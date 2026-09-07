@@ -1,0 +1,4 @@
+# Never commit Tesla private keys
+**/private-key.pem
+**/*private*.pem
+.env
