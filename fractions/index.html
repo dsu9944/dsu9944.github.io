@@ -148,10 +148,11 @@ svg.nl{width:100%;max-width:760px;height:auto}
 </head>
 <body>
 <header class="topbar">
-  <h1 id="homeLink" title="Back to levels">🍕 Alexia's Fraction Quest</h1>
+  <h1 id="homeLink" title="Back to levels">🍕 <span id="titleName">Alexia</span>'s Fraction Quest</h1>
   <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
   <span class="pill" id="streakPill" title="Streak">🔥 0</span>
   <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn hidden" id="switchBtn" href="../index.html?switch=1" title="Switch player" style="text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap">👥 Switch</a>
 </header>
 <main>
 <!-- HOME -->
@@ -175,7 +176,7 @@ svg.nl{width:100%;max-width:760px;height:auto}
   <div class="card">
     <details>
       <summary>👨‍👩‍👧 For grown-ups</summary>
-      <p>Levels follow the NSW Mathematics K–10 syllabus for fractions (Stage 2): picture models first (fraction walls and pizzas), then <b>parallel number lines</b> (the method Alexia's Year 4 class used in Term 4), then choosing equivalents, missing numbers (multiply or divide the top and bottom by the same number) and placing fractions on a number line. Denominators used: 2, 3, 4, 5, 6, 8, 10, 12.</p>
+      <p>Levels follow the NSW Mathematics K–10 syllabus for fractions (Stage 2): picture models first (fraction walls and pizzas), then <b>parallel number lines</b> (the method used in class this term), then choosing equivalents, missing numbers (multiply or divide the top and bottom by the same number) and placing fractions on a number line. Denominators used: 2, 3, 4, 5, 6, 8, 10, 12.</p>
       <p>Wrong answers show a picture explaining why. Hints are free to use but give 5 points instead of 10. Progress is saved on this device only.</p>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
@@ -224,8 +225,14 @@ svg.nl{width:100%;max-width:760px;height:auto}
 <script>
 (function(){
 'use strict';
-const NAME='Alexia';
-const STORE='alexiaFractionQuest.v1';
+/* player / profile (hub-aware; standalone falls back to the original key) */
+const params=new URLSearchParams(location.search);
+const PLAYER=(params.get('player')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+let NAME='Alexia';
+try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(PLAYER&&pr&&pr[PLAYER]&&pr[PLAYER].name)NAME=String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||NAME;}catch(e){}
+const LEGACY='alexiaFractionQuest.v1';
+const STORE=PLAYER?`kidsHub.p.${PLAYER}.fractions`:LEGACY;
+try{if(PLAYER==='alexia'&&!localStorage.getItem(STORE)&&localStorage.getItem(LEGACY))localStorage.setItem(STORE,localStorage.getItem(LEGACY));}catch(e){}
 const $=s=>document.querySelector(s);
 const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -553,6 +560,7 @@ function home(){
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:
     (best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%).`:'');
   $('#unlockAll').checked=!!S.unlockAll;
+  $('#hello').textContent=`Hi ${NAME}!`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Fraction Quest`;
   topbar();show('home');
 }
 
@@ -602,7 +610,7 @@ $('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint()
 $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
-$('#resetBtn').onclick=()=>{if(confirm('Reset all of Alexia\'s progress on this device?')){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
 document.addEventListener('keydown',e=>{
   if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
@@ -610,8 +618,9 @@ document.addEventListener('keydown',e=>{
 });
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+if(PLAYER)$('#switchBtn').classList.remove('hidden');
 // test hook (harmless)
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME};
 home();
 })();
 </script>

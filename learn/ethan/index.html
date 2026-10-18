@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Number Facts Sprint – Make 10, Doubles &amp; More</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A9%3C/text%3E%3C/svg%3E">
+<style>
+:root{--blue:#2563eb;--blue2:#3b82f6;--green:#16a34a;--green2:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#facc15;--ink:#1f2937;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4);min-height:100vh;font-size:19px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:52px;touch-action:manipulation}
+button:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(90deg,#2563eb,#16a34a);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(37,99,235,.12);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--blue)}
+.hero p{margin:0}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.lvl{position:relative;text-align:left;background:#fff;border:4px solid #dbeafe;border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s;color:var(--ink)}
+.lvl:not(.locked):hover{transform:translateY(-3px);border-color:var(--blue2)}
+.lvl .ic{font-size:2.2rem}
+.lvl .t{font-weight:bold;font-size:1.15rem;color:var(--blue)}
+.lvl .b{font-size:.92rem;color:#4b5563}
+.lvl .s{font-size:1.4rem;color:var(--gold);letter-spacing:2px}
+.lvl .num{position:absolute;top:10px;right:14px;font-weight:bold;color:#93c5fd;font-size:1.3rem}
+.lvl.locked{opacity:.6;background:#f3f4f6;cursor:not-allowed}
+.lvl.locked .t{color:#6b7280}
+.btn{background:var(--blue);color:#fff;font-weight:bold;box-shadow:0 4px 0 #1e40af}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #1e40af}
+.btn.orange{background:var(--orange);box-shadow:0 4px 0 #c2410c}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:#dbeafe;color:var(--blue);box-shadow:0 4px 0 #93c5fd}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.stat{background:#eff6ff;border-radius:16px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:var(--blue)}
+.stat span{font-size:.85rem;color:#6b7280}
+.stickers{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.stk{width:26px;height:26px;border-radius:6px;border:2px solid #111;background:#e5e7eb}
+details summary{cursor:pointer;font-weight:bold;color:var(--blue);min-height:40px;display:flex;align-items:center}
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .lvlname{font-weight:bold;color:var(--blue);font-size:1.2rem;flex:1}
+.dots{display:flex;gap:5px}
+.dot{width:16px;height:16px;border-radius:50%;background:#e5e7eb;border:2px solid #d1d5db}
+.dot.cur{border-color:var(--blue);background:#bfdbfe;transform:scale(1.2)}
+.dot.ok{background:var(--green2);border-color:var(--green)}
+.dot.no{background:#fca5a5;border-color:var(--red)}
+.track{position:relative;height:34px;background:#fde68a;border-radius:999px;margin:0 0 12px;overflow:hidden;border:3px solid #f59e0b}
+.track .lane{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9.5%,rgba(255,255,255,.8) 9.5% 10%)}
+.track .runner{position:absolute;top:-2px;font-size:28px;transition:left .5s;transform:scaleX(-1)}
+.track .flag{position:absolute;right:6px;top:0;font-size:26px}
+.prompt{font-size:1.45rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.say{background:#dbeafe;color:var(--blue);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:120px}
+.frames{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:center}
+.frames .plus{font-size:2.4rem;font-weight:bold;color:#6b7280}
+svg{display:block}
+svg.tf{width:min(80vw,300px);height:auto}
+.frames.two svg.tf{width:min(42vw,260px)}
+.eqn{font-size:2.6rem;font-weight:bold;letter-spacing:2px;text-align:center}
+.ansbox{display:inline-block;min-width:1.5em;border:3px dashed var(--blue);border-radius:12px;color:var(--blue);background:#eff6ff;text-align:center;padding:0 .15em}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.15rem}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.15rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7}
+.expl .frames{margin:8px 0}
+.big2{font-size:1.6rem;font-weight:bold}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:600px}
+.opt{background:#fff;border:4px solid #bfdbfe;font-size:2rem;font-weight:bold;padding:10px 6px;min-height:84px;color:var(--ink)}
+.opt:hover{border-color:var(--blue2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}
+.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+.numrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%;max-width:560px}
+.numrow .opt{font-size:1.7rem;min-height:64px}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:#dbeafe;color:var(--blue);font-size:1.6rem;font-weight:bold;min-height:58px;box-shadow:0 3px 0 #93c5fd}
+.keypad button:active{transform:translateY(2px)}
+.speed{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;width:100%;max-width:420px}
+.speed i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#facc15,#ef4444);width:100%}
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--blue);font-size:1.8rem;margin:8px 0}
+.confetti{position:fixed;top:-20px;width:14px;height:14px;z-index:50;pointer-events:none;animation:fall linear forwards;border:2px solid #111;border-radius:3px}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.wstool{position:sticky;top:64px;z-index:10}
+.page{background:#fff;color:#000;max-width:800px;margin:0 auto 20px;padding:28px 34px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.12);font-size:16px}
+.page h2{margin:0 0 4px;font-size:22px}
+.page h3{margin:14px 0 6px;font-size:17px;border-bottom:2px solid #000;padding-bottom:2px}
+.page .meta{display:flex;justify-content:space-between;margin:6px 0 10px}
+.page .instr{font-size:13px;margin:2px 0 6px;color:#333}
+.page .g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 20px;font-size:22px}
+.page .g.four{grid-template-columns:repeat(4,1fr)}
+.page .g.two{grid-template-columns:repeat(2,1fr)}
+.page .g>div{display:flex;align-items:center;gap:6px;break-inside:avoid}
+.page .blank{display:inline-block;width:38px;height:30px;border:2px solid #000;border-radius:5px;vertical-align:middle}
+.page svg.tf{width:150px;height:auto}
+.page .ans{color:#b91c1c;font-weight:bold}
+.page.answers{border-top:6px solid #b91c1c}
+@media print{
+ @page{size:A4;margin:10mm}
+ body{background:#fff}
+ .topbar,.no-print,#home,#play,#results{display:none!important}
+ #worksheet{display:block!important}
+ main{padding:0;max-width:none}
+ .page{box-shadow:none;border-radius:0;margin:0;padding:0;max-width:none;font-size:14px}
+ .page.answers{break-before:page;page-break-before:always;border-top:none}
+ .page h3{margin:8px 0 3px;font-size:15px}
+ .page .g{font-size:19px;gap:5px 20px}
+ .page svg.tf{width:120px}
+ .page .blank{width:32px;height:24px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 id="homeLink" title="Back to levels">🧩 <span id="titleName">Ethan</span>'s Number Facts Sprint</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Streak">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn hidden" id="switchBtn" href="../index.html?switch=1" title="Switch player">👥 Switch</a>
+</header>
+<main>
+<section id="home">
+  <div class="card hero">
+    <div class="big">🏃</div>
+    <div style="flex:1;min-width:220px">
+      <h2 id="hello">Hi!</h2>
+      <p>Speedcubers learn moves until they're super fast. Let's do that with <b>number facts</b>! Make 10, doubles and more. Get 6 or more out of 10 to unlock the next level.</p>
+    </div>
+  </div>
+  <div class="levels" id="levelGrid"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0;color:var(--blue)">📊 My progress</h3>
+      <button class="btn orange" id="wsBtn">🖨️ Make a printable worksheet</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:12px"></div>
+    <div><b>🧊 Cube stickers</b> <span style="font-size:.9rem;color:#6b7280">(one for every star you earn)</span><div class="stickers" id="stickers"></div></div>
+    <p id="tricky" style="margin:12px 0 0"></p>
+  </div>
+  <div class="card">
+    <details>
+      <summary>👨‍👩‍👦 For grown-ups</summary>
+      <p>This game practises <b>quick addition and subtraction facts</b> from the NSW Mathematics K–10 syllabus (Stage 1, additive relations): combinations to 10, doubles, near doubles, making ten to add (bridging) and subtracting by thinking addition. It starts with ten-frame pictures and moves to doing it in your head. The last level is a speed round with a bonus for quick answers. Getting it right counts more than being fast.</p>
+      <p>The 🔈 button reads each question aloud. Hints are free to use but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
+        <button class="btn ghost" id="resetBtn">Reset progress</button>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section id="play" class="hidden">
+  <div class="playhead">
+    <button class="btn ghost" id="quitBtn">← Levels</button>
+    <div class="lvlname" id="lvlName"></div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="card">
+    <div class="track" aria-hidden="true"><div class="lane"></div><span class="flag">🏁</span><span class="runner" id="runner" style="left:0%">🏃</span></div>
+    <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls">
+      <button class="btn ghost" id="hintBtn">💡 Hint</button>
+      <button class="btn green" id="checkBtn">Check ✓</button>
+    </div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+
+<section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+
+<section id="worksheet" class="hidden">
+  <div class="card row no-print wstool">
+    <button class="btn ghost" id="wsBack">← Back</button>
+    <button class="btn" id="wsNew">🔀 New worksheet</button>
+    <button class="btn orange" id="wsPrint">🖨️ Print</button>
+    <span style="font-size:.9rem;color:#6b7280">The answer key prints on its own page.</span>
+  </div>
+  <div id="sheet"></div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+/* ---------- player / profile ---------- */
+const params=new URLSearchParams(location.search);
+const PLAYER=(params.get('player')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+let NAME='Ethan';
+try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(PLAYER&&pr&&pr[PLAYER]&&pr[PLAYER].name)NAME=String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||NAME;}catch(e){}
+const GAME='numberfacts';
+const STORE=PLAYER?`kidsHub.p.${PLAYER}.${GAME}`:'ethanNumberFacts.v1';
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const range=n=>[...Array(n).keys()];
+const RED='#ef4444',BLUE='#3b82f6',GREY='#cbd5e1';
+
+const LEVELS=[
+ {id:1,icon:'🔟',title:'Ten-Frame Friends',blurb:'How many more to fill the ten-frame?',types:['frame10']},
+ {id:2,icon:'🤝',title:'Make 10 Pairs',blurb:'Which numbers go together to make 10?',types:['bond']},
+ {id:3,icon:'🪞',title:'Double Trouble',blurb:'Doubles are the same number twice: 4 + 4!',types:['double']},
+ {id:4,icon:'➕',title:'Near Doubles',blurb:'6 + 7 is double 6, plus 1 more.',types:['near']},
+ {id:5,icon:'🌉',title:'Bridge to 10',blurb:'Make 10 first, then add the rest.',types:['bridge']},
+ {id:6,icon:'➖',title:'Take It Away',blurb:'Use the facts you know to take away.',types:['subtract']},
+ {id:7,icon:'🧊',title:'Speedcuber Sprint',blurb:'Everything mixed, in your head. Quick answers get bonus points!',types:['frame10','bond','double','near','bridge','subtract','bond','double','bridge','subtract'],speed:true},
+];
+const TYPE_NAMES={frame10:'Ten-Frame Friends',bond:'Make 10 Pairs',double:'Double Trouble',near:'Near Doubles',bridge:'Bridge to 10',subtract:'Take It Away'};
+const ROUND=10,UNLOCK=6,SPEED_MS=8000;
+const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
+
+const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
+function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+const unlocked=id=>id===1||S.unlockAll||((S.levels[id-1]||{}).stars||0)>=1;
+
+let actx=null;
+function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];const t=actx.currentTime,vol=kind==='tap'?0.05:0.14;
+  N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const s=t+i*0.12;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});}catch(e){}}
+function say(text){try{if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-AU';u.rate=0.9;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]AU/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+
+/* ---------- ten-frame SVG ----------
+ groups: [{n,color,label:bool,star:bool,cross:bool,ghost:bool}] filled in order */
+function tfSVG(groups,{cross=0,crossFrom='end'}={}){
+  const cells=[];groups.forEach(g=>{for(let i=0;i<g.n;i++)cells.push(Object.assign({},g,{k:i+1}));});
+  const cs=56,pad=6,W=5*cs+2*pad,H=2*cs+2*pad;
+  let s=`<svg class="tf" viewBox="0 0 ${W} ${H}" aria-label="ten-frame with ${cells.filter(c=>!c.ghost).length} counters">`;
+  s+=`<rect x="2" y="2" width="${W-4}" height="${H-4}" rx="10" fill="#fff" stroke="#1f2937" stroke-width="4"/>`;
+  const filled=cells.filter(c=>!c.ghost).length;
+  const crossSet=new Set();for(let i=0;i<cross;i++)crossSet.add(crossFrom==='end'?filled-1-i:i);
+  for(let i=0;i<10;i++){
+    const x=pad+(i%5)*cs,y=pad+Math.floor(i/5)*cs,cx=x+cs/2,cy=y+cs/2;
+    s+=`<rect x="${x}" y="${y}" width="${cs}" height="${cs}" fill="none" stroke="#94a3b8" stroke-width="2"/>`;
+    const c=cells[i];if(!c)continue;
+    if(c.ghost){s+=`<circle cx="${cx}" cy="${cy}" r="20" fill="none" stroke="${c.color}" stroke-width="3" stroke-dasharray="5 4"/>`;}
+    else s+=`<circle cx="${cx}" cy="${cy}" r="21" fill="${c.color}" stroke="rgba(0,0,0,.25)" stroke-width="2"/>`;
+    if(c.label)s+=`<text x="${cx}" y="${cy+7}" text-anchor="middle" font-size="20" font-weight="bold" fill="${c.ghost?c.color:'#fff'}">${c.k}</text>`;
+    if(c.star)s+=`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="22">⭐</text>`;
+    if(crossSet.has(i))s+=`<line x1="${cx-18}" y1="${cy-18}" x2="${cx+18}" y2="${cy+18}" stroke="#111" stroke-width="5" stroke-linecap="round"/><line x1="${cx+18}" y1="${cy-18}" x2="${cx-18}" y2="${cy+18}" stroke="#111" stroke-width="5" stroke-linecap="round"/>`;
+  }
+  return s+'</svg>';
+}
+const frames=(a,b,plus=true)=>`<div class="frames two">${a}${b!=null?(plus?'<span class="plus">+</span>':'')+b:''}</div>`;
+const one=a=>`<div class="frames">${a}</div>`;
+/* draw a number n (0..20) as two frames of colour */
+function framesFor(n,color){return n<=10?[tfSVG([{n,color}])]:[tfSVG([{n:10,color}]),tfSVG([{n:n-10,color}])];}
+
+/* ---------- question types ---------- */
+const PRAISE=[`Great work, ${NAME}!`,`Super fast, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Nailed it!',`Awesome thinking, ${NAME}!`,'Fantastic!','Too easy!'];
+const stage=()=>$('#stage');
+let speakText='';
+function setPrompt(h,spoken){$('#prompt').innerHTML=h;speakText=spoken||$('#prompt').textContent;}
+const BOX='<span class="ansbox" id="ansBox">&nbsp;</span>';
+
+function choiceUI(q,opts,cls='opts'){
+  q.opts=opts;q.noCheck=true;
+  return `<div class="${cls}">${opts.map((o,i)=>`<button class="opt" data-opt="${i}">${o}</button>`).join('')}</div>`;
+}
+function bindChoice(q){stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);};}
+function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
+function distract(ans,lo,hi,extra=[]){const set=new Set();extra.concat([ans+1,ans-1,ans+2,ans-2,ans+10,ans-10]).forEach(v=>{if(v!==ans&&v>=lo&&v<=hi)set.add(v);});
+  const d=shuffle([...set]).slice(0,3);while(d.length<3){const v=rnd(lo,hi);if(v!==ans&&!d.includes(v))d.push(v);}return shuffle([ans].concat(d));}
+function keypadUI(q){
+  q.input='';
+  const html=`<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 5">⌫ Delete</button></div>`;
+  q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(q.input.length<2)q.input+=k;sfx('tap');const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
+  q.canCheck=()=>q.input.length>0;q.nudge='Type a number first.';
+  q.check=()=>parseInt(q.input,10)===q.answerKey;
+  return html;
+}
+function bindKeys(q){stage().onclick=e=>{const b=e.target.closest('[data-key]');if(b)q.key(b.dataset.key);};}
+function revealBox(q,ok){const kp=document.querySelector('.keypad');if(kp)kp.remove();const b=$('#ansBox');if(b){b.textContent=q.answerKey;b.style.borderColor=ok?'#16a34a':'#ef4444';}}
+/* visuals shown only on hint in speed level */
+function visualSlot(q,html){return `<div id="vis" class="${q.speed?'hidden':''}">${html}</div>`;}
+function showVis(html){const v=$('#vis');if(v){if(html)v.innerHTML=html;v.classList.remove('hidden');}}
+
+const TYPES={
+ /* L1: how many more to make 10 (visual, tap a number) */
+ frame10:{make(q,used){q.n=uniq(used,()=>rnd(1,9),'f');q.answerKey=10-q.n;},
+  render(q){
+   setPrompt(q.speed?`<b>${q.n}</b> and how many more make <b>10</b>?`:`There are <b>${q.n}</b> counters. How many more to make <b>10</b>?`);
+   stage().innerHTML=visualSlot(q,one(tfSVG([{n:q.n,color:RED}])))+(q.speed?`<div class="eqn">${q.n} + ${BOX} = 10</div>`:'')+choiceUI(q,range(11),'numrow');
+   bindChoice(q);
+   q.hint=()=>{showVis(one(tfSVG([{n:q.n,color:RED},{n:10-q.n,color:BLUE,ghost:true,label:true}])));return `Count the <b>empty</b> squares! Each one needs a counter.`;};
+   q.explain=ok=>{markChoice(q);showVis(one(tfSVG([{n:q.n,color:RED},{n:10-q.n,color:BLUE,label:true}])));
+     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`The ${10-q.n} blue counters fill the frame.<div class="big2">${q.n} + ${10-q.n} = 10</div>`;};
+ }},
+ /* L2: bonds to 10 (choice) */
+ bond:{make(q,used){q.n=uniq(used,()=>rnd(0,10),'b');q.mode=pick(['add','add','front','sub']);q.answerKey=10-q.n;},
+  render(q){
+   const n=q.n,m=10-n;
+   const eq=q.mode==='add'?`${n} + ${BOX} = 10`:q.mode==='front'?`${BOX} + ${n} = 10`:`10 − ${n} = ${BOX}`;
+   setPrompt(q.mode==='sub'?`What is <b>10 take away ${n}</b>?`:`What goes with <b>${n}</b> to make <b>10</b>?`);
+   stage().innerHTML=`<div class="eqn">${eq}</div>`+visualSlot(q,'')+choiceUI(q,distract(m,0,10));
+   bindChoice(q);
+   q.hint=()=>{showVis(one(tfSVG(q.mode==='sub'?[{n:10,color:RED}]:[{n,color:RED}],q.mode==='sub'?{cross:n}:{})));
+     return q.mode==='sub'?`Picture a full ten-frame. Cross out ${n}. How many are left?`:`Picture ${n} counters in a ten-frame. How many empty squares?`;};
+   q.explain=ok=>{markChoice(q);const b=$('#ansBox');if(b)b.textContent=m;
+     const vis=q.mode==='sub'?one(tfSVG([{n:10,color:RED}],{cross:n})):one(tfSVG([{n,color:RED},{n:m,color:BLUE}]));
+     $('#vis').innerHTML=vis;$('#vis').classList.remove('hidden');
+     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`<b>${n}</b> and <b>${m}</b> are partners. They make 10!<div class="big2">${n} + ${m} = 10 &nbsp; 10 − ${n} = ${m}</div>`;};
+ }},
+ /* L3: doubles (keypad) */
+ double:{make(q,used){q.n=uniq(used,()=>rnd(1,10),'d');q.answerKey=2*q.n;},
+  render(q){
+   const n=q.n;
+   setPrompt(pick([`What is <b>double ${n}</b>?`,`Double trouble! <b>${n} + ${n}</b> = ?`]));
+   stage().innerHTML=visualSlot(q,frames(tfSVG([{n,color:RED}]),tfSVG([{n,color:BLUE}])))+`<div class="eqn">${n} + ${n} = ${BOX}</div>`+keypadUI(q);
+   bindKeys(q);
+   q.hint=()=>{showVis(frames(tfSVG([{n,color:RED}]),tfSVG([{n,color:BLUE}])));
+     return n<=5?`Show ${n} fingers on each hand. How many fingers altogether?`:`${n} is 5 and ${n-5}. Double 5 is 10, double ${n-5} is ${2*(n-5)}. Put them together!`;};
+   q.explain=ok=>{revealBox(q,ok);showVis(frames(tfSVG([{n,color:RED,label:true}]),tfSVG([{n,color:BLUE,label:true}])));
+     return (ok?'':`You wrote <b>${q.input}</b>. `)+`Two groups of ${n} make ${2*n}.<div class="big2">double ${n} = ${2*n}</div>`;};
+ }},
+ /* L4: near doubles (choice) */
+ near:{make(q,used){q.n=uniq(used,()=>rnd(1,9),'n');q.big=Math.random()<0.5;q.answerKey=2*q.n+1;},
+  render(q){
+   const n=q.n,a=q.big?n+1:n,b=q.big?n:n+1;
+   setPrompt(`What is <b>${a} + ${b}</b>?`);
+   const vis=frames(tfSVG([{n:a,color:RED}].concat(q.big?[]:[])),tfSVG([{n:b,color:BLUE}]));
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${a} + ${b} = ${BOX}</div>`+choiceUI(q,distract(2*n+1,2,20,[2*n,2*n+2]));
+   bindChoice(q);
+   const starred=x=>x===n+1?[{n,color:x===a?RED:BLUE},{n:1,color:'#facc15',star:true}]:[{n,color:x===a?RED:BLUE}];
+   q.hint=()=>{showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));return `The numbers are next-door neighbours! Double ${n} is ${2*n}. Then add the ⭐ one more.`;};
+   q.explain=ok=>{markChoice(q);const bx=$('#ansBox');if(bx)bx.textContent=2*n+1;showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));
+     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`${a} + ${b} is <b>double ${n}</b> (${2*n}) and <b>1 more</b> (the ⭐).<div class="big2">${2*n} + 1 = ${2*n+1}</div>`;};
+ }},
+ /* L5: bridge to 10 (keypad) */
+ bridge:{make(q,used){const k=uniq(used,()=>{const a=rnd(6,9),b=rnd(11-a,9);return a+'+'+b;},'g').split('+').map(Number);q.a=k[0];q.b=k[1];if(Math.random()<0.3){[q.a,q.b]=[q.b,q.a];q.swap=true;}q.answerKey=q.a+q.b;},
+  render(q){
+   const big=Math.max(q.a,q.b),small=Math.min(q.a,q.b),need=10-big,rest=small-need;
+   setPrompt(`What is <b>${q.a} + ${q.b}</b>?`);
+   const vis=frames(tfSVG([{n:q.a,color:RED}]),tfSVG([{n:q.b,color:BLUE}]));
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${q.a} + ${q.b} = ${BOX}</div>`+keypadUI(q);
+   bindKeys(q);
+   const bridged=frames(tfSVG([{n:big,color:big===q.a?RED:BLUE},{n:need,color:big===q.a?BLUE:RED,star:true}]),tfSVG([{n:rest,color:big===q.a?BLUE:RED}]),true);
+   q.hint=()=>{showVis(bridged);return `Start with ${big}. It needs <b>${need}</b> more to make 10 (the ⭐ counters). Then add the ${rest} left over.`;};
+   q.explain=ok=>{revealBox(q,ok);showVis(bridged);
+     return (ok?'':`You wrote <b>${q.input}</b>. `)+`Move ${need} over to fill the first ten-frame.<div class="big2">${big} + ${need} = 10, &nbsp; 10 + ${rest} = ${10+rest}</div>`;};
+ }},
+ /* L6: subtraction using facts (keypad) */
+ subtract:{make(q,used){
+   const mode=pick(['ten','double','teen','bridge']);let t,s;
+   for(let i=0;i<40;i++){
+     if(mode==='ten'){t=10;s=rnd(1,9);}else if(mode==='double'){s=rnd(2,9);t=2*s;}else if(mode==='teen'){s=rnd(1,9);t=10+s;}else{const o=rnd(1,8);t=10+o;s=rnd(o+1,9);}
+     if(!used.has('s'+t+'-'+s))break;}
+   used.add('s'+t+'-'+s);q.mode=mode;q.t=t;q.s=s;q.answerKey=t-s;},
+  render(q){
+   const t=q.t,s=q.s,ans=t-s;
+   setPrompt(`What is <b>${t} − ${s}</b>?`,`What is ${t} take away ${s}?`);
+   const tfs=framesFor(t,RED);
+   const vis=tfs.length>1?frames(tfs[0],tfs[1],false):one(tfs[0]);
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${t} − ${s} = ${BOX}</div>`+keypadUI(q);
+   bindKeys(q);
+   const crossed=()=>{if(t<=10)return one(tfSVG([{n:t,color:RED}],{cross:s}));
+     const ones=t-10;const c2=Math.min(s,ones),c1=s-c2;
+     return frames(tfSVG([{n:10,color:RED}],{cross:c1}),tfSVG([{n:ones,color:RED}],{cross:c2}),false);};
+   const H={ten:`Think of partners to 10: ${s} + ? = 10`,double:`${t} is double ${s}! So ${t} − ${s} = ?`,teen:`${t} is 10 and ${s}. Take away the ${s}. What's left?`,bridge:`Take away ${t-10} first to get to 10. Then take away ${s-(t-10)} more.`};
+   const E={ten:`${s} + ${ans} = 10, so 10 − ${s} = ${ans}.`,double:`Double ${s} is ${t}, so ${t} − ${s} = ${s}.`,teen:`${t} is 10 and ${s}. Take away the ${s} and 10 is left.`,bridge:`${t} − ${t-10} = 10, then 10 − ${s-(t-10)} = ${ans}.`};
+   q.hint=()=>{showVis(vis);return H[q.mode];};
+   q.explain=ok=>{revealBox(q,ok);showVis(crossed());return (ok?'':`You wrote <b>${q.input}</b>. `)+`Cross out ${s} and count what's left.<div class="big2">${E[q.mode]}</div>`;};
+ }},
+};
+function uniq(used,gen,prefix){let v;for(let i=0;i<40;i++){v=gen();if(!used.has(prefix+v))break;}used.add(prefix+v);return v;}
+
+/* ---------- round flow ---------- */
+let R=null,q=null,speedTimer=null;
+function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function startLevel(id){
+  const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
+  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+}
+function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');
+  $('#runner').style.left=(R.score/ROUND*88)+'%';}
+function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
+function next(){
+  R.idx++;if(R.idx>=ROUND)return finishRound();
+  const type=R.types[R.idx];
+  q={type,done:false,usedHint:false,speed:!!R.L.speed,start:Date.now()};
+  TYPES[type].make(q,R.used);
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
+  TYPES[type].render(q);
+  if(q.speed){stage().insertAdjacentHTML('afterbegin','<div class="speed" title="Speed bonus"><i id="speedBar"></i></div>');
+    requestAnimationFrame(()=>{const b=$('#speedBar');if(b){b.style.transition=`width ${SPEED_MS}ms linear`;b.style.width='0%';}});}
+  dots();topbar();updCheck();
+}
+function answer(ok){
+  if(!q||q.done)return;q.done=true;
+  const fast=q.speed&&(Date.now()-q.start)<=SPEED_MS;
+  S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
+  let pts=0;
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;if(fast&&!q.usedHint)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  else{R.streak=0;sfx('bad');}
+  R.results.push(ok);save();
+  const expl=q.explain(ok);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${esc(pick(PRAISE))}</div><div>+${pts} points${fast&&!q.usedHint?' · ⚡ speed bonus!':''}${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>`)+
+    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${R.idx<ROUND-1?'Next question ➜':'See my results ⭐'}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  const sb=$('#speedBar');if(sb){sb.style.transition='none';}
+  dots();topbar();$('#nextBtn').onclick=next;
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+function finishRound(){
+  const L=R.L,st=starsFor(R.score),prev=S.levels[L.id]||{best:0,stars:0,plays:0};
+  const wasLocked=L.id<LEVELS.length&&!unlocked(L.id+1);
+  S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
+  S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. The hints help! 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${esc(msg)}</h2>
+    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
+    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
+      ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}</div>`;
+  show('results');q=null;R.streak=0;topbar();
+  if(st>=2){sfx('win');confetti();}
+  $('#rHome').onclick=home;$('#rAgain').onclick=()=>startLevel(L.id);const rn=$('#rNext');if(rn)rn.onclick=()=>startLevel(L.id+1);
+}
+const CUBE=['#ffffff','#facc15','#ef4444','#f97316','#3b82f6','#22c55e'];
+function confetti(){for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=pick(CUBE);d.style.animationDuration=(1.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*0.6+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+
+function home(){
+  R=null;q=null;
+  $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Number Facts Sprint`;
+  $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+  const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
+  const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
+  const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
+  $('#stats').innerHTML=[['⭐ '+S.points,'points'],[totalStars+' / '+LEVELS.length*3,'stars'],[S.rounds,'rounds played'],[S.answered,'questions answered'],[acc,'correct'],['🔥 '+S.bestStreak,'best streak'],[last,'last played']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#stickers').innerHTML=range(LEVELS.length*3).map(i=>`<span class="stk" style="${i<totalStars?'background:'+CUBE[i%6]:''}"></span>`).join('');
+  let worst=null,best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};if(!best||r>best.r)best={t,r};}});
+  $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${esc(NAME)}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%).`:'');
+  $('#unlockAll').checked=!!S.unlockAll;topbar();show('home');
+}
+
+/* ---------- worksheet ---------- */
+function makeWorksheet(){
+  const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const B='<span class="blank"></span>',A=(v,key)=>key?`<span class="ans">${v}</span>`:B,L=i=>String.fromCharCode(97+i)+')';
+  const s1=shuffle(range(9).map(i=>i+1)).slice(0,4);
+  const s2=shuffle(range(11)).slice(0,6).map((n,i)=>({n,front:i%2===1}));
+  const s3=shuffle(range(10).map(i=>i+1)).slice(0,6);
+  const s4=shuffle(range(8).map(i=>i+2)).slice(0,4);
+  const s5=shuffle([[8,5],[9,4],[7,6],[8,7],[9,6],[7,5],[9,3],[8,4],[6,5]]).slice(0,4);
+  const u6=new Set();const s6=range(6).map(()=>{const o={};TYPES.subtract.make(o,u6);return [o.t,o.s];});
+  const page=key=>`<div class="page${key?' answers':''}">
+    <h2>${key?'✅ Answer key: ':''}Number Facts 🧩</h2>
+    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 30</span>'}</div>
+    <h3>1. Make 10</h3><div class="instr">Draw more counters to fill the ten-frame. How many did you draw?</div>
+    <div class="g four">${s1.map((n,i)=>`<div style="flex-direction:column;align-items:flex-start">${L(i)} ${tfSVG(key?[{n,color:'#9ca3af'},{n:10-n,color:'#fca5a5'}]:[{n,color:'#9ca3af'}])}<span>${n} + ${A(10-n,key)} = 10</span></div>`).join('')}</div>
+    <h3>2. Partners to 10</h3><div class="g">${s2.map((o,i)=>`<div>${L(i)} ${o.front?`${A(10-o.n,key)} + ${o.n}`:`${o.n} + ${A(10-o.n,key)}`} = 10</div>`).join('')}</div>
+    <h3>3. Doubles</h3><div class="g">${s3.map((n,i)=>`<div>${L(i)} ${n} + ${n} = ${A(2*n,key)}</div>`).join('')}</div>
+    <h3>4. Near doubles</h3><div class="instr">Use the double to help: 6 + 7 is double 6 and 1 more.</div><div class="g two">${s4.map((n,i)=>`<div>${L(i)} ${n} + ${n+1} = ${A(2*n+1,key)} <span style="font-size:14px">(double ${n} = ${A(2*n,key)})</span></div>`).join('')}</div>
+    <h3>5. Bridge to 10</h3><div class="instr">Make 10 first, then add the rest.</div><div class="g two">${s5.map(([a,b],i)=>`<div>${L(i)} ${a} + ${b} = ${a} + ${A(10-a,key)} + ${A(b-(10-a),key)} = ${A(a+b,key)}</div>`).join('')}</div>
+    <h3>6. Take it away</h3><div class="g">${s6.map(([t,s],i)=>`<div>${L(i)} ${t} − ${s} = ${A(t-s,key)}</div>`).join('')}</div>
+    ${key?'':`<p style="margin-top:12px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: make 10, use doubles, and think addition to take away.</p>`}
+  </div>`;
+  $('#sheet').innerHTML=page(false)+page(true);
+}
+
+/* ---------- events ---------- */
+if(PLAYER)$('#switchBtn').classList.remove('hidden');
+$('#levelGrid').addEventListener('click',e=>{const b=e.target.closest('[data-level]');if(b)startLevel(+b.dataset.level);});
+$('#homeLink').onclick=home;
+$('#quitBtn').onclick=()=>{if(!R||R.idx<1||confirm('Leave this round? Your progress in this round will be lost.'))home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#sayBtn').onclick=()=>say(speakText);
+$('#checkBtn').onclick=()=>{if(!q||q.done)return;if(!q.canCheck()){$('#hintBox').innerHTML=q.nudge;$('#hintBox').classList.remove('hidden');return;}answer(q.check());};
+$('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint();$('#hintBox').innerHTML='💡 '+h;$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;sfx('tap');};
+$('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
+$('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
+window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+$('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
+document.addEventListener('keydown',e=>{if(!q)return;
+  if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}});
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME};
+home();
+})();
+</script>
+</body>
+</html>
