@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Alexia's Fraction Quest – Equivalent Fractions</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8D%95%3C/text%3E%3C/svg%3E">
+<style>
+:root{--purple:#7c3aed;--purple2:#8b5cf6;--orange:#ff8a3d;--pink:#ec4899;--green:#16a34a;--green2:#22c55e;--red:#e11d48;--ink:#1f2937;--bg1:#fdf2ff;--bg2:#e0f2fe;--card:#fff;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;font-size:18px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:48px;touch-action:manipulation}
+button:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(90deg,#7c3aed,#ec4899);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(124,58,237,.12);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--purple)}
+.hero p{margin:0}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.lvl{position:relative;text-align:left;background:#fff;border:4px solid #ede9fe;border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s}
+.lvl:not(.locked):hover{transform:translateY(-3px);border-color:var(--purple2)}
+.lvl .ic{font-size:2.2rem}
+.lvl .t{font-weight:bold;font-size:1.15rem;color:var(--purple)}
+.lvl .b{font-size:.92rem;color:#4b5563}
+.lvl .s{font-size:1.4rem;color:var(--gold);letter-spacing:2px}
+.lvl .num{position:absolute;top:10px;right:14px;font-weight:bold;color:#c4b5fd;font-size:1.3rem}
+.lvl.locked{opacity:.6;background:#f3f4f6;cursor:not-allowed}
+.lvl.locked .t{color:#6b7280}
+.btn{background:var(--purple);color:#fff;font-weight:bold;box-shadow:0 4px 0 #5b21b6}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #5b21b6}
+.btn.orange{background:var(--orange);box-shadow:0 4px 0 #c2410c}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:#ede9fe;color:var(--purple);box-shadow:0 4px 0 #c4b5fd}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.stat{background:#faf5ff;border-radius:16px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:var(--purple)}
+.stat span{font-size:.85rem;color:#6b7280}
+details summary{cursor:pointer;font-weight:bold;color:var(--purple);min-height:40px;display:flex;align-items:center}
+/* fractions */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .15em;font-weight:bold}
+.frac .num{border-bottom:3px solid currentColor;padding:0 .2em}
+.frac .den{padding:0 .2em}
+.frac.big{font-size:1.7em}
+.frac.huge{font-size:2.6em}
+/* play */
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .lvlname{font-weight:bold;color:var(--purple);font-size:1.2rem;flex:1}
+.dots{display:flex;gap:5px}
+.dot{width:16px;height:16px;border-radius:50%;background:#e5e7eb;border:2px solid #d1d5db}
+.dot.cur{border-color:var(--purple);background:#ddd6fe;transform:scale(1.2)}
+.dot.ok{background:var(--green2);border-color:var(--green)}
+.dot.no{background:#fda4af;border-color:var(--red)}
+.prompt{font-size:1.3rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:120px}
+.barrow{display:flex;align-items:center;gap:12px;width:100%;max-width:720px}
+.barlabel{min-width:64px;text-align:center;font-size:1.3rem}
+svg{display:block}
+svg.bar{width:100%;height:auto}
+svg.interactive [data-piece],svg.interactive .tickhit{cursor:pointer}
+svg.interactive [data-piece]:hover{opacity:.85}
+.pizzas{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;width:100%}
+.pz{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:1.2rem}
+svg.pizza{width:min(42vw,250px);height:auto}
+svg.nl{width:100%;max-width:760px;height:auto}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.1rem}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.1rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7}
+.expl .barrow{margin:6px auto}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:640px}
+.opt{background:#fff;border:4px solid #ddd6fe;font-size:1.7rem;padding:14px 6px;min-height:100px;color:var(--ink)}
+.opt:hover{border-color:var(--purple2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}
+.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}}
+.equation{display:flex;align-items:center;justify-content:center;gap:16px;font-size:1.3rem}
+.equation .eq{font-size:2.6rem;font-weight:bold}
+.ansbox{display:inline-block;min-width:1.6em;min-height:1.1em;border:3px dashed var(--purple);border-radius:10px;color:var(--purple);background:#faf5ff;text-align:center}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:#ede9fe;color:var(--purple);font-size:1.5rem;font-weight:bold;min-height:56px;box-shadow:0 3px 0 #c4b5fd}
+.keypad button:active{transform:translateY(2px)}
+.work{display:inline-flex;align-items:center;gap:6px;font-size:1.4rem;margin:6px 0}
+.wops{display:flex;flex-direction:column;gap:10px;font-size:1rem;font-weight:bold;color:var(--red)}
+.wops span{background:#ffe4e6;border-radius:999px;padding:2px 10px}
+.tag{display:inline-block;background:#ede9fe;color:var(--purple);border-radius:999px;padding:2px 10px;font-size:.85rem;font-weight:bold}
+/* results */
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--purple);font-size:1.8rem;margin:8px 0}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+/* worksheet */
+.wstool{position:sticky;top:64px;z-index:10}
+.page{background:#fff;color:#000;max-width:800px;margin:0 auto 20px;padding:28px 34px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.12);font-size:15px}
+.page h2{margin:0 0 4px;font-size:22px}
+.page h3{margin:16px 0 6px;font-size:16px;border-bottom:2px solid #000;padding-bottom:2px}
+.page .meta{display:flex;justify-content:space-between;font-size:15px;margin:6px 0 10px}
+.page .instr{font-size:13px;margin:2px 0 8px;color:#333}
+.page .wsrow{display:flex;align-items:center;gap:10px;margin:6px 0;break-inside:avoid}
+.page .wsrow svg.bar{max-width:420px}
+.page .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px}
+.page .grid2>div{font-size:18px;display:flex;align-items:center;gap:6px;break-inside:avoid}
+.page .blank{display:inline-block;width:30px;height:24px;border:2px solid #000;border-radius:4px;vertical-align:middle}
+.page .frac .num,.page .frac .den{min-width:1em;text-align:center}
+.page .choice span.c{display:inline-block;margin:0 10px}
+.page svg.nl{max-width:680px}
+.page .ans{color:#b91c1c;font-weight:bold}
+.page.answers{border-top:6px solid #b91c1c}
+.page .wsgap{margin-bottom:12px}
+.page .grid2.grid4{grid-template-columns:repeat(4,1fr)}
+@media print{
+ @page{size:A4;margin:10mm}
+ body{background:#fff}
+ .topbar,.no-print,#home,#play,#results{display:none!important}
+ #worksheet{display:block!important}
+ main{padding:0;max-width:none}
+ .page{box-shadow:none;border-radius:0;margin:0;padding:0;max-width:none}
+ .page.answers{break-before:page;page-break-before:always;border-top:none}
+ .page{font-size:12px}
+ .page h2{font-size:18px}
+ .page h3{margin:8px 0 3px;font-size:14px}
+ .page .instr{margin:0 0 3px;font-size:11px}
+ .page .wsrow{margin:1px 0}
+ .page .wsgap{margin-bottom:5px}
+ .page .wsrow svg.bar{height:auto}
+ .page .wsrow svg.bar{max-width:300px}
+ .page svg.nl{max-width:440px;margin:0 auto}
+ .page .frac.big{font-size:1.35em}
+ .page .grid2{gap:4px 30px}
+ .page .grid2>div{font-size:15px}
+ .page .blank{width:24px;height:18px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 id="homeLink" title="Back to levels">🍕 Alexia's Fraction Quest</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Streak">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+</header>
+<main>
+<!-- HOME -->
+<section id="home">
+  <div class="card hero">
+    <div class="big">👋</div>
+    <div style="flex:1;min-width:220px">
+      <h2 id="hello">Hi Alexia!</h2>
+      <p><b>Equivalent fractions</b> are different names for the <b>same amount</b>. Like 1/2 of a pizza is the same as 2/4 or 4/8 of it! Finish a level with 6 or more out of 10 to unlock the next one.</p>
+    </div>
+  </div>
+  <div class="levels" id="levelGrid"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0;color:var(--purple)">📊 My progress</h3>
+      <button class="btn orange" id="wsBtn">🖨️ Make a printable worksheet</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:12px"></div>
+    <p id="tricky" style="margin:12px 0 0"></p>
+  </div>
+  <div class="card">
+    <details>
+      <summary>👨‍👩‍👧 For grown-ups</summary>
+      <p>Levels follow the NSW Mathematics K–10 syllabus for fractions (Stage 2): picture models first (fraction walls and pizzas), then <b>parallel number lines</b> (the method Alexia's Year 4 class used in Term 4), then choosing equivalents, missing numbers (multiply or divide the top and bottom by the same number) and placing fractions on a number line. Denominators used: 2, 3, 4, 5, 6, 8, 10, 12.</p>
+      <p>Wrong answers show a picture explaining why. Hints are free to use but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
+        <button class="btn ghost" id="resetBtn">Reset progress</button>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- PLAY -->
+<section id="play" class="hidden">
+  <div class="playhead">
+    <button class="btn ghost" id="quitBtn">← Levels</button>
+    <div class="lvlname" id="lvlName"></div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="card">
+    <div class="prompt" id="prompt"></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls">
+      <button class="btn ghost" id="hintBtn">💡 Hint</button>
+      <button class="btn green" id="checkBtn">Check ✓</button>
+    </div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<section id="results" class="hidden">
+  <div class="card results" id="resultsCard"></div>
+</section>
+
+<!-- WORKSHEET -->
+<section id="worksheet" class="hidden">
+  <div class="card row no-print wstool">
+    <button class="btn ghost" id="wsBack">← Back</button>
+    <button class="btn" id="wsNew">🔀 New worksheet</button>
+    <button class="btn orange" id="wsPrint">🖨️ Print</button>
+    <span style="font-size:.9rem;color:#6b7280">The answer key prints on its own page.</span>
+  </div>
+  <div id="sheet"></div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+const NAME='Alexia';
+const STORE='alexiaFractionQuest.v1';
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const range=n=>[...Array(n).keys()];
+const F=(n,d,cls='')=>`<span class="frac ${cls}"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+
+const DENS=[2,3,4,5,6,8,10,12];
+const EASY=[[2,4],[2,6],[2,8],[3,6],[4,8],[5,10]];
+const MED=EASY.concat([[3,12],[4,12],[2,10],[6,12],[2,12]]);
+const ALL=MED;
+
+const LEVELS=[
+ {id:1,icon:'🧱',title:'Fraction Wall',blurb:'Shade the same amount on a bar cut into smaller pieces.',types:['bar'],pairs:EASY},
+ {id:2,icon:'🍕',title:'Pizza Party',blurb:'Cut the pizza into more slices. Is it still the same amount?',types:['pizza'],pairs:MED},
+ {id:3,icon:'📏',title:'Parallel Number Lines',blurb:'Just like in class! Find the fraction that lines up.',types:['nlpar'],pairs:ALL},
+ {id:4,icon:'🎯',title:'Match It!',blurb:'Pick the fraction that is worth the same amount.',types:['choice'],pairs:ALL},
+ {id:5,icon:'🔍',title:'Missing Numbers',blurb:'Multiply or divide the top and bottom by the same number.',types:['missing'],pairs:ALL},
+ {id:6,icon:'🐸',title:'Number Line Hop',blurb:'Help the frog hop to where the fraction lives.',types:['nlplace'],pairs:ALL},
+ {id:7,icon:'🏆',title:'Fraction Champion',blurb:'A mix of everything. Can you get 3 stars?',types:['bar','pizza','nlpar','choice','missing','nlplace','missing','choice'],pairs:ALL},
+];
+const TYPE_NAMES={bar:'Fraction Wall',pizza:'Pizza Party',nlpar:'Parallel Number Lines',choice:'Match It!',missing:'Missing Numbers',nlplace:'Number Line Hop'};
+const ROUND=10, UNLOCK=6;
+const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
+
+/* ---------- storage ---------- */
+const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
+function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+const unlocked=id=>id===1||S.unlockAll||((S.levels[id-1]||{}).stars||0)>=1;
+
+/* ---------- sound ---------- */
+let actx=null;
+function sfx(kind){
+  if(!S.sound)return;
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];
+    const t=actx.currentTime, vol=kind==='tap'?0.05:0.14;
+    N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;
+      const s=t+i*0.12;g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);
+      o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});
+  }catch(e){}
+}
+
+/* ---------- SVG helpers ---------- */
+function barSVG({parts,shaded=[],color='#ff8a3d',interactive=false,guideAt=null,groupEvery=0,w=600,h=64}){
+  const on=new Set(shaded), pw=w/parts;
+  let s=`<svg class="bar${interactive?' interactive':''}" viewBox="-6 -8 ${w+12} ${h+16}" aria-label="bar cut into ${parts} parts">`;
+  for(let i=0;i<parts;i++){
+    s+=`<rect ${interactive?`data-piece="${i}"`:''} x="${i*pw}" y="0" width="${pw}" height="${h}" fill="${on.has(i)?color:'#ffffff'}" stroke="#374151" stroke-width="2"/>`;
+  }
+  if(groupEvery>1)for(let g=groupEvery;g<parts;g+=groupEvery)s+=`<line x1="${g*pw}" y1="-6" x2="${g*pw}" y2="${h+6}" stroke="#e11d48" stroke-width="5" pointer-events="none"/>`;
+  if(guideAt!=null)s+=`<line x1="${guideAt*w}" y1="-8" x2="${guideAt*w}" y2="${h+8}" stroke="#e11d48" stroke-width="4" stroke-dasharray="7 6" pointer-events="none"/>`;
+  s+=`<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#1f2937" stroke-width="4" pointer-events="none"/></svg>`;
+  return s;
+}
+function pizzaSVG({parts,shaded=[],interactive=false,groupEvery=0,r=100}){
+  const on=new Set(shaded), c=r+10, T=2*Math.PI/parts;
+  const P=a=>[c+r*Math.cos(a),c+r*Math.sin(a)];
+  let s=`<svg class="pizza${interactive?' interactive':''}" viewBox="0 0 ${2*c} ${2*c}" aria-label="pizza cut into ${parts} slices">`;
+  s+=`<circle cx="${c}" cy="${c}" r="${r+8}" fill="#d9954a"/>`;
+  for(let i=0;i<parts;i++){
+    const a0=-Math.PI/2+i*T,a1=a0+T,[x0,y0]=P(a0),[x1,y1]=P(a1);
+    const fill=on.has(i)?'#ffb703':'#fff3d6';
+    s+=`<path ${interactive?`data-piece="${i}"`:''} d="M${c},${c} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${T>Math.PI?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${fill}" stroke="#8a4b16" stroke-width="2.5"/>`;
+    if(on.has(i)){const am=a0+T/2,pr=Math.max(6,Math.min(13,r*0.55/parts*2.2));
+      [[0.62,0],[0.36,0.6]].forEach(([f,off])=>{if(parts>8&&off)return;const aa=am+(off?T*0.18:0);
+        s+=`<circle cx="${(c+r*f*Math.cos(aa)).toFixed(1)}" cy="${(c+r*f*Math.sin(aa)).toFixed(1)}" r="${pr}" fill="#c0392b" pointer-events="none"/>`;});}
+  }
+  if(groupEvery>1)for(let g=0;g<parts;g+=groupEvery){const [x,y]=P(-Math.PI/2+g*T);s+=`<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="#e11d48" stroke-width="6" stroke-linecap="round" pointer-events="none"/>`;}
+  s+=`</svg>`;return s;
+}
+function fracSVG(x,y,n,d,color='#1f2937',size=19){
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${n}</text>`+
+    `<line x1="${x-11}" y1="${y+5}" x2="${x+11}" y2="${y+5}" stroke="${color}" stroke-width="2.5"/>`+
+    `<text x="${x}" y="${y+24}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${d}</text>`;
+}
+/* lines: [{parts, labels:'all'|'ends'|array, mark, markColor, interactive, selected, highlight, blanks, frog}] */
+function nlSVG({lines,box=null,guide=null,w=680}){
+  const m=40,L=w-2*m,gap=112,top=40,H=top+gap*(lines.length-1)+80;
+  let s=`<svg class="nl" viewBox="0 0 ${w} ${H}" aria-label="number lines">`;
+  (box==null?[]:[].concat(box)).forEach(v=>{const x=m+v*L;s+=`<rect x="${x-24}" y="${top-26}" width="48" height="${gap*(lines.length-1)+90}" rx="10" fill="rgba(225,29,72,.06)" stroke="#e11d48" stroke-width="3" stroke-dasharray="8 6" pointer-events="none"/>`;});
+  if(guide!=null){const x=m+guide*L;s+=`<line x1="${x}" y1="${top-18}" x2="${x}" y2="${H-6}" stroke="#e11d48" stroke-width="4" stroke-dasharray="7 6" pointer-events="none"/>`;}
+  lines.forEach((ln,j)=>{
+    const y=top+j*gap, step=L/ln.parts;
+    s+=`<line x1="${m}" y1="${y}" x2="${m+L}" y2="${y}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;
+    for(let i=0;i<=ln.parts;i++){
+      const x=m+i*step,end=i===0||i===ln.parts;
+      s+=`<line x1="${x}" y1="${y-(end?16:12)}" x2="${x}" y2="${y+(end?16:12)}" stroke="#1f2937" stroke-width="3"/>`;
+      if(i===0)s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="22" font-weight="bold">0</text>`;
+      else if(i===ln.parts)s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="22" font-weight="bold">1</text>`;
+      else{
+        const lab=ln.labels==='all'||(Array.isArray(ln.labels)&&ln.labels.includes(i))||ln.mark===i;
+        const col=ln.highlight===i?'#15803d':ln.mark===i?(ln.markColor||'#ea580c'):'#1f2937';
+        if(lab)s+=fracSVG(x,y+36,i,ln.parts,col);
+        else if(ln.blanks)s+=`<rect x="${x-12}" y="${y+20}" width="24" height="20" fill="#fff" stroke="#555" stroke-width="1.5"/><line x1="${x-12}" y1="${y+45}" x2="${x+12}" y2="${y+45}" stroke="#555" stroke-width="2"/><rect x="${x-12}" y="${y+50}" width="24" height="20" fill="#fff" stroke="#555" stroke-width="1.5"/>`;
+      }
+      if(ln.mark===i)s+=`<circle cx="${x}" cy="${y}" r="11" fill="${ln.markColor||'#ff8a3d'}" stroke="#fff" stroke-width="3"/>`;
+      if(ln.highlight===i)s+=`<circle cx="${x}" cy="${y}" r="13" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;
+      if(ln.selected===i&&ln.highlight!==i)s+=`<circle cx="${x}" cy="${y}" r="13" fill="${ln.selColor||'#8b5cf6'}" stroke="#fff" stroke-width="3"/>`;
+      if(ln.frog===i)s+=`<text x="${x}" y="${y-20}" text-anchor="middle" font-size="34">🐸</text>`;
+      if(ln.interactive&&!end)s+=`<rect class="tickhit" data-tick="${i}" x="${x-step/2}" y="${y-38}" width="${step}" height="76" fill="transparent"/>`;
+    }
+  });
+  return s+`</svg>`;
+}
+
+/* ---------- question generation ---------- */
+function base(pairs,used){
+  let q;
+  for(let t=0;t<60;t++){
+    const [b,d]=pick(pairs),a=rnd(1,b-1),key=a+'/'+b+'/'+d;
+    q={a,b,d,k:d/b,c:a*(d/b)};
+    if(!used.has(key)||t>50){used.add(key);break;}
+  }
+  return q;
+}
+const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,`You're a fraction star, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
+
+const stage=()=>$('#stage');
+function setPrompt(h){$('#prompt').innerHTML=h;}
+function twoBars(n1,d1,n2,d2,c1='#ff8a3d',c2='#8b5cf6'){
+  return `<div class="barrow"><div class="barlabel">${F(n1,d1)}</div>${barSVG({parts:d1,shaded:range(n1),color:c1})}</div>`+
+         `<div class="barrow"><div class="barlabel">${F(n2,d2)}</div>${barSVG({parts:d2,shaded:range(n2),color:c2})}</div>`;
+}
+function workHTML(n1,d1,n2,d2,op,k){
+  return `<div class="work">${F(n1,d1,'big')}<div class="wops"><span>${op} ${k} ➜</span><span>${op} ${k} ➜</span></div>${F(n2,d2,'big')}</div>`;
+}
+
+const TYPES={
+ /* 1. fraction wall */
+ bar:{render(q){
+   q.sel=new Set();
+   setPrompt(`Tap the pieces of the purple bar to shade the <b>same amount</b> as ${F(q.a,q.b,'big')}`);
+   const draw=(o={})=>{stage().innerHTML=
+     `<div class="barrow"><div class="barlabel">${F(q.a,q.b)}</div>${barSVG({parts:q.b,shaded:range(q.a),color:'#ff8a3d',guideAt:o.guide?q.a/q.b:null})}</div>`+
+     `<div class="barrow"><div class="barlabel">${F(q.sel.size||'?',q.d)}</div>${barSVG({parts:q.d,shaded:o.show||q.sel,color:'#8b5cf6',interactive:!q.done,guideAt:o.guide?q.a/q.b:null,groupEvery:o.group?q.k:0})}</div>`;};
+   q.draw=draw;draw();
+   stage().onclick=e=>{const p=e.target.closest('[data-piece]');if(!p||q.done)return;const i=+p.dataset.piece;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);sfx('tap');draw({guide:q.usedHint});};
+   q.answerKey=q.c;
+   q.canCheck=()=>q.sel.size>0; q.nudge='Tap some purple pieces to shade them first.';
+   q.check=()=>q.sel.size===q.c;
+   q.hint=()=>{draw({guide:true});return `Look where the orange part stops. Shade the purple bar up to the <b>same dotted line</b>!`;};
+   q.explain=ok=>{const mine=q.sel.size;q.sel=new Set(range(q.c));draw({group:true});
+     return (ok?'':`You shaded ${F(mine,q.d)}. `)+`Each ${F(1,q.b)} piece splits into <b>${q.k}</b> smaller pieces (see the red lines). So ${q.a} piece${q.a>1?'s':''} become${q.a>1?'':'s'} ${q.a} × ${q.k} = <b>${q.c}</b> pieces.<br>${F(q.a,q.b,'big')} = ${F(q.c,q.d,'big')}`;};
+ }},
+ /* 2. pizza */
+ pizza:{render(q){
+   q.sel=new Set();
+   setPrompt(`Pizza A has toppings on ${F(q.a,q.b,'big')}. Tap slices of Pizza B to put toppings on the <b>same amount</b>!`);
+   const draw=(o={})=>{stage().innerHTML=`<div class="pizzas"><div class="pz">${pizzaSVG({parts:q.b,shaded:range(q.a)})}<div>Pizza A: ${F(q.a,q.b)}</div></div>`+
+     `<div class="pz">${pizzaSVG({parts:q.d,shaded:o.show||q.sel,interactive:!q.done,groupEvery:o.group?q.k:0})}<div>Pizza B: ${F(q.sel.size||'?',q.d)}</div></div></div>`;};
+   q.draw=draw;draw();
+   stage().onclick=e=>{const p=e.target.closest('[data-piece]');if(!p||q.done)return;const i=+p.dataset.piece;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);sfx('tap');draw({group:q.usedHint});};
+   q.answerKey=q.c;
+   q.canCheck=()=>q.sel.size>0; q.nudge='Tap some slices of Pizza B first.';
+   q.check=()=>q.sel.size===q.c;
+   q.hint=()=>{draw({group:true});return `The red lines show how Pizza B's slices fit into Pizza A's slices. Each big slice = <b>${q.k}</b> small slices.`;};
+   q.explain=ok=>{const mine=q.sel.size;q.sel=new Set(range(q.c));draw({group:true});
+     return (ok?'':`You topped ${F(mine,q.d)} of Pizza B. `)+`Every slice of Pizza A is the same as <b>${q.k}</b> slices of Pizza B. ${q.a} × ${q.k} = <b>${q.c}</b> slices.<br>${F(q.a,q.b,'big')} = ${F(q.c,q.d,'big')}`;};
+ }},
+ /* 3. parallel number lines */
+ nlpar:{render(q){
+   const down=Math.random()<0.7;
+   const tp=down?q.b:q.d,bp=down?q.d:q.b,mk=down?q.a:q.c,ans=down?q.c:q.a;
+   q.sel=null;q.answerKey=ans;
+   setPrompt(`Which mark on the <b>bottom</b> line lines up with ${F(mk,tp,'big')}? Tap it, then press Check.`);
+   const draw=(o={})=>{stage().innerHTML=nlSVG({lines:[{parts:tp,labels:'all',mark:mk},{parts:bp,labels:o.reveal?'all':[],interactive:!q.done,selected:q.sel,highlight:o.reveal?ans:null,selColor:o.reveal?'#e11d48':'#8b5cf6'}],guide:o.guide?mk/tp:null,box:o.reveal?mk/tp:null});};
+   q.draw=draw;draw();
+   stage().onclick=e=>{const t=e.target.closest('[data-tick]');if(!t||q.done)return;q.sel=+t.dataset.tick;sfx('tap');draw({guide:q.usedHint});};
+   q.canCheck=()=>q.sel!=null; q.nudge='Tap a mark on the bottom line first.';
+   q.check=()=>q.sel===ans;
+   q.hint=()=>{draw({guide:true});return `Follow the dotted line straight down from ${F(mk,tp)}. Which mark does it touch?`;};
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true});
+     const work=down?workHTML(q.a,q.b,q.c,q.d,'×',q.k):workHTML(q.c,q.d,q.a,q.b,'÷',q.k);
+     return (ok?'':`You picked ${F(mine,bp)} (red dot). `)+`${F(mk,tp)} and ${F(ans,bp,'big')} are at the <b>same spot</b> on the number lines, so they are equivalent.<br>${work}`;};
+ }},
+ /* 4. multiple choice */
+ choice:{render(q){
+   const rev=Math.random()<0.35;
+   const tn=rev?q.c:q.a,td=rev?q.d:q.b,cn=rev?q.a:q.c,cd=rev?q.b:q.d,tv=tn/td;
+   const additive=[tn+(cd-td),cd];
+   const cands=[additive,[tn,cd],[cn+1,cd],[cn-1,cd],[cd-cn,cd]];
+   DENS.forEach(D=>{if(D!==cd){cands.push([cn,D]);cands.push([Math.max(1,Math.round(tv*D)+pick([-1,1])),D]);}});
+   const seen=new Set([cn+'/'+cd]),dis=[];
+   for(const [n,d] of cands){const key=n+'/'+d;if(n<1||n>=d||d>12||seen.has(key)||Math.abs(n/d-tv)<1e-9)continue;seen.add(key);dis.push([n,d]);}
+   const first=dis.slice(0,2),rest=shuffle(dis.slice(2));
+   const opts=shuffle([[cn,cd]].concat(first,rest).slice(0,4));
+   q.opts=opts;q.answerKey=opts.findIndex(o=>o[0]===cn&&o[1]===cd);q.chosen=null;
+   setPrompt(`Which fraction is the <b>same amount</b> as ${F(tn,td,'big')}?`);
+   stage().innerHTML=`<div class="opts">${opts.map((o,i)=>`<button class="opt" data-opt="${i}">${F(o[0],o[1])}</button>`).join('')}</div>`;
+   stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;q.chosen=+b.dataset.opt;answer(q.chosen===q.answerKey);};
+   q.noCheck=true;
+   q.hint=()=>rev?`Try <b>dividing</b> the top and bottom of ${F(tn,td)} by the same number.`:`Multiply the top <b>and</b> the bottom of ${F(tn,td)} by the same number. What can you multiply ${td} by?`;
+   q.explain=ok=>{
+     document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
+     const work=rev?workHTML(tn,td,cn,cd,'÷',q.k):workHTML(tn,td,cn,cd,'×',q.k);
+     if(ok)return `${work}<br>Same top and bottom number, same amount!`;
+     const [wn,wd]=q.opts[q.chosen];
+     const add=(wn===additive[0]&&wd===additive[1]);
+     return `<div class="barrow"><div class="barlabel">${F(tn,td)}</div>${barSVG({parts:td,shaded:range(tn),color:'#ff8a3d'})}</div>`+
+       `<div class="barrow"><div class="barlabel" style="color:#e11d48">${F(wn,wd)}</div>${barSVG({parts:wd,shaded:range(wn),color:'#fda4af'})}</div>`+
+       `<div class="barrow"><div class="barlabel" style="color:#15803d">${F(cn,cd)}</div>${barSVG({parts:cd,shaded:range(cn),color:'#22c55e'})}</div>`+
+       `See how ${F(wn,wd)} is a different amount? `+(add?`<b>Adding</b> the same number to the top and bottom doesn't work. We have to <b>multiply</b> or <b>divide</b>.`:'')+`<br>${work}`;};
+ }},
+ /* 5. missing number */
+ missing:{render(q){
+   const mode=pick(['num','num','den','simp']);
+   let L,R,ans,hint,work;
+   const box=`<span class="ansbox" id="ansBox">&nbsp;</span>`;
+   if(mode==='num'){L=[q.a,q.b];R=[box,q.d];ans=q.c;hint=`The bottom went from ${q.b} to ${q.d}. ${q.b} × <b>?</b> = ${q.d}. Now do the <b>same</b> to the top!`;work=workHTML(q.a,q.b,q.c,q.d,'×',q.k);}
+   else if(mode==='den'){L=[q.a,q.b];R=[q.c,box];ans=q.d;hint=`The top went from ${q.a} to ${q.c}. ${q.a} × <b>?</b> = ${q.c}. Now do the <b>same</b> to the bottom!`;work=workHTML(q.a,q.b,q.c,q.d,'×',q.k);}
+   else{L=[q.c,q.d];R=[box,q.b];ans=q.a;hint=`The bottom went from ${q.d} to ${q.b}. ${q.d} ÷ <b>?</b> = ${q.b}. Now do the <b>same</b> to the top!`;work=workHTML(q.c,q.d,q.a,q.b,'÷',q.k);}
+   q.mode=mode;q.answerKey=ans;q.input='';
+   setPrompt(`Find the missing number so the fractions are <b>equivalent</b>.`);
+   stage().innerHTML=`<div class="equation">${F(L[0],L[1],'huge')}<span class="eq">=</span>${F(R[0],R[1],'huge')}</div>`+
+     `<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 5">⌫ Delete</button></div>`;
+   const upd=()=>{const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
+   q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(q.input.length<2)q.input+=k;sfx('tap');upd();};
+   stage().onclick=e=>{const b=e.target.closest('[data-key]');if(b)q.key(b.dataset.key);};
+   q.canCheck=()=>q.input.length>0;q.nudge='Type a number first.';
+   q.check=()=>parseInt(q.input,10)===ans;
+   q.hint=()=>hint;
+   q.explain=ok=>{const kp=document.querySelector('.keypad');if(kp)kp.remove();const b=$('#ansBox');if(b){b.textContent=ans;b.style.borderColor=ok?'#16a34a':'#e11d48';}
+     return (ok?'':`You wrote <b>${q.input}</b>, but the answer is <b>${ans}</b>. `)+`Whatever you do to the bottom, do to the top!<br>${work}`+twoBars(q.a,q.b,q.c,q.d);};
+ }},
+ /* 6. number line placement */
+ nlplace:{render(q){
+   const toB=Math.random()<0.5;
+   const gn=toB?q.c:q.a,gd=toB?q.d:q.b,P=toB?q.b:q.d,ans=toB?q.a:q.c;
+   q.sel=null;q.answerKey=ans;
+   setPrompt(`Help the frog hop to ${F(gn,gd,'big')}! This line is cut into <b>${P}</b> equal parts. Tap the right mark.`);
+   const draw=(o={})=>{const lines=[{parts:P,labels:o.reveal?'all':[],interactive:!q.done,selected:q.sel,frog:o.reveal?ans:q.sel,highlight:o.reveal?ans:null,selColor:o.reveal?'#e11d48':'#8b5cf6'}];
+     if(o.reveal)lines.push({parts:gd,labels:'all',mark:gn});
+     stage().innerHTML=nlSVG({lines,box:o.reveal?gn/gd:null});};
+   q.draw=draw;draw();
+   stage().onclick=e=>{const t=e.target.closest('[data-tick]');if(!t||q.done)return;q.sel=+t.dataset.tick;sfx('tap');draw();};
+   q.canCheck=()=>q.sel!=null;q.nudge='Tap a mark on the line first.';
+   q.check=()=>q.sel===ans;
+   q.hint=()=>toB?`Each jump on this line is ${F(1,P)}, which is the same as <b>${q.k}</b> jumps of ${F(1,gd)}. So ${gn} ÷ ${q.k} = ?`:`Each ${F(1,gd)} is the same as <b>${q.k}</b> jumps on this line. So ${gn} × ${q.k} = ?`;
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true});
+     const work=toB?workHTML(q.c,q.d,q.a,q.b,'÷',q.k):workHTML(q.a,q.b,q.c,q.d,'×',q.k);
+     return (ok?'':`You tapped ${F(mine,P)} (red dot). `)+`${F(gn,gd)} lives at the same spot as ${F(ans,P,'big')}. The second line shows it!<br>${work}`;};
+ }},
+};
+
+/* ---------- round flow ---------- */
+let R=null,q=null;
+function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function startLevel(id){
+  const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
+  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;
+  show('play');next();
+}
+function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');}
+function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
+function next(){
+  R.idx++;
+  if(R.idx>=ROUND)return finishRound();
+  const type=R.types[R.idx];
+  q=Object.assign(base(R.L.pairs,R.used),{type,done:false,usedHint:false});
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');
+  $('#hintBtn').disabled=false;
+  TYPES[type].render(q);
+  dots();topbar();updCheck();
+}
+function answer(ok){
+  if(!q||q.done)return;q.done=true;
+  S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
+  let pts=0;
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  else{R.streak=0;sfx('bad');}
+  R.results.push(ok);save();
+  const expl=q.explain(ok);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${pick(PRAISE)}</div><div>+${pts} points${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>`)+
+    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${R.idx<ROUND-1?'Next question ➜':'See my results ⭐'}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  dots();topbar();
+  $('#nextBtn').onclick=next;
+  setTimeout(()=>{fb.scrollIntoView({behavior:'smooth',block:'nearest'});},50);
+}
+function finishRound(){
+  const L=R.L,st=starsFor(R.score),prev=S.levels[L.id]||{best:0,stars:0,plays:0};
+  const wasLocked=!unlocked(L.id+1)&&L.id<LEVELS.length;
+  S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
+  S.rounds++;S.lastPlayed=new Date().toISOString();
+  S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. Use the hints, they help! 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
+    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
+    ${nowUnlocked?`<p class="tag" style="font-size:1.1rem">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn ghost" id="rHome">🏠 Levels</button>
+      <button class="btn orange" id="rAgain">🔁 Play again</button>
+      ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}
+    </div>`;
+  show('results');q=null;R.streak=0;topbar();
+  if(st>=2){sfx('win');confetti();}
+  $('#rHome').onclick=home;$('#rAgain').onclick=()=>startLevel(L.id);
+  const rn=$('#rNext');if(rn)rn.onclick=()=>startLevel(L.id+1);
+}
+function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9','#ff8a3d'];
+  for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=pick(cols);d.style.animationDuration=(1.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*0.6+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+
+/* ---------- home ---------- */
+function home(){
+  R=null;q=null;
+  $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}>
+      <span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span>
+      <span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+  const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
+  const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
+  const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
+  $('#stats').innerHTML=[['⭐ '+S.points,'points'],[totalStars+' / '+LEVELS.length*3,'stars'],[S.rounds,'rounds played'],[S.answered,'questions answered'],[acc,'correct'],['🔥 '+S.bestStreak,'best streak'],[last,'last played']]
+    .map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  let worst=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};}});
+  let best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!best||r>best.r)best={t,r};}});
+  $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:
+    (best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%).`:'');
+  $('#unlockAll').checked=!!S.unlockAll;
+  topbar();show('home');
+}
+
+/* ---------- worksheet ---------- */
+function makeWorksheet(){
+  const used=new Set(),today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const blank='<span class="blank"></span>';
+  // 1 shading
+  const s1=range(3).map(()=>base(EASY.concat([[3,12],[4,12]]),used));
+  // 2 parallel number lines chain
+  const chain=pick([[3,6,12],[3,6,12],[2,4,8],[2,6,12],[4,8],[5,10]]);
+  // 3 missing numbers
+  const s3=range(8).map((_,i)=>{const b=base(ALL,used);b.mode=['num','den','simp','num','simp','num','den','num'][i];return b;});
+  // 4 circle the equivalent
+  const s4=range(4).map(()=>{const b=base(ALL,used);const tv=b.a/b.b;const ds=[];
+    const pool=[[b.a+(b.d-b.b),b.d],[b.a,b.d],[b.c+1,b.d],[b.c-1,b.d],[b.a+1,b.b+1]];
+    const seen=new Set([b.c+'/'+b.d]);pool.forEach(([n,d])=>{const k=n+'/'+d;if(n>0&&n<d&&!seen.has(k)&&Math.abs(n/d-tv)>1e-9){seen.add(k);ds.push([n,d]);}});
+    b.opts=shuffle([[b.c,b.d]].concat(ds.slice(0,2)));return b;});
+  const sec1=(key)=>s1.map((b,i)=>`<div class="wsrow"><b>${String.fromCharCode(97+i)})</b> ${F(b.a,b.b)} ${barSVG({parts:b.b,shaded:range(b.a),color:'#9ca3af',h:40})}</div>
+     <div class="wsrow wsgap"><span style="width:28px"></span> = ${key?F(`<span class="ans">${b.c}</span>`,b.d):F(blank,b.d)} ${barSVG({parts:b.d,shaded:key?range(b.c):[],color:'#fca5a5',h:40})}</div>`).join('');
+  const nlLines=key=>nlSVG({lines:chain.map((p,j)=>j===0?{parts:p,labels:'all'}:{parts:p,labels:key?'all':[],blanks:!key}),box:key?range(chain[0]-1).map(i=>(i+1)/chain[0]):null});
+  const mStr=(b,key)=>{const A=v=>key?`<span class="ans">${v}</span>`:blank;
+    if(b.mode==='num')return `${F(b.a,b.b,'big')} = ${F(A(b.c),b.d,'big')}`;
+    if(b.mode==='den')return `${F(b.a,b.b,'big')} = ${F(b.c,A(b.d),'big')}`;
+    return `${F(b.c,b.d,'big')} = ${F(A(b.a),b.b,'big')}`;};
+  const sec4=key=>s4.map((b,i)=>`<div class="choice">${String.fromCharCode(97+i)}) ${F(b.a,b.b,'big')} &nbsp;=&nbsp; ${b.opts.map(o=>`<span class="c" ${key&&o[0]===b.c&&o[1]===b.d?'style="border:3px solid #b91c1c;border-radius:50%;padding:4px 8px"':''}>${F(o[0],o[1],'big')}</span>`).join('')}</div>`).join('');
+  const page=key=>`<div class="page${key?' answers':''}">
+    <h2>${key?'✅ Answer key: ':''}Equivalent Fractions 🍕</h2>
+    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 20</span>'}</div>
+    <h3>1. Fraction walls</h3><div class="instr">Shade the second bar so it shows the same amount as the first. Then write the fraction.</div>${sec1(key)}
+    <h3>2. Parallel number lines</h3><div class="instr">Write the missing fractions under each mark. Draw a box around the fractions that line up with the top line. They are equivalent!</div>${nlLines(key)}
+    <h3>3. Missing numbers</h3><div class="instr">Multiply or divide the top and bottom by the same number.</div><div class="grid2 grid4">${s3.map((b,i)=>`<div>${String.fromCharCode(97+i)}) ${mStr(b,key)}</div>`).join('')}</div>
+    <h3>4. Circle the equivalent fraction</h3><div class="grid2">${sec4(key)}</div>
+    <h3>5. Challenge ⭐</h3><div class="instr">Write three fractions that are equivalent to ${F(1,2)}.</div>
+      <div style="font-size:18px">${F(1,2,'big')} = ${key?`<span class="ans">any of: 2/4, 3/6, 4/8, 5/10, 6/12</span>`:`${F(blank,blank,'big')} = ${F(blank,blank,'big')} = ${F(blank,blank,'big')}`}</div>
+    ${key?'':`<p style="margin-top:14px;font-size:13px">🌟 Great work, ${NAME}! Remember: whatever you do to the bottom, do to the top.</p>`}
+  </div>`;
+  $('#sheet').innerHTML=page(false)+page(true);
+}
+
+/* ---------- events ---------- */
+$('#levelGrid').addEventListener('click',e=>{const b=e.target.closest('[data-level]');if(b)startLevel(+b.dataset.level);});
+$('#homeLink').onclick=home;$('#quitBtn').onclick=()=>{if(!R||R.idx<1||confirm('Leave this round? Your progress in this round will be lost.'))home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#checkBtn').onclick=()=>{if(!q||q.done)return;if(!q.canCheck()){$('#hintBox').innerHTML=q.nudge;$('#hintBox').classList.remove('hidden');return;}answer(q.check());};
+$('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint();$('#hintBox').innerHTML='💡 '+h;$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;sfx('tap');};
+$('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
+$('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
+$('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
+$('#resetBtn').onclick=()=>{if(confirm('Reset all of Alexia\'s progress on this device?')){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+document.addEventListener('keydown',e=>{
+  if(!q)return;
+  if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.type==='missing'&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}
+});
+$('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
+window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+// test hook (harmless)
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS};
+home();
+})();
+</script>
+</body>
+</html>
