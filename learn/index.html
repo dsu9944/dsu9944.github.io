@@ -34,6 +34,9 @@ h2{color:#7c3aed;text-align:center;font-size:1.9rem;margin:10px 0 18px}
 .game .gs{font-size:.9rem;color:#6b7280}
 .game .gp{font-size:.95rem;margin-top:4px}
 .stars{color:#f59e0b;letter-spacing:1px}
+.badge{display:inline-block;background:#dcfce7;color:#166534;border-radius:999px;padding:2px 10px;font-size:.85rem;font-weight:bold}
+.badge.new{background:#fef3c7;color:#92400e}
+.game.done{border-color:#bbf7d0}
 .who{display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:16px}
 .who .avatar{width:90px;height:90px;font-size:50px}
 .who .avatar svg{width:54px;height:54px}
@@ -78,7 +81,8 @@ const DEFAULTS={
 };
 const ORDER=['alexia','ethan'];
 const GAMES={
-  alexia:[{id:'fractions',href:'alexia/index.html',icon:'🍕',title:'Fraction Quest',sub:'Equivalent fractions',levels:7,legacy:'alexiaFractionQuest.v1'}],
+  alexia:[{id:'addfractions',href:'alexia/adding/index.html',icon:'➕',title:'Fraction Add-venture',sub:'Adding & taking away fractions',levels:8,isNew:true},
+          {id:'fractions',href:'alexia/index.html',icon:'🍕',title:'Fraction Quest',sub:'Equivalent fractions',levels:7,legacy:'alexiaFractionQuest.v1'}],
   ethan:[{id:'numberfacts',href:'ethan/index.html',icon:'🧩',title:'Number Facts Sprint',sub:'Make 10, doubles and more',levels:7,legacy:'ethanNumberFacts.v1'}],
 };
 const ls={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
@@ -94,7 +98,9 @@ ORDER.forEach(id=>GAMES[id].forEach(g=>{const k=`kidsHub.p.${id}.${g.id}`;if(g.l
 
 const avatarHTML=(p,cls='avatar')=>`<div class="${cls}" style="background:${p.color}">${p.avatar==='cube'?CUBE_SVG:esc(p.avatar)}</div>`;
 function gameStats(id,g){try{const s=JSON.parse(ls.get(`kidsHub.p.${id}.${g.id}`)||'null');if(!s)return null;
-  const stars=Object.values(s.levels||{}).reduce((a,l)=>a+(l.stars||0),0);return {stars,points:s.points||0,last:s.lastPlayed,best:s.bestStreak||0};}catch(e){return null;}}
+  const lv=s.levels||{};const stars=Object.values(lv).reduce((a,l)=>a+(l.stars||0),0);
+  const complete=g.levels>0&&Array.from({length:g.levels},(_,i)=>(lv[i+1]||{}).stars||0).every(x=>x>=1);
+  return {stars,points:s.points||0,last:s.lastPlayed,best:s.bestStreak||0,complete};}catch(e){return null;}}
 function show(id){['picker','kid'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));
   $('#switchBtn').classList.toggle('hidden',id!=='kid');window.scrollTo(0,0);}
 
@@ -110,8 +116,8 @@ function openKid(id){
   $('#kidHello').textContent=`Hi ${p.name}! 👋`;
   document.title=`${p.name}'s Learning Games`;
   $('#games').innerHTML=GAMES[id].map(g=>{const s=gameStats(id,g);
-    return `<a class="game" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
-      <div class="gp">${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'New! Tap to start ➜'}</div></span></a>`;}).join('');
+    return `<a class="game${s&&s.complete?' done':''}" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
+      <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');
   show('kid');
 }
 function choose(id){openKid(id);}
