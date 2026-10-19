@@ -26,7 +26,7 @@ h2{color:#7c3aed;text-align:center;font-size:1.9rem;margin:10px 0 18px}
 .prof .nm{font-size:1.7rem;font-weight:bold}
 .prof .sub{font-size:.9rem;color:#6b7280}
 .card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(37,99,235,.12);margin-bottom:16px}
-.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px}
 .game{display:flex;gap:14px;align-items:center;text-decoration:none;color:#1f2937;background:#fff;border-radius:24px;padding:18px;border:4px solid #e9d5ff;box-shadow:0 6px 18px rgba(124,58,237,.12);transition:transform .12s}
 .game:hover{transform:translateY(-3px);border-color:#a78bfa}
 .game .gi{font-size:3rem}
@@ -81,7 +81,8 @@ const DEFAULTS={
 };
 const ORDER=['alexia','ethan'];
 const GAMES={
-  alexia:[{id:'addfractions',href:'alexia/adding/index.html',icon:'➕',title:'Fraction Add-venture',sub:'Adding & taking away fractions',levels:8,isNew:true},
+  alexia:[{id:'decimals',href:'alexia/decimals/index.html',icon:'🔎',title:'Decimal Zoom',sub:'Tenths, hundredths & number lines',levels:9,isNew:true},
+          {id:'addfractions',href:'alexia/adding/index.html',icon:'➕',title:'Fraction Add-venture',sub:'Adding & taking away fractions',levels:8},
           {id:'fractions',href:'alexia/index.html',icon:'🍕',title:'Fraction Quest',sub:'Equivalent fractions',levels:7,legacy:'alexiaFractionQuest.v1'}],
   ethan:[{id:'numberfacts',href:'ethan/index.html',icon:'🧩',title:'Number Facts Sprint',sub:'Make 10, doubles and more',levels:7,legacy:'ethanNumberFacts.v1'}],
 };

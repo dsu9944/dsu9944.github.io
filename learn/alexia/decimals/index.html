@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Decimal Zoom – Tenths, Hundredths &amp; Number Lines</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%94%8E%3C/text%3E%3C/svg%3E">
+<style>
+:root{--purple:#7c3aed;--purple2:#8b5cf6;--orange:#ff8a3d;--pink:#ec4899;--green:#16a34a;--green2:#22c55e;--red:#e11d48;--ink:#1f2937;--bg1:#fdf2ff;--bg2:#e0f2fe;--card:#fff;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));min-height:100vh;font-size:18px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:48px;touch-action:manipulation}
+button:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:linear-gradient(90deg,#7c3aed,#ec4899);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:var(--card);border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(124,58,237,.12);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--purple)}
+.hero p{margin:0}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.lvl{position:relative;text-align:left;background:#fff;border:4px solid #ede9fe;border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s}
+.lvl:not(.locked):hover{transform:translateY(-3px);border-color:var(--purple2)}
+.lvl .ic{font-size:2.2rem}
+.lvl .t{font-weight:bold;font-size:1.15rem;color:var(--purple)}
+.lvl .b{font-size:.92rem;color:#4b5563}
+.lvl .s{font-size:1.4rem;color:var(--gold);letter-spacing:2px}
+.lvl .num{position:absolute;top:10px;right:14px;font-weight:bold;color:#c4b5fd;font-size:1.3rem}
+.lvl.locked{opacity:.6;background:#f3f4f6;cursor:not-allowed}
+.lvl.locked .t{color:#6b7280}
+.btn{background:var(--purple);color:#fff;font-weight:bold;box-shadow:0 4px 0 #5b21b6}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #5b21b6}
+.btn.orange{background:var(--orange);box-shadow:0 4px 0 #c2410c}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:#ede9fe;color:var(--purple);box-shadow:0 4px 0 #c4b5fd}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.stat{background:#faf5ff;border-radius:16px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:var(--purple)}
+.stat span{font-size:.85rem;color:#6b7280}
+details summary{cursor:pointer;font-weight:bold;color:var(--purple);min-height:40px;display:flex;align-items:center}
+/* fractions */
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .15em;font-weight:bold}
+.frac .num{border-bottom:3px solid currentColor;padding:0 .2em}
+.frac .den{padding:0 .2em}
+.frac.big{font-size:1.7em}
+.frac.huge{font-size:2.6em}
+/* play */
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .lvlname{font-weight:bold;color:var(--purple);font-size:1.2rem;flex:1}
+.dots{display:flex;gap:5px}
+.dot{width:16px;height:16px;border-radius:50%;background:#e5e7eb;border:2px solid #d1d5db}
+.dot.cur{border-color:var(--purple);background:#ddd6fe;transform:scale(1.2)}
+.dot.ok{background:var(--green2);border-color:var(--green)}
+.dot.no{background:#fda4af;border-color:var(--red)}
+.prompt{font-size:1.3rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:120px}
+.barrow{display:flex;align-items:center;gap:12px;width:100%;max-width:720px}
+.barlabel{min-width:64px;text-align:center;font-size:1.3rem}
+svg{display:block}
+svg.bar{width:100%;height:auto}
+svg.interactive [data-piece],svg.interactive .tickhit{cursor:pointer}
+svg.interactive [data-piece]:hover{opacity:.85}
+.pizzas{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;width:100%}
+.pz{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:1.2rem}
+svg.pizza{width:min(42vw,250px);height:auto}
+svg.nl{width:100%;max-width:760px;height:auto}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.1rem}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.1rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7}
+.expl .barrow{margin:6px auto}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:640px}
+.opt{background:#fff;border:4px solid #ddd6fe;font-size:1.7rem;padding:14px 6px;min-height:100px;color:var(--ink)}
+.opt:hover{border-color:var(--purple2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}
+.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}}
+.equation{display:flex;align-items:center;justify-content:center;gap:16px;font-size:1.3rem}
+.equation .eq{font-size:2.6rem;font-weight:bold}
+.ansbox{display:inline-block;min-width:1.6em;min-height:1.1em;border:3px dashed var(--purple);border-radius:10px;color:var(--purple);background:#faf5ff;text-align:center}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:#ede9fe;color:var(--purple);font-size:1.5rem;font-weight:bold;min-height:56px;box-shadow:0 3px 0 #c4b5fd}
+.keypad button:active{transform:translateY(2px)}
+.work{display:inline-flex;align-items:center;gap:6px;font-size:1.4rem;margin:6px 0}
+.wops{display:flex;flex-direction:column;gap:10px;font-size:1rem;font-weight:bold;color:var(--red)}
+.wops span{background:#ffe4e6;border-radius:999px;padding:2px 10px}
+.tag{display:inline-block;background:#ede9fe;color:var(--purple);border-radius:999px;padding:2px 10px;font-size:.85rem;font-weight:bold}
+/* results */
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--purple);font-size:1.8rem;margin:8px 0}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+/* worksheet */
+.wstool{position:sticky;top:64px;z-index:10}
+.page{background:#fff;color:#000;max-width:800px;margin:0 auto 20px;padding:28px 34px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.12);font-size:15px}
+.page h2{margin:0 0 4px;font-size:22px}
+.page h3{margin:16px 0 6px;font-size:16px;border-bottom:2px solid #000;padding-bottom:2px}
+.page .meta{display:flex;justify-content:space-between;font-size:15px;margin:6px 0 10px}
+.page .instr{font-size:13px;margin:2px 0 8px;color:#333}
+.page .wsrow{display:flex;align-items:center;gap:10px;margin:6px 0;break-inside:avoid}
+.page .wsrow svg.bar{max-width:420px}
+.page .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 30px}
+.page .grid2>div{font-size:18px;display:flex;align-items:center;gap:6px;break-inside:avoid}
+.page .blank{display:inline-block;width:30px;height:24px;border:2px solid #000;border-radius:4px;vertical-align:middle}
+.page .frac .num,.page .frac .den{min-width:1em;text-align:center}
+.page .choice span.c{display:inline-block;margin:0 10px}
+.page svg.nl{max-width:680px}
+.page .ans{color:#b91c1c;font-weight:bold}
+.page.answers{border-top:6px solid #b91c1c}
+.page .wsgap{margin-bottom:12px}
+.page .grid2.grid4{grid-template-columns:repeat(4,1fr)}
+@media print{
+ @page{size:A4;margin:10mm}
+ body{background:#fff}
+ .topbar,.no-print,#home,#play,#results{display:none!important}
+ #worksheet{display:block!important}
+ main{padding:0;max-width:none}
+ .page{box-shadow:none;border-radius:0;margin:0;padding:0;max-width:none}
+ .page.answers{break-before:page;page-break-before:always;border-top:none}
+ .page{font-size:12px}
+ .page h2{font-size:18px}
+ .page h3{margin:8px 0 3px;font-size:14px}
+ .page .instr{margin:0 0 3px;font-size:11px}
+ .page .wsrow{margin:1px 0}
+ .page .wsgap{margin-bottom:5px}
+ .page .wsrow svg.bar{height:auto}
+ .page .wsrow svg.bar{max-width:300px}
+ .page svg.nl{max-width:440px;margin:0 auto}
+ .page .frac.big{font-size:1.35em}
+ .page .grid2{gap:4px 30px}
+ .page .grid2>div{font-size:15px}
+ .page .blank{width:24px;height:18px}
+}
+/* --- shared extras --- */
+@media (max-width:520px){.topbar{gap:6px;padding:8px 10px}.topbar .lbl{display:none!important}.topbar .iconbtn{padding:6px 10px}.topbar .pill{padding:4px 8px}.topbar h1{font-size:1rem;min-width:0}}
+.topbar .lbl{margin-left:5px}
+.say{background:#ede9fe;color:var(--purple);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
+.entry{display:inline-flex;align-items:center;gap:8px;vertical-align:middle}
+.wwrap{display:inline-flex;flex-direction:column;align-items:center;font-size:2.4rem;font-weight:bold}
+.wwrap small{font-size:.75rem;color:#6b7280;font-weight:normal}
+.ebox{display:inline-block;min-width:1.5em;min-height:1.15em;border:3px dashed #a78bfa;border-radius:10px;color:var(--purple);background:#faf5ff;text-align:center;cursor:pointer;line-height:1.1;margin:2px 0}
+.ebox.active{border-style:solid;border-color:var(--purple);background:#ede9fe;box-shadow:0 0 0 4px rgba(124,58,237,.18)}
+.ebox.okb{border-color:var(--green);color:var(--green)}
+.ebox.badb{border-color:var(--red);color:var(--red)}
+.equation .op{font-size:2.4rem;font-weight:bold}
+.mixed{display:inline-flex;align-items:center;font-weight:bold}
+.mixed .wn{font-size:1.25em;margin-right:.08em}
+.oops{background:#fff7ed;border:3px solid #fb923c;border-radius:16px;padding:10px 12px;margin:10px auto;max-width:700px;text-align:left}
+.story{font-size:1.25rem;line-height:1.6;background:#f5f3ff;border-radius:18px;padding:12px 16px;max-width:720px;text-align:left}
+.story .emo{font-size:2rem;float:left;margin-right:10px}
+.wholes{display:flex;gap:14px;width:100%;max-width:760px}
+.wholes>div{flex:1;text-align:center;font-size:.9rem;color:#6b7280}
+@media print{.page .wsrow svg.bar{max-height:26px;width:auto}.page h3{margin:6px 0 2px}.page .grid2.grid4>div{font-size:14px}}
+.keypad button[data-key="next"]{grid-column:span 3;font-size:1.1rem;background:#fae8ff;color:#a21caf;box-shadow:0 3px 0 #f0abfc}
+.keypad button[data-key="del"]{grid-column:span 2;font-size:1.1rem}
+.badge{display:inline-block;background:#dcfce7;color:#166534;border-radius:999px;padding:2px 10px;font-size:.85rem;font-weight:bold}
+
+/* --- decimals --- */
+.dec{font-weight:bold;white-space:nowrap}
+.dec.big{font-size:1.6em}
+.dec.huge{font-size:2.8em;color:var(--ink)}
+.dentry{display:inline-flex;align-items:flex-start;gap:4px;font-size:2.6rem;font-weight:bold;vertical-align:middle}
+.dentry .pvc{display:inline-flex;flex-direction:column;align-items:center}
+.dentry .pvc small{font-size:.8rem;font-weight:normal;color:#6b7280;margin-top:2px}
+.dentry .pt{font-size:3rem;line-height:1;align-self:flex-start;padding-top:.05em}
+.dentry .fixed{display:inline-block;min-width:1.1em;text-align:center;line-height:1.1;margin:5px 0}
+.dentry .pre,.dentry .post{line-height:1.1;margin:5px 2px}
+.dentry .post{font-size:.7em;align-self:center;margin-bottom:24px}
+svg.g100{max-width:100%;height:auto}
+.grids{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.grids figure{margin:0;text-align:center;font-weight:bold}
+.grids figcaption{margin-top:4px}
+.grids figure svg{margin:0 auto}
+table.pv{border-collapse:collapse;margin:8px auto;font-size:1.3rem}
+table.pv th{font-size:.8rem;color:#6b7280;padding:2px 10px;font-weight:normal}
+table.pv td{border:3px solid #c4b5fd;min-width:52px;text-align:center;font-weight:bold;padding:4px 8px;background:#faf5ff}
+table.pv td.pt{border:none;background:none;min-width:10px;font-size:1.6rem}
+table.pv td.hl{background:#fef3c7;border-color:#f59e0b}
+.pvs{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.cmp{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap}
+.cmp .qm{font-size:2.6rem;font-weight:bold;color:#a78bfa;border:4px dashed #c4b5fd;border-radius:50%;width:70px;height:70px;display:flex;align-items:center;justify-content:center}
+.opts.opts3{grid-template-columns:repeat(3,1fr);max-width:600px}
+.opts.opts3 .opt{font-size:2rem;min-height:90px}
+.opts.opts3 .opt small{display:block;font-size:.85rem;color:#4b5563;font-weight:normal}
+.opts.txt .opt{font-size:1.15rem;min-height:70px}
+.opts.mx .opt{font-size:1.5rem}
+.slots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;align-items:center}
+.slot{min-width:84px;min-height:56px;border:3px dashed #c4b5fd;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-weight:bold;background:#faf5ff}
+.slot.full{border-style:solid;border-color:var(--purple2);background:#ede9fe}
+.slots .arrow{font-size:1.4rem;color:#a78bfa}
+.cards{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.cardbtn{background:#fff;border:4px solid #ddd6fe;font-size:1.8rem;font-weight:bold;min-width:100px;min-height:72px;color:var(--ink)}
+.cardbtn:disabled{opacity:.3}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.chips span{background:#ede9fe;border-radius:999px;padding:2px 12px;font-weight:bold}
+@media (max-width:560px){.opts.opts3 .opt{font-size:1.5rem}.dec.huge{font-size:2.2em}.cmp{gap:12px}.cardbtn{min-width:76px;font-size:1.4rem}.slot{min-width:64px;font-size:1.25rem}.dentry{font-size:2.1rem}}
+/* worksheet bits */
+.page .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px}
+.page .g4>div{text-align:center;font-size:15px}
+.page .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 20px}
+.page .g3>div{font-size:16px;display:flex;align-items:center;gap:6px}
+.page svg.g100{width:78px}
+.page .lines2{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
+.page .wl{font-size:14px;margin:2px 0}
+.page .circ{display:inline-block;width:22px;height:22px;border:2px solid #000;border-radius:50%;vertical-align:middle;text-align:center;line-height:19px}
+@media print{.page svg.g100{width:62px}.page .g3>div{font-size:13px}.page .wl{font-size:12px}.page svg.nl{max-width:none}}
+
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 id="homeLink" title="Back to levels">🔎 <span id="titleName">Alexia</span>'s Decimal Zoom</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Streak">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn hidden" id="gamesBtn" href="../../index.html" title="My games" style="text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap">🏠<span class="lbl"> Games</span></a>
+  <a class="iconbtn hidden" id="switchBtn" href="../../index.html?switch=1" title="Switch player" style="text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap">👥<span class="lbl"> Switch</span></a>
+</header>
+<main>
+<section id="home">
+  <div class="card hero">
+    <div class="big">🔎0.1</div>
+    <div style="flex:1;min-width:220px">
+      <h2 id="hello">Hi!</h2>
+      <p>Time to <b>zoom in on decimals</b>! A tenth is <b>0.1</b> and a hundredth is <b>0.01</b>. You'll put decimals on number lines, zoom in to find hundredths, and find out whether 0.25 really is bigger than 0.3. Finish a level with 6 or more out of 10 to unlock the next one.</p>
+    </div>
+  </div>
+  <div class="levels" id="levelGrid"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0;color:var(--purple)">📊 My progress</h3>
+      <button class="btn orange" id="wsBtn">🖨️ Make a printable worksheet</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:12px"></div>
+    <p id="tricky" style="margin:12px 0 0"></p>
+  </div>
+  <div class="card">
+    <details>
+      <summary>👨‍👩‍👧 For grown-ups</summary>
+      <p>Covers decimals to two places (NSW Mathematics K–10, Stage 2). It starts with tenths and hundredths linked to fractions (3/10 = 0.3, 47/100 = 0.47) using bars and 100-grids. Then she places and reads decimals on number lines from 0 to 1, zooms from tenths into hundredths, and goes beyond 1 (1.7 = 1 7/10). After that she compares and orders decimals and finishes with money and measurement problems.</p>
+      <p>The number lines follow the <b>parallel number line</b> style used in class for fractions, with a fraction line lined up above a decimal line and a dashed red box showing they are the same spot. The game looks out for common mistakes. One is thinking a longer decimal is bigger (0.25 &gt; 0.3), which it explains with 100-grids and parallel tenths/hundredths lines. Others are writing 7 hundredths as 0.7 instead of 0.07, swapping the tenths and hundredths digits, and leaving out the whole number. Hints are free but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
+        <button class="btn ghost" id="resetBtn">Reset progress</button>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section id="play" class="hidden">
+  <div class="playhead">
+    <button class="btn ghost" id="quitBtn">← Levels</button>
+    <div class="lvlname" id="lvlName"></div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="card">
+    <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls">
+      <button class="btn ghost" id="hintBtn">💡 Hint</button>
+      <button class="btn green" id="checkBtn">Check ✓</button>
+    </div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+
+<section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+
+<section id="worksheet" class="hidden">
+  <div class="card row no-print wstool">
+    <button class="btn ghost" id="wsBack">← Back</button>
+    <button class="btn" id="wsNew">🔀 New worksheet</button>
+    <button class="btn orange" id="wsPrint">🖨️ Print</button>
+    <span style="font-size:.9rem;color:#6b7280">The answer key prints on its own page.</span>
+  </div>
+  <div id="sheet"></div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+/* ---------- player / profile ---------- */
+const params=new URLSearchParams(location.search);
+const PLAYER=(params.get('player')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+let NAME='Alexia';
+try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(PLAYER&&pr&&pr[PLAYER]&&pr[PLAYER].name)NAME=String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||NAME;}catch(e){}
+const GAME='decimals';
+const STORE=PLAYER?`kidsHub.p.${PLAYER}.${GAME}`:'alexiaDecimals.v1';
+
+const $=s=>document.querySelector(s);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const range=n=>[...Array(n).keys()];
+const F=(n,d,cls='')=>`<span class="frac ${cls}"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+const M=(w,n,d,cls='')=>`<span class="mixed ${cls}"><span class="wn">${w}</span>${F(n,d)}</span>`;
+const OR='#ff8a3d',BL='#3b82f6',GRN='#15803d',RED='#e11d48',PU='#8b5cf6';
+const NUMW=['zero','one','two','three','four','five','six','seven','eight','nine'];
+/* all decimal values are whole numbers of HUNDREDTHS (0.37 -> 37, 1.4 -> 140) so there is no floating point error */
+const plc=v=>v%100===0?0:v%10===0?1:2;
+const D=(v,pl)=>{const w=Math.floor(v/100),r=v%100;if(pl==null)pl=plc(v);if(pl===0)return String(w);if(pl===1)return w+'.'+Math.floor(r/10);return w+'.'+String(r).padStart(2,'0');};
+const DS=(v,pl,cls='big')=>`<span class="dec ${cls}">${D(v,pl)}</span>`;
+const money=v=>'$'+D(v,2);
+const tdig=v=>Math.floor(v%100/10),hdig=v=>v%10,wdig=v=>Math.floor(v/100);
+
+const LEVELS=[
+ {id:1,icon:'🟧',title:'Tenths',blurb:'Fractions out of 10 are tenths: 3/10 = 0.3.',types:['tenths']},
+ {id:2,icon:'💯',title:'Hundredths',blurb:'Fill a 100-grid: 47/100 = 0.47.',types:['hund']},
+ {id:3,icon:'📍',title:'Number Line 0 to 1',blurb:'Place and read tenths on a number line.',types:['nl01']},
+ {id:4,icon:'🔎',title:'Zoom In!',blurb:'Zoom in between two tenths to find hundredths.',types:['zoom']},
+ {id:5,icon:'🚀',title:'Beyond One',blurb:'Decimals bigger than 1, like 1.7 = 1 7/10.',types:['beyond']},
+ {id:6,icon:'⚖️',title:'Which Is Bigger?',blurb:'Compare decimals. Is 0.25 bigger than 0.3? 🤔',types:['compare']},
+ {id:7,icon:'📶',title:'Line Them Up',blurb:'Put decimals in order from smallest to largest.',types:['order']},
+ {id:8,icon:'💰',title:'Money & Measuring',blurb:'Dollars and cents, metres and centimetres.',types:['money']},
+ {id:9,icon:'🏆',title:'Decimal Champion',blurb:'A mix of everything. Can you get 3 stars?',types:['tenths','hund','nl01','zoom','beyond','compare','compare','order','money','money']},
+];
+const TYPE_NAMES={tenths:'Tenths',hund:'Hundredths',nl01:'Number Line 0 to 1',zoom:'Zoom In!',beyond:'Beyond One',compare:'Which Is Bigger?',order:'Line Them Up',money:'Money & Measuring'};
+const ROUND=10,UNLOCK=6;
+const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
+
+const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[],mistakes:{longer:0,tenthHund:0,swap:0,forgotWhole:0}});
+function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));s.mistakes=Object.assign(defState().mistakes,s.mistakes||{});return s;}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+const unlocked=id=>id===1||S.unlockAll||((S.levels[id-1]||{}).stars||0)>=1;
+const noteMistake=k=>{S.mistakes[k]=(S.mistakes[k]||0)+1;};
+
+let actx=null;
+function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];const t=actx.currentTime,vol=kind==='tap'?0.05:0.14;
+  N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const s=t+i*0.12;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});}catch(e){}}
+function say(text){try{if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-AU';u.rate=0.9;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]AU/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+const DEN_WORDS={10:['tenth','tenths'],100:['hundredth','hundredths']};
+/* read decimals digit by digit ("zero point two five") and fractions as "3 tenths" */
+function spoken(el){const c=el.cloneNode(true);
+  c.querySelectorAll('.mixed').forEach(m=>{const w=m.querySelector('.wn');if(w)w.textContent=w.textContent+' and ';});
+  c.querySelectorAll('.frac').forEach(f=>{const n=f.querySelector('.num'),d=f.querySelector('.den');const nn=n?n.textContent.trim():'',dd=d?d.textContent.trim():'';
+    const w=DEN_WORDS[+dd];f.replaceWith(' '+(w&&/^\d+$/.test(nn)?`${nn} ${+nn===1?w[0]:w[1]}`:`${nn||'something'} over ${dd||'something'}`)+' ');});
+  let t=c.textContent.replace(/\$(\d+)\.(\d\d)/g,(m,a,b)=>`${a} dollars ${+b} cents`).replace(/(\d+)\.(\d+)/g,(m,a,b)=>`${a} point ${b.split('').join(' ')}`);
+  return t.replace(/\bm\b/g,'metres').replace(/\bcm\b/g,'centimetres').replace(/\bL\b/g,'litres').replace(/\s+/g,' ').trim();}
+
+/* ---------- pictures ---------- */
+function barSVG({parts=10,fills=[],w=600,h=60}){
+  const pw=w/parts;let s=`<svg class="bar" viewBox="-6 -8 ${w+12} ${h+16}" aria-label="bar cut into ${parts} parts">`;
+  for(let i=0;i<parts;i++)s+=`<rect x="${i*pw}" y="0" width="${pw}" height="${h}" fill="${fills[i]||'#ffffff'}" stroke="#374151" stroke-width="2"/>`;
+  return s+`<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#1f2937" stroke-width="4"/></svg>`;
+}
+const tenthsFill=(n,col=OR)=>range(n).map(()=>col);
+/* 100-grid shaded in columns: each column is one tenth, each square one hundredth */
+function grid100(v,{size=200,col=OR}={}){
+  const c=size/10;let s=`<svg class="g100" viewBox="-3 -3 ${size+6} ${size+6}" width="${size}" aria-label="hundred grid with ${v} squares shaded">`;
+  for(let i=0;i<100;i++){const x=Math.floor(i/10)*c,y=(i%10)*c;s+=`<rect x="${x}" y="${y}" width="${c}" height="${c}" fill="${i<v?col:'#fff'}" stroke="#9ca3af" stroke-width="1"/>`;}
+  for(let k=1;k<10;k++)s+=`<line x1="${k*c}" y1="0" x2="${k*c}" y2="${size}" stroke="#374151" stroke-width="2"/>`;
+  return s+`<rect x="0" y="0" width="${size}" height="${size}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+function pv(v,pl=2){
+  return `<table class="pv" aria-label="place value chart"><tr><th>Ones</th><th></th><th>Tenths</th>${pl===2?'<th>Hundredths</th>':''}</tr><tr><td>${wdig(v)}</td><td class="pt">.</td><td>${tdig(v)}</td>${pl===2?`<td>${hdig(v)}</td>`:''}</tr></table>`;
+}
+function fracSVG(x,y,n,d,color='#1f2937',size=16){
+  const hw=d>=100?16:11;
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${n}</text><line x1="${x-hw}" y1="${y+5}" x2="${x+hw}" y2="${y+5}" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+22}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${d}</text>`;
+}
+/* number lines. Each line: {lo,hi,step (hundredths), lab:'none'|'all'|'ends'|'tenths', labs:[values], fr (fraction labels), marks:[{v,color,label,row}],
+   sel, selColor, highlight, interactive, tag}. box: values for the dashed red "same spot" box (parallel lines). zoom: {from,lo,hi} */
+function dl({lines,box=null,zoom=null,w=(window.innerWidth<600?440:680),gap=124,top=64,cls='nl'}){
+  const m=40,Lw=w-2*m,H=top+gap*(lines.length-1)+72;
+  const Xf=ln=>v=>m+(v-ln.lo)/(ln.hi-ln.lo)*Lw;
+  let s=`<svg class="${cls}" viewBox="0 0 ${w} ${H}" aria-label="number line">`;
+  if(zoom){const a=lines[zoom.from],xa=Xf(a),ya=top+zoom.from*gap,yb=ya+gap;
+    s+=`<path d="M${xa(zoom.lo)},${ya+46} L${xa(zoom.hi)},${ya+46} L${m+Lw},${yb-22} L${m},${yb-22} Z" fill="rgba(167,139,250,.13)" stroke="#a78bfa" stroke-width="2.5" stroke-dasharray="6 5"/>`;}
+  (box==null?[]:[].concat(box)).forEach(v=>{const x=Xf(lines[0])(v);s+=`<rect x="${x-26}" y="${top-26}" width="52" height="${gap*(lines.length-1)+90}" rx="10" fill="rgba(225,29,72,.06)" stroke="${RED}" stroke-width="3" stroke-dasharray="8 6" pointer-events="none"/>`;});
+  lines.forEach((ln,j)=>{
+    const y=top+j*gap,X=Xf(ln),st=ln.step,px=(X(ln.lo+st)-X(ln.lo));
+    s+=`<line x1="${X(ln.lo)}" y1="${y}" x2="${X(ln.hi)}" y2="${y}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;
+    if(zoom&&zoom.from===j)s+=`<line x1="${X(zoom.lo)}" y1="${y}" x2="${X(zoom.hi)}" y2="${y}" stroke="${OR}" stroke-width="10" stroke-linecap="round" opacity=".9"/>`;
+    if(ln.tag)s+=`<text x="${X(ln.lo)-30}" y="${y-30}" font-size="15" font-weight="bold" fill="${ln.tagColor||'#6b7280'}">${ln.tag}</text>`;
+    for(let v=ln.lo;v<=ln.hi;v+=st){
+      const x=X(v),whole=v%100===0,tenth=v%10===0,hh=whole?17:(st===1&&tenth)?14:10;
+      s+=`<line x1="${x}" y1="${y-hh}" x2="${x}" y2="${y+hh}" stroke="#1f2937" stroke-width="${whole?3.5:2.5}"/>`;
+      const hl=ln.highlight===v;
+      let lab=whole||ln.lab==='all'||(ln.lab==='tenths'&&tenth)||(ln.lab==='ends'&&(v===ln.lo||v===ln.hi))||(ln.labs&&ln.labs.includes(v))||hl;
+      if(st===1&&ln.lab==='tenths'&&!tenth)lab=hl;
+      if(ln.lab==='all'&&px<26&&!whole&&!hl&&(v/st)%2!==0)lab=false;
+      const col=hl?GRN:'#1f2937';
+      if(lab){
+        if(ln.fr&&!whole)s+=fracSVG(x,y+33,st===10?v/10:v,st===10?10:100,col);
+        else s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="${whole?22:(px<34?15:18)}" font-weight="bold" fill="${col}">${D(v)}</text>`;
+      }
+      if(hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;
+      if(ln.sel===v&&!hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="${ln.selColor||PU}" stroke="#fff" stroke-width="3"/>`;
+      if(ln.interactive)s+=`<rect class="tickhit" data-tick="${v}" x="${x-px/2}" y="${y-38}" width="${px}" height="76" fill="transparent"/>`;
+    }
+    (ln.marks||[]).forEach(mk=>{const x=X(mk.v),c=mk.color||OR,ry=y-24-(mk.row||0)*21;
+      if(mk.label!=null){if(mk.row)s+=`<line x1="${x}" y1="${y-10}" x2="${x}" y2="${ry+4}" stroke="${c}" stroke-width="1.5"/>`;
+        s+=`<text x="${x}" y="${ry}" text-anchor="middle" font-size="16" font-weight="bold" fill="${c}" stroke="#fff" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${mk.label}</text>`;}
+      s+=`<circle cx="${x}" cy="${y}" r="${mk.r||10}" fill="${c}" stroke="#fff" stroke-width="3"/>`;});
+  });
+  return s+'</svg>';
+}
+/* teacher's style: fraction line parallel to a decimal line, dashed box shows the same spot */
+function parallelFD(v,{den=10}={}){
+  const st=den===10?10:1,lab=den===10?'all':'tenths';
+  return dl({lines:[{lo:0,hi:100,step:st,lab:den===10?'all':'none',labs:den===100?[v]:null,fr:true,highlight:v,tag:'fractions',tagColor:'#7c3aed'},
+                    {lo:0,hi:100,step:st,lab,highlight:v,tag:'decimals',tagColor:'#7c3aed'}],box:v});
+}
+/* longer-isn't-bigger explainer: tenths line parallel to hundredths line */
+function longerExplain(a,b){ // a, b < 100. shows each on its own line with boxes
+  const L=[{v:a},{v:b}];
+  const t=L.filter(o=>plc(o.v)<=1),h=L.filter(o=>plc(o.v)===2);
+  return dl({lines:[{lo:0,hi:100,step:10,lab:'all',marks:t.map(o=>({v:o.v,color:BL,label:D(o.v)})),tag:'tenths'},
+                    {lo:0,hi:100,step:1,lab:'tenths',marks:L.slice().sort((x,y)=>x.v-y.v).map((o,i)=>({v:o.v,color:plc(o.v)===2?OR:BL,label:D(o.v,2),row:i===1&&Math.abs(a-b)<14?1:0})),tag:'hundredths'}],box:[a,b],top:86});
+}
+
+/* ---------- answer boxes ---------- */
+const stage=()=>$('#stage');
+function setPrompt(h){$('#prompt').innerHTML=h;}
+const ebox=(k,lab)=>`<span class="ebox" data-field="${k}" id="f_${k}" role="button" aria-label="${lab} box">&nbsp;</span>`;
+function boxes(q,spec){
+  q.f={};q.max={};q.fields=spec.map(([k,mx])=>{q.f[k]='';q.max[k]=mx;return k;});q.active=q.fields[0];
+  q.keypadHTML=`<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del">⌫ Delete</button>${q.fields.length>1?'<button data-key="next">Next box ➜</button>':''}</div>`;
+  q.refresh=()=>{q.fields.forEach(k=>{const e=document.getElementById('f_'+k);if(e){e.innerHTML=q.f[k]||'&nbsp;';e.classList.toggle('active',!q.done&&k===q.active);}});updCheck();};
+  q.key=k=>{if(q.done)return;const A=q.active,i=q.fields.indexOf(A);
+    if(k==='next')q.active=q.fields[(i+1)%q.fields.length];
+    else if(k==='del'){if(!q.f[A]&&i>0){q.active=q.fields[i-1];q.f[q.active]=q.f[q.active].slice(0,-1);}else q.f[A]=q.f[A].slice(0,-1);}
+    else{if(q.f[A].length>=q.max[A]){if(q.max[A]===1)q.f[A]=k;}else q.f[A]+=k;
+      if(q.f[A].length>=q.max[A]&&i<q.fields.length-1)q.active=q.fields[i+1];}
+    sfx('tap');q.refresh();};
+  q.setActive=k=>{if(!q.done&&q.fields.includes(k)){q.active=k;q.refresh();}};
+  q.lockBoxes=ok=>{q.fields.forEach(k=>{const e=document.getElementById('f_'+k);if(e){e.classList.remove('active');e.classList.add(ok?'okb':'badb');}});const kp=document.querySelector('.keypad');if(kp)kp.remove();};
+}
+/* decimal answer: [ones] . [tenths] [hundredths] */
+function decEntry(q,{ones=0,pl=1,pre='',post=''}={}){
+  const spec=[];if(ones==='edit')spec.push(['o',1]);spec.push(['t',1]);if(pl===2)spec.push(['h',1]);boxes(q,spec);
+  const col=(inner,lab)=>`<span class="pvc">${inner}<small>${lab}</small></span>`;
+  q.entryHTML=`<span class="dentry">${pre?`<span class="pre">${pre}</span>`:''}${col(ones==='edit'?ebox('o','ones'):`<span class="fixed">${ones}</span>`,'ones')}<span class="pt">.</span>${col(ebox('t','tenths'),'tenths')}${pl===2?col(ebox('h','hundredths'),'hundredths'):''}${post?`<span class="post">${post}</span>`:''}</span>`;
+  q.canCheck=()=>q.f.t.length>0&&(ones!=='edit'||q.f.o.length>0);
+  q.nudge='Fill in the boxes first (tap a box to choose it).';
+  q.val=()=>(ones==='edit'?+q.f.o:+ones)*100+(+q.f.t)*10+(pl===2?(+q.f.h||0):0);
+  q.shown=()=>D(q.val(),pl===2&&q.f.h!==''?2:1);
+}
+function intEntry(q,{max=3,pre='',post='',den=null}={}){
+  boxes(q,[['n',max]]);
+  q.entryHTML=den?`<span class="frac huge"><span class="num">${ebox('n','top number')}</span><span class="den">${den}</span></span>`:`<span class="dentry">${pre?`<span class="pre">${pre}</span>`:''}${ebox('n','answer')}${post?`<span class="post">${post}</span>`:''}</span>`;
+  q.canCheck=()=>q.f.n.length>0;q.nudge='Type a number first.';q.val=()=>+q.f.n;q.shown=()=>q.f.n;
+}
+function bindEntry(q){stage().onclick=e=>{const k=e.target.closest('[data-key]');if(k)return q.key(k.dataset.key);const f=e.target.closest('[data-field]');if(f)q.setActive(f.dataset.field);};}
+function gradeDec(q,target){
+  const v=q.val();q.entered=v;q.mistake=null;if(v===target)return true;
+  const t=tdig(target),h=hdig(target),w=wdig(target);
+  if(target%100<10&&h>0&&v===w*100+h*10)q.mistake='tenthHund';
+  else if(h>0&&t!==h&&v===w*100+h*10+t)q.mistake='swap';
+  else if(w>0&&v===target%100)q.mistake='forgotWhole';
+  if(q.mistake)noteMistake(q.mistake);
+  return false;
+}
+function mistakeHTML(q,target){
+  const v=q.entered;
+  if(q.mistake==='tenthHund')return `<div class="oops">⚠️ <b>Careful with the places!</b> ${DS(v,1,'')} means <b>${tdig(v)} tenths</b>, which is ${tdig(v)} whole columns. ${DS(target,2,'')} is <b>0 tenths and ${hdig(target)} hundredths</b>, just ${hdig(target)} little square${hdig(target)>1?'s':''}. The <b>0</b> holds the tenths place.</div>`+
+    (wdig(target)===0?`<div class="grids"><figure>${grid100(v%100,{size:130,col:'#fda4af'})}<figcaption>✗ ${D(v)}</figcaption></figure><figure>${grid100(target%100,{size:130})}<figcaption>✓ ${D(target,2)}</figcaption></figure></div>`:pv(target,2));
+  if(q.mistake==='swap')return `<div class="oops">⚠️ The digits are swapped. The <b>first</b> digit after the point is the <b>tenths</b>, and the second is the <b>hundredths</b>.</div>`+pv(target,2);
+  if(q.mistake==='forgotWhole')return `<div class="oops">⚠️ Don't forget the <b>whole number</b>! It's past ${wdig(target)}, so it starts with <b>${wdig(target)}.</b></div>`;
+  return '';
+}
+function choiceHTML(q,opts,key,cls=''){q.opts=opts;q.answerKey=key;q.noCheck=true;
+  return `<div class="opts ${cls}">${opts.map((o,i)=>`<button class="opt" data-opt="${i}">${o}</button>`).join('')}</div>`;}
+function bindChoice(q,onPick){stage().onclick=e=>{const bt=e.target.closest('[data-opt]');if(!bt||q.done)return;q.chosen=+bt.dataset.opt;if(onPick)onPick(q.chosen);answer(q.chosen===q.answerKey);};}
+function markChoice(q){document.querySelectorAll('.opt').forEach((bt,i)=>{if(i===q.answerKey)bt.classList.add('right');else if(i===q.chosen)bt.classList.add('wrong');});}
+function uniq(u,key,gen){let v;for(let t=0;t<40;t++){v=gen();if(!u.has(key+v)){break;}}u.add(key+v);return v;}
+const eqRow=(l,r)=>`<div class="equation">${l}<span class="eq">=</span>${r}</div>`;
+const modeOf=(q,list)=>list[(R?R.idx:0)%list.length];
+
+/* ---------- generators (shared with the worksheet) ---------- */
+function genHund(){const r=Math.random();return r<0.3?rnd(1,9):r<0.45?rnd(1,9)*10:pick(range(99).map(i=>i+1).filter(x=>x>10&&x%10));}
+function genCompare(kind){
+  const K=kind||pick(['trap','trap','trap','equal','hundTenth','plain','whole','longerBig']);let a,b,pa,pb;
+  if(K==='trap'){const x=rnd(2,9),y=rnd(1,x-1);a=x*10;b=y*10+rnd(1,9);}
+  else if(K==='equal'){const x=rnd(1,9);a=x*10;b=x*10;}
+  else if(K==='hundTenth'){a=rnd(1,5)*10;b=rnd(2,9);}
+  else if(K==='plain'){const n10=()=>{let x;do{x=rnd(11,99);}while(x%10===0);return x;};a=n10();do{b=n10();}while(b===a);}
+  else if(K==='whole'){a=100+rnd(1,5)*10;b=rnd(51,99);if(b%10===0)b++;}
+  else {const x=rnd(1,8);a=x*10;b=x*10+rnd(1,9);}
+  pa=plc(a)||1;pb=K==='equal'?2:(plc(b)||1);
+  const sides=Math.random()<0.5?[{v:a,p:pa},{v:b,p:pb}]:[{v:b,p:pb},{v:a,p:pa}];
+  return {kind:K,L:sides[0],Rt:sides[1]};
+}
+function genOrder(){
+  for(let t=0;t<80;t++){const x=rnd(3,8);
+    const s=[x*10,(x-rnd(1,2))*10+rnd(1,9),Math.random()<0.5?rnd(1,9):x*10+rnd(1,9),Math.random()<0.35?100+rnd(0,5)*10+(Math.random()<0.5?rnd(1,9):0):rnd(11,99)].map(v=>v===100?105:v);
+    if(new Set(s).size===4)return shuffle(s);}
+  return [30,25,7,42];
+}
+const cmpSym=(a,b)=>a<b?0:a===b?1:2;
+const SYM=['&lt;','=','&gt;'],SYMW=['is less than','is equal to','is greater than'];
+
+/* ---------- question types ---------- */
+const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,`You're a decimal detective, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
+const youWrote=q=>`You wrote <b>${q.shown()}</b>. `;
+const TYPES={
+ /* 1. tenths */
+ tenths:{make(q,u){q.n=uniq(u,'t',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,['bar','frac','toFrac']);},render(q){
+   const {n,v,mode}=q;
+   if(mode==='toFrac'){setPrompt(`Write ${DS(v)} as a fraction.`);intEntry(q,{max:2,den:10});q.answerKey={n};
+     stage().innerHTML=`<div id="vis" class="hidden" style="width:100%"></div>`+eqRow(DS(v,1,'huge'),q.entryHTML)+q.keypadHTML;q.check=()=>{q.entered=q.val();return q.val()===n;};}
+   else{decEntry(q,{ones:0,pl:1});q.answerKey={t:n};
+     if(mode==='bar'){setPrompt(`The bar is cut into 10 equal parts. What decimal is coloured?`);
+       stage().innerHTML=barSVG({fills:tenthsFill(n)})+`<div class="equation">${q.entryHTML}</div>`+q.keypadHTML;}
+     else{setPrompt(`Write ${F(n,10,'big')} as a decimal.`);stage().innerHTML=`<div id="vis" class="hidden" style="width:100%"></div>`+eqRow(F(n,10,'huge'),q.entryHTML)+q.keypadHTML;}
+     q.check=()=>gradeDec(q,v);}
+   bindEntry(q);q.refresh();
+   q.hint=()=>{const vis=$('#vis');if(vis){vis.innerHTML=barSVG({fills:tenthsFill(n)});vis.classList.remove('hidden');}
+     return mode==='toFrac'?`The first digit after the point tells you how many <b>tenths</b>.`:`Each part is ${F(1,10)} = 0.1. Count the tenths. They go in the first box after the point.`;};
+   q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+`<b>${n}</b> tenth${n>1?'s':''} = ${F(n,10,'big')} = ${DS(v)}`+
+     `<div style="margin-top:6px">On parallel number lines, ${F(n,10)} and ${D(v)} are in the <b>same spot</b>:</div>`+parallelFD(v);};
+ }},
+ /* 2. hundredths */
+ hund:{make(q,u){q.v=uniq(u,'h',genHund);q.mode=modeOf(q,['grid','frac','words']);},render(q){
+   const {v,mode}=q,t=tdig(v),h=hdig(v);
+   if(mode==='words'){
+     setPrompt(`What does ${DS(v,2)} mean?`);
+     const right=`${t} tenth${t===1?'':'s'} and ${h} hundredth${h===1?'':'s'}`;
+     const c=[right,`${h} tenth${h===1?'':'s'} and ${t} hundredth${t===1?'':'s'}`,`${v} tenths`,`${t} one${t===1?'':'s'} and ${h} tenth${h===1?'':'s'}`,`${v} ones`];
+     const opts=[...new Set(c)].slice(0,4);const sh=shuffle(opts.slice());
+     stage().innerHTML=choiceHTML(q,sh,sh.indexOf(right),'txt');
+     bindChoice(q,i=>{if(sh[i]===c[1]&&t!==h)noteMistake('swap');});
+     q.hint=()=>`The first digit after the point is <b>tenths</b>. The second digit is <b>hundredths</b>.`;
+     q.explain=ok=>{markChoice(q);return pv(v,2)+`<div class="grids"><figure>${grid100(v,{size:150})}<figcaption>${D(v,2)}</figcaption></figure></div>${D(v,2)} is <b>${right}</b>. That's ${v} hundredths altogether: ${F(v,100)}.`;};
+     return;}
+   decEntry(q,{ones:0,pl:2});q.answerKey={t,h};
+   if(mode==='grid'){setPrompt(`The grid has 100 squares. What decimal is coloured?`);stage().innerHTML=`<div class="grids">${grid100(v,{size:220})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;}
+   else{setPrompt(`Write ${F(v,100,'big')} as a decimal.`);stage().innerHTML=`<div id="vis" class="hidden"></div>`+eqRow(F(v,100,'huge'),q.entryHTML)+q.keypadHTML;}
+   bindEntry(q);q.refresh();
+   q.check=()=>gradeDec(q,v);
+   q.hint=()=>{const vis=$('#vis');if(vis){vis.innerHTML=`<div class="grids">${grid100(v,{size:160})}</div>`;vis.classList.remove('hidden');}
+     return `Each column is one tenth (10 squares). Full columns go in the <b>tenths</b> box, and the extra squares go in the <b>hundredths</b> box.${v<10?' No full columns? Then the tenths box is 0.':''}`;};
+   q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+(q.mistake==='tenthHund'?'':`<div class="grids"><figure>${grid100(v,{size:150})}<figcaption>${t} column${t===1?'':'s'} + ${h} square${h===1?'':'s'}</figcaption></figure></div>`)+
+     `${F(v,100,'big')} = ${t} tenth${t===1?'':'s'} and ${h} hundredth${h===1?'':'s'} = ${DS(v,2)}${h===0?` = ${DS(v,1)} (the same amount!)`:''}`+pv(v,2);};
+ }},
+ /* 3. number line 0 to 1 */
+ nl01:{make(q,u){q.n=uniq(u,'n',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,['place','read','placeFrac']);},render(q){
+   const {n,v,mode}=q;
+   if(mode==='read'){setPrompt(`What decimal is the orange dot on?`);decEntry(q,{ones:0,pl:1});q.answerKey={t:n};
+     stage().innerHTML=`<div id="line" style="width:100%">${dl({lines:[{lo:0,hi:100,step:10,lab:'none',marks:[{v}]}]})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
+     bindEntry(q);q.refresh();q.check=()=>gradeDec(q,v);
+     q.hint=()=>{$('#line').innerHTML=dl({lines:[{lo:0,hi:100,step:10,lab:'none',labs:[50],marks:[{v}]}]});return `There are 10 jumps from 0 to 1, so each jump is 0.1. The middle is 0.5. Count the jumps to the dot.`;};
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+`The dot is <b>${n}</b> jump${n>1?'s':''} of 0.1 from 0, so it's on ${DS(v)}. As a fraction, that's ${F(n,10)}:`+parallelFD(v);};
+     return;}
+   q.answerKey=v;q.sel=null;
+   setPrompt(mode==='place'?`Tap where ${DS(v)} goes on the number line, then press Check.`:`Tap where ${F(n,10,'big')} goes on the number line, then press Check.`);
+   const draw=(o={})=>{stage().innerHTML=dl({lines:[{lo:0,hi:100,step:10,lab:o.reveal?'all':'none',labs:o.hint?[50]:null,interactive:!q.done,sel:q.sel,selColor:o.reveal?RED:PU,highlight:o.reveal?v:null}]});};
+   draw();stage().onclick=e=>{const t=e.target.closest('[data-tick]');if(!t||q.done)return;q.sel=+t.dataset.tick;sfx('tap');draw({hint:q.usedHint});updCheck();};
+   q.canCheck=()=>q.sel!=null;q.nudge='Tap a mark on the number line first.';q.check=()=>q.sel===v;
+   q.hint=()=>{draw({hint:true});return `From 0 to 1 there are 10 jumps of 0.1. The middle is 0.5. Count <b>${mode==='place'?n:'the tenths'}</b> from 0.`;};
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true});return (ok?'':`You tapped <b>${D(mine)}</b> (red dot). `)+`${mode==='place'?DS(v):F(n,10,'big')} is <b>${n}</b> jump${n>1?'s':''} of 0.1 from 0.`+
+     `<div style="margin-top:6px">Parallel number lines show that ${F(n,10)} and ${D(v)} are the <b>same spot</b>:</div>`+parallelFD(v);};
+ }},
+ /* 4. zoom from tenths into hundredths */
+ zoom:{make(q,u){q.v=uniq(u,'z',()=>rnd(0,9)*10+rnd(1,9));q.a=tdig(q.v);q.b=hdig(q.v);q.mode=modeOf(q,['place','read','between']);},render(q){
+   const {v,a,b,mode}=q,lo=a*10,hi=lo+10;
+   const lines=(o={})=>dl({lines:[{lo:0,hi:100,step:10,lab:'all',marks:o.top?[{v,color:o.topCol||OR}]:[]},
+       {lo,hi,step:1,lab:o.reveal?'all':'ends',interactive:o.interactive,sel:o.sel,selColor:o.selColor||PU,highlight:o.reveal?v:null,marks:o.mark?[{v}]:[],labs:o.hint?[lo+5]:null}],zoom:{from:0,lo,hi}});
+   const sumUp=`${DS(v,2)} is <b>${a} tenth${a===1?'':'s'} and ${b} hundredth${b===1?'':'s'}</b>. It's between ${D(lo)} and ${D(hi)}, ${b<5?`closer to ${D(lo)}`:b>5?`closer to ${D(hi)}`:'exactly halfway'}.`;
+   if(mode==='between'){
+     setPrompt(`${DS(v,2)} is between which two tenths?`);
+     const right=`${D(lo)} and ${D(hi)}`;const c=[right];
+     if(b!==a)c.push(`${D(b*10)} and ${D(b*10+10)}`);
+     c.push(a>0?`${D(lo-10)} and ${D(lo)}`:`${D(hi)} and ${D(hi+10)}`);c.push(`${a} and ${a+1}`);c.push(`${D(hi)} and ${D(hi+10)}`);c.push(`${D(lo+20)} and ${D(lo+30)}`);
+     const sh=shuffle([...new Set(c)].slice(0,4));
+     stage().innerHTML=dl({lines:[{lo:0,hi:100,step:10,lab:'all'}]})+choiceHTML(q,sh,sh.indexOf(right),'txt');
+     bindChoice(q);
+     q.hint=()=>`Look at the <b>tenths</b> digit (the first one after the point). ${DS(v,2,'')} has ${a} tenth${a===1?'':'s'}, plus a bit more.`;
+     q.explain=ok=>{markChoice(q);return sumUp+lines({top:true,reveal:true});};
+     return;}
+   if(mode==='read'){
+     setPrompt(`Zoom in between ${DS(lo)} and ${DS(hi)}. What decimal is the orange dot on?`);decEntry(q,{ones:0,pl:2});q.answerKey={t:a,h:b};
+     stage().innerHTML=`<div id="line" style="width:100%">${lines({mark:true})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
+     bindEntry(q);q.refresh();q.check=()=>gradeDec(q,v);
+     q.hint=()=>{$('#line').innerHTML=lines({mark:true,hint:true});return `Between ${D(lo)} and ${D(hi)} there are 10 little steps, and each one is 0.01. The middle is ${D(lo+5,2)}. Start at ${D(lo)} and count the steps.`;};
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+sumUp+lines({top:true,reveal:true});};
+     return;}
+   q.answerKey=v;q.sel=null;
+   setPrompt(`Zoom in between ${DS(lo)} and ${DS(hi)}. Tap where ${DS(v,2)} goes on the bottom line.`);
+   const draw=(o={})=>{stage().innerHTML=lines(Object.assign({interactive:!q.done,sel:q.sel},o));};
+   draw();stage().onclick=e=>{const t=e.target.closest('[data-tick]');if(!t||q.done)return;q.sel=+t.dataset.tick;sfx('tap');draw({hint:q.usedHint});updCheck();};
+   q.canCheck=()=>q.sel!=null;q.nudge='Tap a mark on the bottom number line first.';q.check=()=>q.sel===v;
+   q.hint=()=>{draw({hint:true});return `Each little step on the zoomed line is 0.01. Start at ${D(lo)} and count <b>${b}</b> step${b>1?'s':''}.`;};
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true,top:true,selColor:RED,interactive:false});return (ok?'':`You tapped <b>${D(mine,2)}</b> (red dot). `)+sumUp;};
+ }},
+ /* 5. beyond one */
+ beyond:{make(q,u){q.L0=pick([0,100]);const ks=q.L0===0?range(9).map(i=>110+i*10):range(19).map(i=>110+i*10).filter(x=>x!==200);q.v=uniq(u,'b',()=>pick(ks));q.mode=modeOf(q,['place','read','mixed']);},render(q){
+   const {v,L0,mode}=q,w=wdig(v),t=tdig(v),lo=L0,hi=L0+200;
+   const line=(o={})=>dl({lines:[{lo,hi,step:10,lab:o.reveal?'all':'none',labs:o.hint?[w*100+50]:null,interactive:o.interactive,sel:o.sel,selColor:o.selColor||PU,highlight:o.reveal?v:null,marks:o.mark?[{v}]:[]}]});
+   const sumUp=`${DS(v)} = <b>${w}</b> whole${w>1?'s':''} and <b>${t}</b> tenth${t>1?'s':''} = ${M(w,t,10,'big')}`;
+   if(mode==='mixed'){
+     setPrompt(`Which mixed number is the same as ${DS(v)}?`);
+     const right=M(w,t,10);const c=[right,t!==w?M(t,w,10):M(w+1,t,10),M(w,t,100),`<span class="dec">${w}${t}</span>`];
+     const sh=shuffle(c.slice());stage().innerHTML=line({mark:true})+choiceHTML(q,sh,sh.indexOf(right),'mx');bindChoice(q);
+     q.hint=()=>`The digit <b>before</b> the point is the wholes. The digit after it is tenths, so the fraction is out of <b>10</b>.`;
+     q.explain=ok=>{markChoice(q);return sumUp+line({reveal:true});};return;}
+   if(mode==='read'){
+     setPrompt(`What decimal is the orange dot on? Watch out, it's bigger than 1!`);decEntry(q,{ones:'edit',pl:1});q.answerKey={o:w,t};
+     stage().innerHTML=`<div id="line" style="width:100%">${line({mark:true})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
+     bindEntry(q);q.refresh();q.check=()=>gradeDec(q,v);
+     q.hint=()=>{$('#line').innerHTML=line({mark:true,hint:true});return `Which whole number is just before the dot? That goes in the <b>ones</b> box. Then count the jumps of 0.1 after it.`;};
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+sumUp+line({reveal:true});};return;}
+   q.answerKey=v;q.sel=null;
+   setPrompt(`Tap where ${DS(v)} goes on the number line, then press Check.`);
+   const draw=(o={})=>{stage().innerHTML=line(Object.assign({interactive:!q.done,sel:q.sel},o));};
+   draw();stage().onclick=e=>{const tk=e.target.closest('[data-tick]');if(!tk||q.done)return;q.sel=+tk.dataset.tick;sfx('tap');draw({hint:q.usedHint});updCheck();};
+   q.canCheck=()=>q.sel!=null;q.nudge='Tap a mark on the number line first.';
+   q.check=()=>q.sel===v;
+   q.hint=()=>{draw({hint:true});return `Find <b>${w}</b> first. Then count <b>${t}</b> jump${t>1?'s':''} of 0.1 after it.`;};
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true,selColor:RED,interactive:false});
+     if(!ok&&mine===v%100)noteMistake('forgotWhole');
+     return (ok?'':`You tapped <b>${D(mine)}</b> (red dot). `+(mine===v%100?`<div class="oops">⚠️ Don't forget the <b>whole number</b>! ${D(v)} is past ${w}.</div>`:''))+sumUp;};
+ }},
+ /* 6. compare */
+ compare:{make(q,u){let g;for(let i=0;i<20;i++){g=genCompare();const k=g.L.v+'/'+g.Rt.v;if(!u.has('c'+k)){u.add('c'+k);break;}}Object.assign(q,g);},render(q){
+   const A=q.L,B=q.Rt;
+   setPrompt(`Which sign goes in the circle? ${DS(A.v,A.p,'')} ◯ ${DS(B.v,B.p,'')}`);
+   const key=cmpSym(A.v,B.v);
+   stage().innerHTML=`<div class="cmp"><span class="dec huge">${D(A.v,A.p)}</span><span class="qm">?</span><span class="dec huge">${D(B.v,B.p)}</span></div>`+
+     choiceHTML(q,SYM.map((s,i)=>`${s}<small>${SYMW[i]}</small>`),key,'opts3');
+   bindChoice(q,i=>{q.mistake=null;if(i!==key&&i!==1){const claimed=i===2?A:B,other=i===2?B:A;if(claimed.p>other.p&&claimed.v<=other.v){q.mistake='longer';noteMistake('longer');}}});
+   q.hint=()=>`Write both with two decimal places: <b>${D(A.v,2)}</b> and <b>${D(B.v,2)}</b>. Compare the ones, then the tenths, then the hundredths.`;
+   q.explain=ok=>{markChoice(q);
+     const both=A.v<100&&B.v<100;
+     const rel=`${DS(A.v,A.p,'')} ${SYM[key]} ${DS(B.v,B.p,'')}`;
+     const why=A.v===B.v?`${D(A.v,A.p)} and ${D(B.v,B.p)} are the <b>same amount</b>. A zero on the end doesn't change it: ${tdig(A.v)} tenths = ${tdig(A.v)*10} hundredths.`
+       :wdig(A.v)!==wdig(B.v)?`Look at the ones first: ${Math.max(A.v,B.v)>=100?`${D(Math.max(A.v,B.v))} is more than 1 whole, and ${D(Math.min(A.v,B.v))} is less than 1.`:''}`
+       :`Line up the places: <b>${D(A.v,2)}</b> and <b>${D(B.v,2)}</b>. That's ${A.v} hundredths and ${B.v} hundredths.`;
+     const grids=both?`<div class="grids"><figure>${grid100(A.v,{size:130,col:A.v>=B.v?GRN:OR})}<figcaption>${D(A.v,A.p)}</figcaption></figure><figure>${grid100(B.v,{size:130,col:B.v>=A.v?GRN:OR})}<figcaption>${D(B.v,B.p)}</figcaption></figure></div>`
+       :dl({lines:[{lo:0,hi:200,step:10,lab:'all',marks:[{v:A.v,label:D(A.v,A.p),color:BL},{v:B.v,label:D(B.v,B.p),color:OR,row:1}]}],top:84});
+     const big=Math.max(A.v,B.v),sm=Math.min(A.v,B.v);const oops=q.mistake==='longer'?`<div class="oops">⚠️ <b>More digits doesn't mean bigger!</b> ${A.v===B.v?`${D(big,1)} and ${D(big,2)} are the same: ${tdig(big)} tenths = ${big} hundredths. A zero on the end doesn't make a decimal bigger.`:both?`${D(big)} = ${D(big,2)}, which is <b>${big} hundredths</b>. That's more than <b>${sm} hundredths</b> (${D(sm,2)}). Compare the tenths first: ${tdig(big)} tenths beats ${tdig(sm)} tenths.`:`${D(big)} has more wholes.`} Look at the ${both?'parallel number lines and grids':'number line'}:</div>`+(both&&A.v!==B.v?longerExplain(A.v,B.v):''):'';
+     return oops+`<div style="font-size:1.3rem;margin:4px 0">${rel}</div>${why}`+grids;};
+ }},
+ /* 7. ordering */
+ order:{make(q,u){q.vals=genOrder();q.dir=Math.random()<0.3?'desc':'asc';},render(q){
+   const vals=q.vals,dir=q.dir,sorted=vals.slice().sort((x,y)=>dir==='asc'?x-y:y-x);q.answerKey=sorted.map(v=>vals.indexOf(v));q.pick=[];
+   setPrompt(dir==='asc'?`Tap the decimals in order from <b>smallest</b> to <b>largest</b>.`:`Tap the decimals in order from <b>largest</b> to <b>smallest</b>.`);
+   const draw=()=>{stage().innerHTML=`<div class="slots">${range(4).map(i=>`<div class="slot${q.pick[i]!=null?' full':''}">${q.pick[i]!=null?D(vals[q.pick[i]]):''}</div>${i<3?`<span class="arrow">${dir==='asc'?'&lt;':'&gt;'}</span>`:''}`).join('')}</div>`+
+     `<div class="cards">${vals.map((v,i)=>`<button class="cardbtn" data-card="${i}" ${q.pick.includes(i)||q.done?'disabled':''}>${D(v)}</button>`).join('')}</div>`+
+     `<div class="row" style="justify-content:center"><button class="btn ghost" data-undo="1" ${q.pick.length&&!q.done?'':'disabled'}>↺ Start again</button></div><div id="vis" style="width:100%"></div>`;};
+   draw();
+   stage().onclick=e=>{if(q.done)return;const c=e.target.closest('[data-card]');if(c&&!q.pick.includes(+c.dataset.card)&&q.pick.length<4){q.pick.push(+c.dataset.card);sfx('tap');draw();updCheck();return;}
+     if(e.target.closest('[data-undo]')){q.pick=[];draw();updCheck();}};
+   q.canCheck=()=>q.pick.length===4;q.nudge='Tap all four decimals first.';
+   q.check=()=>{const ok=q.pick.every((p,i)=>vals[p]===sorted[i]);
+     if(!ok){const asc=dir==='asc'?q.pick.map(p=>vals[p]):q.pick.map(p=>vals[p]).reverse();let lg=false;
+       for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)if(asc[i]>asc[j]&&plc(asc[i])<plc(asc[j])){lg=true;q.lgPair=[asc[i],asc[j]];}
+       if(lg){q.mistake='longer';noteMistake('longer');}}
+     return ok;};
+   q.hint=()=>{$('#vis').innerHTML=`<div class="chips">${vals.map(v=>`<span>${D(v)} = ${D(v,2)}</span>`).join('')}</div>`;return `Give them all two decimal places so they're easier to compare. Check the ones first, then the tenths, then the hundredths.`;};
+   q.explain=ok=>{draw();const hi=Math.max(...vals)>100?200:100;const asc=vals.slice().sort((x,y)=>x-y);
+     const marks=asc.map((v,i)=>({v,label:D(v),color:[BL,OR,PU,GRN][i],row:i%3}));
+     return (q.mistake==='longer'?`<div class="oops">⚠️ <b>More digits doesn't mean bigger!</b> ${q.lgPair?`${D(q.lgPair[0])} = ${D(q.lgPair[0],2)}, and that is bigger than ${D(q.lgPair[1],2)}. Compare the ones and tenths first.`:'Compare the ones and tenths first.'}</div>`:'')+
+       `<div style="font-size:1.4rem;font-weight:bold">${sorted.map(v=>D(v)).join(dir==='asc'?' &lt; ':' &gt; ')}</div>`+
+       `<div class="chips">${asc.map(v=>`<span>${D(v)} = ${v} hundredths</span>`).join('')}</div>`+dl({lines:[{lo:0,hi,step:10,lab:'all',marks}],top:110});};
+ }},
+ /* 8. money & measurement */
+ money:{make(q,u){const avail=STORIES.filter(t=>!u.has('s'+t.id));const T=pick(avail.length?avail:STORIES);u.add('s'+T.id);q.story=T;Object.assign(q,T.make());},render(q){
+   const T=q.story;setPrompt('Read the story, then answer.');
+   const story=`<div class="story"><span class="emo">${T.emo}</span>${q.text}</div>`;
+   if(q.kind==='choice'){
+     stage().innerHTML=story+choiceHTML(q,q.opts,q.ans,'txt');
+     bindChoice(q,i=>{q.mistake=null;const cv=q.optVals[i],other=q.optVals.find((x,j)=>j!==i&&x!=null);if(i!==q.ans&&cv!=null&&other!=null&&plc(cv)>plc(other)&&cv<other){q.mistake='longer';noteMistake('longer');}});
+     q.hint=()=>q.hintText||`Line up the decimal points and compare: ones, then tenths, then hundredths.`;
+     q.explain=ok=>{markChoice(q);return (q.mistake==='longer'?`<div class="oops">⚠️ <b>More digits doesn't mean bigger!</b> Give them both two decimal places and compare.</div>`:'')+q.why+(q.vis?q.vis():'');};
+     return;}
+   if(q.kind==='int')intEntry(q,{max:q.max||3,post:q.post||''});else decEntry(q,{ones:q.ones!=null?q.ones:0,pl:q.pl||2,pre:q.pre||'',post:q.post||''});
+   q.answerKey=q.kind==='int'?{n:q.ans}:(q.ones==='edit'?{o:wdig(q.ans),t:tdig(q.ans)}:{t:tdig(q.ans)});if(q.kind!=='int'&&(q.pl||2)===2)q.answerKey.h=hdig(q.ans);
+   stage().innerHTML=story+`<div id="vis" class="hidden" style="width:100%"></div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
+   bindEntry(q);q.refresh();
+   q.check=()=>q.kind==='int'?(q.entered=q.val(),q.val()===q.ans):gradeDec(q,q.ans);
+   q.hint=()=>{if(q.vis){$('#vis').innerHTML=q.vis(true);$('#vis').classList.remove('hidden');}return q.hintText;};
+   q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+(q.kind==='int'?'':mistakeHTML(q,q.ans)))+q.why+(q.vis?q.vis():'');};
+ }},
+};
+const fs=(n,d)=>F(n,d);
+const centsGrid=v=>()=>`<div class="grids"><figure>${grid100(v%100,{size:150})}<figcaption>Each square is 1 cent. The whole grid is $1.</figcaption></figure></div>`;
+const metreLine=(v,lbl)=>()=>dl({lines:[{lo:0,hi:v>100?200:100,step:10,lab:'all',marks:[{v,label:lbl,color:OR}],tag:v>100?'metres':'1 metre = 100 cm',tagColor:'#7c3aed'}],top:80});
+const cmpLine=(a,b,la,lb)=>()=>{const lo=Math.floor(Math.min(a,b)/100)*100,hi=Math.ceil((Math.max(a,b)+1)/100)*100;return dl({lines:[{lo,hi,step:10,lab:'all',marks:[{v:a,label:la,color:BL},{v:b,label:lb,color:OR,row:1}]}],top:84});};
+const STORIES=[
+ {id:1,emo:'🪙',make(){const coins=[[50,'50c'],[20,'20c'],[10,'10c'],[5,'5c']];let tot,parts;
+   do{parts=[];tot=0;coins.forEach(([c,l])=>{const k=rnd(0,c===50?1:3);if(k){parts.push([k,l,c]);tot+=k*c;}});}while(tot<15||tot>95||parts.length<2);
+   const list=parts.map(([k,l])=>`${NUMW[k]} ${l} coin${k>1?'s':''}`);const txt=list.length>1?list.slice(0,-1).join(', ')+' and '+list[list.length-1]:list[0];
+   return {kind:'dec',pre:'$',pl:2,ans:tot,text:`${NAME} has ${txt} in her pocket. How much money is that in dollars?`,
+     why:`${parts.map(([k,l,c])=>`${k} × ${c}c`).join(' + ')} = <b>${tot} cents</b>. 100 cents make $1, so ${tot} cents is ${F(tot,100)} of a dollar = <b>${money(tot)}</b>.`,
+     vis:centsGrid(tot),hintText:`Add up the cents first. 100 cents = $1, so 1 cent is $0.01 and 10 cents is $0.10.`};}},
+ {id:2,emo:'⭐',make(){const c=rnd(1,19)*5;return {kind:'dec',pre:'$',pl:2,ans:c,text:`A packet of stickers costs ${c} cents. Write this amount in dollars.`,
+   why:`${c} cents is ${c} hundredths of a dollar: ${F(c,100)} = <b>${money(c)}</b>.`,vis:centsGrid(c),hintText:`100 cents = $1. So 5 cents is $0.05 and 50 cents is $0.50.`};}},
+ {id:3,emo:'🧁',make(){const x=rnd(3,8),A=200+x*10,B=200+rnd(0,x-1)*10+rnd(1,9);const items=shuffle([['cupcake',A],['juice',B]]);
+   const opts=[`The ${items[0][0]}`,`The ${items[1][0]}`,'They cost the same'],optVals=[items[0][1],items[1][1],null];
+   return {kind:'choice',opts,optVals,ans:items[0][1]>items[1][1]?0:1,text:`At the school fete, a cupcake costs ${money(A)} and a juice costs ${money(B)}. Which costs more?`,
+     why:`${money(A)} is 2 dollars and ${A-200} cents. ${money(B)} is 2 dollars and ${B-200} cents. ${A-200} cents is more, so <b>the cupcake</b> costs more.`,vis:cmpLine(A,B,money(A),money(B)),hintText:`Both are 2 dollars and some cents. Compare the cents: the <b>tenths</b> digit (10c coins) first.`};}},
+ {id:4,emo:'🎀',make(){const v=Math.random()<0.5?rnd(1,9)*10:pick(range(89).map(i=>i+11).filter(x=>x%10));return {kind:'int',max:3,post:'cm',ans:v,text:`A ribbon is ${D(v)} m long. How many centimetres is that? (1 m = 100 cm)`,
+   why:`1 m = 100 cm, so 0.01 m = 1 cm. ${D(v)} m = ${D(v,2)} m = <b>${v} cm</b>.`,vis:metreLine(v,`${D(v)} m`),hintText:`1 m = 100 cm, so 0.1 m = 10 cm and 0.01 m = 1 cm.`};}},
+ {id:5,emo:'📏',make(){const v=pick(range(89).map(i=>i+11).filter(x=>x%10));return {kind:'dec',pl:2,post:'m',ans:v,text:`Mia's paper chain is ${v} cm long. Write this length in metres.`,
+   why:`100 cm = 1 m, so ${v} cm is ${F(v,100)} of a metre = <b>${D(v,2)} m</b>.`,vis:metreLine(v,`${v} cm`),hintText:`1 cm is one hundredth of a metre (0.01 m).`};}},
+ {id:6,emo:'🏃‍♀️',make(){const x=rnd(2,6),A=100+x*10,B=100+(x-1)*10+rnd(1,9);const me=Math.random()<0.5?A:B,mia=me===A?B:A;const win=me===A?NAME:'Mia';
+   return {kind:'choice',opts:[NAME,'Mia','They jumped the same'],optVals:[me,mia,null],ans:me===A?0:1,text:`At the school sports carnival, ${NAME} jumped ${D(me,plc(me)||1)} m in the long jump and Mia jumped ${D(mia,plc(mia)||1)} m. Who jumped further?`,
+     why:`${D(A)} m = ${D(A,2)} m, which is 1 m and ${A-100} cm. ${D(B,2)} m is 1 m and ${B-100} cm. <b>${win}</b> jumped further.`,vis:cmpLine(me,mia,NAME,'Mia'),hintText:`Write ${D(A)} as ${D(A,2)}. Now compare.`};}},
+ {id:7,emo:'🍫',make(){const n=rnd(1,9);return {kind:'dec',pl:1,ans:n*10,text:`A chocolate bar has 10 equal pieces. ${NAME} ate ${n} piece${n>1?'s':''}. What decimal of the bar did she eat?`,
+   why:`${n} out of 10 pieces = ${F(n,10)} = <b>${D(n*10)}</b>.`,vis:()=>barSVG({fills:tenthsFill(n,'#92400e')}),hintText:`Each piece is ${F(1,10)} = 0.1 of the bar.`};}},
+ {id:8,emo:'🧃',make(){const n=rnd(1,9);return {kind:'dec',pl:1,post:'L',ans:100-n*10,text:`A bottle holds 1 litre of juice. ${NAME} drank ${D(n*10)} L. How much juice is left?`,
+   why:`1 L = 10 tenths. 10 tenths take away ${n} leaves ${10-n} tenths = <b>${D(100-n*10)} L</b>.`,vis:()=>barSVG({fills:range(10).map(i=>i<10-n?BL:'#e5e7eb')}),hintText:`Think of 1 L as 10 tenths. How many tenths are left?`};}},
+ {id:9,emo:'💃',make(){const v=100+rnd(1,9)*10+(Math.random()<0.5?rnd(1,9):0);return {kind:'int',max:3,post:'cm',ans:v,text:`${NAME}'s new dance costume needs ${D(v)} m of fabric. How many centimetres is that?`,
+   why:`1 m = 100 cm. ${D(v)} m = 100 cm + ${v-100} cm = <b>${v} cm</b>.`,vis:metreLine(v,`${D(v)} m`),hintText:`1 m = 100 cm. Then work out the part after the point: 0.1 m = 10 cm.`};}},
+ {id:10,emo:'🌻',make(){const x=rnd(3,9),A=x*10,B=(x-1)*10+rnd(1,9);const sf=Math.random()<0.5?A:B,tm=sf===A?B:A;const win=sf===A?'The sunflower':'The tomato plant';
+   return {kind:'choice',opts:['The sunflower','The tomato plant','They are the same height'],optVals:[sf,tm,null],ans:sf===A?0:1,text:`In the school garden, the sunflower is ${D(sf)} m tall and the tomato plant is ${D(tm)} m tall. Which is taller?`,
+     why:`${D(A)} m = ${D(A,2)} m = ${A} cm, and ${D(B,2)} m = ${B} cm. <b>${win}</b> is taller.`,vis:cmpLine(sf,tm,'🌻','🍅'),hintText:`Write ${D(A)} as ${D(A,2)}, then compare.`};}},
+ {id:11,emo:'🎷',make(){const w=rnd(2,9);return {kind:'dec',ones:'edit',pl:2,pre:'$',ans:w*100+5,text:`${NAME} is saving up for a new band music book. She has ${NUMW[w]} dollars and five cents. Write this amount as dollars.`,
+   why:`${w} dollars and 5 cents = $${w} + 5 hundredths of a dollar = <b>${money(w*100+5)}</b>. The 0 shows there are no 10c coins.`,vis:null,hintText:`Five cents is 5 hundredths of a dollar. Is that in the tenths box or the hundredths box?`};}},
+];
+
+/* ---------- round flow ---------- */
+let R=null,q=null;
+function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function startLevel(id){
+  const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
+  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+}
+function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');}
+function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
+function next(){
+  R.idx++;if(R.idx>=ROUND)return finishRound();
+  const type=R.types[R.idx];
+  q={type,done:false,usedHint:false};TYPES[type].make(q,R.used);
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
+  TYPES[type].render(q);dots();topbar();updCheck();
+}
+function answer(ok){
+  if(!q||q.done)return;q.done=true;
+  S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
+  let pts=0;
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  else{R.streak=0;sfx('bad');}
+  R.results.push(ok);save();
+  const expl=q.explain(ok);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${pick(PRAISE)}</div><div>+${pts} points${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>`)+
+    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${R.idx<ROUND-1?'Next question ➜':'See my results ⭐'}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  dots();topbar();$('#nextBtn').onclick=next;
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+function finishRound(){
+  const L=R.L,st=starsFor(R.score),prev=S.levels[L.id]||{best:0,stars:0,plays:0};
+  const wasLocked=L.id<LEVELS.length&&!unlocked(L.id+1);
+  S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
+  S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. Use the hints, they help! 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
+    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
+    ${nowUnlocked?`<p class="tag" style="font-size:1.1rem">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${L.id===LEVELS.length&&st>=1?`<p style="font-size:1.2rem">🏆 You finished Decimal Zoom, ${NAME}!</p>`:''}
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
+      ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}</div>`;
+  show('results');q=null;R.streak=0;topbar();
+  if(st>=2){sfx('win');confetti();}
+  $('#rHome').onclick=home;$('#rAgain').onclick=()=>startLevel(L.id);const rn=$('#rNext');if(rn)rn.onclick=()=>startLevel(L.id+1);
+}
+function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9','#ff8a3d'];
+  for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=pick(cols);d.style.animationDuration=(1.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*0.6+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+
+function home(){
+  R=null;q=null;
+  $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Decimal Zoom`;
+  $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+  const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
+  const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
+  const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
+  $('#stats').innerHTML=[['⭐ '+S.points,'points'],[totalStars+' / '+LEVELS.length*3,'stars'],[S.rounds,'rounds played'],[S.answered,'questions answered'],[acc,'correct'],['🔥 '+S.bestStreak,'best streak'],[last,'last played']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  const rates=Object.entries(S.byType).filter(([t,v])=>v.n>=3&&TYPE_NAMES[t]).map(([t,v])=>({t,r:v.c/v.n})).sort((a,b)=>b.r-a.r);
+  const best=rates[0],worst=rates[rates.length-1],mk=S.mistakes||{};
+  const tips=[mk.longer?`⚖️ Thought the longer decimal was bigger ${mk.longer} time${mk.longer>1?'s':''}. Remember 0.3 = 0.30, so it's bigger than 0.25!`:'',
+    mk.tenthHund?`💯 Mixed up tenths and hundredths ${mk.tenthHund} time${mk.tenthHund>1?'s':''} (7 hundredths is 0.07, not 0.7).`:'',
+    mk.swap?`🔁 Swapped the tenths and hundredths digits ${mk.swap} time${mk.swap>1?'s':''}.`:'',
+    mk.forgotWhole?`1️⃣ Forgot the whole number ${mk.forgotWhole} time${mk.forgotWhole>1?'s':''}.`:''].filter(Boolean);
+  $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%). `:'')+(tips.length?'<br>'+tips.join('<br>'):'');
+  $('#unlockAll').checked=!!S.unlockAll;topbar();show('home');
+}
+
+/* ---------- worksheet ---------- */
+function makeWorksheet(){
+  const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const B='<span class="blank"></span>',BL_='<span class="blank" style="width:54px"></span>',A=(v,key,wide)=>key?`<span class="ans">${v}</span>`:(wide?BL_:B),Lt=i=>String.fromCharCode(97+i)+')';
+  const n10=()=>{let x;do{x=rnd(11,99);}while(x%10===0);return x;};
+  // 1. grids
+  const g=shuffle([rnd(1,9),rnd(1,9)*10,n10(),n10()]);
+  // 2. conversions
+  const c1=rnd(1,9),c2=rnd(1,9),c3=n10(),c4=rnd(1,9),c5=rnd(1,9),c6=n10();
+  const conv=[k=>`${F(c1,10,'big')} = ${A(D(c1*10),k,1)}`,k=>`${D(c2,2)} = ${F(A(c2,k),100,'big')}`,k=>`${F(c3,100,'big')} = ${A(D(c3,2),k,1)}`,
+              k=>`${D(c4*10)} = ${F(A(c4,k),10,'big')}`,k=>`${F(c5,100,'big')} = ${A(D(c5,2),k,1)}`,k=>`${D(c6,2)} = ${F(A(c6,k),100,'big')}`];
+  // 3. number lines
+  const p1=rnd(1,4)*10,p2=rnd(6,9)*10,p3=n10();
+  const za=rnd(1,8),zl=za*10,zA=zl+rnd(1,4),zB=zl+rnd(6,9);
+  const bl=pick([0,100]);const bc=range(19).map(i=>bl+10+i*10).filter(x=>x%100);let bA,bB2;do{bA=pick(bc);bB2=pick(bc);}while(Math.abs(bA-bB2)<30||(bl===0&&Math.max(bA,bB2)<100));if(bA>bB2)[bA,bB2]=[bB2,bA];
+  // 4. compare, 5. order
+  const cmps=['trap','equal','hundTenth','whole','trap','plain'].map(k=>genCompare(k));
+  const ords=[genOrder(),genOrder()];
+  // 6. word problems
+  const ws=[STORIES[1],STORIES[3],STORIES[10]].map(T=>T.make());
+  // 7. spot the mistake
+  const sx=rnd(3,8),sA=sx*10,sB=(sx-rnd(1,2))*10+rnd(1,9);
+  const page=key=>`<div class="page${key?' answers':''}">
+    <h2>${key?'✅ Answer key: ':''}Decimals: Tenths &amp; Hundredths 🔎</h2>
+    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 29</span>'}</div>
+    <h3>1. Shade and write</h3><div class="instr">Each grid is 1 whole. Write the shaded part as a decimal and as a fraction.</div>
+    <div class="g4">${g.map((v,i)=>`<div>${Lt(i)}<br>${grid100(v,{size:100,col:'#9ca3af'})}<div style="margin-top:2px">${A(D(v,2),key,1)} = ${F(A(v,key),100)}</div></div>`).join('')}</div>
+    <h3>2. Fractions and decimals</h3><div class="g3">${conv.map((f,i)=>`<div>${Lt(i)} ${f(key)}</div>`).join('')}</div>
+    <h3>3. Number lines</h3>
+    <div class="wl">a) Draw an arrow to show <b>${D(p1)}</b>, <b>${D(p2)}</b> and <b>${D(p3,2)}</b>.</div>
+    ${dl({lines:[{lo:0,hi:100,step:10,lab:'none',marks:key?[{v:p1,label:D(p1),color:'#b91c1c'},{v:p2,label:D(p2),color:'#b91c1c'},{v:p3,label:D(p3,2),color:'#b91c1c',row:Math.abs(p3-p1)<12||Math.abs(p3-p2)<12?1:0}]:[]}],w:1000,top:key?62:26,gap:100})}
+    <div class="lines2"><div><div class="wl">b) Zoom in! What decimals are at A and B?<br>A = ${A(D(zA,2),key,1)} &nbsp; B = ${A(D(zB,2),key,1)}</div>
+      ${dl({lines:[{lo:zl,hi:zl+10,step:1,lab:'ends',marks:[{v:zA,label:'A',color:'#111'},{v:zB,label:'B',color:'#111'}]}],w:560})}</div>
+      <div><div class="wl">c) What decimals are at C and D?<br>C = ${A(D(bA),key,1)} &nbsp; D = ${A(D(bB2),key,1)}</div>
+      ${dl({lines:[{lo:bl,hi:bl+200,step:10,lab:'none',marks:[{v:bA,label:'C',color:'#111'},{v:bB2,label:'D',color:'#111'}]}],w:560})}</div></div>
+    <h3>4. Compare: write &lt;, &gt; or =</h3><div class="g3">${cmps.map((c,i)=>`<div>${Lt(i)} <b>${D(c.L.v,c.L.p)}</b> ${key?`<span class="ans">${SYM[cmpSym(c.L.v,c.Rt.v)]}</span>`:'<span class="circ"></span>'} <b>${D(c.Rt.v,c.Rt.p)}</b></div>`).join('')}</div>
+    <h3>5. Put in order from smallest to largest</h3>${ords.map((o,i)=>`<div class="wl" style="font-size:14px">${Lt(i)} ${o.map(v=>`<b>${D(v)}</b>`).join(', ')} &nbsp;→&nbsp; ${key?`<span class="ans">${o.slice().sort((x,y)=>x-y).map(v=>D(v)).join(' &lt; ')}</span>`:'_____ &lt; _____ &lt; _____ &lt; _____'}</div>`).join('')}
+    <h3>6. Money and measuring</h3>${ws.map((w,i)=>`<div class="wl" style="font-size:14px">${Lt(i)} ${w.text} ${key?`<span class="ans">${w.kind==='int'?w.ans+' '+(w.post||''):(w.pre||'')+D(w.ans,w.pl)+(w.post?' '+w.post:'')}</span>`:'&nbsp;Answer: ________'}</div>`).join('')}
+    <h3>7. Spot the mistake</h3><div class="wl" style="font-size:14px">Sam says <b>${D(sB,2)}</b> is bigger than <b>${D(sA)}</b> because ${sB} is bigger than ${sx}. Is Sam right? Explain. ${key?`<span class="ans">No. ${D(sA)} = ${D(sA,2)} (${sA} hundredths), which is bigger than ${D(sB,2)} (${sB} hundredths). Compare the tenths first: ${sx} tenths &gt; ${tdig(sB)} tenths.</span>`:'<br>________________________________________________________________'}</div>
+    ${key?'':`<p style="margin:6px 0 0;font-size:12px">🌟 Great work, ${NAME}! Remember: tenths come straight after the point, and 0.3 = 0.30.</p>`}
+  </div>`;
+  $('#sheet').innerHTML=page(false)+page(true);
+}
+
+/* ---------- events ---------- */
+if(PLAYER){$('#switchBtn').classList.remove('hidden');$('#gamesBtn').classList.remove('hidden');}
+$('#levelGrid').addEventListener('click',e=>{const b=e.target.closest('[data-level]');if(b)startLevel(+b.dataset.level);});
+$('#homeLink').onclick=home;
+$('#quitBtn').onclick=()=>{if(!R||R.idx<1||confirm('Leave this round? Your progress in this round will be lost.'))home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#sayBtn').onclick=()=>{const st=document.querySelector('#stage .story');say(spoken($('#prompt'))+(st?'. '+spoken(st):''));};
+$('#checkBtn').onclick=()=>{if(!q||q.done)return;if(!q.canCheck()){$('#hintBox').innerHTML=q.nudge;$('#hintBox').classList.remove('hidden');return;}answer(q.check());};
+$('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint();$('#hintBox').innerHTML='💡 '+h;$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;sfx('tap');};
+$('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
+$('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
+window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+$('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
+document.addEventListener('keydown',e=>{if(!q)return;
+  if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Tab'||e.key==='.'||e.key==='/'){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,D};
+home();
+})();
+
+</script>
+</body>
+</html>
