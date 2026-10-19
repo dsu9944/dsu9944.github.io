@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Data Dash – Tallies, Picture Graphs, Column Graphs &amp; Pie Charts</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8A%3C/text%3E%3C/svg%3E">
+<style>
+:root{--blue:#2563eb;--blue2:#3b82f6;--green:#16a34a;--green2:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#facc15;--ink:#1f2937;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4);min-height:100vh;font-size:19px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:52px;touch-action:manipulation}
+button:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(90deg,#2563eb,#16a34a);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(37,99,235,.12);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--blue)}
+.hero p{margin:0}
+.levels{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.lvl{position:relative;text-align:left;background:#fff;border:4px solid #dbeafe;border-radius:22px;padding:14px;display:flex;flex-direction:column;gap:6px;transition:transform .12s;color:var(--ink)}
+.lvl:not(.locked):hover{transform:translateY(-3px);border-color:var(--blue2)}
+.lvl .ic{font-size:2.2rem}
+.lvl .t{font-weight:bold;font-size:1.15rem;color:var(--blue)}
+.lvl .b{font-size:.92rem;color:#4b5563}
+.lvl .s{font-size:1.4rem;color:var(--gold);letter-spacing:2px}
+.lvl .num{position:absolute;top:10px;right:14px;font-weight:bold;color:#93c5fd;font-size:1.3rem}
+.lvl.locked{opacity:.6;background:#f3f4f6;cursor:not-allowed}
+.lvl.locked .t{color:#6b7280}
+.btn{background:var(--blue);color:#fff;font-weight:bold;box-shadow:0 4px 0 #1e40af}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #1e40af}
+.btn.orange{background:var(--orange);box-shadow:0 4px 0 #c2410c}
+.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:#dbeafe;color:var(--blue);box-shadow:0 4px 0 #93c5fd}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.stat{background:#eff6ff;border-radius:16px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:var(--blue)}
+.stat span{font-size:.85rem;color:#6b7280}
+.stickers{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.stk{width:26px;height:26px;border-radius:6px;border:2px solid #111;background:#e5e7eb}
+details summary{cursor:pointer;font-weight:bold;color:var(--blue);min-height:40px;display:flex;align-items:center}
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .lvlname{font-weight:bold;color:var(--blue);font-size:1.2rem;flex:1}
+.dots{display:flex;gap:5px}
+.dot{width:16px;height:16px;border-radius:50%;background:#e5e7eb;border:2px solid #d1d5db}
+.dot.cur{border-color:var(--blue);background:#bfdbfe;transform:scale(1.2)}
+.dot.ok{background:var(--green2);border-color:var(--green)}
+.dot.no{background:#fca5a5;border-color:var(--red)}
+.track{position:relative;height:34px;background:#fde68a;border-radius:999px;margin:0 0 12px;overflow:hidden;border:3px solid #f59e0b}
+.track .lane{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9.5%,rgba(255,255,255,.8) 9.5% 10%)}
+.track .runner{position:absolute;top:-2px;font-size:28px;transition:left .5s;transform:scaleX(-1)}
+.track .flag{position:absolute;right:6px;top:0;font-size:26px}
+.prompt{font-size:1.45rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.say{background:#dbeafe;color:var(--blue);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:120px}
+.frames{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:center}
+.frames .plus{font-size:2.4rem;font-weight:bold;color:#6b7280}
+svg{display:block}
+svg.tf{width:min(80vw,300px);height:auto}
+.frames.two svg.tf{width:min(42vw,260px)}
+.eqn{font-size:2.6rem;font-weight:bold;letter-spacing:2px;text-align:center}
+.ansbox{display:inline-block;min-width:1.5em;border:3px dashed var(--blue);border-radius:12px;color:var(--blue);background:#eff6ff;text-align:center;padding:0 .15em}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.15rem}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.15rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7}
+.expl .frames{margin:8px 0}
+.big2{font-size:1.6rem;font-weight:bold}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:600px}
+.opt{background:#fff;border:4px solid #bfdbfe;font-size:2rem;font-weight:bold;padding:10px 6px;min-height:84px;color:var(--ink)}
+.opt:hover{border-color:var(--blue2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}
+.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+.numrow{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;width:100%;max-width:560px}
+.numrow .opt{font-size:1.7rem;min-height:64px}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:#dbeafe;color:var(--blue);font-size:1.6rem;font-weight:bold;min-height:58px;box-shadow:0 3px 0 #93c5fd}
+.keypad button:active{transform:translateY(2px)}
+.speed{height:10px;background:#e5e7eb;border-radius:999px;overflow:hidden;width:100%;max-width:420px}
+.speed i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#facc15,#ef4444);width:100%}
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--blue);font-size:1.8rem;margin:8px 0}
+.confetti{position:fixed;top:-20px;width:14px;height:14px;z-index:50;pointer-events:none;animation:fall linear forwards;border:2px solid #111;border-radius:3px}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.wstool{position:sticky;top:64px;z-index:10}
+.page{background:#fff;color:#000;max-width:800px;margin:0 auto 20px;padding:28px 34px;border-radius:8px;box-shadow:0 4px 18px rgba(0,0,0,.12);font-size:16px}
+.page h2{margin:0 0 4px;font-size:22px}
+.page h3{margin:14px 0 6px;font-size:17px;border-bottom:2px solid #000;padding-bottom:2px}
+.page .meta{display:flex;justify-content:space-between;margin:6px 0 10px}
+.page .instr{font-size:13px;margin:2px 0 6px;color:#333}
+.page .g{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 20px;font-size:22px}
+.page .g.four{grid-template-columns:repeat(4,1fr)}
+.page .g.two{grid-template-columns:repeat(2,1fr)}
+.page .g>div{display:flex;align-items:center;gap:6px;break-inside:avoid}
+.page .blank{display:inline-block;width:38px;height:30px;border:2px solid #000;border-radius:5px;vertical-align:middle}
+.page svg.tf{width:150px;height:auto}
+.page .ans{color:#b91c1c;font-weight:bold}
+.page.answers{border-top:6px solid #b91c1c}
+@media print{
+ @page{size:A4;margin:10mm}
+ body{background:#fff}
+ .topbar,.no-print,#home,#play,#results{display:none!important}
+ #worksheet{display:block!important}
+ main{padding:0;max-width:none}
+ .page{box-shadow:none;border-radius:0;margin:0;padding:0;max-width:none;font-size:14px}
+ .page.answers{break-before:page;page-break-before:always;border-top:none}
+ .page h3{margin:8px 0 3px;font-size:15px}
+ .page .g{font-size:19px;gap:5px 20px}
+ .page svg.tf{width:120px}
+ .page .blank{width:32px;height:24px}
+}
+.topbar .lbl{}
+@media (max-width:520px){.topbar .lbl{display:none}}
+.graph{width:100%;max-width:520px;height:auto;display:block;margin:0 auto}
+.gtitle{font-weight:bold;color:var(--blue);font-size:1.15rem;text-align:center;margin-bottom:4px}
+.gwrap{background:#fff;border:3px solid #dbeafe;border-radius:18px;padding:10px 12px;width:100%;max-width:560px}
+.pict{border-collapse:collapse;margin:0 auto}
+.pict td{border-bottom:2px solid #e5e7eb;padding:4px 6px;vertical-align:middle}
+.pict td.lab{border-right:3px solid #1f2937;text-align:center;font-size:clamp(24px,6.5vw,34px);line-height:1;min-width:56px}
+.pict td.lab small{display:block;font-size:12px;color:#4b5563;font-weight:bold}
+.pict td.ics{font-size:clamp(18px,5.4vw,32px);letter-spacing:1px;white-space:nowrap;text-align:left}
+.pict td.cnt{font-weight:bold;color:var(--green);font-size:1.4rem;min-width:30px}
+.pict tr.hl td{background:#fef9c3}
+.key{font-size:1rem;color:#374151;text-align:center;margin-top:6px}
+.ttable{border-collapse:collapse;margin:0 auto;background:#fff}
+.ttable td{border:2px solid #cbd5e1;padding:4px 10px;vertical-align:middle}
+.ttable td.lab{font-size:32px;text-align:center;min-width:70px}
+.ttable td.lab small{display:block;font-size:12px;font-weight:bold;color:#4b5563}
+.ttable tr.hl td{background:#fef9c3}
+.ttable svg{display:block}
+.tbig{width:100%;max-width:440px;height:auto}
+.pile{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px;min-height:60px}
+.pile button{font-size:40px;line-height:1;background:#fff;border:4px solid #bfdbfe;border-radius:16px;padding:6px 8px;min-height:64px;min-width:64px}
+.pile button.sel{border-color:var(--orange);background:#ffedd5;transform:scale(1.12)}
+.bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;width:100%;max-width:600px}
+.bin{background:#f8fafc;border:4px dashed #93c5fd;border-radius:18px;padding:8px;min-height:120px;color:var(--ink);display:flex;flex-direction:column;align-items:center;gap:4px}
+.bin .bh{font-size:34px}
+.bin .bc{font-size:26px;letter-spacing:2px;line-height:1.25;word-break:break-all}
+.bin .bn{font-weight:bold;color:var(--green);font-size:1.5rem}
+.bin.hl{border-style:solid;border-color:var(--green2);background:#dcfce7}
+.bin.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.smsg{min-height:1.6em;font-weight:bold;color:#b45309;text-align:center}
+.opt .ic{font-size:2.4rem;display:block;line-height:1.1}
+.opt .nm{font-size:1rem;display:block;color:#374151}
+.opt .sw{display:block;width:54px;height:40px;border-radius:10px;margin:0 auto 4px;border:3px solid rgba(0,0,0,.2)}
+.opts.three{grid-template-columns:repeat(3,1fr);max-width:640px}
+.opts.three .opt{font-size:1.1rem;padding:8px}
+.opts.three .opt svg{width:100%;height:auto;display:block}
+.opts.qs{grid-template-columns:1fr;max-width:460px}
+.opts.qs .opt{font-size:1.4rem;min-height:64px}
+.opts.graphs{grid-template-columns:repeat(3,1fr);max-width:720px}
+.opts.graphs .opt{font-size:.95rem;padding:6px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.opts.graphs .opt svg,.opts.graphs .opt .pict{width:100%;height:auto}
+.opts.graphs .pict td.lab{font-size:18px;min-width:30px}
+.opts.graphs .pict td.ics{font-size:15px;letter-spacing:0}
+.opts.graphs .ttable td.lab{font-size:20px;min-width:30px}
+@media (max-width:560px){.opts.graphs{grid-template-columns:1fr}.opts.three{grid-template-columns:repeat(3,1fr)}}
+.tallybtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.tallybtns .btn{font-size:1.2rem}
+.target{font-size:3rem;font-weight:bold;color:var(--orange);line-height:1}
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:1.6rem}
+.cell{cursor:pointer}
+.why{font-size:1.05rem;margin:6px 0}
+.page .ws2{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px}
+.page .ws2>div{break-inside:avoid}
+.page .pile2{font-size:26px;letter-spacing:3px;line-height:1.2}
+.page table.wt{border-collapse:collapse;font-size:16px}
+.page table.wt td{border:1.5px solid #000;padding:2px 8px;height:34px;vertical-align:middle}
+.page table.wt td.lab{font-size:24px;text-align:center}
+.page .gwrap{border:none;padding:0;max-width:none}
+.page .graph{max-width:250px!important;margin:0}
+.page .g5 .graph{max-width:190px!important}
+.page .g6 .graph{max-width:150px!important}
+.page .gtitle{font-size:14px;color:#000;text-align:left}
+.page .ttable td.lab{font-size:20px;min-width:44px;padding:2px 6px}
+.page .ttable td{padding:2px 6px}
+.page .pict td.lab{font-size:22px;min-width:40px}
+.page .pict td.ics{font-size:20px}
+.page .ql{font-size:15px;margin:3px 0}
+.page .tallies{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 14px;font-size:16px}
+.page .tallies>div{display:flex;align-items:center;gap:6px}
+@media print{
+ .page h2{font-size:19px}
+ .page .meta{margin:3px 0 4px}
+ .page .pile2{font-size:22px}
+ .page table.wt td{height:30px;padding:1px 6px}
+ .page .graph{max-width:230px!important}
+ .page .g5 .graph{max-width:170px!important}
+ .page .ql{margin:2px 0}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 id="homeLink" title="Back to levels">📊 <span id="titleName">Ethan</span>'s Data Dash</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Streak">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn hidden" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
+  <a class="iconbtn hidden" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥<span class="lbl"> Switch</span></a>
+</header>
+<main>
+<section id="home">
+  <div class="card hero">
+    <div class="big">📊🏃</div>
+    <div style="flex:1;min-width:220px">
+      <h2 id="hello">Hi!</h2>
+      <p>Let's be <b>data detectives</b>! Sort things, count with tally marks, and read picture graphs, column graphs and pie charts. Tap 🔈 to hear any question. Get 6 or more out of 10 to unlock the next level.</p>
+    </div>
+  </div>
+  <div class="levels" id="levelGrid"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="row" style="justify-content:space-between">
+      <h3 style="margin:0;color:var(--blue)">📊 My progress</h3>
+      <button class="btn orange" id="wsBtn">🖨️ Make a printable worksheet</button>
+    </div>
+    <div class="stats" id="stats" style="margin-top:12px"></div>
+    <div><b>🧊 Cube stickers</b> <span style="font-size:.9rem;color:#6b7280">(one for every star you earn)</span><div class="stickers" id="stickers"></div></div>
+    <p id="tricky" style="margin:12px 0 0"></p>
+  </div>
+  <div class="card">
+    <details>
+      <summary>👨‍👩‍👦 For grown-ups</summary>
+      <p>This game covers <b>data</b> from the NSW Mathematics K–10 syllabus: sorting objects into groups, making and reading tally marks, picture graphs where one picture stands for one thing, column graphs (reading values, most and least, how many more), and simple pie charts using only halves and quarters. Later levels build a column graph from a tally, and pick the graph that can answer a question.</p>
+      <p>Every question is read aloud when it appears (you can turn this off below), and the 🔈 button repeats it. Reading is kept to a minimum. The feedback shows the answer on the graph itself, for example counting along a row or showing the "extra" part of the taller column for "how many more". Hints are free but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <div class="row" style="margin-bottom:8px"><label class="row" style="gap:6px"><input type="checkbox" id="autoSay" style="width:24px;height:24px" checked> Read each question aloud automatically</label></div>
+      <div class="row">
+        <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
+        <button class="btn ghost" id="resetBtn">Reset progress</button>
+      </div>
+    </details>
+  </div>
+</section>
+
+<section id="play" class="hidden">
+  <div class="playhead">
+    <button class="btn ghost" id="quitBtn">← Levels</button>
+    <div class="lvlname" id="lvlName"></div>
+    <div class="dots" id="dots"></div>
+  </div>
+  <div class="card">
+    <div class="track" aria-hidden="true"><div class="lane"></div><span class="flag">🏁</span><span class="runner" id="runner" style="left:0%">🏃</span></div>
+    <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls">
+      <button class="btn ghost" id="hintBtn">💡 Hint</button>
+      <button class="btn green" id="checkBtn">Check ✓</button>
+    </div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+
+<section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+
+<section id="worksheet" class="hidden">
+  <div class="card row no-print wstool">
+    <button class="btn ghost" id="wsBack">← Back</button>
+    <button class="btn" id="wsNew">🔀 New worksheet</button>
+    <button class="btn orange" id="wsPrint">🖨️ Print</button>
+    <span style="font-size:.9rem;color:#6b7280">The answer key prints on its own page.</span>
+  </div>
+  <div id="sheet"></div>
+</section>
+</main>
+
+<script>
+(function(){
+'use strict';
+/* ---------- player / profile ---------- */
+const params=new URLSearchParams(location.search);
+const PLAYER=(params.get('player')||'').toLowerCase().replace(/[^a-z0-9_-]/g,'');
+let NAME='Ethan';
+try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(PLAYER&&pr&&pr[PLAYER]&&pr[PLAYER].name)NAME=String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||NAME;}catch(e){}
+const GAME='data';
+const STORE=PLAYER?`kidsHub.p.${PLAYER}.${GAME}`:'ethanDataDash.v1';
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const range=n=>[...Array(n).keys()];
+
+const LEVELS=[
+ {id:1,icon:'🧺',title:'Sort It!',blurb:'Put things into groups, then count each group.',types:['sort']},
+ {id:2,icon:'✏️',title:'Tally Marks',blurb:'Read and make tally marks. Every 5th line goes across!',types:['tallyRead','tallyMake','tallyTable']},
+ {id:3,icon:'🙂',title:'Picture Graphs',blurb:'One picture means one thing.',types:['pict']},
+ {id:4,icon:'📊',title:'Column Graphs',blurb:'Most, least and how many more.',types:['col']},
+ {id:5,icon:'🥧',title:'Pie Charts',blurb:'Biggest slice, smallest slice, halves and quarters.',types:['pie']},
+ {id:6,icon:'🏗️',title:'Build a Graph',blurb:'Read the tally and tap to build the columns.',types:['build']},
+ {id:7,icon:'🔍',title:'Which Graph?',blurb:'Find the graph that answers the question.',types:['choose']},
+ {id:8,icon:'🏆',title:'Data Champion',blurb:'Everything mixed together. Can you get 10 out of 10?',types:['sort','tallyRead','tallyMake','pict','col','col','pie','build','choose','tallyTable']},
+];
+const TYPE_NAMES={sort:'Sorting',tallyRead:'Reading tallies',tallyMake:'Making tallies',tallyTable:'Tally tables',pict:'Picture graphs',col:'Column graphs',pie:'Pie charts',build:'Building graphs',choose:'Choosing a graph'};
+const ROUND=10,UNLOCK=6;
+const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
+
+const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},mist:{},unlockAll:false,sound:true,autoSay:true,history:[]});
+function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+const unlocked=id=>id===1||S.unlockAll||((S.levels[id-1]||{}).stars||0)>=1;
+
+let actx=null;
+function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];const t=actx.currentTime,vol=kind==='tap'?0.05:0.14;
+  N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const s=t+i*0.12;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});}catch(e){}}
+function say(text){try{if(!('speechSynthesis' in window)||!text)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-AU';u.rate=0.9;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]AU/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+
+/* ---------- data sets ---------- */
+const CATS={
+ cube:{title:'Favourite cube colour',icon:'🧊',about:'cube colours',items:[{icon:'🟥',name:'red',col:'#ef4444'},{icon:'🟦',name:'blue',col:'#3b82f6'},{icon:'🟩',name:'green',col:'#22c55e'},{icon:'🟨',name:'yellow',col:'#facc15'},{icon:'🟧',name:'orange',col:'#f97316'}]},
+ sport:{title:'Favourite sport',icon:'🏅',about:'sports',items:[{icon:'🏃',name:'running',col:'#f97316'},{icon:'⚽',name:'soccer',col:'#22c55e'},{icon:'🏊',name:'swimming',col:'#3b82f6'},{icon:'🏀',name:'basketball',col:'#ef4444'}]},
+ fruit:{title:'Favourite fruit',icon:'🍎',about:'fruit',items:[{icon:'🍎',name:'apple',col:'#ef4444'},{icon:'🍌',name:'banana',col:'#facc15'},{icon:'🍇',name:'grapes',col:'#8b5cf6'},{icon:'🍉',name:'watermelon',col:'#22c55e'}]},
+ pet:{title:'Favourite pet',icon:'🐾',about:'pets',items:[{icon:'🐶',name:'dog',col:'#a16207'},{icon:'🐱',name:'cat',col:'#f97316'},{icon:'🐟',name:'fish',col:'#3b82f6'},{icon:'🐰',name:'rabbit',col:'#ec4899'}]},
+};
+const PIECOLS=[{name:'red',col:'#ef4444'},{name:'blue',col:'#3b82f6'},{name:'green',col:'#22c55e'},{name:'yellow',col:'#facc15'},{name:'orange',col:'#f97316'},{name:'purple',col:'#8b5cf6'}];
+/* k categories with counts lo..hi; uniq => unique biggest and smallest */
+function catData(catKey,k,lo,hi,uniq=true){
+  const C=CATS[catKey];
+  for(let t=0;t<200;t++){
+    const items=shuffle(C.items.slice()).slice(0,k).map(it=>Object.assign({},it,{n:rnd(lo,hi)}));
+    const ns=items.map(i=>i.n),mx=Math.max(...ns),mn=Math.min(...ns);
+    if(!uniq||(ns.filter(v=>v===mx).length===1&&ns.filter(v=>v===mn).length===1))return {cat:catKey,C,items};
+  }
+  const items=C.items.slice(0,k).map((it,i)=>Object.assign({},it,{n:lo+i}));return {cat:catKey,C,items};
+}
+const anyCat=()=>pick(['cube','sport','fruit','pet']);
+
+/* ---------- visuals ---------- */
+/* tally marks: n marks, bundles of five (4 up + 1 across) */
+function tallySVG(n,{h=60,labels=false,cls='tbig',empty=''}={}){
+  const gw=h*0.95,gap=h*0.38,sp=h*0.2,groups=Math.ceil(n/5)||1,W=Math.max(groups*(gw+gap),gw+gap),Hh=h+(labels?28:8);
+  let s=`<svg class="${cls}" viewBox="0 0 ${W} ${Hh}" ${cls?`style="max-width:${Math.round(W*1.25)}px"`:`width="${Math.round(W)}" height="${Math.round(Hh)}"`} aria-label="${n} tally marks">`;
+  if(!n&&empty)s+=`<text x="${W/2}" y="${h*0.62}" text-anchor="middle" font-size="${h*0.3}" fill="#9ca3af">${empty}</text>`;
+  for(let g=0;g<groups;g++){
+    const x0=g*(gw+gap)+gap/2,m=Math.min(5,n-g*5);
+    for(let i=0;i<Math.min(m,4);i++){const x=x0+sp*0.6+i*sp;s+=`<line x1="${x}" y1="4" x2="${x}" y2="${h}" stroke="#1f2937" stroke-width="${h*0.07}" stroke-linecap="round"/>`;}
+    if(m===5)s+=`<line x1="${x0}" y1="${h*0.78}" x2="${x0+sp*4.4}" y2="${h*0.2}" stroke="#dc2626" stroke-width="${h*0.07}" stroke-linecap="round"/>`;
+    if(labels&&m>0)s+=`<text x="${x0+sp*2.1}" y="${h+24}" text-anchor="middle" font-size="20" font-weight="bold" fill="${m===5?'#16a34a':'#2563eb'}">${m===5?g*5+5:g*5+m}</text>`;
+  }
+  return s+'</svg>';
+}
+/* tally table */
+function tallyTable(items,{hl=-1,labels=false,nums=false,h=40}={}){
+  return `<table class="ttable">${items.map((it,i)=>`<tr class="${i===hl?'hl':''}"><td class="lab">${it.icon}<small>${esc(it.name)}</small></td><td>${tallySVG(it.n,{h,labels,cls:''})}</td>${nums?`<td style="font-weight:bold;font-size:1.4rem;color:#16a34a">${it.n}</td>`:''}</tr>`).join('')}</table>`;
+}
+/* picture graph (rows) */
+function pictHTML(items,{hl=[],nums=false,title='',key=true}={}){
+  const icon=items[0]?items[0].icon:'';
+  return `${title?`<div class="gtitle">${esc(title)}</div>`:''}<table class="pict">${items.map((it,i)=>`<tr class="${hl.includes(i)?'hl':''}"><td class="lab">${it.icon}<small>${esc(it.name)}</small></td><td class="ics">${it.icon.repeat(it.n)}</td>${nums?`<td class="cnt">${it.n}</td>`:''}</tr>`).join('')}</table>${key?`<div class="key">Key: each picture = 1 child</div>`:''}`;
+}
+/* column graph svg */
+function colSVG(items,{max=10,hl=[],nums=false,diff=null,build=null,title='',small=false,fill=true}={}){
+  const u=small?16:28,L=small?24:40,T=small?10:16,cw=small?40:70,gp=small?14:26,k=items.length,W=L+k*(cw+gp)+gp/2,base=T+max*u,Hh=base+(small?30:48);
+  let s=`<svg class="graph" viewBox="0 0 ${W} ${Hh}" ${small?'':`style="max-width:${Math.round(W*1.15)}px"`} aria-label="column graph${title?': '+esc(title):''}">`;
+  for(let v=0;v<=max;v++){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/>`;
+    if(!small||v%2===0)s+=`<text x="${L-6}" y="${y+5}" text-anchor="end" font-size="${small?11:16}" fill="#374151">${v}</text>`;}
+  s+=`<line x1="${L}" y1="${T-4}" x2="${L}" y2="${base}" stroke="#1f2937" stroke-width="3"/>`;
+  items.forEach((it,i)=>{const x=L+gp/2+i*(cw+gp)+gp/2-gp/2+4,h=build?build[i]:it.n;
+    if(build){for(let l=1;l<=max;l++){const y=base-l*u;s+=`<rect class="cell" data-cell="${i},${l}" x="${x}" y="${y}" width="${cw}" height="${u}" fill="${l<=h?it.col:'#f8fafc'}" stroke="${l<=h?'rgba(0,0,0,.25)':'#cbd5e1'}" stroke-width="1.5" ${l<=h?'':'stroke-dasharray="4 3"'}/>`;}}
+    else if(h>0)s+=`<rect x="${x}" y="${base-h*u}" width="${cw}" height="${h*u}" rx="4" fill="${fill?it.col:'#fff'}" stroke="${hl.includes(i)?'#111':'rgba(0,0,0,.3)'}" stroke-width="${hl.includes(i)?4:2}"/>`;
+    if(nums||hl.includes(i))s+=`<text x="${x+cw/2}" y="${base-h*u-6}" text-anchor="middle" font-size="${small?12:20}" font-weight="bold" fill="#111">${h}</text>`;
+    s+=`<text x="${x+cw/2}" y="${base+(small?20:34)}" text-anchor="middle" font-size="${small?16:30}">${it.icon}</text>`;
+  });
+  if(diff){const [a,b]=diff,xa=L+gp/2+a*(cw+gp)+4,xb=L+gp/2+b*(cw+gp)+4,ya=base-items[a].n*u,yb=base-items[b].n*u;
+    s+=`<line x1="${Math.min(xa,xb)}" y1="${yb}" x2="${Math.max(xa,xb)+cw}" y2="${yb}" stroke="#111" stroke-width="3" stroke-dasharray="7 5"/>`;
+    s+=`<rect x="${xa-3}" y="${ya-3}" width="${cw+6}" height="${yb-ya+6}" fill="rgba(250,204,21,.45)" stroke="#b45309" stroke-width="3" stroke-dasharray="6 4"/>`;
+    for(let v=1;v<=items[a].n-items[b].n;v++)s+=`<text x="${xa+cw/2}" y="${yb-(v-1)*u-u/2+6}" text-anchor="middle" font-size="17" font-weight="bold" fill="#92400e">${v}</text>`;}
+  return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';
+}
+/* pie chart: slices [{q (quarters), col, name}] */
+function pieSVG(slices,{r=90,labels=false,hl=-1,cls='graph',letters=false}={}){
+  const c=r+10,W=2*c;let a=-Math.PI/2,s=`<svg class="${cls}" viewBox="0 0 ${W} ${W}" style="max-width:${Math.round(W*1.3)}px" aria-label="pie chart">`;
+  const pt=(ang,rr)=>[c+rr*Math.cos(ang),c+rr*Math.sin(ang)];
+  slices.forEach((sl,i)=>{const da=sl.q/4*2*Math.PI,b=a+da;
+    if(sl.q>=4)s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;
+    else{const [x1,y1]=pt(a,r),[x2,y2]=pt(b,r);s+=`<path d="M${c},${c} L${x1},${y1} A${r},${r} 0 ${da>Math.PI?1:0} 1 ${x2},${y2} Z" fill="${sl.col}" stroke="${i===hl?'#111':'#fff'}" stroke-width="${i===hl?5:3}"/>`;}
+    const [lx,ly]=pt(a+da/2,r*(sl.q===1?0.62:0.5));
+    if(labels)s+=`<text x="${lx}" y="${ly+6}" text-anchor="middle" font-size="${r*0.15}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${{1:'quarter',2:'half',3:'3 quarters',4:'whole'}[sl.q]}</text>`;
+    if(letters)s+=`<text x="${lx}" y="${ly+8}" text-anchor="middle" font-size="${r*0.26}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${'ABCD'[i]}</text>`;
+    a=b;});
+  return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+const wrap=h=>`<div class="gwrap">${h}</div>`;
+const catBtn=it=>`<span class="ic">${it.icon}</span><span class="nm">${esc(it.name)}</span>`;
+const swBtn=it=>`<span class="sw" style="background:${it.col}"></span><span class="nm">${esc(it.name)}</span>`;
+const listSay=a=>a.length<2?a.join(''):a.slice(0,-1).join(', ')+' or '+a[a.length-1];
+/* ---------- question helpers ---------- */
+const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Nailed it!',`Super data detective, ${NAME}!`,'Fantastic!','You got it!','Speedy and right!'];
+const stage=()=>$('#stage');
+let speakText='';
+function setPrompt(h,spoken){$('#prompt').innerHTML=h;speakText=spoken||$('#prompt').textContent;}
+function choiceUI(q,vals,label,cls='opts'){q.opts=vals;q.noCheck=true;
+  return `<div class="${cls}">${vals.map((v,i)=>`<button class="opt" data-opt="${i}">${label?label(v):v}</button>`).join('')}</div>`;}
+function bindChoice(q){stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);};}
+function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
+function distract(ans,lo,hi,extra=[]){const set=new Set();extra.concat([ans+1,ans-1,ans+2,ans-2]).forEach(v=>{if(v!==ans&&v>=lo&&v<=hi)set.add(v);});
+  const pri=extra.filter(v=>v!==ans&&v>=lo&&v<=hi),rest=shuffle([...set].filter(v=>!pri.includes(v)));
+  const d=[...new Set(pri)].concat(rest).slice(0,3);while(d.length<3){const v=rnd(lo,hi);if(v!==ans&&!d.includes(v))d.push(v);}return shuffle([ans].concat(d)).sort((a,b)=>a-b);}
+const numOpts=(q,ans,lo,hi,extra)=>choiceUI(q,distract(ans,lo,hi,extra),null,'opts');
+function uniq(used,gen,keyOf){let v;for(let i=0;i<40;i++){v=gen();if(!used.has(keyOf(v)))break;}used.add(keyOf(v));return v;}
+const dkey=(p,d)=>p+d.items.map(i=>i.name+i.n).join('');
+const bigN=n=>`<span style="font-size:1.6em;color:var(--orange);font-weight:bold">${n}</span>`;
+
+/* ---------- question types ---------- */
+const TYPES={
+ /* 1. sorting */
+ sort:{
+  make(q,used){const d=uniq(used,()=>{const cat=pick(['cube','cube','sport','fruit','pet']),k=rnd(2,3);
+      for(;;){const x=catData(cat,k,2,5,false);if(x.items.reduce((a,i)=>a+i.n,0)<=12)return x;}},x=>dkey('s',x));
+    q.d=d;q.items=d.items;q.pile=shuffle(d.items.flatMap((it,i)=>Array(it.n).fill(i)));q.placed=q.pile.map(()=>-1);q.sel=null;q.phase='sort';
+    const ns=d.items.map(i=>i.n),mx=Math.max(...ns),mn=Math.min(...ns);
+    const modes=['howmany'];if(ns.filter(v=>v===mx).length===1)modes.push('most','most');if(ns.filter(v=>v===mn).length===1)modes.push('least');
+    q.mode=pick(modes);q.t=rnd(0,d.items.length-1);q.noCheck=true;
+  },
+  render(q){
+    setPrompt('🧺 Sort them into groups!<br><span style="font-size:1rem">Tap a picture, then tap its box.</span>','Sort them into groups. Tap a picture, then tap the box it belongs in.');
+    const draw=()=>{
+      stage().innerHTML=(q.phase==='sort'?`<div class="pile">${q.pile.map((k,j)=>q.placed[j]<0?`<button data-item="${j}" class="${q.sel===j?'sel':''}" aria-label="${esc(q.items[k].name)}">${q.items[k].icon}</button>`:'').join('')}</div><div class="smsg" id="smsg"></div>`:'')+
+        `<div class="bins">${q.items.map((it,i)=>{const n=q.placed.filter(b=>b===i).length;return `<button class="bin" data-bin="${i}"><span class="bh">📦 ${it.icon}</span><span class="bc">${it.icon.repeat(n)}</span></button>`;}).join('')}</div>`+(q.phase==='ask'?q.askHTML:'');
+    };
+    q.draw=draw;draw();
+    stage().onclick=e=>{if(q.done)return;
+      if(q.phase==='ask'){const b=e.target.closest('[data-opt]');if(!b)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);return;}
+      const it=e.target.closest('[data-item]'),bin=e.target.closest('[data-bin]');
+      if(it){q.sel=+it.dataset.item;sfx('tap');draw();return;}
+      if(bin){const bi=+bin.dataset.bin;
+        if(q.sel===null){$('#smsg').textContent='Tap a picture first! 👆';return;}
+        if(q.pile[q.sel]!==bi){q.oops=(q.oops||0)+1;sfx('bad');const nm=q.items[q.pile[q.sel]];draw();$('#smsg').textContent=`Oops! That ${nm.icon} goes in the ${nm.icon} box.`;const bb=document.querySelector(`[data-bin="${bi}"]`);if(bb)bb.classList.add('shake');return;}
+        q.placed[q.sel]=bi;q.sel=null;sfx('tap');
+        if(q.placed.every(b=>b>=0))TYPES.sort.ask(q);else draw();}
+    };
+  },
+  ask(q){q.phase='ask';const it=q.items[q.t];
+    if(q.mode==='howmany'){q.answerKey=it.n;setPrompt(`All sorted! 🎉<br>How many ${it.icon} are there?`,`All sorted! How many ${it.name} are there?`);
+      q.askHTML=numOpts(q,it.n,1,12,[it.n+1,it.n-1]);}
+    else{const ns=q.items.map(i=>i.n),v=q.mode==='most'?Math.max(...ns):Math.min(...ns);q.answerKey=ns.indexOf(v);
+      setPrompt(`All sorted! 🎉<br>Which group has the <b>${q.mode}</b>?`,`All sorted! Which group has the ${q.mode}? Is it ${listSay(q.items.map(i=>i.name))}?`);
+      q.askHTML=choiceUI(q,range(q.items.length),i=>catBtn(q.items[i]),'opts three');}
+    q.draw();sayQ();
+  },
+  hint(q){return q.phase==='sort'?'Look at the picture you tapped. Find the box with the same picture on it.':q.mode==='howmany'?'Look in the box. Touch each one as you count: 1, 2, 3…':`Count each box. The ${q.mode==='most'?'biggest':'smallest'} number wins.`;},
+  explain(q,ok){markChoice(q);document.querySelectorAll('.bin').forEach((b,i)=>{b.insertAdjacentHTML('beforeend',`<span class="bn">${q.items[i].n}</span>`);if(i===(q.mode==='howmany'?q.t:q.answerKey))b.classList.add('hl');});
+    const it=q.mode==='howmany'?q.items[q.t]:q.items[q.answerKey];
+    q.fbSay=q.mode==='howmany'?`There are ${it.n} ${it.name}.`:`The ${it.name} group has the ${q.mode}, with ${it.n}.`;
+    return `<div class="why">${q.mode==='howmany'?`Count the ${it.icon} box: <b>${it.n}</b>.`:`Count every box: ${q.items.map(i=>`${i.icon} ${i.n}`).join(' · ')}.<br>${it.icon} has the <b>${q.mode}</b>.`}</div>`;}
+ },
+ /* 2. tally marks */
+ tallyRead:{
+  make(q,used){q.n=uniq(used,()=>rnd(3,19),v=>'tr'+v);q.answerKey=q.n;q.gateWrong=q.n>=5?Math.floor(q.n/5)*4+q.n%5:null;},
+  render(q){setPrompt('✏️ How many does this tally show?','How many does this tally show?');
+    stage().innerHTML=`<div class="gwrap" style="max-width:480px">${tallySVG(q.n,{h:70})}</div>`+numOpts(q,q.n,1,20,q.gateWrong?[q.gateWrong,q.n+1]:[q.n+1]);bindChoice(q);},
+  mistake(q){return q.gateWrong!=null&&q.opts[q.chosen]===q.gateWrong?'gate':null;},
+  hint(q){return q.n>=5?'Each bundle with a line across is <b>5</b>. Count the bundles by 5s, then count the ones left over.':'Count each line: 1, 2, 3…';},
+  explain(q){markChoice(q);const g=Math.floor(q.n/5),r=q.n%5;q.fbSay=`It shows ${q.n}.`;
+    return `${tallySVG(q.n,{h:60,labels:true})}<div class="why">${g?`Count the bundles by 5s: <b>${range(g).map(i=>5*(i+1)).join(', ')}</b>${r?`, then ${range(r).map(i=>5*g+i+1).join(', ')}`:''}.`:`Count each line: ${range(q.n).map(i=>i+1).join(', ')}.`} That makes <b>${q.n}</b>.${q.mistake==='gate'?'<br>⚠️ Don\'t forget: the red line across is the <b>5th</b> mark!':''}</div>`;}
+ },
+ tallyMake:{
+  make(q,used){q.n=uniq(used,()=>rnd(3,14),v=>'tm'+v);q.count=0;},
+  render(q){setPrompt(`✏️ Make a tally for ${bigN(q.n)}`,`Make a tally for ${q.n}. Tap add a mark until you have ${q.n}. Remember, the fifth mark goes across.`);
+    const draw=()=>{$('#tview').innerHTML=tallySVG(q.count,{h:70,empty:'tap ➕'});};
+    stage().innerHTML=`<div class="gwrap" style="max-width:480px;min-height:110px" id="tview"></div><div class="tallybtns"><button class="btn orange" data-t="add">➕ Add a mark</button><button class="btn ghost" data-t="del">↩ Take one away</button></div>`;draw();
+    q.canCheck=()=>q.count>0;q.nudge='Tap ➕ to add tally marks first.';q.check=()=>q.count===q.n;
+    q.key=k=>{if(q.done)return;if(k==='del')q.count=Math.max(0,q.count-1);else if(q.count<25)q.count++;sfx('tap');draw();updCheck();};
+    stage().onclick=e=>{const b=e.target.closest('[data-t]');if(b)q.key(b.dataset.t);};},
+  hint(q){return `Draw 4 lines, then the 5th line goes across to make a bundle of 5. ${q.n>=5?`${q.n} is ${Math.floor(q.n/5)} bundle${q.n>=10?'s':''} of 5${q.n%5?` and ${q.n%5} more`:''}.`:''}`;},
+  explain(q,ok){q.fbSay=ok?`Yes, that is ${q.n}.`:`You made ${q.count}. ${q.n} looks like this.`;
+    return `${ok?'':`<div class="why">You made <b>${q.count}</b>. Here is <b>${q.n}</b>:</div>`}${tallySVG(q.n,{h:60,labels:true})}<div class="why">${q.n>=5?`${Math.floor(q.n/5)} bundle${q.n>=10?'s':''} of 5${q.n%5?` and ${q.n%5} more`:''} = <b>${q.n}</b>`:`${q.n} lines`}</div>`;}
+ },
+ tallyTable:{
+  make(q,used){q.d=uniq(used,()=>catData(anyCat(),3,2,12,false),x=>dkey('tt',x));q.t=rnd(0,2);q.answerKey=q.d.items[q.t].n;},
+  render(q){const it=q.d.items[q.t];setPrompt(`✏️ How many chose ${it.icon}?`,`This tally is about ${q.d.C.about}. How many children chose ${it.name}?`);
+    stage().innerHTML=wrap(`<div class="gtitle">${esc(q.d.C.title)}</div>${tallyTable(q.d.items)}`)+numOpts(q,it.n,1,15,it.n>=5?[Math.floor(it.n/5)*4+it.n%5]:[]);bindChoice(q);},
+  hint(q){const it=q.d.items[q.t];return `Find the ${it.icon} row. Count the bundles by 5s, then the extra lines.`;},
+  explain(q){markChoice(q);const it=q.d.items[q.t];q.fbSay=`${it.n} children chose ${it.name}.`;return tallyTable(q.d.items,{hl:q.t,labels:true})+`<div class="why">The ${it.icon} row shows <b>${it.n}</b>.</div>`;}
+ },
+ /* 3. picture graphs */
+ pict:{
+  make(q,used){q.d=uniq(used,()=>catData(anyCat(),rnd(3,4),1,8),x=>dkey('p',x));q.mode=pick(['howmany','howmany','most','least']);qMode(q);},
+  render(q){graphQ(q,(o)=>pictHTML(q.d.items,Object.assign({title:q.d.C.title},o)),'🙂');},
+  hint(q){return q.mode==='howmany'?'One picture means one child. Count the pictures in that row.':`Look for the ${q.mode==='most'?'longest':'shortest'} row of pictures.`;},
+  explain(q){markChoice(q);return graphExplain(q,o=>pictHTML(q.d.items,Object.assign({nums:true,key:false},o)));}
+ },
+ /* 4. column graphs */
+ col:{
+  make(q,used){q.d=uniq(used,()=>catData(anyCat(),rnd(3,4),1,10),x=>dkey('c',x));q.mode=pick(['howmany','most','least','more','more']);qMode(q);},
+  render(q){graphQ(q,(o)=>colSVG(q.d.items,Object.assign({title:q.d.C.title},o)),'📊');},
+  mistake(q){return q.mode==='more'&&q.opts[q.chosen]===q.d.items[q.a].n?'moreTotal':null;},
+  hint(q){const I=q.d.items;return q.mode==='howmany'?'Go to the top of the column, then look across to the numbers on the side.':q.mode==='more'?`Find how tall ${I[q.a].icon} and ${I[q.b].icon} are. How many squares is ${I[q.a].icon} taller?`:`Look for the ${q.mode==='most'?'tallest':'shortest'} column.`;},
+  explain(q){markChoice(q);return graphExplain(q,o=>colSVG(q.d.items,o));}
+ },
+ /* 5. pie charts */
+ pie:{
+  make(q,used){const mode=pick(['biggest','smallest','half','quarter','same','match']);q.mode=mode;
+    const pat=mode==='smallest'||mode==='quarter'?[3,1]:mode==='half'||mode==='same'?[2,1,1]:pick([[3,1],[2,1,1]]);
+    if(mode==='match'){const C=CATS[pick(['fruit','sport','pet'])],its=shuffle(C.items.slice()).slice(0,3),p=pick([[2,1,1],[2,2],[3,1]]);
+      q.C=C;q.its=its.slice(0,p.length);q.pat=p;
+      const variants=[p.slice()];
+      const alt=[[2,1,1],[1,2,1],[1,1,2],[2,2],[3,1],[1,3],[1,1,1,1]].filter(v=>v.length===p.length&&v.join()!==p.join());
+      shuffle(alt).forEach(v=>{if(variants.length<3)variants.push(v);});
+      if(variants.length<3){const ex=p.length===2?[[1,1,2],[1,1,1,1]]:[[3,1],[2,2]];ex.forEach(v=>{if(variants.length<3)variants.push(v);});}
+      q.variants=variants;q.answerKey=0;used.add('pm'+p.join()+its[0].name);return;}
+    const cols=shuffle(PIECOLS.slice()).slice(0,pat.length);q.slices=shuffle(pat.map((v,i)=>({q:v,col:cols[i].col,name:cols[i].name})));
+    used.add('pie'+mode+q.slices.map(s=>s.name+s.q).join());
+    const qs=q.slices.map(s=>s.q);
+    if(mode==='biggest')q.answerKey=qs.indexOf(Math.max(...qs));
+    else if(mode==='smallest'||mode==='quarter')q.answerKey=qs.indexOf(1);
+    else if(mode==='half')q.answerKey=qs.indexOf(2);
+    else{const ones=range(qs.length).filter(i=>qs[i]===1);q.answerKey=ones.join('+');}
+  },
+  render(q){
+    if(q.mode==='match'){const txt={2:'half',1:'a quarter',3:'three quarters'};
+      const lines=q.pat.map((v,i)=>`${{2:'½ half',1:'¼ quarter',3:'¾ three quarters'}[v]} chose ${q.its[i].icon}`);
+      setPrompt(`🥧 Which pie shows this?<div style="font-size:1.05rem;line-height:1.5">${lines.join('<br>')}</div>`,`Which pie chart shows this? ${q.pat.map((v,i)=>`${txt[v]} of the children chose ${q.its[i].name}.`).join(' ')}`);
+      q.order=shuffle(range(q.variants.length));
+      stage().innerHTML=`<div class="legend">${q.its.map(it=>`<span>${it.icon} <span class="sw" style="display:inline-block;width:26px;height:20px;border-radius:5px;background:${it.col};vertical-align:middle"></span></span>`).join('')}</div>`+
+        choiceUI(q,q.order,v=>pieSVG(q.variants[v].map((n,i)=>({q:n,col:q.its[i].col,name:q.its[i].name})),{r:60,cls:''}),'opts three');bindChoice(q);return;}
+    const words={biggest:'Which colour is the <b>biggest</b> slice?',smallest:'Which colour is the <b>smallest</b> slice?',half:'Which colour is <b>half</b> of the pie?',quarter:'Which colour is <b>one quarter</b> of the pie?',same:'Which two colours are the <b>same size</b>?'};
+    setPrompt('🥧 '+words[q.mode],words[q.mode].replace(/<\/?b>/g,'')+(q.mode==='same'?'':` Is it ${listSay(q.slices.map(s=>s.name))}?`));
+    let vals=range(q.slices.length),lab=i=>swBtn(q.slices[i]);
+    if(q.mode==='same'){vals=[];for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)vals.push(i+'+'+j);lab=v=>v.split('+').map(i=>`<span class="sw" style="background:${q.slices[i].col};display:inline-block;width:40px;margin:0 3px"></span>`).join('')+`<span class="nm">${v.split('+').map(i=>q.slices[i].name).join(' & ')}</span>`;}
+    stage().innerHTML=`<div class="gwrap" style="max-width:300px">${pieSVG(q.slices)}</div>`+choiceUI(q,vals,lab,'opts three');bindChoice(q);},
+  hint(q){return {biggest:'Which colour covers the most of the circle?',smallest:'Which colour covers the least of the circle?',half:'Half is when the pie is cut into 2 equal parts. Look for the colour that fills one whole side.',quarter:'A quarter is 1 of 4 equal parts, like a pizza cut into 4.',same:'Find two slices that would fit exactly on top of each other.',match:'Half means 2 equal parts. A quarter means 4 equal parts. Find the colour that fills half the circle first.'}[q.mode];},
+  explain(q){markChoice(q);
+    if(q.mode==='match'){q.fbSay='The right pie is the one where each colour is the right size.';return pieSVG(q.pat.map((n,i)=>({q:n,col:q.its[i].col})),{labels:true,r:80})+`<div class="why">${q.pat.map((v,i)=>`${q.its[i].icon} = ${{2:'half',1:'a quarter',3:'three quarters'}[v]}`).join(' · ')}</div>`;}
+    const a=String(q.answerKey).split('+').map(Number),nm=a.map(i=>q.slices[i].name).join(' and ');
+    q.fbSay=q.mode==='same'?`${nm} are both one quarter.`:`It is ${nm}.`;
+    return pieSVG(q.slices,{labels:true,hl:a.length===1?a[0]:-1,r:80})+`<div class="why">${q.slices.map(s=>`<span style="color:${s.col};font-weight:bold">■</span> ${s.name} = ${{1:'a quarter',2:'half',3:'three quarters'}[s.q]}`).join(' · ')}<br>${q.mode==='same'?`<b>${nm}</b> are both a quarter.`:q.mode==='half'||q.mode==='quarter'?`<b>${nm}</b> is ${q.mode==='half'?'half':'a quarter'}.`:`<b>${nm}</b> is the ${q.mode} slice.`}</div>`;}
+ },
+ /* 6. build a column graph from a tally */
+ build:{
+  make(q,used){q.d=uniq(used,()=>catData(anyCat(),3,1,7,false),x=>dkey('b',x));q.h=[0,0,0];},
+  render(q){setPrompt('🏗️ Build the column graph from the tally!<br><span style="font-size:1rem">Tap a square to make each column that tall.</span>','Build the column graph from the tally. Count each tally, then tap a square to make the column that tall.');
+    const draw=()=>{$('#bview').innerHTML=colSVG(q.d.items,{max:8,build:q.h,title:q.d.C.title});};
+    stage().innerHTML=wrap(tallyTable(q.d.items,{h:34}))+`<div class="gwrap" id="bview"></div>`;draw();
+    q.canCheck=()=>q.h.some(v=>v>0);q.nudge='Tap the squares to build the columns first.';q.check=()=>q.h.every((v,i)=>v===q.d.items[i].n);
+    q.tap=(c,l)=>{if(q.done)return;q.h[c]=q.h[c]===l?l-1:l;sfx('tap');draw();updCheck();};
+    stage().onclick=e=>{const c=e.target.closest('[data-cell]');if(c){const [a,b]=c.dataset.cell.split(',').map(Number);q.tap(a,b);}};},
+  hint(q){const it=q.d.items[0];return `Count the ${it.icon} tally first: it is ${it.n}. Tap the square next to ${it.n} in the ${it.icon} column.`;},
+  explain(q,ok){const bad=q.d.items.map((it,i)=>i).filter(i=>q.h[i]!==q.d.items[i].n);q.fbSay=ok?'Your graph matches the tally.':'Here is the right graph.';
+    return `${colSVG(q.d.items,{max:8,nums:true})}<div class="why">${ok?'Every column matches the tally. 🏗️':bad.map(i=>`${q.d.items[i].icon} should be <b>${q.d.items[i].n}</b> (you made ${q.h[i]})`).join('<br>')}</div>`;}
+ },
+ /* 7. which graph answers the question? */
+ choose:{
+  make(q,used){q.mode=pick(['whichGraph','whichQ']);const cats=shuffle(['cube','sport','fruit','pet']).slice(0,3);
+    q.ds=cats.map(c=>catData(c,3,1,6));q.t=rnd(0,2);q.it=pick(q.ds[q.t].items);q.answerKey=q.t;q.kinds=shuffle(['col','pict','tally']);used.add('ch'+q.mode+cats.join());},
+  render(q){const D=q.ds[q.t];
+    if(q.mode==='whichGraph'){setPrompt(`🔍 Which graph tells us how many chose ${q.it.icon}?`,`Which graph tells us how many children chose ${q.it.name}?`);
+      stage().innerHTML=choiceUI(q,range(3),i=>miniGraph(q.ds[i],q.kinds[i]),'opts graphs');}
+    else{const others=q.ds.map(d=>pick(d.items));others[q.t]=q.it;
+      setPrompt('🔍 Which question can this graph answer?',`Which question can this graph answer? ${others.map(it=>`How many chose ${it.name}?`).join(' Or, ')}`);
+      stage().innerHTML=wrap(colSVG(D.items,{max:6,title:D.C.title}))+choiceUI(q,range(3),i=>`How many chose ${others[i].icon}?`,'opts qs');}
+    bindChoice(q);},
+  hint(q){return q.mode==='whichGraph'?`Look at the pictures under each graph. Which one has ${q.it.icon}?`:'Look at the pictures under the columns. The question must be about one of them.';},
+  explain(q){markChoice(q);const D=q.ds[q.t];q.fbSay=`This graph is about ${D.C.about}, so it can answer the question about ${q.it.name}.`;
+    return `${q.mode==='whichGraph'?colSVG(D.items,{max:6,nums:true,hl:[D.items.indexOf(q.it)],title:D.C.title}):''}<div class="why">The ${esc(D.C.title.toLowerCase())} graph shows ${D.items.map(i=>i.icon).join(' ')}, so it can tell us about ${q.it.icon}.<br>${q.it.icon} = <b>${q.it.n}</b> children.</div>`;}
+ },
+};
+function miniGraph(d,kind){return `<div class="gtitle" style="font-size:.95rem">${esc(d.C.title)}</div>`+(kind==='col'?colSVG(d.items,{max:6,small:true}):kind==='pict'?pictHTML(d.items,{key:false}):tallyTable(d.items,{h:22}));}
+/* shared: question modes for picture/column graphs */
+function qMode(q){const I=q.d.items,ns=I.map(i=>i.n);q.t=rnd(0,I.length-1);
+  if(q.mode==='more'){const s=range(I.length).sort((a,b)=>ns[b]-ns[a]);let a,b;for(let t=0;t<30;t++){a=pick(s);b=pick(s);if(ns[a]>ns[b])break;}if(!(ns[a]>ns[b])){a=s[0];b=s[s.length-1];}q.a=a;q.b=b;q.answerKey=ns[a]-ns[b];}
+  else if(q.mode==='howmany')q.answerKey=ns[q.t];
+  else q.answerKey=ns.indexOf(q.mode==='most'?Math.max(...ns):Math.min(...ns));}
+function graphQ(q,g,emo){const I=q.d.items;
+  if(q.mode==='howmany'){setPrompt(`${emo} How many chose ${I[q.t].icon}?`,`How many children chose ${I[q.t].name}?`);stage().innerHTML=wrap(g({}))+numOpts(q,q.answerKey,1,12,[q.answerKey+1,q.answerKey-1]);}
+  else if(q.mode==='more'){const A=I[q.a],B=I[q.b];setPrompt(`${emo} How many <b>more</b> chose ${A.icon} than ${B.icon}?`,`How many more children chose ${A.name} than ${B.name}?`);
+    stage().innerHTML=wrap(g({}))+numOpts(q,q.answerKey,0,12,[A.n,A.n+B.n<=12?A.n+B.n:B.n]);}
+  else{setPrompt(`${emo} Which has the <b>${q.mode}</b>?`,`Which did the ${q.mode} children choose? Is it ${listSay(I.map(i=>i.name))}?`);stage().innerHTML=wrap(g({}))+choiceUI(q,range(I.length),i=>catBtn(I[i]),'opts');}
+  bindChoice(q);}
+function graphExplain(q,g){const I=q.d.items;
+  if(q.mode==='howmany'){q.fbSay=`${I[q.t].n} children chose ${I[q.t].name}.`;return g({hl:[q.t]})+`<div class="why">${I[q.t].icon} = <b>${I[q.t].n}</b></div>`;}
+  if(q.mode==='more'){const A=I[q.a],B=I[q.b];q.fbSay=`${A.n} take away ${B.n} is ${A.n-B.n}. ${A.name} has ${A.n-B.n} more.`;
+    const pic=q.type==='col'?colSVG(I,{nums:true,diff:[q.a,q.b]}):g({hl:[q.a,q.b]});
+    return pic+`<div class="why">${A.icon} ${A.n} &nbsp;−&nbsp; ${B.icon} ${B.n} = <b>${A.n-B.n}</b>. The dotted box shows the extra.${q.mistake==='moreTotal'?`<br>⚠️ ${A.n} is how many chose ${A.icon}. "How many more" means the <b>difference</b>.`:''}</div>`;}
+  const w=I[q.answerKey];q.fbSay=`${w.name} has the ${q.mode}, with ${w.n}.`;
+  return g({hl:[q.answerKey],nums:true})+`<div class="why">${I.map(i=>`${i.icon} ${i.n}`).join(' · ')}<br>${w.icon} has the <b>${q.mode}</b>.</div>`;}
+/* ---------- round flow ---------- */
+let R=null,q=null;
+function sayQ(){if(S.autoSay!==false)say(speakText);}
+function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function startLevel(id){
+  const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
+  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+}
+function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');
+  $('#runner').style.left=(R.score/ROUND*88)+'%';}
+function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
+function next(){
+  R.idx++;if(R.idx>=ROUND)return finishRound();
+  const type=R.types[R.idx];
+  q={type,done:false,usedHint:false};
+  TYPES[type].make(q,R.used);
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
+  stage().onclick=null;TYPES[type].render(q);
+  dots();topbar();updCheck();sayQ();
+}
+function answer(ok){
+  if(!q||q.done)return;q.done=true;
+  S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
+  let pts=0;
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  else{R.streak=0;sfx('bad');const m=TYPES[q.type].mistake&&TYPES[q.type].mistake(q);if(m){q.mistake=m;S.mist[m]=(S.mist[m]||0)+1;}}
+  R.results.push(ok);save();
+  const expl=TYPES[q.type].explain(q,ok);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${esc(pick(PRAISE))}</div><div>+${pts} points${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>`)+
+    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${R.idx<ROUND-1?'Next question ➜':'See my results ⭐'}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  if(S.autoSay!==false)say((ok?'Yes! ':'Not quite. ')+(q.fbSay||''));
+  dots();topbar();$('#nextBtn').onclick=next;
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);
+}
+function finishRound(){
+  const L=R.L,st=starsFor(R.score),prev=S.levels[L.id]||{best:0,stars:0,plays:0};
+  const wasLocked=L.id<LEVELS.length&&!unlocked(L.id+1);
+  S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
+  S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. The hints help! 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${esc(msg)}</h2>
+    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
+    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    <div class="row" style="justify-content:center;margin-top:14px">
+      <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
+      ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}</div>`;
+  show('results');q=null;R.streak=0;topbar();
+  if(S.autoSay!==false)say(msg.replace(/[^\w\s,.!']/g,'')+` You got ${R.score} out of 10.`);
+  if(st>=2){sfx('win');confetti();}
+  $('#rHome').onclick=home;$('#rAgain').onclick=()=>startLevel(L.id);const rn=$('#rNext');if(rn)rn.onclick=()=>startLevel(L.id+1);
+}
+const CUBE=['#ffffff','#facc15','#ef4444','#f97316','#3b82f6','#22c55e'];
+function confetti(){for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=pick(CUBE);d.style.animationDuration=(1.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*0.6+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+const TIPS={gate:'In a tally, the line going <b>across</b> is the 5th mark, so each bundle is 5.',moreTotal:'"How many more" means the <b>difference</b>: how much taller one column is than the other.'};
+
+function home(){
+  R=null;q=null;try{speechSynthesis.cancel();}catch(e){}
+  $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Data Dash`;
+  $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+  const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
+  const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
+  const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
+  $('#stats').innerHTML=[['⭐ '+S.points,'points'],[totalStars+' / '+LEVELS.length*3,'stars'],[S.rounds,'rounds played'],[S.answered,'questions answered'],[acc,'correct'],['🔥 '+S.bestStreak,'best streak'],[last,'last played']].map(([b,s])=>`<div class="stat"><b>${b}</b><span>${s}</span></div>`).join('');
+  $('#stickers').innerHTML=range(LEVELS.length*3).map(i=>`<span class="stk" style="${i<totalStars?'background:'+CUBE[i%6]:''}"></span>`).join('');
+  let worst=null,best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};if(!best||r>best.r)best={t,r};}});
+  const tip=Object.entries(S.mist||{}).filter(([k,v])=>v>=2&&TIPS[k]).sort((a,b)=>b[1]-a[1])[0];
+  $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${esc(NAME)}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%). `:'')+(tip?`<br>💡 Tip: ${TIPS[tip[0]]}`:'');
+  $('#unlockAll').checked=!!S.unlockAll;$('#autoSay').checked=S.autoSay!==false;topbar();show('home');
+}
+/* ---------- worksheet ---------- */
+function makeWorksheet(){
+  const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
+  const B='<span class="blank"></span>',BW='<span class="blank" style="width:110px"></span>',A=(v,key,w)=>key?`<span class="ans">${v}</span>`:(w?BW:B),L=i=>String.fromCharCode(97+i)+')';
+  /* 1 sort */
+  const s1=catData('cube',3,2,5,false),pile=shuffle(s1.items.flatMap(it=>Array(it.n).fill(it.icon)));
+  /* 2 tallies */
+  const s2=shuffle(range(17).map(i=>i+3)).slice(0,4);
+  /* 3 picture graph */
+  const s3=catData(pick(['fruit','pet']),3,1,6),I3=s3.items,n3=I3.map(i=>i.n),t3=rnd(0,2);
+  /* 4 column graph */
+  const s4=catData(pick(['sport','cube']),4,1,8),I4=s4.items,n4=I4.map(i=>i.n);
+  const o4=range(4).sort((a,b)=>n4[b]-n4[a]),a4=o4[0],b4=o4[2+rnd(0,1)];
+  /* 5 build */
+  const s5=catData(anyCat(),3,1,6,false);
+  /* 6 pie */
+  const pc=shuffle(PIECOLS.slice()).slice(0,3),sl6=shuffle([2,1,1].map((v,i)=>({q:v,col:pc[i].col,name:pc[i].name}))),half=sl6.findIndex(s=>s.q===2),qs=range(3).filter(i=>sl6[i].q===1);
+  const P='ABC';
+  const page=key=>`<div class="page${key?' answers':''}">
+    <h2>${key?'✅ Answer key: ':''}Data Dash 📊🏃</h2>
+    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 18</span>'}</div>
+    <h3>1. Sort and count</h3><div class="instr">Count each colour. Make a tally, then write how many.</div>
+    <div class="ws2"><div class="pile2">${pile.join('')}</div>
+    <table class="wt"><tr><td></td><td style="width:150px"><b>Tally</b></td><td><b>How many?</b></td></tr>${s1.items.map(it=>`<tr><td class="lab">${it.icon}</td><td>${key?tallySVG(it.n,{h:22,cls:''}):''}</td><td>${A(it.n,key)}</td></tr>`).join('')}</table></div>
+    <h3>2. Read the tally</h3><div class="tallies">${s2.map((n,i)=>`<div>${L(i)} ${tallySVG(n,{h:26,cls:''})} = ${A(n,key)}</div>`).join('')}</div>
+    <div class="ws2">
+     <div><h3>3. Picture graph</h3>${pictHTML(I3,{title:s3.C.title})}
+      <div class="ql">a) How many chose ${I3[t3].icon}? ${A(n3[t3],key)}</div>
+      <div class="ql">b) Which has the most? ${A(I3[n3.indexOf(Math.max(...n3))].icon,key)}</div>
+      <div class="ql">c) Which has the least? ${A(I3[n3.indexOf(Math.min(...n3))].icon,key)}</div></div>
+     <div><h3>4. Column graph</h3>${colSVG(I4,{max:8,title:s4.C.title,nums:key})}
+      <div class="ql">a) Which has the most? ${A(I4[a4].icon,key)}</div>
+      <div class="ql">b) How many chose ${I4[b4].icon}? ${A(n4[b4],key)}</div>
+      <div class="ql">c) How many more chose ${I4[a4].icon} than ${I4[b4].icon}? ${A(n4[a4]-n4[b4],key)}</div></div>
+    </div>
+    <div class="ws2">
+     <div><h3>5. Make a column graph</h3><div class="instr">Colour the columns to match the tally.</div>
+      <div style="display:flex;gap:12px;align-items:flex-end">${tallyTable(s5.items,{h:22})}<div class="g5">${colSVG(s5.items,{max:6,build:key?s5.items.map(i=>i.n):[0,0,0],title:s5.C.title})}</div></div></div>
+     <div><h3>6. Pie chart</h3><div class="g6">${pieSVG(sl6,{r:70,letters:true})}</div>
+      <div class="ql">a) Which part is <b>half</b>? ${A(P[half],key)}</div>
+      <div class="ql">b) Which two parts are the <b>same size</b>? ${A(P[qs[0]],key)} and ${A(P[qs[1]],key)}</div>
+      <div class="ql">c) Each of those parts is a ${key?'<span class="ans">quarter</span>':'<span class="blank" style="width:90px"></span>'}.</div></div>
+    </div>
+    ${key?'':`<p style="margin-top:8px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: the 5th tally mark goes across, and one picture means one thing.</p>`}
+  </div>`;
+  $('#sheet').innerHTML=page(false)+page(true);
+}
+
+/* ---------- events ---------- */
+if(PLAYER){$('#switchBtn').classList.remove('hidden');$('#gamesBtn').classList.remove('hidden');}
+$('#levelGrid').addEventListener('click',e=>{const b=e.target.closest('[data-level]');if(b)startLevel(+b.dataset.level);});
+$('#homeLink').onclick=home;
+$('#quitBtn').onclick=()=>{if(!R||R.idx<1||confirm('Leave this round? Your progress in this round will be lost.'))home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#sayBtn').onclick=()=>say(speakText);
+$('#checkBtn').onclick=()=>{if(!q||q.done)return;if(!q.canCheck()){$('#hintBox').innerHTML=q.nudge;$('#hintBox').classList.remove('hidden');return;}answer(q.check());};
+$('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=TYPES[q.type].hint(q);$('#hintBox').innerHTML='💡 '+h;$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;sfx('tap');if(S.autoSay!==false)say($('#hintBox').textContent.replace('💡',''));};
+$('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
+$('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
+window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+$('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
+$('#autoSay').onchange=e=>{S.autoSay=e.target.checked;save();};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,as=S.autoSay;S=defState();S.sound=snd;S.autoSay=as;save();home();}};
+$('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
+document.addEventListener('keydown',e=>{if(!q)return;
+  if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.type==='tallyMake'&&!q.done){if(e.key==='+'||e.key===' '){e.preventDefault();q.key('add');}else if(e.key==='Backspace'||e.key==='-')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}});
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES};
+home();
+})();
+</script>
+</body>
+</html>
