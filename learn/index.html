@@ -81,11 +81,11 @@ const DEFAULTS={
 };
 const ORDER=['alexia','ethan'];
 const GAMES={
-  alexia:[{id:'decimals',href:'alexia/decimals/index.html',icon:'🔎',title:'Decimal Zoom',sub:'Tenths, hundredths & number lines',levels:9,isNew:true},
-          {id:'addfractions',href:'alexia/adding/index.html',icon:'➕',title:'Fraction Add-venture',sub:'Adding & taking away fractions',levels:8},
-          {id:'fractions',href:'alexia/index.html',icon:'🍕',title:'Fraction Quest',sub:'Equivalent fractions',levels:7,legacy:'alexiaFractionQuest.v1'}],
-  ethan:[{id:'data',href:'ethan/data/index.html',icon:'📊',title:'Data Dash',sub:'Tallies, picture graphs, column graphs & pie charts',levels:8,isNew:true},
-       {id:'numberfacts',href:'ethan/index.html',icon:'🧩',title:'Number Facts Sprint',sub:'Make 10, doubles and more',levels:7,legacy:'ethanNumberFacts.v1'}],
+  alexia:[{id:'decimals',href:'alexia/decimals/index.html',icon:'🔎',title:'Decimal Zoom',sub:'Tenths to thousandths, rounding & money',levels:15,core:9,isNew:true},
+          {id:'addfractions',href:'alexia/adding/index.html',icon:'➕',title:'Fraction Add-venture',sub:'Adding, mixed numbers & two-step stories',levels:12,core:8},
+          {id:'fractions',href:'alexia/index.html',icon:'🍕',title:'Fraction Quest',sub:'Equivalent fractions, simplifying & comparing',levels:11,core:7,legacy:'alexiaFractionQuest.v1'}],
+  ethan:[{id:'data',href:'ethan/data/index.html',icon:'📊',title:'Data Dash',sub:'Tallies, graphs with scales, tables & pie charts',levels:16,core:8,isNew:true},
+       {id:'numberfacts',href:'ethan/index.html',icon:'🧩',title:'Number Facts Sprint',sub:'Facts to 20, two-digit jumps & more',levels:14,core:7,legacy:'ethanNumberFacts.v1'}],
 };
 const ls={get(k){try{return localStorage.getItem(k);}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,v);}catch(e){}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
 
@@ -101,8 +101,9 @@ ORDER.forEach(id=>GAMES[id].forEach(g=>{const k=`kidsHub.p.${id}.${g.id}`;if(g.l
 const avatarHTML=(p,cls='avatar')=>`<div class="${cls}" style="background:${p.color}">${p.avatar==='cube'?CUBE_SVG:esc(p.avatar)}</div>`;
 function gameStats(id,g){try{const s=JSON.parse(ls.get(`kidsHub.p.${id}.${g.id}`)||'null');if(!s)return null;
   const lv=s.levels||{};const stars=Object.values(lv).reduce((a,l)=>a+(l.stars||0),0);
-  const complete=g.levels>0&&Array.from({length:g.levels},(_,i)=>(lv[i+1]||{}).stars||0).every(x=>x>=1);
-  return {stars,points:s.points||0,last:s.lastPlayed,best:s.bestStreak||0,complete};}catch(e){return null;}}
+  const complete=g.levels>0&&Array.from({length:g.core||g.levels},(_,i)=>(lv[i+1]||{}).stars||0).every(x=>x>=1);
+  const allDone=Array.from({length:g.levels},(_,i)=>(lv[i+1]||{}).stars||0).every(x=>x>=1);
+  return {stars,points:s.points||0,last:s.lastPlayed,best:s.bestStreak||0,complete,allDone};}catch(e){return null;}}
 function show(id){['picker','kid'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));
   $('#switchBtn').classList.toggle('hidden',id!=='kid');window.scrollTo(0,0);}
 
@@ -119,7 +120,7 @@ function openKid(id){
   document.title=`${p.name}'s Learning Games`;
   $('#games').innerHTML=GAMES[id].map(g=>{const s=gameStats(id,g);
     return `<a class="game${s&&s.complete?' done':''}" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
-      <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');
+      <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${s&&s.complete&&!s.allDone&&g.core?'<span class="badge new">⚡ New challenge levels</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');
   show('kid');
 }
 function choose(id){openKid(id);}

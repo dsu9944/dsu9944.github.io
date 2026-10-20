@@ -204,6 +204,28 @@ svg.tf{width:min(80vw,300px);height:auto}
  .page .g5 .graph{max-width:170px!important}
  .page .ql{margin:2px 0}
 }
+
+.clvl{display:inline-block;font-size:.85rem;background:#fef3c7;color:#92400e;border:2px solid #f59e0b;border-radius:999px;padding:1px 10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.lvl .clv{font-size:.8rem;color:#92400e;font-weight:bold}
+.stepup{font-size:1.1rem;font-weight:bold;background:#fef3c7;border-radius:14px;padding:8px 12px;display:inline-block}
+.pi{display:inline-block}
+.pi.halfp{width:.5em;overflow:hidden;vertical-align:bottom;white-space:nowrap}
+.cnts{font-size:12px;color:#166534;font-weight:bold;letter-spacing:0}
+.opts.two{grid-template-columns:repeat(2,1fr);max-width:440px}
+.opts.graphs.g4{grid-template-columns:repeat(2,1fr);max-width:600px}
+.dtable{border-collapse:collapse;margin:0 auto;background:#fff;font-size:1.25rem}
+.dtable th,.dtable td{border:2px solid #cbd5e1;padding:6px 12px;text-align:center}
+.dtable th{background:#eff6ff;color:var(--blue)}
+.dtable .hl{background:#fef9c3}
+.duo{display:grid;grid-template-columns:1fr 1.4fr;gap:10px;width:100%;max-width:720px;align-items:start}
+@media (max-width:600px){.duo{grid-template-columns:1fr}}
+.page .dtable{font-size:14px}.page .dtable th,.page .dtable td{padding:2px 8px;border:1.5px solid #000}.page .dtable th{background:#fff;color:#000}
+
+.pict.many td.ics{font-size:clamp(11px,3.3vw,26px);letter-spacing:0}
+@media (max-width:520px){.dtable{font-size:1rem}.dtable th,.dtable td{padding:4px 6px}.pict.many td.lab{min-width:44px;font-size:22px}}
+.page .pict.many td.ics{font-size:16px}
+
+@media (max-width:560px){.opts.graphs.g4{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -221,7 +243,7 @@ svg.tf{width:min(80vw,300px);height:auto}
     <div class="big">📊🏃</div>
     <div style="flex:1;min-width:220px">
       <h2 id="hello">Hi!</h2>
-      <p>Let's be <b>data detectives</b>! Sort things, count with tally marks, and read picture graphs, column graphs and pie charts. Tap 🔈 to hear any question. Get 6 or more out of 10 to unlock the next level.</p>
+      <p>Let's be <b>data detectives</b>! Sort things, count with tally marks, and read picture graphs, column graphs and pie charts. Tap 🔈 to hear any question. Get 6 or more out of 10 to unlock the next level. Get 9 or 10 and the next round gets harder ⚡.</p>
     </div>
   </div>
   <div class="levels" id="levelGrid"></div>
@@ -237,8 +259,13 @@ svg.tf{width:min(80vw,300px);height:auto}
   <div class="card">
     <details>
       <summary>👨‍👩‍👦 For grown-ups</summary>
-      <p>This game covers <b>data</b> from the NSW Mathematics K–10 syllabus: sorting objects into groups, making and reading tally marks, picture graphs where one picture stands for one thing, column graphs (reading values, most and least, how many more), and simple pie charts using only halves and quarters. Later levels build a column graph from a tally, and pick the graph that can answer a question.</p>
-      <p>Every question is read aloud when it appears (you can turn this off below), and the 🔈 button repeats it. Reading is kept to a minimum. The feedback shows the answer on the graph itself, for example counting along a row or showing the "extra" part of the taller column for "how many more". Hints are free but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <p>This game covers <b>data</b> from the NSW Mathematics K–10 syllabus. Levels 1–8: sorting objects into groups, tally marks, picture graphs where one picture stands for one thing, column graphs (most, least, how many more, altogether), and pie charts with halves and quarters. Levels 9–16 stretch into harder next-stage work: picture graphs where one picture stands for 2 or 10 (with half pictures), column graphs with scales counting by 2s, 5s and 10s and unlabelled gridlines, two-step questions, two-way tables, pie charts in eighths and comparing two pies, spotting what's wrong with a graph, and choosing a true conclusion from the data.</p>
+      <p><b>Challenge levels:</b> each level runs at a challenge level from 1 to 5. Higher levels use bigger numbers, more categories, typed answers instead of multiple choice, scales and two-step questions. A score of 9 or 10 moves that level up one challenge step for the next round. A score of 4 or less moves it back down, but never below the setting you choose here.</p>
+      <div class="row" style="margin-bottom:8px" role="radiogroup" aria-label="Difficulty"><b>Difficulty:</b>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="easy"> Easy</label>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="normal"> Normal</label>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="challenge" checked> Challenge</label></div>
+      <p style="font-size:.9rem">Easy starts at challenge level 1 (like the first version: multiple choice, small numbers). Normal starts at 2. Challenge starts at 3. Every question is read aloud when it appears (you can turn this off below), and the 🔈 button repeats it. The feedback shows the answer on the graph. Hints give 5 points instead of 10 (3 points from challenge level 4). Progress is saved on this device only.</p>
       <div class="row" style="margin-bottom:8px"><label class="row" style="gap:6px"><input type="checkbox" id="autoSay" style="width:24px;height:24px" checked> Read each question aloud automatically</label></div>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
@@ -299,20 +326,30 @@ const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()
 const range=n=>[...Array(n).keys()];
 
 const LEVELS=[
- {id:1,icon:'🧺',title:'Sort It!',blurb:'Put things into groups, then count each group.',types:['sort']},
+ {id:1,icon:'🧺',title:'Sort It!',blurb:'Put things into groups, then count and compare the groups.',types:['sort']},
  {id:2,icon:'✏️',title:'Tally Marks',blurb:'Read and make tally marks. Every 5th line goes across!',types:['tallyRead','tallyMake','tallyTable']},
  {id:3,icon:'🙂',title:'Picture Graphs',blurb:'One picture means one thing.',types:['pict']},
- {id:4,icon:'📊',title:'Column Graphs',blurb:'Most, least and how many more.',types:['col']},
+ {id:4,icon:'📊',title:'Column Graphs',blurb:'Most, least, how many more and altogether.',types:['col']},
  {id:5,icon:'🥧',title:'Pie Charts',blurb:'Biggest slice, smallest slice, halves and quarters.',types:['pie']},
  {id:6,icon:'🏗️',title:'Build a Graph',blurb:'Read the tally and tap to build the columns.',types:['build']},
  {id:7,icon:'🔍',title:'Which Graph?',blurb:'Find the graph that answers the question.',types:['choose']},
- {id:8,icon:'🏆',title:'Data Champion',blurb:'Everything mixed together. Can you get 10 out of 10?',types:['sort','tallyRead','tallyMake','pict','col','col','pie','build','choose','tallyTable']},
+ {id:8,icon:'🏆',title:'Data Champion',blurb:'Levels 1–7 mixed together. Can you get 10 out of 10?',types:['sort','tallyRead','tallyMake','pict','col','col','pie','build','choose','tallyTable']},
+ {id:9,icon:'🖼️',title:'Picture Keys',blurb:'Now one picture means 2 (or 10)! Half a picture is half as many.',types:['pict2']},
+ {id:10,icon:'📏',title:'Graph Scales',blurb:'Count up the side in 2s, 5s or 10s. Watch the lines with no numbers!',types:['scaled']},
+ {id:11,icon:'🧠',title:'Two-Step Questions',blurb:'Add groups together, then compare.',types:['twostep']},
+ {id:12,icon:'📋',title:'Tables',blurb:'Read across and down a table.',types:['table']},
+ {id:13,icon:'🍕',title:'Eighths & Two Pies',blurb:'Pies cut into 8 pieces, and comparing two pies.',types:['pie8']},
+ {id:14,icon:'🕵️',title:'Graph Detective',blurb:'Something is wrong with this graph. Can you spot it?',types:['wrong']},
+ {id:15,icon:'💡',title:'What Does It Tell Us?',blurb:'Pick the sentence that is true.',types:['conclude']},
+ {id:16,icon:'🏅',title:'Data Pro',blurb:'Levels 9–15 mixed. The ultimate data challenge!',types:['pict2','scaled','twostep','table','pie8','wrong','conclude','twostep','scaled','table']},
 ];
-const TYPE_NAMES={sort:'Sorting',tallyRead:'Reading tallies',tallyMake:'Making tallies',tallyTable:'Tally tables',pict:'Picture graphs',col:'Column graphs',pie:'Pie charts',build:'Building graphs',choose:'Choosing a graph'};
+const TYPE_NAMES={sort:'Sorting',tallyRead:'Reading tallies',tallyMake:'Making tallies',tallyTable:'Tally tables',pict:'Picture graphs',col:'Column graphs',pie:'Pie charts',build:'Building graphs',choose:'Choosing a graph',pict2:'Picture keys',scaled:'Graph scales',twostep:'Two-step questions',table:'Tables',pie8:'Eighths',wrong:'Graph detective',conclude:'Drawing conclusions'};
 const ROUND=10,UNLOCK=6;
+const DIFFS={easy:{name:'Easy',base:0},normal:{name:'Normal',base:1},challenge:{name:'Challenge',base:2}};
+const levelD=id=>Math.min(4,(DIFFS[S.diff]||DIFFS.challenge).base+((S.adapt||{})[id]||0));
 const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
 
-const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},mist:{},unlockAll:false,sound:true,autoSay:true,history:[]});
+const defState=()=>({diff:'challenge',adapt:{},levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},mist:{},unlockAll:false,sound:true,autoSay:true,history:[]});
 function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -335,14 +372,15 @@ const CATS={
 };
 const PIECOLS=[{name:'red',col:'#ef4444'},{name:'blue',col:'#3b82f6'},{name:'green',col:'#22c55e'},{name:'yellow',col:'#facc15'},{name:'orange',col:'#f97316'},{name:'purple',col:'#8b5cf6'}];
 /* k categories with counts lo..hi; uniq => unique biggest and smallest */
-function catData(catKey,k,lo,hi,uniq=true){
+function catData(catKey,k,lo,hi,uniq=true,step=1){
   const C=CATS[catKey];
   for(let t=0;t<200;t++){
-    const items=shuffle(C.items.slice()).slice(0,k).map(it=>Object.assign({},it,{n:rnd(lo,hi)}));
+    const items=shuffle(C.items.slice()).slice(0,k).map(it=>Object.assign({},it,{n:rnd(Math.ceil(lo/step),Math.floor(hi/step))*step}));
     const ns=items.map(i=>i.n),mx=Math.max(...ns),mn=Math.min(...ns);
-    if(!uniq||(ns.filter(v=>v===mx).length===1&&ns.filter(v=>v===mn).length===1))return {cat:catKey,C,items};
+    if(uniq==='all'&&new Set(ns).size<ns.length)continue;
+    if(!uniq||uniq==='all'||(ns.filter(v=>v===mx).length===1&&ns.filter(v=>v===mn).length===1))return {cat:catKey,C,items};
   }
-  const items=C.items.slice(0,k).map((it,i)=>Object.assign({},it,{n:lo+i}));return {cat:catKey,C,items};
+  const items=C.items.slice(0,k).map((it,i)=>Object.assign({},it,{n:(Math.ceil(lo/step)+i)*step}));return {cat:catKey,C,items};
 }
 const anyCat=()=>pick(['cube','sport','fruit','pet']);
 
@@ -362,43 +400,48 @@ function tallySVG(n,{h=60,labels=false,cls='tbig',empty=''}={}){
 }
 /* tally table */
 function tallyTable(items,{hl=-1,labels=false,nums=false,h=40}={}){
+  if(Math.max(...items.map(i=>i.n))>15)h=Math.min(h,26);
   return `<table class="ttable">${items.map((it,i)=>`<tr class="${i===hl?'hl':''}"><td class="lab">${it.icon}<small>${esc(it.name)}</small></td><td>${tallySVG(it.n,{h,labels,cls:''})}</td>${nums?`<td style="font-weight:bold;font-size:1.4rem;color:#16a34a">${it.n}</td>`:''}</tr>`).join('')}</table>`;
 }
-/* picture graph (rows) */
-function pictHTML(items,{hl=[],nums=false,title='',key=true}={}){
-  const icon=items[0]?items[0].icon:'';
-  return `${title?`<div class="gtitle">${esc(title)}</div>`:''}<table class="pict">${items.map((it,i)=>`<tr class="${hl.includes(i)?'hl':''}"><td class="lab">${it.icon}<small>${esc(it.name)}</small></td><td class="ics">${it.icon.repeat(it.n)}</td>${nums?`<td class="cnt">${it.n}</td>`:''}</tr>`).join('')}</table>${key?`<div class="key">Key: each picture = 1 child</div>`:''}`;
+/* picture graph (rows); kv = children per picture, half pictures for kv/2 */
+function pictRow(it,kv){const full=Math.floor(it.n/kv),half=it.n%kv?1:0;return `<span class="pi">${it.icon}</span>`.repeat(full)+(half?`<span class="pi halfp">${it.icon}</span>`:'');}
+function pictHTML(items,{hl=[],nums=false,title='',key=true,kv=1,counts=false}={}){
+  const many=Math.max(...items.map(it=>Math.ceil(it.n/kv)))>8;
+  return `${title?`<div class="gtitle">${esc(title)}</div>`:''}<table class="pict${many?' many':''}">${items.map((it,i)=>`<tr class="${hl.includes(i)?'hl':''}"><td class="lab">${it.icon}<small>${esc(it.name)}</small></td><td class="ics">${pictRow(it,kv)}${counts?`<div class="cnts">${range(Math.floor(it.n/kv)).map(j=>(j+1)*kv).concat(it.n%kv?[it.n]:[]).join(', ')}</div>`:''}</td>${nums?`<td class="cnt">${it.n}</td>`:''}</tr>`).join('')}</table>${key?`<div class="key">Key: ${items[0]?items[0].icon:'🙂'} = ${kv} ${kv===1?'child':'children'}${kv>1?` &nbsp; <span class="pi halfp">${items[0]?items[0].icon:''}</span> = ${kv/2}`:''}</div>`:''}`;
 }
-/* column graph svg */
-function colSVG(items,{max=10,hl=[],nums=false,diff=null,build=null,title='',small=false,fill=true}={}){
-  const u=small?16:28,L=small?24:40,T=small?10:16,cw=small?40:70,gp=small?14:26,k=items.length,W=L+k*(cw+gp)+gp/2,base=T+max*u,Hh=base+(small?30:48);
+/* column graph svg: max = number of gridlines, scale = value per gridline, le = label every le lines, labels = override list */
+function colSVG(items,{max=10,hl=[],nums=false,diff=null,build=null,title='',small=false,fill=true,scale=1,le=1,labels=null}={}){
+  const u=small?16:28,L=small?24:44,T=small?10:16,cw=small?40:70,gp=small?14:26,k=items.length,W=L+k*(cw+gp)+gp/2,base=T+max*u,Hh=base+(small?30:48),hv=n=>n/scale;
   let s=`<svg class="graph" viewBox="0 0 ${W} ${Hh}" ${small?'':`style="max-width:${Math.round(W*1.15)}px"`} aria-label="column graph${title?': '+esc(title):''}">`;
   for(let v=0;v<=max;v++){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/>`;
-    if(!small||v%2===0)s+=`<text x="${L-6}" y="${y+5}" text-anchor="end" font-size="${small?11:16}" fill="#374151">${v}</text>`;}
+    const lab=labels?labels[v]:v*scale;if(lab!=null&&(labels||(!small||v%2===0)&&v%le===0))s+=`<text class="ylab" x="${L-6}" y="${y+5}" text-anchor="end" font-size="${small?11:16}" fill="#374151">${lab}</text>`;}
   s+=`<line x1="${L}" y1="${T-4}" x2="${L}" y2="${base}" stroke="#1f2937" stroke-width="3"/>`;
-  items.forEach((it,i)=>{const x=L+gp/2+i*(cw+gp)+gp/2-gp/2+4,h=build?build[i]:it.n;
+  const bx=i=>L+gp/2+i*(cw+gp)+4;
+  items.forEach((it,i)=>{const x=bx(i),h=build?build[i]:hv(it.n);
     if(build){for(let l=1;l<=max;l++){const y=base-l*u;s+=`<rect class="cell" data-cell="${i},${l}" x="${x}" y="${y}" width="${cw}" height="${u}" fill="${l<=h?it.col:'#f8fafc'}" stroke="${l<=h?'rgba(0,0,0,.25)':'#cbd5e1'}" stroke-width="1.5" ${l<=h?'':'stroke-dasharray="4 3"'}/>`;}}
-    else if(h>0)s+=`<rect x="${x}" y="${base-h*u}" width="${cw}" height="${h*u}" rx="4" fill="${fill?it.col:'#fff'}" stroke="${hl.includes(i)?'#111':'rgba(0,0,0,.3)'}" stroke-width="${hl.includes(i)?4:2}"/>`;
-    if(nums||hl.includes(i))s+=`<text x="${x+cw/2}" y="${base-h*u-6}" text-anchor="middle" font-size="${small?12:20}" font-weight="bold" fill="#111">${h}</text>`;
+    else if(h>0)s+=`<rect class="bar" x="${x}" y="${base-h*u}" width="${cw}" height="${h*u}" rx="4" fill="${fill?it.col:'#fff'}" stroke="${hl.includes(i)?'#111':'rgba(0,0,0,.3)'}" stroke-width="${hl.includes(i)?4:2}"/>`;
+    if(nums||hl.includes(i))s+=`<text x="${x+cw/2}" y="${base-h*u-6}" text-anchor="middle" font-size="${small?12:20}" font-weight="bold" fill="#111">${build?h*scale:it.n}</text>`;
     s+=`<text x="${x+cw/2}" y="${base+(small?20:34)}" text-anchor="middle" font-size="${small?16:30}">${it.icon}</text>`;
   });
-  if(diff){const [a,b]=diff,xa=L+gp/2+a*(cw+gp)+4,xb=L+gp/2+b*(cw+gp)+4,ya=base-items[a].n*u,yb=base-items[b].n*u;
+  if(diff){const [a,b]=diff,xa=bx(a),xb=bx(b),ya=base-hv(items[a].n)*u,yb=base-hv(items[b].n)*u;
     s+=`<line x1="${Math.min(xa,xb)}" y1="${yb}" x2="${Math.max(xa,xb)+cw}" y2="${yb}" stroke="#111" stroke-width="3" stroke-dasharray="7 5"/>`;
     s+=`<rect x="${xa-3}" y="${ya-3}" width="${cw+6}" height="${yb-ya+6}" fill="rgba(250,204,21,.45)" stroke="#b45309" stroke-width="3" stroke-dasharray="6 4"/>`;
-    for(let v=1;v<=items[a].n-items[b].n;v++)s+=`<text x="${xa+cw/2}" y="${yb-(v-1)*u-u/2+6}" text-anchor="middle" font-size="17" font-weight="bold" fill="#92400e">${v}</text>`;}
+    if(scale===1)for(let v=1;v<=items[a].n-items[b].n;v++)s+=`<text x="${xa+cw/2}" y="${yb-(v-1)*u-u/2+6}" text-anchor="middle" font-size="17" font-weight="bold" fill="#92400e">${v}</text>`;
+    else s+=`<text x="${xa+cw/2}" y="${(ya+yb)/2+7}" text-anchor="middle" font-size="20" font-weight="bold" fill="#92400e">${items[a].n-items[b].n}</text>`;}
   return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';
 }
 /* pie chart: slices [{q (quarters), col, name}] */
-function pieSVG(slices,{r=90,labels=false,hl=-1,cls='graph',letters=false}={}){
+function pieSVG(slices,{r=90,labels=false,hl=-1,cls='graph',letters=false,den=4}={}){
   const c=r+10,W=2*c;let a=-Math.PI/2,s=`<svg class="${cls}" viewBox="0 0 ${W} ${W}" style="max-width:${Math.round(W*1.3)}px" aria-label="pie chart">`;
   const pt=(ang,rr)=>[c+rr*Math.cos(ang),c+rr*Math.sin(ang)];
-  slices.forEach((sl,i)=>{const da=sl.q/4*2*Math.PI,b=a+da;
-    if(sl.q>=4)s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;
+  slices.forEach((sl,i)=>{const da=sl.q/den*2*Math.PI,b=a+da;
+    if(sl.q>=den)s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;
     else{const [x1,y1]=pt(a,r),[x2,y2]=pt(b,r);s+=`<path d="M${c},${c} L${x1},${y1} A${r},${r} 0 ${da>Math.PI?1:0} 1 ${x2},${y2} Z" fill="${sl.col}" stroke="${i===hl?'#111':'#fff'}" stroke-width="${i===hl?5:3}"/>`;}
     const [lx,ly]=pt(a+da/2,r*(sl.q===1?0.62:0.5));
-    if(labels)s+=`<text x="${lx}" y="${ly+6}" text-anchor="middle" font-size="${r*0.15}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${{1:'quarter',2:'half',3:'3 quarters',4:'whole'}[sl.q]}</text>`;
+    if(labels)s+=`<text x="${lx}" y="${ly+6}" text-anchor="middle" font-size="${r*0.15}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${den===8?sl.q+'/8':{1:'quarter',2:'half',3:'3 quarters',4:'whole'}[sl.q]}</text>`;
     if(letters)s+=`<text x="${lx}" y="${ly+8}" text-anchor="middle" font-size="${r*0.26}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${'ABCD'[i]}</text>`;
     a=b;});
+  if(den===8)for(let e=0;e<8;e++){const [x1,y1]=pt(-Math.PI/2+e*Math.PI/4,r);s+=`<line x1="${c}" y1="${c}" x2="${x1}" y2="${y1}" stroke="rgba(255,255,255,.75)" stroke-width="1.5" stroke-dasharray="4 3"/>`;}
   return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
 }
 const wrap=h=>`<div class="gwrap">${h}</div>`;
@@ -410,109 +453,151 @@ const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Nailed it
 const stage=()=>$('#stage');
 let speakText='';
 function setPrompt(h,spoken){$('#prompt').innerHTML=h;speakText=spoken||$('#prompt').textContent;}
-function choiceUI(q,vals,label,cls='opts'){q.opts=vals;q.noCheck=true;
+function choiceUI(q,vals,label,cls='opts'){q.opts=vals;q.noCheck=true;q.typed=false;
   return `<div class="${cls}">${vals.map((v,i)=>`<button class="opt" data-opt="${i}">${label?label(v):v}</button>`).join('')}</div>`;}
-function bindChoice(q){stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);};}
-function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
+const BOX='<span class="ansbox" id="ansBox">&nbsp;</span>';
+function keypadUI(q,unit=''){q.opts=null;q.noCheck=false;q.typed=true;q.input='';
+  q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(/^\d$/.test(k)&&q.input.length<3)q.input+=k;sfx('tap');const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
+  q.canCheck=()=>q.input.length>0;q.nudge='Type a number first.';q.check=()=>parseInt(q.input,10)===q.answerKey;
+  return `<div class="eqn" style="font-size:1.8rem">Answer: ${BOX}${unit?` <span style="font-size:1rem">${unit}</span>`:''}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 5">⌫ Delete</button></div>`;}
+function bindChoice(q){stage().onclick=e=>{if(q.done)return;const k=e.target.closest('[data-key]');if(k&&q.key){q.key(k.dataset.key);return;}
+  const b=e.target.closest('[data-opt]');if(!b||!q.opts)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);};}
+function markChoice(q){if(!q.opts){const kp=document.querySelector('#stage .keypad');if(kp)kp.remove();const b=$('#ansBox');if(b){b.textContent=q.answerKey;b.style.borderColor=parseInt(q.input,10)===q.answerKey?'#16a34a':'#ef4444';}return;}
+  document.querySelectorAll('#stage .opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
 function distract(ans,lo,hi,extra=[]){const set=new Set();extra.concat([ans+1,ans-1,ans+2,ans-2]).forEach(v=>{if(v!==ans&&v>=lo&&v<=hi)set.add(v);});
   const pri=extra.filter(v=>v!==ans&&v>=lo&&v<=hi),rest=shuffle([...set].filter(v=>!pri.includes(v)));
   const d=[...new Set(pri)].concat(rest).slice(0,3);while(d.length<3){const v=rnd(lo,hi);if(v!==ans&&!d.includes(v))d.push(v);}return shuffle([ans].concat(d)).sort((a,b)=>a-b);}
-const numOpts=(q,ans,lo,hi,extra)=>choiceUI(q,distract(ans,lo,hi,extra),null,'opts');
+/* number answer: multiple choice only at the easiest challenge level */
+const numOpts=(q,ans,lo,hi,extra)=>q.D===0?choiceUI(q,distract(ans,lo,hi,extra),null,'opts'):keypadUI(q);
+const chosenVal=q=>q.opts?q.opts[q.chosen]:parseInt(q.input,10);
 function uniq(used,gen,keyOf){let v;for(let i=0;i<40;i++){v=gen();if(!used.has(keyOf(v)))break;}used.add(keyOf(v));return v;}
 const dkey=(p,d)=>p+d.items.map(i=>i.name+i.n).join('');
 const bigN=n=>`<span style="font-size:1.6em;color:var(--orange);font-weight:bold">${n}</span>`;
+const sum=a=>a.reduce((x,y)=>x+y,0);
+/* question modes on a data set: howmany, most, least, more, total2, twoSmall, all, diffML */
+function pickMode(q,modes){const I=q.d.items,ns=I.map(i=>i.n),ord=range(I.length).sort((a,b)=>ns[b]-ns[a]);
+  const uq=v=>ns.filter(x=>x===v).length===1,ok=m=>m==='twoSmall'?(I.length>=3&&ns[ord[0]]>ns[ord[I.length-1]]+ns[ord[I.length-2]]):m==='most'?uq(Math.max(...ns)):m==='least'?uq(Math.min(...ns)):m==='more'||m==='diffML'?Math.max(...ns)>Math.min(...ns):true;
+  const ms=modes.filter(ok);q.mode=pick(ms.length?ms:['howmany']);q.t=rnd(0,I.length-1);
+  if(q.mode==='more'){q.a=pick(range(I.length).filter(i=>ns[i]>Math.min(...ns)));const lower=ord.filter(i=>ns[i]<ns[q.a]);q.b=pick(lower);q.answerKey=ns[q.a]-ns[q.b];}
+  else if(q.mode==='total2'){const p=shuffle(range(I.length)).slice(0,2);q.a=p[0];q.b=p[1];q.answerKey=ns[q.a]+ns[q.b];}
+  else if(q.mode==='twoSmall'){q.a=ord[0];q.b=ord[I.length-1];q.c=ord[I.length-2];q.answerKey=ns[q.a]-ns[q.b]-ns[q.c];}
+  else if(q.mode==='all')q.answerKey=sum(ns);
+  else if(q.mode==='diffML'){q.a=ord[0];q.b=ord[I.length-1];q.answerKey=ns[q.a]-ns[q.b];}
+  else if(q.mode==='howmany')q.answerKey=ns[q.t];
+  else q.answerKey=ns.indexOf(q.mode==='most'?Math.max(...ns):Math.min(...ns));}
+const isNumMode=m=>m!=='most'&&m!=='least';
+function modeText(q,emo){const I=q.d.items,A=I[q.a],B=I[q.b],C=I[q.c],T=I[q.t];
+  switch(q.mode){
+   case 'howmany':return [`${emo} How many chose ${T.icon}?`,`How many children chose ${T.name}?`];
+   case 'more':return [`${emo} How many <b>more</b> chose ${A.icon} than ${B.icon}?`,`How many more children chose ${A.name} than ${B.name}?`];
+   case 'total2':return [`${emo} How many chose ${A.icon} and ${B.icon} <b>altogether</b>?`,`How many children chose ${A.name} and ${B.name} altogether?`];
+   case 'twoSmall':return [`${emo} How many more chose ${A.icon} than ${B.icon} and ${C.icon} <b>put together</b>?`,`How many more children chose ${A.name} than ${B.name} and ${C.name} put together?`];
+   case 'all':return [`${emo} How many children were asked <b>altogether</b>?`,`How many children were asked altogether?`];
+   case 'diffML':return [`${emo} How many more chose the <b>most</b> popular than the <b>least</b> popular?`,`How many more children chose the most popular one than the least popular one?`];
+   default:return [`${emo} Which has the <b>${q.mode}</b>?`,`Which did the ${q.mode} children choose? Is it ${listSay(I.map(i=>i.name))}?`];}}
+function modeWhy(q){const I=q.d.items,A=I[q.a],B=I[q.b],C=I[q.c],T=I[q.t];
+  switch(q.mode){
+   case 'howmany':q.fbSay=`${T.n} children chose ${T.name}.`;return `${T.icon} = <b>${T.n}</b>`;
+   case 'more':q.fbSay=`${A.n} take away ${B.n} is ${A.n-B.n}.`;return `${A.icon} ${A.n} − ${B.icon} ${B.n} = <b>${A.n-B.n}</b>`+(q.mistake==='moreTotal'?`<br>⚠️ ${A.n} is how many chose ${A.icon}. "How many more" means the <b>difference</b>.`:'');
+   case 'total2':q.fbSay=`${A.n} plus ${B.n} is ${A.n+B.n}.`;return `${A.icon} ${A.n} + ${B.icon} ${B.n} = <b>${A.n+B.n}</b>`;
+   case 'twoSmall':q.fbSay=`Step 1: ${B.n} plus ${C.n} is ${B.n+C.n}. Step 2: ${A.n} take away ${B.n+C.n} is ${q.answerKey}.`;return `Step 1: ${B.icon} ${B.n} + ${C.icon} ${C.n} = ${B.n+C.n}<br>Step 2: ${A.icon} ${A.n} − ${B.n+C.n} = <b>${q.answerKey}</b>`;
+   case 'all':q.fbSay=`Add them all: ${I.map(i=>i.n).join(' plus ')} is ${q.answerKey}.`;return `${I.map(i=>`${i.icon} ${i.n}`).join(' + ')} = <b>${q.answerKey}</b>`;
+   case 'diffML':q.fbSay=`${A.n} take away ${B.n} is ${q.answerKey}.`;return `Most: ${A.icon} ${A.n}. Least: ${B.icon} ${B.n}.<br>${A.n} − ${B.n} = <b>${q.answerKey}</b>`;
+   default:{const w=I[q.answerKey];q.fbSay=`${w.name} has the ${q.mode}, with ${w.n}.`;return `${I.map(i=>`${i.icon} ${i.n}`).join(' · ')}<br>${w.icon} has the <b>${q.mode}</b>.`;}}}
+function modeHL(q){return q.mode==='howmany'?[q.t]:q.mode==='more'||q.mode==='total2'||q.mode==='diffML'?[q.a,q.b]:q.mode==='twoSmall'?[q.a,q.b,q.c]:q.mode==='all'?range(q.d.items.length):[q.answerKey];}
+function modeInput(q){const I=q.d.items;return isNumMode(q.mode)?numOpts(q,q.answerKey,0,Math.max(12,q.answerKey+4),q.mode==='more'?[I[q.a].n]:[]):choiceUI(q,range(I.length),i=>catBtn(I[i]),'opts');}
+function modeMistake(q){return q.mode==='more'&&chosenVal(q)===q.d.items[q.a].n?'moreTotal':q.mode==='twoSmall'&&chosenVal(q)===q.d.items[q.a].n-q.d.items[q.b].n?'oneStep':null;}
 
 /* ---------- question types ---------- */
 const TYPES={
  /* 1. sorting */
  sort:{
-  make(q,used){const d=uniq(used,()=>{const cat=pick(['cube','cube','sport','fruit','pet']),k=rnd(2,3);
-      for(;;){const x=catData(cat,k,2,5,false);if(x.items.reduce((a,i)=>a+i.n,0)<=12)return x;}},x=>dkey('s',x));
-    q.d=d;q.items=d.items;q.pile=shuffle(d.items.flatMap((it,i)=>Array(it.n).fill(i)));q.placed=q.pile.map(()=>-1);q.sel=null;q.phase='sort';
-    const ns=d.items.map(i=>i.n),mx=Math.max(...ns),mn=Math.min(...ns);
-    const modes=['howmany'];if(ns.filter(v=>v===mx).length===1)modes.push('most','most');if(ns.filter(v=>v===mn).length===1)modes.push('least');
-    q.mode=pick(modes);q.t=rnd(0,d.items.length-1);q.noCheck=true;
+  make(q,used){const D=q.D,cfg=[[2,3,2,5,12],[2,3,2,6,15],[3,3,3,7,18],[3,4,3,6,20],[3,4,4,7,20]][D];
+    const d=uniq(used,()=>{const cat=pick(['cube','cube','sport','fruit','pet']),k=rnd(cfg[0],cfg[1]);
+      for(;;){const x=catData(cat,k,cfg[2],cfg[3],false);if(sum(x.items.map(i=>i.n))<=cfg[4])return x;}},x=>dkey('s',x));
+    q.d=d;q.items=d.items;q.pile=shuffle(d.items.flatMap((it,i)=>Array(it.n).fill(i)));q.placed=q.pile.map(()=>-1);q.sel=null;q.selBin=null;q.phase='sort';
+    pickMode(q,D===0?['howmany','most','most','least']:D===1?['howmany','most','more']:D===2?['more','total2','howmany']:['more','total2','twoSmall','all']);q.noCheck=true;
   },
   render(q){
-    setPrompt('🧺 Sort them into groups!<br><span style="font-size:1rem">Tap a picture, then tap its box.</span>','Sort them into groups. Tap a picture, then tap the box it belongs in.');
+    setPrompt('🧺 Sort them into groups!<br><span style="font-size:1rem">Tap a picture, then tap its box (or tap a box, then its pictures).</span>','Sort them into groups. Tap a picture, then tap the box it belongs in.');
     const draw=()=>{
       stage().innerHTML=(q.phase==='sort'?`<div class="pile">${q.pile.map((k,j)=>q.placed[j]<0?`<button data-item="${j}" class="${q.sel===j?'sel':''}" aria-label="${esc(q.items[k].name)}">${q.items[k].icon}</button>`:'').join('')}</div><div class="smsg" id="smsg"></div>`:'')+
-        `<div class="bins">${q.items.map((it,i)=>{const n=q.placed.filter(b=>b===i).length;return `<button class="bin" data-bin="${i}"><span class="bh">📦 ${it.icon}</span><span class="bc">${it.icon.repeat(n)}</span></button>`;}).join('')}</div>`+(q.phase==='ask'?q.askHTML:'');
+        `<div class="bins">${q.items.map((it,i)=>{const n=q.placed.filter(b=>b===i).length;return `<button class="bin${q.selBin===i&&q.phase==='sort'?' hl':''}" data-bin="${i}"><span class="bh">📦 ${it.icon}</span><span class="bc">${it.icon.repeat(n)}</span></button>`;}).join('')}</div>`+(q.phase==='ask'?q.askHTML:'');
     };
     q.draw=draw;draw();
+    const place=(j,bi)=>{if(q.pile[j]!==bi){q.oops=(q.oops||0)+1;sfx('bad');const nm=q.items[q.pile[j]];q.sel=null;draw();$('#smsg').textContent=`Oops! That ${nm.icon} goes in the ${nm.icon} box.`;const bb=document.querySelector(`[data-bin="${bi}"]`);if(bb)bb.classList.add('shake');return;}
+      q.placed[j]=bi;q.sel=null;sfx('tap');if(q.placed.every(b=>b>=0))TYPES.sort.ask(q);else draw();};
     stage().onclick=e=>{if(q.done)return;
-      if(q.phase==='ask'){const b=e.target.closest('[data-opt]');if(!b)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);return;}
+      if(q.phase==='ask'){const k=e.target.closest('[data-key]');if(k&&q.key){q.key(k.dataset.key);return;}const b=e.target.closest('[data-opt]');if(!b||!q.opts)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);return;}
       const it=e.target.closest('[data-item]'),bin=e.target.closest('[data-bin]');
-      if(it){q.sel=+it.dataset.item;sfx('tap');draw();return;}
+      if(it){const j=+it.dataset.item;if(q.selBin!=null){place(j,q.selBin);return;}q.sel=j;sfx('tap');draw();return;}
       if(bin){const bi=+bin.dataset.bin;
-        if(q.sel===null){$('#smsg').textContent='Tap a picture first! 👆';return;}
-        if(q.pile[q.sel]!==bi){q.oops=(q.oops||0)+1;sfx('bad');const nm=q.items[q.pile[q.sel]];draw();$('#smsg').textContent=`Oops! That ${nm.icon} goes in the ${nm.icon} box.`;const bb=document.querySelector(`[data-bin="${bi}"]`);if(bb)bb.classList.add('shake');return;}
-        q.placed[q.sel]=bi;q.sel=null;sfx('tap');
-        if(q.placed.every(b=>b>=0))TYPES.sort.ask(q);else draw();}
+        if(q.sel===null){q.selBin=q.selBin===bi?null:bi;draw();if(q.selBin==null)$('#smsg').textContent='Tap a picture first! 👆';return;}
+        place(q.sel,bi);}
     };
   },
-  ask(q){q.phase='ask';const it=q.items[q.t];
-    if(q.mode==='howmany'){q.answerKey=it.n;setPrompt(`All sorted! 🎉<br>How many ${it.icon} are there?`,`All sorted! How many ${it.name} are there?`);
-      q.askHTML=numOpts(q,it.n,1,12,[it.n+1,it.n-1]);}
-    else{const ns=q.items.map(i=>i.n),v=q.mode==='most'?Math.max(...ns):Math.min(...ns);q.answerKey=ns.indexOf(v);
-      setPrompt(`All sorted! 🎉<br>Which group has the <b>${q.mode}</b>?`,`All sorted! Which group has the ${q.mode}? Is it ${listSay(q.items.map(i=>i.name))}?`);
-      q.askHTML=choiceUI(q,range(q.items.length),i=>catBtn(q.items[i]),'opts three');}
-    q.draw();sayQ();
-  },
-  hint(q){return q.phase==='sort'?'Look at the picture you tapped. Find the box with the same picture on it.':q.mode==='howmany'?'Look in the box. Touch each one as you count: 1, 2, 3…':`Count each box. The ${q.mode==='most'?'biggest':'smallest'} number wins.`;},
-  explain(q,ok){markChoice(q);document.querySelectorAll('.bin').forEach((b,i)=>{b.insertAdjacentHTML('beforeend',`<span class="bn">${q.items[i].n}</span>`);if(i===(q.mode==='howmany'?q.t:q.answerKey))b.classList.add('hl');});
-    const it=q.mode==='howmany'?q.items[q.t]:q.items[q.answerKey];
-    q.fbSay=q.mode==='howmany'?`There are ${it.n} ${it.name}.`:`The ${it.name} group has the ${q.mode}, with ${it.n}.`;
-    return `<div class="why">${q.mode==='howmany'?`Count the ${it.icon} box: <b>${it.n}</b>.`:`Count every box: ${q.items.map(i=>`${i.icon} ${i.n}`).join(' · ')}.<br>${it.icon} has the <b>${q.mode}</b>.`}</div>`;}
+  ask(q){q.phase='ask';const [h,sp]=modeText(q,'🎉');setPrompt('All sorted! '+h,'All sorted! '+sp);q.askHTML=modeInput(q);q.draw();updCheck();sayQ();},
+  mistake:modeMistake,
+  hint(q){return q.phase==='sort'?'Look at the picture you tapped. Find the box with the same picture on it.':isNumMode(q.mode)?(q.mode==='twoSmall'?'Two steps! First add the two smaller groups. Then find the difference.':'Count each box first. Touch each one as you count.'):`Count each box. The ${q.mode==='most'?'biggest':'smallest'} number wins.`;},
+  explain(q,ok){markChoice(q);const hl=modeHL(q);document.querySelectorAll('.bin').forEach((b,i)=>{b.insertAdjacentHTML('beforeend',`<span class="bn">${q.items[i].n}</span>`);if(hl.includes(i))b.classList.add('hl');});
+    return `<div class="why">${modeWhy(q)}</div>`;}
  },
  /* 2. tally marks */
  tallyRead:{
-  make(q,used){q.n=uniq(used,()=>rnd(3,19),v=>'tr'+v);q.answerKey=q.n;q.gateWrong=q.n>=5?Math.floor(q.n/5)*4+q.n%5:null;},
+  make(q,used){const R=[[3,19],[5,24],[10,34],[15,44],[20,49]][q.D];q.n=uniq(used,()=>rnd(R[0],R[1]),v=>'tr'+v);q.answerKey=q.n;q.gateWrong=q.n>=5?Math.floor(q.n/5)*4+q.n%5:null;},
   render(q){setPrompt('✏️ How many does this tally show?','How many does this tally show?');
-    stage().innerHTML=`<div class="gwrap" style="max-width:480px">${tallySVG(q.n,{h:70})}</div>`+numOpts(q,q.n,1,20,q.gateWrong?[q.gateWrong,q.n+1]:[q.n+1]);bindChoice(q);},
-  mistake(q){return q.gateWrong!=null&&q.opts[q.chosen]===q.gateWrong?'gate':null;},
+    stage().innerHTML=`<div class="gwrap" style="max-width:${q.n>24?560:480}px">${tallySVG(q.n,{h:q.n>24?54:70})}</div>`+numOpts(q,q.n,1,50,q.gateWrong?[q.gateWrong,q.n+1]:[q.n+1]);bindChoice(q);},
+  mistake(q){return q.gateWrong!=null&&chosenVal(q)===q.gateWrong?'gate':null;},
   hint(q){return q.n>=5?'Each bundle with a line across is <b>5</b>. Count the bundles by 5s, then count the ones left over.':'Count each line: 1, 2, 3…';},
   explain(q){markChoice(q);const g=Math.floor(q.n/5),r=q.n%5;q.fbSay=`It shows ${q.n}.`;
-    return `${tallySVG(q.n,{h:60,labels:true})}<div class="why">${g?`Count the bundles by 5s: <b>${range(g).map(i=>5*(i+1)).join(', ')}</b>${r?`, then ${range(r).map(i=>5*g+i+1).join(', ')}`:''}.`:`Count each line: ${range(q.n).map(i=>i+1).join(', ')}.`} That makes <b>${q.n}</b>.${q.mistake==='gate'?'<br>⚠️ Don\'t forget: the red line across is the <b>5th</b> mark!':''}</div>`;}
+    return `${tallySVG(q.n,{h:q.n>24?48:60,labels:true})}<div class="why">${g?`Count the bundles by 5s: <b>${range(g).map(i=>5*(i+1)).join(', ')}</b>${r?`, then ${range(r).map(i=>5*g+i+1).join(', ')}`:''}.`:`Count each line: ${range(q.n).map(i=>i+1).join(', ')}.`} That makes <b>${q.n}</b>.${q.mistake==='gate'?'<br>⚠️ Don\'t forget: the red line across is the <b>5th</b> mark!':''}</div>`;}
  },
  tallyMake:{
-  make(q,used){q.n=uniq(used,()=>rnd(3,14),v=>'tm'+v);q.count=0;},
+  make(q,used){const R=[[3,14],[6,19],[10,24],[12,24],[15,29]][q.D];q.n=uniq(used,()=>rnd(R[0],R[1]),v=>'tm'+v);q.count=0;},
   render(q){setPrompt(`✏️ Make a tally for ${bigN(q.n)}`,`Make a tally for ${q.n}. Tap add a mark until you have ${q.n}. Remember, the fifth mark goes across.`);
-    const draw=()=>{$('#tview').innerHTML=tallySVG(q.count,{h:70,empty:'tap ➕'});};
-    stage().innerHTML=`<div class="gwrap" style="max-width:480px;min-height:110px" id="tview"></div><div class="tallybtns"><button class="btn orange" data-t="add">➕ Add a mark</button><button class="btn ghost" data-t="del">↩ Take one away</button></div>`;draw();
-    q.canCheck=()=>q.count>0;q.nudge='Tap ➕ to add tally marks first.';q.check=()=>q.count===q.n;
-    q.key=k=>{if(q.done)return;if(k==='del')q.count=Math.max(0,q.count-1);else if(q.count<25)q.count++;sfx('tap');draw();updCheck();};
+    const draw=()=>{$('#tview').innerHTML=tallySVG(q.count,{h:q.n>19?54:70,empty:'tap ➕'});};
+    stage().innerHTML=`<div class="gwrap" style="max-width:520px;min-height:110px" id="tview"></div><div class="tallybtns"><button class="btn orange" data-t="add">➕ Add a mark</button><button class="btn ghost" data-t="del">↩ Take one away</button></div>`;draw();
+    q.canCheck=()=>q.count>0;q.nudge='Tap ➕ to add tally marks first.';q.check=()=>q.count===q.n;q.typed=false;
+    q.key=k=>{if(q.done)return;if(k==='del')q.count=Math.max(0,q.count-1);else if(q.count<40)q.count++;sfx('tap');draw();updCheck();};
     stage().onclick=e=>{const b=e.target.closest('[data-t]');if(b)q.key(b.dataset.t);};},
   hint(q){return `Draw 4 lines, then the 5th line goes across to make a bundle of 5. ${q.n>=5?`${q.n} is ${Math.floor(q.n/5)} bundle${q.n>=10?'s':''} of 5${q.n%5?` and ${q.n%5} more`:''}.`:''}`;},
   explain(q,ok){q.fbSay=ok?`Yes, that is ${q.n}.`:`You made ${q.count}. ${q.n} looks like this.`;
-    return `${ok?'':`<div class="why">You made <b>${q.count}</b>. Here is <b>${q.n}</b>:</div>`}${tallySVG(q.n,{h:60,labels:true})}<div class="why">${q.n>=5?`${Math.floor(q.n/5)} bundle${q.n>=10?'s':''} of 5${q.n%5?` and ${q.n%5} more`:''} = <b>${q.n}</b>`:`${q.n} lines`}</div>`;}
+    return `${ok?'':`<div class="why">You made <b>${q.count}</b>. Here is <b>${q.n}</b>:</div>`}${tallySVG(q.n,{h:q.n>19?48:60,labels:true})}<div class="why">${q.n>=5?`${Math.floor(q.n/5)} bundle${q.n>=10?'s':''} of 5${q.n%5?` and ${q.n%5} more`:''} = <b>${q.n}</b>`:`${q.n} lines`}</div>`;}
  },
  tallyTable:{
-  make(q,used){q.d=uniq(used,()=>catData(anyCat(),3,2,12,false),x=>dkey('tt',x));q.t=rnd(0,2);q.answerKey=q.d.items[q.t].n;},
-  render(q){const it=q.d.items[q.t];setPrompt(`✏️ How many chose ${it.icon}?`,`This tally is about ${q.d.C.about}. How many children chose ${it.name}?`);
-    stage().innerHTML=wrap(`<div class="gtitle">${esc(q.d.C.title)}</div>${tallyTable(q.d.items)}`)+numOpts(q,it.n,1,15,it.n>=5?[Math.floor(it.n/5)*4+it.n%5]:[]);bindChoice(q);},
-  hint(q){const it=q.d.items[q.t];return `Find the ${it.icon} row. Count the bundles by 5s, then the extra lines.`;},
-  explain(q){markChoice(q);const it=q.d.items[q.t];q.fbSay=`${it.n} children chose ${it.name}.`;return tallyTable(q.d.items,{hl:q.t,labels:true})+`<div class="why">The ${it.icon} row shows <b>${it.n}</b>.</div>`;}
+  make(q,used){const D=q.D,hi=[12,15,20,25,25][D];q.d=uniq(used,()=>catData(anyCat(),3,2,hi,D>=2?'all':false),x=>dkey('tt',x));
+    pickMode(q,D===0?['howmany']:D===1?['howmany','more']:D===2?['howmany','more','total2']:['more','total2','twoSmall','all']);},
+  render(q){const [h,sp]=modeText(q,'✏️');setPrompt(h,`This tally is about ${q.d.C.about}. `+sp);
+    stage().innerHTML=wrap(`<div class="gtitle">${esc(q.d.C.title)}</div>${tallyTable(q.d.items,{h:36})}`)+modeInput(q);bindChoice(q);},
+  mistake:modeMistake,
+  hint(q){return q.mode==='howmany'?`Find the ${q.d.items[q.t].icon} row. Count the bundles by 5s, then the extra lines.`:'Work out each tally number first. Then add or take away.';},
+  explain(q){markChoice(q);return tallyTable(q.d.items,{hl:modeHL(q)[0],labels:true,nums:true})+`<div class="why">${modeWhy(q)}</div>`;}
  },
- /* 3. picture graphs */
+ /* 3. picture graphs (1 picture = 1) */
  pict:{
-  make(q,used){q.d=uniq(used,()=>catData(anyCat(),rnd(3,4),1,8),x=>dkey('p',x));q.mode=pick(['howmany','howmany','most','least']);qMode(q);},
-  render(q){graphQ(q,(o)=>pictHTML(q.d.items,Object.assign({title:q.d.C.title},o)),'🙂');},
-  hint(q){return q.mode==='howmany'?'One picture means one child. Count the pictures in that row.':`Look for the ${q.mode==='most'?'longest':'shortest'} row of pictures.`;},
-  explain(q){markChoice(q);return graphExplain(q,o=>pictHTML(q.d.items,Object.assign({nums:true,key:false},o)));}
+  make(q,used){const D=q.D;q.d=uniq(used,()=>catData(anyCat(),D>=3?4:rnd(3,4),1,D===0?8:D<=2?10:12),x=>dkey('p',x));
+    pickMode(q,[['howmany','howmany','most','least'],['howmany','more','most','least'],['howmany','more','total2','least'],['more','total2','twoSmall','most'],['more','total2','twoSmall','all']][D]);},
+  render(q){graphQ(q,o=>pictHTML(q.d.items,Object.assign({title:q.d.C.title},o)),'🙂');},
+  mistake:modeMistake,
+  hint(q){return isNumMode(q.mode)?'One picture means one child. Count the pictures in each row you need.':`Look for the ${q.mode==='most'?'longest':'shortest'} row of pictures.`;},
+  explain(q){markChoice(q);return pictHTML(q.d.items,{nums:true,key:false,hl:modeHL(q)})+`<div class="why">${modeWhy(q)}</div>`;}
  },
  /* 4. column graphs */
  col:{
-  make(q,used){q.d=uniq(used,()=>catData(anyCat(),rnd(3,4),1,10),x=>dkey('c',x));q.mode=pick(['howmany','most','least','more','more']);qMode(q);},
-  render(q){graphQ(q,(o)=>colSVG(q.d.items,Object.assign({title:q.d.C.title},o)),'📊');},
-  mistake(q){return q.mode==='more'&&q.opts[q.chosen]===q.d.items[q.a].n?'moreTotal':null;},
-  hint(q){const I=q.d.items;return q.mode==='howmany'?'Go to the top of the column, then look across to the numbers on the side.':q.mode==='more'?`Find how tall ${I[q.a].icon} and ${I[q.b].icon} are. How many squares is ${I[q.a].icon} taller?`:`Look for the ${q.mode==='most'?'tallest':'shortest'} column.`;},
-  explain(q){markChoice(q);return graphExplain(q,o=>colSVG(q.d.items,o));}
+  make(q,used){const D=q.D;q.scale=D>=3?2:1;q.le=D===4?2:D>=1&&D<3?2:1;
+    q.d=uniq(used,()=>catData(anyCat(),D>=2?4:rnd(3,4),q.scale,10*q.scale,true,q.scale),x=>dkey('c',x));
+    pickMode(q,[['howmany','most','least','more','more'],['howmany','more','more','most'],['howmany','more','total2','least'],['howmany','more','total2','twoSmall'],['more','total2','twoSmall','diffML']][D]);},
+  render(q){graphQ(q,o=>colSVG(q.d.items,Object.assign({title:q.d.C.title,scale:q.scale,le:q.le},o)),'📊');},
+  mistake:modeMistake,
+  hint(q){const I=q.d.items;return (q.scale>1?`The numbers on the side count by <b>${q.scale}s</b>. `:'')+(q.le>1?'Some lines have no number. Count up the lines to find them. ':'')+(q.mode==='howmany'?'Go to the top of the column, then look across to the side.':q.mode==='more'?`Find how tall ${I[q.a].icon} and ${I[q.b].icon} are. Then find the difference.`:isNumMode(q.mode)?'Find each number first, then add or take away.':`Look for the ${q.mode==='most'?'tallest':'shortest'} column.`);},
+  explain(q){markChoice(q);return (q.mode==='more'?colSVG(q.d.items,{nums:true,diff:[q.a,q.b],scale:q.scale}):colSVG(q.d.items,{hl:modeHL(q),nums:true,scale:q.scale}))+`<div class="why">${modeWhy(q)}</div>`;}
  },
- /* 5. pie charts */
+ /* 5. pie charts (halves and quarters) */
  pie:{
-  make(q,used){const mode=pick(['biggest','smallest','half','quarter','same','match']);q.mode=mode;
-    const pat=mode==='smallest'||mode==='quarter'?[3,1]:mode==='half'||mode==='same'?[2,1,1]:pick([[3,1],[2,1,1]]);
+  make(q,used){const D=q.D;const mode=pick([['biggest','smallest','half','quarter','same','match'],['biggest','smallest','half','same','match','quarters'],['half','same','match','quarters','quarters','compare'],['same','match','quarters','compare','compare'],['match','quarters','compare','compare']][D]);q.mode=mode;
+    if(mode==='compare'){const cols=shuffle(PIECOLS.slice()).slice(0,3);const pA=pick([[2,1,1],[3,1],[1,1,2],[1,3],[2,2]]);let pB;do{pB=pick([[2,1,1],[1,2,1],[1,1,2],[3,1],[1,3],[2,2]]);}while(pB[0]===pA[0]||pB.length<1);
+      q.pies=[pA,pB].map(p=>p.map((v,i)=>({q:v,col:cols[i].col,name:cols[i].name})));q.target=cols[0];q.answerKey=pA[0]>pB[0]?0:1;used.add('pc'+pA+pB);return;}
+    const pat=mode==='smallest'||mode==='quarter'?[3,1]:mode==='half'||mode==='same'?[2,1,1]:mode==='quarters'?pick([[3,1],[2,1,1],[2,2]]):pick([[3,1],[2,1,1]]);
     if(mode==='match'){const C=CATS[pick(['fruit','sport','pet'])],its=shuffle(C.items.slice()).slice(0,3),p=pick([[2,1,1],[2,2],[3,1]]);
       q.C=C;q.its=its.slice(0,p.length);q.pat=p;
       const variants=[p.slice()];
@@ -523,78 +608,218 @@ const TYPES={
     const cols=shuffle(PIECOLS.slice()).slice(0,pat.length);q.slices=shuffle(pat.map((v,i)=>({q:v,col:cols[i].col,name:cols[i].name})));
     used.add('pie'+mode+q.slices.map(s=>s.name+s.q).join());
     const qs=q.slices.map(s=>s.q);
-    if(mode==='biggest')q.answerKey=qs.indexOf(Math.max(...qs));
+    if(mode==='quarters'){q.t=rnd(0,qs.length-1);q.answerKey=qs[q.t];}
+    else if(mode==='biggest')q.answerKey=qs.indexOf(Math.max(...qs));
     else if(mode==='smallest'||mode==='quarter')q.answerKey=qs.indexOf(1);
     else if(mode==='half')q.answerKey=qs.indexOf(2);
     else{const ones=range(qs.length).filter(i=>qs[i]===1);q.answerKey=ones.join('+');}
   },
   render(q){
+    if(q.mode==='compare'){const t=q.target;setPrompt(`🥧 In which pie is <b>${t.name}</b> bigger?`,`Look at both pies. In which pie is the ${t.name} part bigger, pie A or pie B?`);
+      stage().innerHTML=choiceUI(q,[0,1],i=>`<span class="nm" style="font-size:1.3rem;font-weight:bold">Pie ${'AB'[i]}</span>${pieSVG(q.pies[i],{r:70,cls:''})}`,'opts three two');bindChoice(q);return;}
     if(q.mode==='match'){const txt={2:'half',1:'a quarter',3:'three quarters'};
       const lines=q.pat.map((v,i)=>`${{2:'½ half',1:'¼ quarter',3:'¾ three quarters'}[v]} chose ${q.its[i].icon}`);
       setPrompt(`🥧 Which pie shows this?<div style="font-size:1.05rem;line-height:1.5">${lines.join('<br>')}</div>`,`Which pie chart shows this? ${q.pat.map((v,i)=>`${txt[v]} of the children chose ${q.its[i].name}.`).join(' ')}`);
       q.order=shuffle(range(q.variants.length));
       stage().innerHTML=`<div class="legend">${q.its.map(it=>`<span>${it.icon} <span class="sw" style="display:inline-block;width:26px;height:20px;border-radius:5px;background:${it.col};vertical-align:middle"></span></span>`).join('')}</div>`+
         choiceUI(q,q.order,v=>pieSVG(q.variants[v].map((n,i)=>({q:n,col:q.its[i].col,name:q.its[i].name})),{r:60,cls:''}),'opts three');bindChoice(q);return;}
+    if(q.mode==='quarters'){const s=q.slices[q.t];setPrompt(`🥧 How many <b>quarters</b> is <span style="color:${s.col}">${s.name}</span>?`,`The pie is cut into quarters. How many quarters is ${s.name}?`);
+      stage().innerHTML=`<div class="gwrap" style="max-width:300px">${pieSVG(q.slices)}</div>`+(q.D<=1?choiceUI(q,[1,2,3,4],null,'opts'):keypadUI(q,'quarters'));bindChoice(q);return;}
     const words={biggest:'Which colour is the <b>biggest</b> slice?',smallest:'Which colour is the <b>smallest</b> slice?',half:'Which colour is <b>half</b> of the pie?',quarter:'Which colour is <b>one quarter</b> of the pie?',same:'Which two colours are the <b>same size</b>?'};
     setPrompt('🥧 '+words[q.mode],words[q.mode].replace(/<\/?b>/g,'')+(q.mode==='same'?'':` Is it ${listSay(q.slices.map(s=>s.name))}?`));
     let vals=range(q.slices.length),lab=i=>swBtn(q.slices[i]);
     if(q.mode==='same'){vals=[];for(let i=0;i<3;i++)for(let j=i+1;j<3;j++)vals.push(i+'+'+j);lab=v=>v.split('+').map(i=>`<span class="sw" style="background:${q.slices[i].col};display:inline-block;width:40px;margin:0 3px"></span>`).join('')+`<span class="nm">${v.split('+').map(i=>q.slices[i].name).join(' & ')}</span>`;}
     stage().innerHTML=`<div class="gwrap" style="max-width:300px">${pieSVG(q.slices)}</div>`+choiceUI(q,vals,lab,'opts three');bindChoice(q);},
-  hint(q){return {biggest:'Which colour covers the most of the circle?',smallest:'Which colour covers the least of the circle?',half:'Half is when the pie is cut into 2 equal parts. Look for the colour that fills one whole side.',quarter:'A quarter is 1 of 4 equal parts, like a pizza cut into 4.',same:'Find two slices that would fit exactly on top of each other.',match:'Half means 2 equal parts. A quarter means 4 equal parts. Find the colour that fills half the circle first.'}[q.mode];},
+  hint(q){return {biggest:'Which colour covers the most of the circle?',smallest:'Which colour covers the least of the circle?',half:'Half is when the pie is cut into 2 equal parts. Look for the colour that fills one whole side.',quarter:'A quarter is 1 of 4 equal parts, like a pizza cut into 4.',same:'Find two slices that would fit exactly on top of each other.',match:'Half means 2 equal parts. A quarter means 4 equal parts. Find the colour that fills half the circle first.',quarters:'Imagine lines cutting the pie into 4 equal pieces. How many of those pieces does the colour cover?',compare:'Both pies are the same size. Look at how much of each circle the colour covers.'}[q.mode];},
   explain(q){markChoice(q);
+    if(q.mode==='compare'){const t=q.target,a=q.pies[0][0].q,b=q.pies[1][0].q,nm={1:'a quarter',2:'half',3:'three quarters'};q.fbSay=`${t.name} is ${nm[a]} of pie A and ${nm[b]} of pie B.`;
+      return `<div class="row" style="justify-content:center">${q.pies.map((p,i)=>`<div><b>Pie ${'AB'[i]}</b>${pieSVG(p,{labels:true,r:60,hl:0})}</div>`).join('')}</div><div class="why">${t.name}: pie A = ${nm[a]}, pie B = ${nm[b]}. Pie <b>${'AB'[q.answerKey]}</b> has more.</div>`;}
     if(q.mode==='match'){q.fbSay='The right pie is the one where each colour is the right size.';return pieSVG(q.pat.map((n,i)=>({q:n,col:q.its[i].col})),{labels:true,r:80})+`<div class="why">${q.pat.map((v,i)=>`${q.its[i].icon} = ${{2:'half',1:'a quarter',3:'three quarters'}[v]}`).join(' · ')}</div>`;}
+    if(q.mode==='quarters'){const s=q.slices[q.t];q.fbSay=`${s.name} is ${s.q} quarter${s.q>1?'s':''}.`;return pieSVG(q.slices,{labels:true,hl:q.t,r:80})+`<div class="why">${s.name} covers <b>${s.q}</b> of the 4 quarters.</div>`;}
     const a=String(q.answerKey).split('+').map(Number),nm=a.map(i=>q.slices[i].name).join(' and ');
     q.fbSay=q.mode==='same'?`${nm} are both one quarter.`:`It is ${nm}.`;
     return pieSVG(q.slices,{labels:true,hl:a.length===1?a[0]:-1,r:80})+`<div class="why">${q.slices.map(s=>`<span style="color:${s.col};font-weight:bold">■</span> ${s.name} = ${{1:'a quarter',2:'half',3:'three quarters'}[s.q]}`).join(' · ')}<br>${q.mode==='same'?`<b>${nm}</b> are both a quarter.`:q.mode==='half'||q.mode==='quarter'?`<b>${nm}</b> is ${q.mode==='half'?'half':'a quarter'}.`:`<b>${nm}</b> is the ${q.mode} slice.`}</div>`;}
  },
  /* 6. build a column graph from a tally */
  build:{
-  make(q,used){q.d=uniq(used,()=>catData(anyCat(),3,1,7,false),x=>dkey('b',x));q.h=[0,0,0];},
-  render(q){setPrompt('🏗️ Build the column graph from the tally!<br><span style="font-size:1rem">Tap a square to make each column that tall.</span>','Build the column graph from the tally. Count each tally, then tap a square to make the column that tall.');
-    const draw=()=>{$('#bview').innerHTML=colSVG(q.d.items,{max:8,build:q.h,title:q.d.C.title});};
-    stage().innerHTML=wrap(tallyTable(q.d.items,{h:34}))+`<div class="gwrap" id="bview"></div>`;draw();
-    q.canCheck=()=>q.h.some(v=>v>0);q.nudge='Tap the squares to build the columns first.';q.check=()=>q.h.every((v,i)=>v===q.d.items[i].n);
+  make(q,used){const D=q.D;q.scale=D>=3?2:1;q.max=D===0?8:10;const k=D>=2?4:3;
+    q.d=uniq(used,()=>catData(anyCat(),k,q.scale,D===0?7:10*q.scale,false,q.scale),x=>dkey('b',x));q.h=Array(k).fill(0);},
+  render(q){const sc=q.scale;setPrompt(`🏗️ Build the column graph from the tally!<br><span style="font-size:1rem">${sc>1?`Each square is worth <b>${sc}</b>. `:''}Tap a square to make each column that tall.</span>`,`Build the column graph from the tally. ${sc>1?`Careful: each square is worth ${sc}. `:''}Count each tally, then tap a square to make the column that tall.`);
+    const draw=()=>{$('#bview').innerHTML=colSVG(q.d.items,{max:q.max,build:q.h,title:q.d.C.title,scale:sc});};
+    stage().innerHTML=wrap(tallyTable(q.d.items,{h:30}))+`<div class="gwrap" id="bview"></div>`;draw();
+    q.canCheck=()=>q.h.some(v=>v>0);q.nudge='Tap the squares to build the columns first.';q.check=()=>q.h.every((v,i)=>v*sc===q.d.items[i].n);q.typed=false;
     q.tap=(c,l)=>{if(q.done)return;q.h[c]=q.h[c]===l?l-1:l;sfx('tap');draw();updCheck();};
     stage().onclick=e=>{const c=e.target.closest('[data-cell]');if(c){const [a,b]=c.dataset.cell.split(',').map(Number);q.tap(a,b);}};},
-  hint(q){const it=q.d.items[0];return `Count the ${it.icon} tally first: it is ${it.n}. Tap the square next to ${it.n} in the ${it.icon} column.`;},
-  explain(q,ok){const bad=q.d.items.map((it,i)=>i).filter(i=>q.h[i]!==q.d.items[i].n);q.fbSay=ok?'Your graph matches the tally.':'Here is the right graph.';
-    return `${colSVG(q.d.items,{max:8,nums:true})}<div class="why">${ok?'Every column matches the tally. 🏗️':bad.map(i=>`${q.d.items[i].icon} should be <b>${q.d.items[i].n}</b> (you made ${q.h[i]})`).join('<br>')}</div>`;}
+  hint(q){const it=q.d.items[0];return `Count the ${it.icon} tally first: it is ${it.n}.`+(q.scale>1?` Each square is ${q.scale}, so you need ${it.n/q.scale} squares.`:` Tap the square next to ${it.n} in the ${it.icon} column.`);},
+  explain(q,ok){const bad=q.d.items.map((it,i)=>i).filter(i=>q.h[i]*q.scale!==q.d.items[i].n);q.fbSay=ok?'Your graph matches the tally.':'Here is the right graph.';
+    return `${colSVG(q.d.items,{max:q.max,nums:true,scale:q.scale})}<div class="why">${ok?'Every column matches the tally. 🏗️':bad.map(i=>`${q.d.items[i].icon} should be <b>${q.d.items[i].n}</b> (you made ${q.h[i]*q.scale})`).join('<br>')}</div>`;}
  },
  /* 7. which graph answers the question? */
  choose:{
-  make(q,used){q.mode=pick(['whichGraph','whichQ']);const cats=shuffle(['cube','sport','fruit','pet']).slice(0,3);
-    q.ds=cats.map(c=>catData(c,3,1,6));q.t=rnd(0,2);q.it=pick(q.ds[q.t].items);q.answerKey=q.t;q.kinds=shuffle(['col','pict','tally']);used.add('ch'+q.mode+cats.join());},
-  render(q){const D=q.ds[q.t];
+  make(q,used){const D=q.D;q.mode=pick(['whichGraph','whichQ']);const nG=D>=2?4:3;const cats=shuffle(['cube','sport','fruit','pet']).slice(0,nG);
+    q.ds=cats.map(c=>catData(c,3,1,6));q.t=rnd(0,nG-1);q.it=pick(q.ds[q.t].items);q.answerKey=q.t;q.kinds=shuffle(['col','pict','tally','col'].slice(0,nG));used.add('ch'+q.mode+cats.join());},
+  render(q){const D=q.ds[q.t],n=q.ds.length;
     if(q.mode==='whichGraph'){setPrompt(`🔍 Which graph tells us how many chose ${q.it.icon}?`,`Which graph tells us how many children chose ${q.it.name}?`);
-      stage().innerHTML=choiceUI(q,range(3),i=>miniGraph(q.ds[i],q.kinds[i]),'opts graphs');}
+      stage().innerHTML=choiceUI(q,range(n),i=>miniGraph(q.ds[i],q.kinds[i]),'opts graphs'+(n===4?' g4':''));}
     else{const others=q.ds.map(d=>pick(d.items));others[q.t]=q.it;
       setPrompt('🔍 Which question can this graph answer?',`Which question can this graph answer? ${others.map(it=>`How many chose ${it.name}?`).join(' Or, ')}`);
-      stage().innerHTML=wrap(colSVG(D.items,{max:6,title:D.C.title}))+choiceUI(q,range(3),i=>`How many chose ${others[i].icon}?`,'opts qs');}
+      stage().innerHTML=wrap(colSVG(D.items,{max:6,title:D.C.title}))+choiceUI(q,range(n),i=>`How many chose ${others[i].icon}?`,'opts qs');}
     bindChoice(q);},
   hint(q){return q.mode==='whichGraph'?`Look at the pictures under each graph. Which one has ${q.it.icon}?`:'Look at the pictures under the columns. The question must be about one of them.';},
   explain(q){markChoice(q);const D=q.ds[q.t];q.fbSay=`This graph is about ${D.C.about}, so it can answer the question about ${q.it.name}.`;
     return `${q.mode==='whichGraph'?colSVG(D.items,{max:6,nums:true,hl:[D.items.indexOf(q.it)],title:D.C.title}):''}<div class="why">The ${esc(D.C.title.toLowerCase())} graph shows ${D.items.map(i=>i.icon).join(' ')}, so it can tell us about ${q.it.icon}.<br>${q.it.icon} = <b>${q.it.n}</b> children.</div>`;}
  },
+ /* 9. picture graphs with a key (1 picture = 2 or 10, half pictures) */
+ pict2:{
+  make(q,used){const D=q.D;q.kv=D>=3&&Math.random()<0.4?10:2;const h=q.kv/2;
+    q.d=uniq(used,()=>catData(anyCat(),D>=2?4:3,h,q.kv===10?60:(D===0?12:16),true,D===0&&Math.random()<0.5?q.kv:h),x=>dkey('p2'+q.kv,x));
+    pickMode(q,[['howmany','howmany','most'],['howmany','more','most'],['howmany','more','total2'],['more','total2','twoSmall','howmany'],['total2','twoSmall','all','more']][D]);},
+  render(q){const kv=q.kv;graphQ(q,o=>pictHTML(q.d.items,Object.assign({title:q.d.C.title,kv},o)),'🖼️',`Look at the key: one picture means ${kv} children. `);},
+  mistake(q){const m=modeMistake(q);if(m)return m;if(q.mode==='howmany'){const v=chosenVal(q),it=q.d.items[q.t],pics=Math.ceil(it.n/q.kv);if(v===pics)return 'keyCount';}return null;},
+  hint(q){const kv=q.kv;return `Each picture is <b>${kv}</b>, so count in ${kv}s: ${range(4).map(i=>(i+1)*kv).join(', ')}… Half a picture is <b>${kv/2}</b>.`;},
+  explain(q){markChoice(q);return pictHTML(q.d.items,{nums:true,key:true,kv:q.kv,hl:modeHL(q),counts:true})+`<div class="why">${modeWhy(q)}${q.mistake==='keyCount'?`<br>⚠️ You counted the pictures. Each picture is <b>${q.kv}</b> children!`:''}</div>`;}
+ },
+ /* 10. column graphs with scales */
+ scaled:{
+  make(q,used){const D=q.D;q.scale=pick([[2],[2,5],[2,5,10],[2,5,10],[2,5,10]][D]);q.le=D>=3?2:1;
+    const half=D===4&&q.scale!==5&&Math.random()<0.5;const step=half?q.scale/2:q.scale;
+    q.d=uniq(used,()=>catData(anyCat(),D>=2?4:3,step,q.scale*(D>=3?10:8),true,step),x=>dkey('sc'+q.scale,x));
+    q.max=Math.ceil(Math.max(...q.d.items.map(i=>i.n))/q.scale)+1;q.max=Math.max(q.max,6);if(q.le===2&&q.max%2)q.max++;
+    pickMode(q,[['howmany','howmany','most'],['howmany','more','least'],['howmany','more','total2'],['howmany','more','total2','diffML'],['howmany','total2','twoSmall','diffML']][D]);},
+  render(q){graphQ(q,o=>colSVG(q.d.items,Object.assign({title:q.d.C.title,scale:q.scale,le:q.le,max:q.max},o)),'📏',`The numbers count by ${q.scale}s. `);},
+  mistake(q){const m=modeMistake(q);if(m)return m;if(q.mode==='howmany'&&chosenVal(q)*q.scale===q.d.items[q.t].n&&q.scale>1)return 'scaleLines';return null;},
+  hint(q){return `The side counts by <b>${q.scale}s</b>: 0, ${q.scale}, ${2*q.scale}, ${3*q.scale}…${q.le>1?' Lines without a number are in between.':''}${q.d.items.some(i=>i.n%q.scale)?` A column that stops halfway between two lines is ${q.scale/2} more.`:''}`;},
+  explain(q){markChoice(q);return colSVG(q.d.items,{hl:modeHL(q),nums:true,scale:q.scale,le:1,max:q.max})+`<div class="why">The lines go up in ${q.scale}s.<br>${modeWhy(q)}${q.mistake==='scaleLines'?`<br>⚠️ You counted lines. Each line is worth <b>${q.scale}</b>!`:''}</div>`;}
+ },
+ /* 11. two-step questions */
+ twostep:{
+  make(q,used){const D=q.D;q.kind=pick(D>=3?['col','pict','tally','col2']:['col','pict','tally']);const sc=q.kind==='col2'?2:1;q.scale=sc;
+    const k=D>=3?4:3,hi=q.kind==='pict'?Math.min(12,[8,10,12,16,20][D]):[8,10,12,16,20][D]*sc;
+    const modes=[['total2','all'],['total2','all','diffML'],['total2','twoSmall','diffML','all'],['twoSmall','total2','all','diffML'],['twoSmall','twoSmall','all','diffML']][D];
+    for(let t=0;t<30;t++){q.d=catData(anyCat(),k,sc,Math.max(6,Math.floor(hi/sc)*sc),'all',sc);pickMode(q,modes);if(!used.has(dkey('ts'+q.mode,q.d)))break;}used.add(dkey('ts'+q.mode,q.d));
+    if(q.kind==='col'||q.kind==='col2')q.max=Math.max(...q.d.items.map(i=>i.n))/sc+1;},
+  view(q,o={}){const I=q.d.items;return q.kind==='pict'?pictHTML(I,Object.assign({title:q.d.C.title},o)):q.kind==='tally'?`<div class="gtitle">${esc(q.d.C.title)}</div>`+tallyTable(I,{h:30,hl:(o.hl||[])[0],nums:o.nums,labels:o.nums}):colSVG(I,Object.assign({title:q.d.C.title,scale:q.scale,max:Math.max(6,Math.ceil(q.max||10))},o));},
+  render(q){const [h,sp]=modeText(q,'🧠');setPrompt(h+`<br><span style="font-size:.95rem">Two steps! 🧠</span>`,sp+' This needs two steps.');stage().innerHTML=wrap(TYPES.twostep.view(q))+modeInput(q);bindChoice(q);},
+  mistake:modeMistake,
+  hint(q){const I=q.d.items;return q.mode==='twoSmall'?`Step 1: add ${I[q.b].icon} and ${I[q.c].icon}. Step 2: how many more is ${I[q.a].icon} than that?`:q.mode==='all'?'Write down each number, then add them all up. Make 10s where you can!':q.mode==='diffML'?'Step 1: find the most and the least. Step 2: find the difference.':`Find the ${I[q.a].icon} and ${I[q.b].icon} numbers, then add them.`;},
+  explain(q){markChoice(q);return TYPES.twostep.view(q,{hl:modeHL(q),nums:true})+`<div class="why">${modeWhy(q)}${q.mistake==='oneStep'?'<br>⚠️ You only did one step. Remember to <b>add the two small groups</b> first!':''}</div>`;}
+ },
+ /* 12. tables (two-way) */
+ table:{
+  make(q,used){const D=q.D;const names=[NAME].concat(shuffle(['Mia','Leo','Zara','Sam','Ava','Noah']).slice(0,D>=3?3:2));const days=['Mon','Tue','Wed'].slice(0,D>=2?3:2);
+    q.topic=pick([{t:'Cubes solved',u:'cubes',v:'solve'},{t:'Laps run',u:'laps',v:'run'}]);q.rows=shuffle(names);q.cols=days;const hi=[10,12,12,15,20][D];
+    for(let t=0;t<40;t++){q.grid=q.rows.map(()=>days.map(()=>rnd(1,hi)));q.mode=pick([['cell','cell','whoMost'],['cell','whoMost','rowTotal'],['cell','rowTotal','colTotal','whoMost','diff'],['rowTotal','colTotal','diff','whoMost'],['rowTotal','colTotal','diff','whoTotal']][D]);
+      q.r=rnd(0,q.rows.length-1);q.c=rnd(0,days.length-1);
+      do{q.r2=rnd(0,q.rows.length-1);}while(q.r2===q.r);
+      const col=q.grid.map(r=>r[q.c]),tot=q.grid.map(r=>sum(r));
+      if(q.mode==='whoMost'&&col.filter(v=>v===Math.max(...col)).length>1)continue;
+      if(q.mode==='whoTotal'&&tot.filter(v=>v===Math.max(...tot)).length>1)continue;
+      if(q.mode==='diff'&&q.grid[q.r][q.c]===q.grid[q.r2][q.c])continue;
+      if(!used.has('tb'+q.mode+q.grid))break;}
+    used.add('tb'+q.mode+q.grid);const G=q.grid,col=G.map(r=>r[q.c]),tot=G.map(r=>sum(r));
+    if(q.mode==='diff'&&G[q.r][q.c]<G[q.r2][q.c])[q.r,q.r2]=[q.r2,q.r];
+    q.answerKey=q.mode==='cell'?G[q.r][q.c]:q.mode==='rowTotal'?tot[q.r]:q.mode==='colTotal'?sum(col):q.mode==='diff'?G[q.r][q.c]-G[q.r2][q.c]:q.mode==='whoMost'?col.indexOf(Math.max(...col)):tot.indexOf(Math.max(...tot));},
+  view(q,hl){const G=q.grid;return `<div class="gtitle">${q.topic.t}</div><table class="dtable"><tr><th></th>${q.cols.map((c,j)=>`<th class="${hl&&hl.c===j?'hl':''}">${c}</th>`).join('')}${hl&&hl.tot?'<th>Total</th>':''}</tr>${q.rows.map((r,i)=>`<tr><th class="${hl&&hl.r&&hl.r.includes(i)?'hl':''}">${esc(r)}</th>${G[i].map((v,j)=>`<td class="${hl&&((hl.r&&hl.r.includes(i)&&(hl.c==null||hl.c===j))||(hl.r==null&&hl.c===j))?'hl':''}">${v}</td>`).join('')}${hl&&hl.tot?`<td><b>${sum(G[i])}</b></td>`:''}</tr>`).join('')}${hl&&hl.colTot?`<tr><th>Total</th>${q.cols.map((c,j)=>`<td><b>${sum(G.map(r=>r[j]))}</b></td>`).join('')}</tr>`:''}</table>`;},
+  render(q){const R=q.rows,C=q.cols,u=q.topic.u,day={Mon:'Monday',Tue:'Tuesday',Wed:'Wednesday'};let h,sp;
+    switch(q.mode){case 'cell':h=`How many ${u} did <b>${esc(R[q.r])}</b> do on <b>${C[q.c]}</b>?`;sp=`How many ${u} did ${R[q.r]} do on ${day[C[q.c]]}?`;break;
+     case 'rowTotal':h=`How many ${u} did <b>${esc(R[q.r])}</b> do <b>altogether</b>?`;sp=`How many ${u} did ${R[q.r]} do altogether, on all the days?`;break;
+     case 'colTotal':h=`How many ${u} did everyone do on <b>${C[q.c]}</b>?`;sp=`How many ${u} did everyone do altogether on ${day[C[q.c]]}?`;break;
+     case 'diff':h=`On <b>${C[q.c]}</b>, how many more ${u} did <b>${esc(R[q.r])}</b> do than <b>${esc(R[q.r2])}</b>?`;sp=`On ${day[C[q.c]]}, how many more ${u} did ${R[q.r]} do than ${R[q.r2]}?`;break;
+     case 'whoMost':h=`Who did the <b>most</b> ${u} on <b>${C[q.c]}</b>?`;sp=`Who did the most ${u} on ${day[C[q.c]]}?`;break;
+     default:h=`Who did the most ${u} <b>altogether</b>?`;sp=`Who did the most ${u} altogether, on all the days?`;}
+    setPrompt('📋 '+h,sp);const who=q.mode.startsWith('who');
+    stage().innerHTML=wrap(TYPES.table.view(q))+(who?choiceUI(q,range(R.length),i=>`<span class="nm" style="font-size:1.2rem">${esc(R[i])}</span>`,'opts'):numOpts(q,q.answerKey,0,99,[]));bindChoice(q);},
+  hint(q){return {cell:'Find the name on the left. Go across to the right day.',rowTotal:'Find the name, then add every number in that row.',colTotal:'Find the day at the top, then add every number going down.',diff:'Find both numbers in that day\'s column, then find the difference.',whoMost:'Look down that day\'s column for the biggest number.',whoTotal:'Add up each row first. Then compare the totals.'}[q.mode];},
+  explain(q){markChoice(q);const G=q.grid,m=q.mode;let hl,why;
+    if(m==='cell'){hl={r:[q.r],c:q.c};why=`${esc(q.rows[q.r])} on ${q.cols[q.c]}: <b>${G[q.r][q.c]}</b>`;q.fbSay=`It is ${G[q.r][q.c]}.`;}
+    else if(m==='rowTotal'){hl={r:[q.r],tot:true};why=`${G[q.r].join(' + ')} = <b>${sum(G[q.r])}</b>`;q.fbSay=`${G[q.r].join(' plus ')} is ${sum(G[q.r])}.`;}
+    else if(m==='colTotal'){hl={c:q.c,colTot:true};why=`${G.map(r=>r[q.c]).join(' + ')} = <b>${q.answerKey}</b>`;q.fbSay=`Add down the column: ${q.answerKey}.`;}
+    else if(m==='diff'){hl={r:[q.r,q.r2],c:q.c};why=`${G[q.r][q.c]} − ${G[q.r2][q.c]} = <b>${q.answerKey}</b>`;q.fbSay=`${G[q.r][q.c]} take away ${G[q.r2][q.c]} is ${q.answerKey}.`;}
+    else if(m==='whoMost'){hl={c:q.c};why=`<b>${esc(q.rows[q.answerKey])}</b> did ${G[q.answerKey][q.c]}, the most on ${q.cols[q.c]}.`;q.fbSay=`${q.rows[q.answerKey]} did the most.`;}
+    else{hl={tot:true,r:[q.answerKey]};why=`Totals: ${q.rows.map((r,i)=>`${esc(r)} ${sum(G[i])}`).join(' · ')}<br><b>${esc(q.rows[q.answerKey])}</b> did the most.`;q.fbSay=`${q.rows[q.answerKey]} did the most altogether.`;}
+    return TYPES.table.view(q,hl)+`<div class="why">${why}</div>`;}
+ },
+ /* 13. eighths and comparing two pies */
+ pie8:{
+  make(q,used){const D=q.D;q.mode=pick([['eighths','eighths','biggest','half'],['eighths','half','quarter','biggest','together'],['eighths','together','quarter','compare','half'],['together','compare','compare','moreHalf','eighths'],['together','compare','moreHalf','moreHalf','eighths']][D]);
+    const pats={eighths:[[5,2,1],[4,3,1],[3,3,2],[4,2,1,1],[2,2,2,2],[6,2],[3,2,2,1]],biggest:[[5,2,1],[4,3,1],[6,1,1],[4,2,1,1],[3,2,2,1]],half:[[4,3,1],[4,2,1,1],[4,2,2]],quarter:[[5,2,1],[4,2,1,1],[3,3,2],[6,2]],together:[[3,2,2,1],[4,3,1],[5,2,1],[3,3,2],[2,2,3,1]],moreHalf:[[5,2,1],[3,4,1],[6,1,1],[3,3,2],[2,5,1],[4,3,1]]};
+    if(q.mode==='compare'){const cols=shuffle(PIECOLS.slice()).slice(0,3);let a,b;do{a=rnd(1,6);b=rnd(1,6);}while(a===b);
+      const rest=n=>{const x=rnd(1,8-n-1);return [n,x,8-n-x];};q.pies=[rest(a),rest(b)].map(p=>p.map((v,i)=>({q:v,col:cols[i].col,name:cols[i].name})));q.target=cols[0];q.answerKey=a>b?0:1;used.add('p8c'+a+b);return;}
+    const pat=shuffle(pick(pats[q.mode]).slice());const cols=shuffle(PIECOLS.slice()).slice(0,pat.length);q.slices=pat.map((v,i)=>({q:v,col:cols[i].col,name:cols[i].name}));const qs=pat;
+    used.add('p8'+q.mode+q.slices.map(s=>s.name+s.q).join());
+    if(q.mode==='eighths'){q.t=rnd(0,qs.length-1);q.answerKey=qs[q.t];}
+    else if(q.mode==='biggest')q.answerKey=qs.indexOf(Math.max(...qs));
+    else if(q.mode==='half')q.answerKey=qs.indexOf(4);
+    else if(q.mode==='quarter')q.answerKey=qs.indexOf(2);
+    else if(q.mode==='together'){const p=shuffle(range(qs.length)).slice(0,2);q.t=p[0];q.t2=p[1];q.answerKey=qs[q.t]+qs[q.t2];}
+    else{q.t=rnd(0,qs.length-1);const v=qs[q.t];q.answerKey=v>4?'more':v<4?'less':'half';}},
+  render(q){const pie=()=>`<div class="gwrap" style="max-width:300px">${pieSVG(q.slices,{den:8})}</div><div class="key">The pie is cut into 8 equal pieces (eighths).</div>`;
+    const S=q.slices;
+    if(q.mode==='compare'){const t=q.target;setPrompt(`🍕 In which pie is <b>${t.name}</b> bigger?`,`Both pies are cut into eighths. In which pie is the ${t.name} part bigger, pie A or pie B?`);
+      stage().innerHTML=choiceUI(q,[0,1],i=>`<span class="nm" style="font-size:1.3rem;font-weight:bold">Pie ${'AB'[i]}</span>${pieSVG(q.pies[i],{r:70,cls:'',den:8})}`,'opts three two');bindChoice(q);return;}
+    if(q.mode==='eighths'){const s=S[q.t];setPrompt(`🍕 How many <b>eighths</b> is <span style="color:${s.col}">${s.name}</span>?`,`How many eighths of the pie is ${s.name}?`);stage().innerHTML=pie()+numOpts(q,q.answerKey,1,8,[]);bindChoice(q);return;}
+    if(q.mode==='together'){const a=S[q.t],b=S[q.t2];setPrompt(`🍕 How many eighths are <span style="color:${a.col}">${a.name}</span> and <span style="color:${b.col}">${b.name}</span> together?`,`How many eighths are ${a.name} and ${b.name} together?`);stage().innerHTML=pie()+numOpts(q,q.answerKey,1,8,[]);bindChoice(q);return;}
+    if(q.mode==='moreHalf'){const s=S[q.t];setPrompt(`🍕 Is <span style="color:${s.col}">${s.name}</span> more than half, less than half, or exactly half?`,`Is ${s.name} more than half of the pie, less than half, or exactly half?`);
+      stage().innerHTML=pie()+choiceUI(q,['more','half','less'],v=>`<span class="nm" style="font-size:1.1rem">${{more:'More than half',half:'Exactly half',less:'Less than half'}[v]}</span>`,'opts three');bindChoice(q);return;}
+    const words={biggest:'Which colour is the <b>biggest</b> part?',half:'Which colour is <b>half</b> of the pie?',quarter:'Which colour is <b>one quarter</b> of the pie?'};
+    setPrompt('🍕 '+words[q.mode],words[q.mode].replace(/<\/?b>/g,'')+` Is it ${listSay(S.map(s=>s.name))}?`);
+    stage().innerHTML=pie()+choiceUI(q,range(S.length),i=>swBtn(S[i]),'opts three');bindChoice(q);},
+  hint(q){return {eighths:'Count the pieces of that colour. Each piece is one eighth.',biggest:'Count the eighths in each colour.',half:'Half of 8 pieces is <b>4</b> pieces.',quarter:'A quarter of 8 pieces is <b>2</b> pieces.',together:'Count the pieces of both colours and add them.',moreHalf:'Half of the pie is 4 eighths. Count the pieces and compare with 4.',compare:'Count the eighths of that colour in each pie.'}[q.mode];},
+  explain(q){markChoice(q);
+    if(q.mode==='compare'){const t=q.target,a=q.pies[0][0].q,b=q.pies[1][0].q;q.fbSay=`${t.name} is ${a} eighths in pie A and ${b} eighths in pie B.`;
+      return `<div class="row" style="justify-content:center">${q.pies.map((p,i)=>`<div><b>Pie ${'AB'[i]}</b>${pieSVG(p,{labels:true,r:60,hl:0,den:8})}</div>`).join('')}</div><div class="why">${t.name}: pie A = ${a}/8, pie B = ${b}/8. Pie <b>${'AB'[q.answerKey]}</b> has more.</div>`;}
+    const S=q.slices,lab=S.map(s=>`<span style="color:${s.col};font-weight:bold">■</span> ${s.name} = ${s.q}/8`).join(' · ');let extra='';
+    if(q.mode==='together')extra=`${S[q.t].q} + ${S[q.t2].q} = <b>${q.answerKey}</b> eighths`;
+    else if(q.mode==='moreHalf')extra=`Half is 4/8. ${S[q.t].name} is ${S[q.t].q}/8, so it is <b>${{more:'more than half',less:'less than half',half:'exactly half'}[q.answerKey]}</b>.`;
+    else if(q.mode==='eighths')extra=`${S[q.t].name} is <b>${S[q.t].q}</b> eighths.`;
+    else extra=`<b>${S[q.answerKey].name}</b> is ${S[q.answerKey].q}/8${q.mode==='half'?' = half':q.mode==='quarter'?' = a quarter':''}.`;
+    q.fbSay=extra.replace(/<[^>]+>/g,'').replace(/(\d)\/8/g,'$1 eighths');
+    return pieSVG(S,{labels:true,r:80,den:8,hl:typeof q.answerKey==='number'&&q.mode!=='eighths'&&q.mode!=='together'?q.answerKey:(q.t!=null?q.t:-1)})+`<div class="why">${lab}<br>${extra}</div>`;}
+ },
+ /* 14. graph detective: what's wrong? */
+ wrong:{
+  make(q,used){const D=q.D;q.mode=pick([['colTally'],['colTally','pictTable'],['colTally','pictTable','scale'],['colTally','pictTable','scale','scale'],['colTally','scale','pictTable']][D]);
+    const k=D>=3?4:3;q.d=uniq(used,()=>catData(anyCat(),k,2,D>=3?10:8,false),x=>dkey('w'+q.mode,x));
+    if(q.mode==='scale'){q.sc=pick([1,2,5]);q.max=8;q.d.items.forEach(it=>it.n=rnd(1,7)*q.sc);q.labels=range(q.max+1).map(v=>v*q.sc);q.bad=rnd(2,q.max-1);
+      q.labels[q.bad]=q.labels[q.bad]+pick([-1,1])*(q.sc===1?1:q.sc===2?1:2);
+      const choices=shuffle(range(q.max+1).filter(v=>v>0&&v!==q.bad)).slice(0,3).concat([q.bad]).sort((a,b)=>a-b);q.optsIdx=choices;q.answerKey=q.bad;return;}
+    q.shown=q.d.items.map(it=>Object.assign({},it));q.t=rnd(0,k-1);const off=D<=1?pick([-3,-2,2,3]):pick([-1,1,2,-2]);let v=q.shown[q.t].n+off;if(v<1||v>10)v=q.shown[q.t].n+(off>0?-Math.abs(off):Math.abs(off));if(v<1)v=q.shown[q.t].n+Math.abs(off);q.shown[q.t].n=v;q.answerKey=q.t;},
+  render(q){const I=q.d.items;
+    if(q.mode==='scale'){setPrompt('🕵️ One number on the side of this graph is <b>wrong</b>. Which one?','One number on the side of this graph is wrong. Which number is it?');
+      stage().innerHTML=wrap(colSVG(I,{title:q.d.C.title,max:q.max,scale:q.sc,labels:q.labels}))+choiceUI(q,q.optsIdx,v=>String(q.labels[v]),'opts');bindChoice(q);return;}
+    setPrompt(`🕵️ The ${q.mode==='colTally'?'graph':'picture graph'} should match the ${q.mode==='colTally'?'tally':'table'}. Which one is <b>wrong</b>?`,`The ${q.mode==='colTally'?'column graph should match the tally':'picture graph should match the table'}. Which one is wrong? Is it ${listSay(I.map(i=>i.name))}?`);
+    const left=q.mode==='colTally'?tallyTable(I,{h:30}):`<table class="dtable"><tr><th></th><th>How many</th></tr>${I.map(i=>`<tr><th>${i.icon}</th><td>${i.n}</td></tr>`).join('')}</table>`;
+    const right=q.mode==='colTally'?colSVG(q.shown,{title:q.d.C.title}):pictHTML(q.shown,{title:q.d.C.title});
+    stage().innerHTML=`<div class="duo">${wrap(left)}${wrap(right)}</div>`+choiceUI(q,range(I.length),i=>catBtn(I[i]),'opts');bindChoice(q);},
+  hint(q){return q.mode==='scale'?`The numbers should go up by the same amount every time: 0, ${q.sc}, ${2*q.sc}, ${3*q.sc}…`:'Check each one: count the tally or read the table, then compare with the graph.';},
+  explain(q){markChoice(q);const I=q.d.items;
+    if(q.mode==='scale'){const right=q.bad*q.sc;q.fbSay=`The scale counts by ${q.sc}s, so that number should be ${right}, not ${q.labels[q.bad]}.`;
+      return colSVG(I,{max:q.max,scale:q.sc,nums:true})+`<div class="why">The scale counts by ${q.sc}s: ${range(q.max+1).map(v=>v===q.bad?`<b style="color:#dc2626">${right}</b>`:v*q.sc).join(', ')}.<br>It said <b>${q.labels[q.bad]}</b> but it should be <b>${right}</b>.</div>`;}
+    const it=I[q.t];q.fbSay=`The ${it.name} should be ${it.n}, but the graph shows ${q.shown[q.t].n}.`;
+    return `<div class="why">${it.icon} should be <b>${it.n}</b>, but the graph shows <b>${q.shown[q.t].n}</b>.</div>`+(q.mode==='colTally'?colSVG(I,{nums:true,hl:[q.t]}):pictHTML(I,{nums:true,hl:[q.t],key:false}));}
+ },
+ /* 15. drawing conclusions */
+ conclude:{
+  make(q,used){const D=q.D;q.kind=D>=2?pick(['col','pict','tally']):'col';q.d=uniq(used,()=>catData(anyCat(),D>=3?4:3,1,D>=3?12:9,'all'),x=>dkey('cl',x));
+    const I=q.d.items,ns=I.map(i=>i.n),tot=sum(ns),mx=ns.indexOf(Math.max(...ns)),mn=ns.indexOf(Math.min(...ns));
+    const pairs=[];for(let a=0;a<I.length;a++)for(let b=0;b<I.length;b++)if(a!==b)pairs.push([a,b]);
+    const S=[];const add=(text,say,truth,kind)=>S.push({text,say,truth,kind});
+    shuffle(pairs).slice(0,4).forEach(([a,b])=>add(`More children chose ${I[a].icon} than ${I[b].icon}.`,`More children chose ${I[a].name} than ${I[b].name}.`,ns[a]>ns[b],'more:'+a+','+b));
+    I.forEach((it,i)=>add(`${it.icon} is the most popular.`,`${it.name} is the most popular.`,i===mx,'most:'+i));
+    I.forEach((it,i)=>add(`${it.icon} is the least popular.`,`${it.name} is the least popular.`,i===mn,'least:'+i));
+    const off=pick([-2,-1,1,2]);add(`${tot} children were asked altogether.`,`${tot} children were asked altogether.`,true,'total:'+tot);add(`${tot+off} children were asked altogether.`,`${tot+off} children were asked altogether.`,false,'total:'+(tot+off));
+    if(D>=2){const [a,b]=pick(pairs),c=range(I.length).find(i=>i!==a&&i!==b);if(c!=null)add(`${I[a].icon} and ${I[b].icon} together are more than ${I[c].icon}.`,`${I[a].name} and ${I[b].name} together are more than ${I[c].name}.`,ns[a]+ns[b]>ns[c],'sum:'+a+','+b+','+c);}
+    I.forEach((it,i)=>add(`Nobody chose ${it.icon}.`,`Nobody chose ${it.name}.`,ns[i]===0,'none:'+i));
+    const T=shuffle(S.filter(s=>s.truth)),F=shuffle(S.filter(s=>!s.truth));q.stmts=shuffle([T[0]].concat(F.slice(0,D>=2?3:2)));q.answerKey=q.stmts.indexOf(T[0]);used.add('cl'+T[0].text);},
+  view(q,o={}){const I=q.d.items;return q.kind==='pict'?pictHTML(I,Object.assign({title:q.d.C.title},o)):q.kind==='tally'?`<div class="gtitle">${esc(q.d.C.title)}</div>`+tallyTable(I,{h:30,nums:o.nums}):colSVG(I,Object.assign({title:q.d.C.title,max:Math.max(...I.map(i=>i.n))+1},o));},
+  render(q){setPrompt('💡 Which sentence is <b>true</b>?',`Look at the graph. Which sentence is true? ${q.stmts.map((s,i)=>`${'ABCD'[i]}: ${s.say}`).join(' ')}`);
+    stage().innerHTML=wrap(TYPES.conclude.view(q))+choiceUI(q,range(q.stmts.length),i=>`<span class="nm" style="font-size:1.15rem;color:#111">${q.stmts[i].text}</span>`,'opts qs');bindChoice(q);},
+  hint(q){return 'Read each sentence, then check it on the graph. Only one is true.';},
+  explain(q){markChoice(q);const s=q.stmts[q.answerKey];q.fbSay=`True: ${s.say}`;return TYPES.conclude.view(q,{nums:true})+`<div class="why">✅ <b>${s.text}</b><br>${q.d.items.map(i=>`${i.icon} ${i.n}`).join(' · ')} (total ${sum(q.d.items.map(i=>i.n))})</div>`;}
+ },
 };
 function miniGraph(d,kind){return `<div class="gtitle" style="font-size:.95rem">${esc(d.C.title)}</div>`+(kind==='col'?colSVG(d.items,{max:6,small:true}):kind==='pict'?pictHTML(d.items,{key:false}):tallyTable(d.items,{h:22}));}
-/* shared: question modes for picture/column graphs */
-function qMode(q){const I=q.d.items,ns=I.map(i=>i.n);q.t=rnd(0,I.length-1);
-  if(q.mode==='more'){const s=range(I.length).sort((a,b)=>ns[b]-ns[a]);let a,b;for(let t=0;t<30;t++){a=pick(s);b=pick(s);if(ns[a]>ns[b])break;}if(!(ns[a]>ns[b])){a=s[0];b=s[s.length-1];}q.a=a;q.b=b;q.answerKey=ns[a]-ns[b];}
-  else if(q.mode==='howmany')q.answerKey=ns[q.t];
-  else q.answerKey=ns.indexOf(q.mode==='most'?Math.max(...ns):Math.min(...ns));}
-function graphQ(q,g,emo){const I=q.d.items;
-  if(q.mode==='howmany'){setPrompt(`${emo} How many chose ${I[q.t].icon}?`,`How many children chose ${I[q.t].name}?`);stage().innerHTML=wrap(g({}))+numOpts(q,q.answerKey,1,12,[q.answerKey+1,q.answerKey-1]);}
-  else if(q.mode==='more'){const A=I[q.a],B=I[q.b];setPrompt(`${emo} How many <b>more</b> chose ${A.icon} than ${B.icon}?`,`How many more children chose ${A.name} than ${B.name}?`);
-    stage().innerHTML=wrap(g({}))+numOpts(q,q.answerKey,0,12,[A.n,A.n+B.n<=12?A.n+B.n:B.n]);}
-  else{setPrompt(`${emo} Which has the <b>${q.mode}</b>?`,`Which did the ${q.mode} children choose? Is it ${listSay(I.map(i=>i.name))}?`);stage().innerHTML=wrap(g({}))+choiceUI(q,range(I.length),i=>catBtn(I[i]),'opts');}
-  bindChoice(q);}
-function graphExplain(q,g){const I=q.d.items;
-  if(q.mode==='howmany'){q.fbSay=`${I[q.t].n} children chose ${I[q.t].name}.`;return g({hl:[q.t]})+`<div class="why">${I[q.t].icon} = <b>${I[q.t].n}</b></div>`;}
-  if(q.mode==='more'){const A=I[q.a],B=I[q.b];q.fbSay=`${A.n} take away ${B.n} is ${A.n-B.n}. ${A.name} has ${A.n-B.n} more.`;
-    const pic=q.type==='col'?colSVG(I,{nums:true,diff:[q.a,q.b]}):g({hl:[q.a,q.b]});
-    return pic+`<div class="why">${A.icon} ${A.n} &nbsp;−&nbsp; ${B.icon} ${B.n} = <b>${A.n-B.n}</b>. The dotted box shows the extra.${q.mistake==='moreTotal'?`<br>⚠️ ${A.n} is how many chose ${A.icon}. "How many more" means the <b>difference</b>.`:''}</div>`;}
-  const w=I[q.answerKey];q.fbSay=`${w.name} has the ${q.mode}, with ${w.n}.`;
-  return g({hl:[q.answerKey],nums:true})+`<div class="why">${I.map(i=>`${i.icon} ${i.n}`).join(' · ')}<br>${w.icon} has the <b>${q.mode}</b>.</div>`;}
+function graphQ(q,g,emo,pre=''){const [h,sp]=modeText(q,emo);setPrompt(h,pre+sp);stage().innerHTML=wrap(g({}))+modeInput(q);bindChoice(q);}
 /* ---------- round flow ---------- */
 let R=null,q=null;
 function sayQ(){if(S.autoSay!==false)say(speakText);}
@@ -602,8 +827,8 @@ function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).clas
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
 function startLevel(id){
   const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
-  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
-  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+  const D=levelD(id);R={L,D,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').innerHTML=`${L.icon} Level ${L.id}: ${esc(L.title)} <span class="clvl" id="clvl" title="Challenge level">⚡ Challenge level ${D+1}</span>`;show('play');next();
 }
 function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');
   $('#runner').style.left=(R.score/ROUND*88)+'%';}
@@ -611,7 +836,7 @@ function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidd
 function next(){
   R.idx++;if(R.idx>=ROUND)return finishRound();
   const type=R.types[R.idx];
-  q={type,done:false,usedHint:false};
+  q={type,D:R.D,done:false,usedHint:false};
   TYPES[type].make(q,R.used);
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   stage().onclick=null;TYPES[type].render(q);
@@ -621,7 +846,7 @@ function answer(ok){
   if(!q||q.done)return;q.done=true;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
-  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
   else{R.streak=0;sfx('bad');const m=TYPES[q.type].mistake&&TYPES[q.type].mistake(q);if(m){q.mistake=m;S.mist[m]=(S.mist[m]||0)+1;}}
   R.results.push(ok);save();
   const expl=TYPES[q.type].explain(q,ok);
@@ -639,10 +864,14 @@ function finishRound(){
   S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
   S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
   const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  S.adapt=S.adapt||{};const oldA=S.adapt[L.id]||0;let step='';
+  if(R.score>=9&&R.D<4){S.adapt[L.id]=Math.min(2,oldA+1);}else if(R.score<=4&&oldA>0){S.adapt[L.id]=oldA-1;}
+  const newD=levelD(L.id);if(newD>R.D)step=`<p class="stepup">⬆️ Level up! Next round is <b>Challenge level ${newD+1}</b>: bigger numbers and trickier questions.</p>`;else if(newD<R.D)step=`<p class="stepup" style="background:#e0f2fe">Next round goes back to Challenge level ${newD+1} for more practice.</p>`;else if(R.D>=4&&R.score>=9)step=`<p class="stepup">🏅 You're at the top Challenge level!</p>`;
+  save();
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. The hints help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${esc(msg)}</h2>
     <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
-    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}${step}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
       ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}</div>`;
@@ -653,13 +882,13 @@ function finishRound(){
 }
 const CUBE=['#ffffff','#facc15','#ef4444','#f97316','#3b82f6','#22c55e'];
 function confetti(){for(let i=0;i<60;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=pick(CUBE);d.style.animationDuration=(1.8+Math.random()*2)+'s';d.style.animationDelay=Math.random()*0.6+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
-const TIPS={gate:'In a tally, the line going <b>across</b> is the 5th mark, so each bundle is 5.',moreTotal:'"How many more" means the <b>difference</b>: how much taller one column is than the other.'};
+const TIPS={keyCount:'Check the <b>key</b> on a picture graph. If one picture means 2, count in 2s!',scaleLines:'On a graph with a scale, count up the side in 2s, 5s or 10s, not 1s.',oneStep:'Two-step questions: do the first step (adding) before you compare.',gate:'In a tally, the line going <b>across</b> is the 5th mark, so each bundle is 5.',moreTotal:'"How many more" means the <b>difference</b>: how much taller one column is than the other.'};
 
 function home(){
   R=null;q=null;try{speechSynthesis.cancel();}catch(e){}
   $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Data Dash`;
   $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
-    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${u?`<span class="clv">⚡ Challenge ${levelD(L.id)+1}</span>`:''}${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
   const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
   const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
   const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
@@ -668,52 +897,57 @@ function home(){
   let worst=null,best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};if(!best||r>best.r)best={t,r};}});
   const tip=Object.entries(S.mist||{}).filter(([k,v])=>v>=2&&TIPS[k]).sort((a,b)=>b[1]-a[1])[0];
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${esc(NAME)}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%). `:'')+(tip?`<br>💡 Tip: ${TIPS[tip[0]]}`:'');
-  $('#unlockAll').checked=!!S.unlockAll;$('#autoSay').checked=S.autoSay!==false;topbar();show('home');
+  $('#unlockAll').checked=!!S.unlockAll;$('#autoSay').checked=S.autoSay!==false;document.querySelectorAll('[name=diff]').forEach(r=>r.checked=r.value===(DIFFS[S.diff]?S.diff:'challenge'));topbar();show('home');
 }
 /* ---------- worksheet ---------- */
 function makeWorksheet(){
   const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
-  const B='<span class="blank"></span>',BW='<span class="blank" style="width:110px"></span>',A=(v,key,w)=>key?`<span class="ans">${v}</span>`:(w?BW:B),L=i=>String.fromCharCode(97+i)+')';
+  const B='<span class="blank"></span>',A=(v,key,w)=>key?`<span class="ans">${v}</span>`:(w?`<span class="blank" style="width:${w}px"></span>`:B),L=i=>String.fromCharCode(97+i)+')';
   /* 1 sort */
-  const s1=catData('cube',3,2,5,false),pile=shuffle(s1.items.flatMap(it=>Array(it.n).fill(it.icon)));
+  let s1;do{s1=catData('cube',3,4,8,'all');}while(sum(s1.items.map(i=>i.n))>20);const pile=shuffle(s1.items.flatMap(it=>Array(it.n).fill(it.icon))),t1=sum(s1.items.map(i=>i.n));
   /* 2 tallies */
-  const s2=shuffle(range(17).map(i=>i+3)).slice(0,4);
-  /* 3 picture graph */
-  const s3=catData(pick(['fruit','pet']),3,1,6),I3=s3.items,n3=I3.map(i=>i.n),t3=rnd(0,2);
-  /* 4 column graph */
-  const s4=catData(pick(['sport','cube']),4,1,8),I4=s4.items,n4=I4.map(i=>i.n);
-  const o4=range(4).sort((a,b)=>n4[b]-n4[a]),a4=o4[0],b4=o4[2+rnd(0,1)];
-  /* 5 build */
-  const s5=catData(anyCat(),3,1,6,false);
-  /* 6 pie */
-  const pc=shuffle(PIECOLS.slice()).slice(0,3),sl6=shuffle([2,1,1].map((v,i)=>({q:v,col:pc[i].col,name:pc[i].name}))),half=sl6.findIndex(s=>s.q===2),qs=range(3).filter(i=>sl6[i].q===1);
-  const P='ABC';
+  const s2=shuffle(range(30).map(i=>i+13)).slice(0,4);
+  /* 3 picture graph, key 2 */
+  const s3=catData(pick(['fruit','pet']),3,1,14,'all'),I3=s3.items,n3=I3.map(i=>i.n);if(!n3.some(v=>v%2)){I3[0].n+=I3[0].n<14?1:-1;}
+  const o3=range(3).sort((a,b)=>I3[b].n-I3[a].n),t3=I3.findIndex(i=>i.n%2)>=0?I3.findIndex(i=>i.n%2):0;
+  /* 4 column graph with scale + unlabelled lines */
+  const sc=pick([2,5]);let s4;for(let t=0;t<50;t++){s4=catData(pick(['sport','cube']),4,sc,8*sc,'all',sc);const ns=s4.items.map(i=>i.n).sort((a,b)=>b-a);if(ns[0]>ns[2]+ns[3])break;}
+  const I4=s4.items,n4=I4.map(i=>i.n),o4=range(4).sort((a,b)=>n4[b]-n4[a]),q4=o4[1];const two=n4[o4[0]]>n4[o4[2]]+n4[o4[3]];
+  /* 5 two-way table */
+  const rows=[NAME].concat(shuffle(['Mia','Leo','Zara','Sam']).slice(0,2)),cols=['Mon','Tue','Wed'];let G,ci;
+  do{G=rows.map(()=>cols.map(()=>rnd(2,15)));ci=rnd(0,2);}while(G.map(r=>r[ci]).filter(v=>v===Math.max(...G.map(r=>r[ci]))).length>1);
+  const r5=rnd(0,2),c5=rnd(0,2),r6=rnd(0,2),mostR=G.map(r=>r[ci]).indexOf(Math.max(...G.map(r=>r[ci])));
+  /* 6 eighths pie */
+  const pat=shuffle(pick([[3,2,2,1],[4,2,1,1],[5,2,1],[3,3,2]]).slice()),pc=shuffle(PIECOLS.slice()).slice(0,pat.length),sl6=pat.map((v,i)=>({q:v,col:pc[i].col,name:pc[i].name})),P='ABCD';
+  const qi=pat.indexOf(2);
   const page=key=>`<div class="page${key?' answers':''}">
     <h2>${key?'✅ Answer key: ':''}Data Dash 📊🏃</h2>
-    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 18</span>'}</div>
-    <h3>1. Sort and count</h3><div class="instr">Count each colour. Make a tally, then write how many.</div>
-    <div class="ws2"><div class="pile2">${pile.join('')}</div>
+    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 20</span>'}</div>
+    <h3>1. Sort and count</h3><div class="instr">Make a tally for each colour, write how many, then answer the question.</div>
+    <div class="ws2"><div><div class="pile2">${pile.join('')}</div><div class="ql">How many squares altogether? ${A(t1,key)}</div></div>
     <table class="wt"><tr><td></td><td style="width:150px"><b>Tally</b></td><td><b>How many?</b></td></tr>${s1.items.map(it=>`<tr><td class="lab">${it.icon}</td><td>${key?tallySVG(it.n,{h:22,cls:''}):''}</td><td>${A(it.n,key)}</td></tr>`).join('')}</table></div>
-    <h3>2. Read the tally</h3><div class="tallies">${s2.map((n,i)=>`<div>${L(i)} ${tallySVG(n,{h:26,cls:''})} = ${A(n,key)}</div>`).join('')}</div>
+    <h3>2. Read the tally</h3><div class="tallies">${s2.map((n,i)=>`<div>${L(i)} ${tallySVG(n,{h:24,cls:''})} = ${A(n,key)}</div>`).join('')}</div>
     <div class="ws2">
-     <div><h3>3. Picture graph</h3>${pictHTML(I3,{title:s3.C.title})}
-      <div class="ql">a) How many chose ${I3[t3].icon}? ${A(n3[t3],key)}</div>
-      <div class="ql">b) Which has the most? ${A(I3[n3.indexOf(Math.max(...n3))].icon,key)}</div>
-      <div class="ql">c) Which has the least? ${A(I3[n3.indexOf(Math.min(...n3))].icon,key)}</div></div>
-     <div><h3>4. Column graph</h3>${colSVG(I4,{max:8,title:s4.C.title,nums:key})}
-      <div class="ql">a) Which has the most? ${A(I4[a4].icon,key)}</div>
-      <div class="ql">b) How many chose ${I4[b4].icon}? ${A(n4[b4],key)}</div>
-      <div class="ql">c) How many more chose ${I4[a4].icon} than ${I4[b4].icon}? ${A(n4[a4]-n4[b4],key)}</div></div>
+     <div><h3>3. Picture graph</h3>${pictHTML(I3,{title:s3.C.title,kv:2})}
+      <div class="ql">a) How many chose ${I3[t3].icon}? ${A(I3[t3].n,key)}</div>
+      <div class="ql">b) How many more chose ${I3[o3[0]].icon} than ${I3[o3[2]].icon}? ${A(I3[o3[0]].n-I3[o3[2]].n,key)}</div>
+      <div class="ql">c) How many children altogether? ${A(sum(n3),key)}</div></div>
+     <div><h3>4. Column graph</h3><div class="instr">The side counts by ${sc}s.</div>${colSVG(I4,{max:8,title:s4.C.title,scale:sc,le:2,nums:key})}
+      <div class="ql">a) How many chose ${I4[q4].icon}? ${A(n4[q4],key)}</div>
+      <div class="ql">b) How many more chose ${I4[o4[0]].icon} than ${I4[o4[3]].icon}? ${A(n4[o4[0]]-n4[o4[3]],key)}</div>
+      <div class="ql">c) ${two?`How many more chose ${I4[o4[0]].icon} than ${I4[o4[2]].icon} and ${I4[o4[3]].icon} put together? ${A(n4[o4[0]]-n4[o4[2]]-n4[o4[3]],key)}`:`How many children altogether? ${A(sum(n4),key)}`}</div></div>
     </div>
     <div class="ws2">
-     <div><h3>5. Make a column graph</h3><div class="instr">Colour the columns to match the tally.</div>
-      <div style="display:flex;gap:12px;align-items:flex-end">${tallyTable(s5.items,{h:22})}<div class="g5">${colSVG(s5.items,{max:6,build:key?s5.items.map(i=>i.n):[0,0,0],title:s5.C.title})}</div></div></div>
-     <div><h3>6. Pie chart</h3><div class="g6">${pieSVG(sl6,{r:70,letters:true})}</div>
-      <div class="ql">a) Which part is <b>half</b>? ${A(P[half],key)}</div>
-      <div class="ql">b) Which two parts are the <b>same size</b>? ${A(P[qs[0]],key)} and ${A(P[qs[1]],key)}</div>
-      <div class="ql">c) Each of those parts is a ${key?'<span class="ans">quarter</span>':'<span class="blank" style="width:90px"></span>'}.</div></div>
+     <div><h3>5. Table: cubes solved</h3><table class="dtable"><tr><th></th>${cols.map(c=>`<th>${c}</th>`).join('')}</tr>${rows.map((r,i)=>`<tr><th>${esc(r)}</th>${G[i].map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</table>
+      <div class="ql">a) How many did ${esc(rows[r5])} solve on ${cols[c5]}? ${A(G[r5][c5],key)}</div>
+      <div class="ql">b) How many did ${esc(rows[r6])} solve altogether? ${A(sum(G[r6]),key)}</div>
+      <div class="ql">c) Who solved the most on ${cols[ci]}? ${A(esc(rows[mostR]),key,70)}</div></div>
+     <div><h3>6. Pie chart in eighths</h3><div class="g6">${pieSVG(sl6,{r:70,letters:true,den:8})}</div>
+      <div class="ql">a) How many eighths is part A? ${A(pat[0],key)}</div>
+      <div class="ql">b) Which part is one quarter? ${A(P[qi],key)}</div>
+      <div class="ql">c) How many eighths are A and B together? ${A(pat[0]+pat[1],key)}</div></div>
     </div>
-    ${key?'':`<p style="margin-top:8px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: the 5th tally mark goes across, and one picture means one thing.</p>`}
+    ${key?'':`<p style="margin-top:8px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: check the key and the scale before you count.</p>`}
   </div>`;
   $('#sheet').innerHTML=page(false)+page(true);
 }
@@ -731,13 +965,15 @@ $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
+document.querySelectorAll('[name=diff]').forEach(r=>r.onchange=()=>{if(r.checked){S.diff=r.value;save();home();}});
 $('#autoSay').onchange=e=>{S.autoSay=e.target.checked;save();};
-$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,as=S.autoSay;S=defState();S.sound=snd;S.autoSay=as;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,as=S.autoSay,df=S.diff;S=defState();S.sound=snd;S.autoSay=as;S.diff=df;save();home();}};
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 document.addEventListener('keydown',e=>{if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.typed&&q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();return;}
   if(q.type==='tallyMake'&&!q.done){if(e.key==='+'||e.key===' '){e.preventDefault();q.key('add');}else if(e.key==='Backspace'||e.key==='-')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}});
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,makeWorksheet};
 home();
 })();
 </script>
