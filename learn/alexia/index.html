@@ -144,6 +144,21 @@ svg.nl{width:100%;max-width:760px;height:auto}
  .page .grid2>div{font-size:15px}
  .page .blank{width:24px;height:18px}
 }
+.clvl{display:inline-block;font-size:.8rem;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.clv{display:block;font-size:.78rem;color:#92400e;margin-top:2px}
+.stepup{font-size:1.1rem;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 12px;display:inline-block}.stepup.down{background:#fff7ed;color:#9a3412}
+.diffset{background:#f8fafc;border-radius:12px;padding:8px 12px;margin:8px 0}.diffset label{margin-right:14px;white-space:nowrap}.diffset input{width:20px;height:20px;vertical-align:middle}.diffset .small{font-size:.9rem;margin:6px 0 0}
+.mixed{display:inline-flex;align-items:center;gap:2px;vertical-align:middle}.mixed .mw{font-weight:800;font-size:1.3em}.mixed.huge .mw{font-size:3.4rem}.mixed.big .mw{font-size:1.9em}
+.entry{display:inline-flex;align-items:center;gap:6px}.mw2 .ansbox{font-size:3.2rem;font-weight:800;min-width:1.2em}
+.fbox{cursor:pointer}.fbox.active{border-style:solid;box-shadow:0 0 0 4px #ddd6fe}
+.cmpbox{display:inline-flex;align-items:center;justify-content:center;width:72px;height:72px;border-radius:50%;border:4px dashed var(--purple);font-size:2.6rem;font-weight:800;color:var(--purple);background:#faf5ff}
+.opts.sym{grid-template-columns:repeat(3,1fr);max-width:420px}.opts.sym .opt{font-size:2.4rem;min-height:80px}
+.opts.six{grid-template-columns:repeat(3,1fr)}.opt.picked{background:#ede9fe;border-color:var(--purple)}.opt.used{opacity:.35}
+.ordrow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}.ordslot{display:inline-flex;align-items:center;justify-content:center;min-width:64px;min-height:84px;border:3px dashed #c4b5fd;border-radius:12px;background:#faf5ff}.lt{font-size:2rem;font-weight:800}
+.wholes{display:flex;flex-direction:column;gap:6px;width:100%;max-width:720px;margin:0 auto}
+.page .circ{display:inline-block;width:26px;height:26px;border:2px solid #000;border-radius:50%;vertical-align:middle;margin:0 6px}
+.page .mixed .mw{font-size:1.3em}
+@media(max-width:560px){.opts.six{grid-template-columns:repeat(2,1fr)}.mixed.huge .mw{font-size:2.4rem}.cmpbox{width:56px;height:56px;font-size:2rem}}
 </style>
 </head>
 <body>
@@ -161,7 +176,7 @@ svg.nl{width:100%;max-width:760px;height:auto}
     <div class="big">👋</div>
     <div style="flex:1;min-width:220px">
       <h2 id="hello">Hi Alexia!</h2>
-      <p><b>Equivalent fractions</b> are different names for the <b>same amount</b>. Like 1/2 of a pizza is the same as 2/4 or 4/8 of it! Finish a level with 6 or more out of 10 to unlock the next one.</p>
+      <p><b>Equivalent fractions</b> are different names for the <b>same amount</b>. Like 1/2 of a pizza is the same as 2/4 or 4/8 of it! Finish a level with 6 or more out of 10 to unlock the next one. New: simplifying, improper fractions and comparing in Levels 8–11! Score 9 or 10 and the level gets harder. ⚡</p>
     </div>
   </div>
   <div class="levels" id="levelGrid"></div>
@@ -176,8 +191,13 @@ svg.nl{width:100%;max-width:760px;height:auto}
   <div class="card">
     <details>
       <summary>👨‍👩‍👧 For grown-ups</summary>
-      <p>Levels follow the NSW Mathematics K–10 syllabus for fractions (Stage 2): picture models first (fraction walls and pizzas), then <b>parallel number lines</b> (the method used in class this term), then choosing equivalents, missing numbers (multiply or divide the top and bottom by the same number) and placing fractions on a number line. Denominators used: 2, 3, 4, 5, 6, 8, 10, 12.</p>
-      <p>Wrong answers show a picture explaining why. Hints are free to use but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <p>Levels follow the NSW Mathematics K–10 syllabus for fractions: picture models first (fraction walls and pizzas), then <b>parallel number lines</b> (the method used in class this term), then choosing equivalents, missing numbers (multiply or divide the top and bottom by the same number) and placing fractions on a number line. Levels 8–11 stretch further: simplest form with denominators up to 100, improper fractions and mixed numbers (including their equivalents), and comparing and ordering unlike fractions by making the denominators the same. At higher Challenge levels the counting labels, number-line labels and pictures are hidden until a hint is used, denominators go up to 24 on the pictures and up to 100 elsewhere, and Match It! asks for <b>every</b> equivalent fraction.</p>
+      <p>Wrong answers show a picture explaining why. Hints are free to use but give 5 points instead of 10 (3 at Challenge level 4 and 5). Progress is saved on this device only.</p>
+      <div class="diffset"><b>Difficulty:</b>
+        <label><input type="radio" name="diff" value="easy"> Easy</label>
+        <label><input type="radio" name="diff" value="normal"> Normal</label>
+        <label><input type="radio" name="diff" value="challenge"> Challenge</label>
+        <p class="small">Challenge (the default) starts each level at Challenge level 3: bigger numbers, fewer pictures and typed answers. Easy is the original version of each level. Getting 9 or 10 right steps that level up (to Challenge level 5); 4 or fewer steps it back down.</p></div>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
         <button class="btn ghost" id="resetBtn">Reset progress</button>
@@ -253,13 +273,20 @@ const LEVELS=[
  {id:5,icon:'🔍',title:'Missing Numbers',blurb:'Multiply or divide the top and bottom by the same number.',types:['missing'],pairs:ALL},
  {id:6,icon:'🐸',title:'Number Line Hop',blurb:'Help the frog hop to where the fraction lives.',types:['nlplace'],pairs:ALL},
  {id:7,icon:'🏆',title:'Fraction Champion',blurb:'A mix of everything. Can you get 3 stars?',types:['bar','pizza','nlpar','choice','missing','nlplace','missing','choice'],pairs:ALL},
+ {id:8,icon:'✂️',title:'Simplest Form',blurb:'Divide the top and bottom to simplify, with denominators up to 100.',types:['simplify'],pairs:ALL},
+ {id:9,icon:'🎈',title:'Improper & Mixed',blurb:'7/4 = 1 3/4, and improper fractions have equivalents too.',types:['improper'],pairs:ALL},
+ {id:10,icon:'⚖️',title:'Compare & Order',blurb:'Make the bottom numbers the same, then compare and order.',types:['compare','order'],pairs:ALL},
+ {id:11,icon:'👑',title:'Fraction Master',blurb:'The toughest mix: big denominators, simplifying, improper fractions and ordering.',types:['simplify','improper','compare','order','missing','choice','nlpar','simplify','improper','missing'],pairs:ALL},
 ];
 const TYPE_NAMES={bar:'Fraction Wall',pizza:'Pizza Party',nlpar:'Parallel Number Lines',choice:'Match It!',missing:'Missing Numbers',nlplace:'Number Line Hop'};
 const ROUND=10, UNLOCK=6;
+
+const DIFFS={easy:{base:0,label:'Easy'},normal:{base:1,label:'Normal'},challenge:{base:2,label:'Challenge'}};
+const levelD=id=>Math.min(4,(DIFFS[S.diff]||DIFFS.challenge).base+((S.adapt||{})[id]||0));
 const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
 
 /* ---------- storage ---------- */
-const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
+const defState=()=>({diff:'challenge',adapt:{},levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
 function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -371,7 +398,7 @@ const TYPES={
    setPrompt(`Tap the pieces of the purple bar to shade the <b>same amount</b> as ${F(q.a,q.b,'big')}`);
    const draw=(o={})=>{stage().innerHTML=
      `<div class="barrow"><div class="barlabel">${F(q.a,q.b)}</div>${barSVG({parts:q.b,shaded:range(q.a),color:'#ff8a3d',guideAt:o.guide?q.a/q.b:null})}</div>`+
-     `<div class="barrow"><div class="barlabel">${F(q.sel.size||'?',q.d)}</div>${barSVG({parts:q.d,shaded:o.show||q.sel,color:'#8b5cf6',interactive:!q.done,guideAt:o.guide?q.a/q.b:null,groupEvery:o.group?q.k:0})}</div>`;};
+     `<div class="barrow"><div class="barlabel">${F(q.D>=2&&!q.done?'?':(q.sel.size||'?'),q.d)}</div>${barSVG({parts:q.d,shaded:o.show||q.sel,color:'#8b5cf6',interactive:!q.done,guideAt:o.guide?q.a/q.b:null,groupEvery:o.group?q.k:0})}</div>`;};
    q.draw=draw;draw();
    stage().onclick=e=>{const p=e.target.closest('[data-piece]');if(!p||q.done)return;const i=+p.dataset.piece;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);sfx('tap');draw({guide:q.usedHint});};
    q.answerKey=q.c;
@@ -386,7 +413,7 @@ const TYPES={
    q.sel=new Set();
    setPrompt(`Pizza A has toppings on ${F(q.a,q.b,'big')}. Tap slices of Pizza B to put toppings on the <b>same amount</b>!`);
    const draw=(o={})=>{stage().innerHTML=`<div class="pizzas"><div class="pz">${pizzaSVG({parts:q.b,shaded:range(q.a)})}<div>Pizza A: ${F(q.a,q.b)}</div></div>`+
-     `<div class="pz">${pizzaSVG({parts:q.d,shaded:o.show||q.sel,interactive:!q.done,groupEvery:o.group?q.k:0})}<div>Pizza B: ${F(q.sel.size||'?',q.d)}</div></div></div>`;};
+     `<div class="pz">${pizzaSVG({parts:q.d,shaded:o.show||q.sel,interactive:!q.done,groupEvery:o.group?q.k:0})}<div>Pizza B: ${F(q.D>=2&&!q.done?'?':(q.sel.size||'?'),q.d)}</div></div></div>`;};
    q.draw=draw;draw();
    stage().onclick=e=>{const p=e.target.closest('[data-piece]');if(!p||q.done)return;const i=+p.dataset.piece;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);sfx('tap');draw({group:q.usedHint});};
    q.answerKey=q.c;
@@ -402,7 +429,7 @@ const TYPES={
    const tp=down?q.b:q.d,bp=down?q.d:q.b,mk=down?q.a:q.c,ans=down?q.c:q.a;
    q.sel=null;q.answerKey=ans;
    setPrompt(`Which mark on the <b>bottom</b> line lines up with ${F(mk,tp,'big')}? Tap it, then press Check.`);
-   const draw=(o={})=>{stage().innerHTML=nlSVG({lines:[{parts:tp,labels:'all',mark:mk},{parts:bp,labels:o.reveal?'all':[],interactive:!q.done,selected:q.sel,highlight:o.reveal?ans:null,selColor:o.reveal?'#e11d48':'#8b5cf6'}],guide:o.guide?mk/tp:null,box:o.reveal?mk/tp:null});};
+   const draw=(o={})=>{stage().innerHTML=nlSVG({lines:[{parts:tp,labels:q.D>=2&&!o.reveal?[]:'all',mark:mk},{parts:bp,labels:o.reveal?'all':[],interactive:!q.done,selected:q.sel,highlight:o.reveal?ans:null,selColor:o.reveal?'#e11d48':'#8b5cf6'}],guide:o.guide?mk/tp:null,box:o.reveal?mk/tp:null});};
    q.draw=draw;draw();
    stage().onclick=e=>{const t=e.target.closest('[data-tick]');if(!t||q.done)return;q.sel=+t.dataset.tick;sfx('tap');draw({guide:q.usedHint});};
    q.canCheck=()=>q.sel!=null; q.nudge='Tap a mark on the bottom line first.';
@@ -414,13 +441,14 @@ const TYPES={
  }},
  /* 4. multiple choice */
  choice:{render(q){
+   if(q.D>=2)return choiceMulti(q);
    const rev=Math.random()<0.35;
    const tn=rev?q.c:q.a,td=rev?q.d:q.b,cn=rev?q.a:q.c,cd=rev?q.b:q.d,tv=tn/td;
    const additive=[tn+(cd-td),cd];
    const cands=[additive,[tn,cd],[cn+1,cd],[cn-1,cd],[cd-cn,cd]];
-   DENS.forEach(D=>{if(D!==cd){cands.push([cn,D]);cands.push([Math.max(1,Math.round(tv*D)+pick([-1,1])),D]);}});
+   (q.D>=1?[2,3,4,5,6,8,9,10,12,14,15,16,18,20,24]:DENS).forEach(D=>{if(D!==cd){cands.push([cn,D]);cands.push([Math.max(1,Math.round(tv*D)+pick([-1,1])),D]);}});
    const seen=new Set([cn+'/'+cd]),dis=[];
-   for(const [n,d] of cands){const key=n+'/'+d;if(n<1||n>=d||d>12||seen.has(key)||Math.abs(n/d-tv)<1e-9)continue;seen.add(key);dis.push([n,d]);}
+   for(const [n,d] of cands){const key=n+'/'+d;if(n<1||n>=d||d>(q.D>=1?24:12)||seen.has(key)||Math.abs(n/d-tv)<1e-9)continue;seen.add(key);dis.push([n,d]);}
    const first=dis.slice(0,2),rest=shuffle(dis.slice(2));
    const opts=shuffle([[cn,cd]].concat(first,rest).slice(0,4));
    q.opts=opts;q.answerKey=opts.findIndex(o=>o[0]===cn&&o[1]===cd);q.chosen=null;
@@ -453,7 +481,7 @@ const TYPES={
    stage().innerHTML=`<div class="equation">${F(L[0],L[1],'huge')}<span class="eq">=</span>${F(R[0],R[1],'huge')}</div>`+
      `<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 5">⌫ Delete</button></div>`;
    const upd=()=>{const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
-   q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(q.input.length<2)q.input+=k;sfx('tap');upd();};
+   q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(q.input.length<3)q.input+=k;sfx('tap');upd();};
    stage().onclick=e=>{const b=e.target.closest('[data-key]');if(b)q.key(b.dataset.key);};
    q.canCheck=()=>q.input.length>0;q.nudge='Type a number first.';
    q.check=()=>parseInt(q.input,10)===ans;
@@ -481,14 +509,212 @@ const TYPES={
  }},
 };
 
+/* ===== harder content (difficulty layer) ===== */
+const M=(w,n,d,cls='')=>`<span class="mixed ${cls}"><span class="mw">${w}</span>${F(n,d,cls)}</span>`;
+const gcd=(a,b)=>b?gcd(b,a%b):a, lcm=(a,b)=>a*b/gcd(a,b);
+const VIS1=MED.concat([[2,14],[3,9],[4,16],[5,15],[2,16],[3,15],[4,20]]);
+const VIS2=[[3,9],[4,16],[5,15],[5,20],[4,20],[3,18],[6,18],[2,16],[8,16],[3,24],[4,24],[6,24],[8,24],[2,20],[10,20]];
+const HUND=[[4,100],[5,100],[10,100],[20,100],[25,100],[2,100],[5,50],[10,50],[25,50],[2,50],[3,30],[6,30],[3,60],[4,40],[8,40],[6,36],[9,36],[12,36],[7,21],[7,28],[9,27],[8,64],[5,45],[6,48],[12,60],[4,80],[3,90]];
+const VISUAL=new Set(['bar','pizza','nlpar','nlplace']);
+function pairsFor(type,D,lp){
+  if(D<=0)return lp;
+  if(VISUAL.has(type))return D===1?VIS1:VIS2;
+  return D===1?VIS1:D===2?VIS2.concat(HUND.slice(0,10)):D===3?VIS2.concat(HUND):HUND;
+}
+function postRender(q){}
+/* typed fraction / mixed-number entry */
+function fentry(q,cfg){
+  q.cfg=cfg;q.f={w:'',n:'',d:''};q.fields=['w','n','d'].filter(k=>cfg[k]==='edit');q.active=q.fields[0];
+  const box=k=>`<span class="ansbox fbox" data-field="${k}" id="f_${k}" role="button" aria-label="${{w:'whole number',n:'top number',d:'bottom number'}[k]} box">&nbsp;</span>`;
+  const part=k=>cfg[k]==='edit'?box(k):cfg[k];
+  q.entryHTML=`<span class="entry">${cfg.w!=null?`<span class="mw2">${part('w')}</span>`:''}<span class="frac huge"><span class="num">${part('n')}</span><span class="den">${part('d')}</span></span></span>`;
+  q.keypadHTML=`<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" ${q.fields.length>1?'':'style="grid-column:span 5"'}>⌫ Delete</button>${q.fields.length>1?'<button data-key="next" style="grid-column:span 4">Next box ➜</button>':''}</div>`;
+  q.refresh=()=>{q.fields.forEach(k=>{const e=document.getElementById('f_'+k);if(e){e.innerHTML=q.f[k]||'&nbsp;';e.classList.toggle('active',!q.done&&k===q.active);}});updCheck();};
+  q.key=k=>{if(q.done)return;const A=q.active;
+    if(k==='next'){const i=q.fields.indexOf(A);q.active=q.fields[(i+1)%q.fields.length];}
+    else if(k==='del')q.f[A]=q.f[A].slice(0,-1);
+    else if(q.f[A].length<3)q.f[A]+=k;
+    sfx('tap');q.refresh();};
+  q.canCheck=()=>q.fields.every(k=>q.f[k].length>0);
+  q.nudge=q.fields.length>1?'Fill in all the boxes first (tap a box to choose it).':'Type a number first.';
+  q.val=k=>cfg[k]==='edit'?parseInt(q.f[k],10):cfg[k];
+  q.lockBoxes=(ok,ans)=>{q.fields.forEach(k=>{const e=document.getElementById('f_'+k);if(e){e.classList.remove('active');if(!ok&&ans&&ans[k]!=null)e.textContent=ans[k];e.style.borderColor=ok?'#16a34a':'#e11d48';e.style.borderStyle='solid';}});const kp=document.querySelector('.keypad');if(kp)kp.remove();};
+  q.bind=()=>{stage().onclick=e=>{const k=e.target.closest('[data-key]');if(k)return q.key(k.dataset.key);const f=e.target.closest('[data-field]');if(f&&!q.done&&q.fields.includes(f.dataset.field)){q.active=f.dataset.field;q.refresh();}};};
+}
+/* simplest fraction with denominator <= maxB */
+function simpleFrac(maxB){let b,a;do{b=rnd(2,maxB);a=rnd(1,b-1);}while(gcd(a,b)!==1);return [a,b];}
+/* number lines that run past 1 (for improper fractions): parallel lines with whole-number labels */
+function nlWholes({lines,W,box=null}){
+  const w=680,m=40,Lw=w-2*m,gap=104,top=40,H=top+gap*(lines.length-1)+76;
+  let s=`<svg class="nl" viewBox="0 0 ${w} ${H}" aria-label="number lines">`;
+  (box==null?[]:[].concat(box)).forEach(v=>{const x=m+v/W*Lw;s+=`<rect x="${x-24}" y="${top-26}" width="48" height="${gap*(lines.length-1)+86}" rx="10" fill="rgba(225,29,72,.06)" stroke="#e11d48" stroke-width="3" stroke-dasharray="6 5"/>`;});
+  lines.forEach((ln,j)=>{const y=top+j*gap,N=ln.parts*W,step=Lw/N;
+    s+=`<line x1="${m}" y1="${y}" x2="${m+Lw}" y2="${y}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;
+    for(let i=0;i<=N;i++){const x=m+i*step,wh=i%ln.parts===0;
+      s+=`<line x1="${x}" y1="${y-(wh?16:10)}" x2="${x}" y2="${y+(wh?16:10)}" stroke="#1f2937" stroke-width="${wh?3:2}"/>`;
+      if(wh)s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="22" font-weight="bold">${i/ln.parts}</text>`;
+      else if(ln.labels==='all'||ln.mark===i||ln.highlight===i){const col=ln.highlight===i?'#15803d':ln.mark===i?(ln.markColor||'#ea580c'):'#1f2937';s+=fracSVG(x,y+34,i,ln.parts,col,N>24?14:17);}
+      if(ln.mark===i)s+=`<circle cx="${x}" cy="${y}" r="11" fill="${ln.markColor||'#ff8a3d'}" stroke="#fff" stroke-width="3"/>`;
+      if(ln.highlight===i)s+=`<circle cx="${x}" cy="${y}" r="13" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;}
+    if(ln.tag)s+=`<text x="${w-4}" y="${y-20}" text-anchor="end" font-size="15" font-weight="bold" fill="${ln.tagColor||'#1f2937'}">${ln.tag}</text>`;
+  });
+  return s+'</svg>';
+}
+function multiBars(n,d,color='#ff8a3d'){const W=Math.max(1,Math.ceil(n/d));let s='<div class="wholes">';
+  for(let k=0;k<W;k++)s+=`<div>${barSVG({parts:d,shaded:range(Math.max(0,Math.min(d,n-k*d))),color,h:44})}</div>`;return s+'</div>';}
+/* pick two different fractions for comparing */
+function cmpPair(D,u){
+  for(let t=0;t<80;t++){let a,b,c,d;
+    if(D<=1){b=pick([2,3,4,5,6]);d=b*pick([2,3,4].filter(k=>b*k<=12));}
+    else if(D===2){b=pick([2,3,4,5,6,8,10]);d=b*pick([2,3,4,5]);if(d>40)continue;}
+    else{b=rnd(2,12);d=rnd(2,12);if(b===d||lcm(b,d)>(D===3?60:100))continue;}
+    if(Math.random()<0.5)[b,d]=[d,b];
+    a=rnd(1,b-1);c=rnd(1,d-1);
+    const eq=a*d===c*b;if(eq&&Math.random()<0.75)continue;
+    if(D>=2&&Math.abs(a/b-c/d)>0.34&&t<60)continue;
+    const k=[a,b,c,d].join('/');if(u.has(k)&&t<70)continue;u.add(k);return {a,b,c,d};}
+  return {a:1,b:2,c:2,d:5};
+}
+function orderSet(D,u){
+  const n=D>=3?4:3;
+  for(let t=0;t<200;t++){let ds;
+    if(D<=1){const bse=pick([2,3,4]);ds=shuffle([bse,bse*2,bse*3,bse*4].filter(x=>x<=12)).slice(0,n);}
+    else if(D===2){const bse=pick([2,3,4,5]);ds=range(n).map(()=>bse*pick([1,2,3,4]));}
+    else{ds=range(n).map(()=>pick([2,3,4,5,6,8,10,12]));}
+    const L=ds.reduce(lcm);if(L>(D>=3?120:60))continue;
+    const fr=ds.map(d=>[rnd(1,d-1),d]);const vals=fr.map(([a,d])=>a*L/d);
+    if(new Set(vals).size<n)continue;
+    if(D>=3&&fr.some(([a,d])=>gcd(a,d)>1)&&t<150)continue;
+    const k=fr.map(f=>f.join('/')).join(',');if(u.has(k))continue;u.add(k);return {fr,L};}
+  return {fr:[[1,2],[1,4],[3,4]].slice(0,n),L:4};
+}
+const NEWTYPES={
+ /* 8. simplest form */
+ simplify:{render(q){
+   const D=q.D,maxB=D<=0?6:D===1?8:12,maxD=D<=0?24:D===1?40:D===2?60:100;
+   let a,b,k,t=0;do{[a,b]=simpleFrac(maxB);const kmax=Math.floor(maxD/b);k=rnd(2,Math.max(2,kmax));t++;}while((b*k>maxD||(D>=3&&k<3&&t<30)||R.used.has('s'+a+'/'+b+'/'+k))&&t<60);
+   R.used.add('s'+a+'/'+b+'/'+k);
+   const c=a*k,d=b*k;Object.assign(q,{sa:a,sb:b,sk:k,sc:c,sd:d});q.answerKey={n:a,d:b};
+   setPrompt(`Write ${F(c,d,'big')} in its <b>simplest form</b>. Divide the top and bottom by the same number until you can't any more.`);
+   fentry(q,{n:'edit',d:'edit'});
+   stage().innerHTML=`<div class="equation">${F(c,d,'huge')}<span class="eq">=</span>${q.entryHTML}</div><div id="vis" class="hidden" style="width:100%"></div>`+q.keypadHTML;
+   q.bind();q.refresh();
+   q.check=()=>{const n=q.val('n'),dd=q.val('d');q.mistake=null;if(!dd)return false;
+     if(n*b===a*dd&&!(n===a&&dd===b))q.mistake='notSimplest';return n===a&&dd===b;};
+   const f=[2,3,5,7].filter(p=>c%p===0&&d%p===0);
+   q.hint=()=>`What number goes into <b>both</b> ${c} and ${d}? ${D<=1?`Try ${k}.`:`Try ${f.length?f[0]:k}, and keep going if you can.`}`;
+   q.explain=ok=>{const n=q.val('n'),dd=q.val('d');q.lockBoxes(ok,{n:a,d:b});
+     let s=ok?'':(q.mistake==='notSimplest'?`<div class="oops">${F(n,dd)} is equivalent, but it can be simplified more: ${n} and ${dd} can both still be divided by ${gcd(n,dd)}.</div>`:`You wrote ${F(n||'?',dd||'?')}. `);
+     s+=`${c} and ${d} can both be divided by <b>${k}</b>.<br>${workHTML(c,d,a,b,'÷',k)}`;
+     if(d<=24)s+=`<div style="width:100%">${nlSVG({lines:[{parts:d,labels:[c],mark:c},{parts:b,labels:'all',highlight:a}],box:a/b})}</div>`;
+     return s;};
+ }},
+ /* 9. improper fractions & mixed numbers */
+ improper:{render(q){
+   const D=q.D;const modes=D<=0?['toMixed','toImp']:D===1?['toMixed','toImp','eqImp']:['toMixed','toImp','eqImp','eqMix','eqImp'];
+   const mode=pick(modes);q.mode=mode;
+   const dens=D<=0?[2,3,4,5]:D===1?[2,3,4,5,6,8]:[2,3,4,5,6,8,10,12];const maxW=D<=1?2:D===2?3:5;
+   let html,w,n,d,ans,work,visN,visD,hint;
+   fentry(q,{});
+   if(mode==='toMixed'){d=pick(dens);w=rnd(1,maxW);const r=rnd(1,d-1);n=w*d+r;q.ans={w,n:r};
+     fentry(q,{w:'edit',n:'edit',d});html=`${F(n,d,'huge')}<span class="eq">=</span>${q.entryHTML}`;
+     setPrompt(`Write ${F(n,d,'big')} as a <b>mixed number</b>.`);
+     hint=`How many groups of ${d} are in ${n}? Each group of ${F(d,d)} is one whole.`;
+     work=`${n} ÷ ${d} = ${w} remainder ${r}, so ${F(n,d,'big')} = ${M(w,r,d,'big')}`;visN=n;visD=d;
+     q.check=()=>q.val('w')===w&&q.val('n')===r;}
+   else if(mode==='toImp'){d=pick(dens);w=rnd(1,maxW);const r=rnd(1,d-1);n=w*d+r;q.ans={n};
+     fentry(q,{n:'edit',d});html=`${M(w,r,d,'huge')}<span class="eq">=</span>${q.entryHTML}`;
+     setPrompt(`Write ${M(w,r,d,'big')} as an <b>improper fraction</b>.`);
+     hint=`Each whole is ${F(d,d)}. ${w} whole${w>1?'s':''} = ${w} × ${d} pieces. Then add the ${r} extra.`;
+     work=`${w} × ${d} + ${r} = ${n}, so ${M(w,r,d,'big')} = ${F(n,d,'big')}`;visN=n;visD=d;
+     q.check=()=>q.val('n')===n;}
+   else if(mode==='eqImp'){let b,k,a;for(let t=0;t<50;t++){b=pick([2,3,4,5,6]);k=pick(D>=3?[2,3,4,5]:[2,3,4]);a=rnd(b+1,b*(D>=3?3:2)-1);if(a%b&&b*k<=(D>=3?30:24))break;}
+     const up=Math.random()<0.5;const tn=up?a:a*k,td=up?b:b*k,an=up?a*k:a,ad=up?b*k:b;q.ans={n:an};
+     fentry(q,{n:'edit',d:ad});html=`${F(tn,td,'huge')}<span class="eq">=</span>${q.entryHTML}`;
+     setPrompt(`Improper fractions have equivalents too! Find the missing number.`);
+     hint=up?`The bottom went from ${td} to ${ad}: × ${k}. Do the same to the top.`:`The bottom went from ${td} to ${ad}: ÷ ${k}. Do the same to the top.`;
+     work=up?workHTML(tn,td,an,ad,'×',k):workHTML(tn,td,an,ad,'÷',k);visN=an;visD=ad;
+     q.lines={W:Math.ceil(a/b),l:[{parts:td,mark:tn},{parts:ad,highlight:an}],box:a/b};
+     q.check=()=>q.val('n')===an;}
+   else{/* eqMix: mixed number to improper with a different denominator */
+     const b=pick([2,3,4,5]),k=pick([2,3,4].filter(x=>b*x<=20)),ww=rnd(1,D>=3?3:2),r=rnd(1,b-1),an=(ww*b+r)*k,ad=b*k;q.ans={n:an};
+     fentry(q,{n:'edit',d:ad});html=`${M(ww,r,b,'huge')}<span class="eq">=</span>${q.entryHTML}`;
+     setPrompt(`Two steps! Write ${M(ww,r,b,'big')} as an improper fraction with ${ad} on the bottom.`);
+     hint=`First make it an improper fraction: ${ww} × ${b} + ${r} = ${ww*b+r}, so ${F(ww*b+r,b)}. Then multiply the top and bottom by ${k}.`;
+     work=`${M(ww,r,b)} = ${F(ww*b+r,b)} ${workHTML(ww*b+r,b,an,ad,'×',k)}`;visN=an;visD=ad;
+     q.lines={W:ww+1,l:[{parts:b,mark:ww*b+r},{parts:ad,highlight:an}],box:(ww*b+r)/b};
+     q.check=()=>q.val('n')===an;}
+   stage().innerHTML=`<div class="equation">${html}</div><div id="vis" class="hidden" style="width:100%"></div>`+q.keypadHTML;
+   q.bind();q.refresh();
+   q.hint=()=>{if(D<=1){$('#vis').innerHTML=multiBars(visN,visD);$('#vis').classList.remove('hidden');}return hint;};
+   q.explain=ok=>{const mine=q.fields.map(k=>q.f[k]).join(' ');q.lockBoxes(ok,q.ans);
+     const pic=q.lines&&q.lines.W<=4&&q.lines.l.every(l=>l.parts*q.lines.W<=40)?nlWholes({lines:q.lines.l,W:q.lines.W,box:q.lines.box}):multiBars(visN,visD);
+     return (ok?'':`You wrote ${mine}. The answer is shown in the box${q.fields.length>1?'es':''}.<br>`)+work+`<div style="width:100%">${pic}</div>`;};
+ }},
+ /* 10a. compare unlike fractions */
+ compare:{render(q){
+   const D=q.D;const {a,b,c,d}=cmpPair(D,R.used);const L=lcm(b,d);
+   const v=a*d-c*b,ans=v>0?'>':v<0?'<':'=';Object.assign(q,{ca:a,cb:b,cc:c,cd:d,ans});q.answerKey=ans;
+   setPrompt(`Which sign goes in the circle? Make the bottom numbers the same first.`);
+   stage().innerHTML=`<div class="equation">${F(a,b,'huge')}<span class="cmpbox" id="cmpBox">?</span>${F(c,d,'huge')}</div>
+     <div class="opts sym">${['<','=','>'].map(s=>`<button class="opt" data-sym="${s}">${s}</button>`).join('')}</div>`;
+   q.noCheck=true;
+   stage().onclick=e=>{const bt=e.target.closest('[data-sym]');if(!bt||q.done)return;q.chosen=bt.dataset.sym;$('#cmpBox').textContent=q.chosen;answer(q.chosen===ans);};
+   q.hint=()=>`Change both to <b>${L}ths</b>: ${F(a,b)} = ${F('?',L)} and ${F(c,d)} = ${F('?',L)}.`;
+   q.explain=ok=>{document.querySelectorAll('[data-sym]').forEach(bt=>{if(bt.dataset.sym===ans)bt.classList.add('right');else if(bt.dataset.sym===q.chosen)bt.classList.add('wrong');});$('#cmpBox').textContent=ans;
+     const A=a*L/b,C=c*L/d;
+     let s=`${F(a,b)} = ${F(A,L)} and ${F(c,d)} = ${F(C,L)}. ${A} ${ans} ${C}, so <b>${F(a,b,'big')} ${ans} ${F(c,d,'big')}</b>.`;
+     if(Math.max(b,d)<=24)s+=`<div style="width:100%">${nlSVG({lines:[{parts:b,labels:[a],mark:a},{parts:d,labels:[c],mark:c,markColor:'#8b5cf6'}]})}</div>The fraction further right on the parallel number lines is bigger.`;
+     return s;};
+ }},
+ /* 10b. order fractions */
+ order:{render(q){
+   const D=q.D;const {fr,L}=orderSet(D,R.used);q.fr=fr;q.L=L;
+   const sorted=fr.map((f,i)=>i).sort((i,j)=>fr[i][0]/fr[i][1]-fr[j][0]/fr[j][1]);q.answerKey=sorted;q.picked=[];
+   setPrompt(`Tap the fractions in order from <b>smallest</b> to <b>largest</b>.`);
+   const draw=()=>{stage().innerHTML=`<div class="ordrow">${range(fr.length).map(i=>`<span class="ordslot">${q.picked[i]!=null?F(fr[q.picked[i]][0],fr[q.picked[i]][1],'big'):'&nbsp;'}</span>`).join('<span class="lt">&lt;</span>')}</div>
+     <div class="opts">${fr.map((f,i)=>`<button class="opt${q.picked.includes(i)?' used':''}" data-o="${i}" ${q.picked.includes(i)?'disabled':''}>${F(f[0],f[1])}</button>`).join('')}</div>
+     ${q.picked.length&&!q.done?'<div class="row" style="justify-content:center"><button class="btn ghost" data-undo="1">↩️ Undo</button></div>':''}`;};
+   draw();q.draw=draw;
+   stage().onclick=e=>{if(q.done)return;if(e.target.closest('[data-undo]')){q.picked.pop();draw();updCheck();return;}const bt=e.target.closest('[data-o]');if(!bt)return;const i=+bt.dataset.o;if(!q.picked.includes(i)){q.picked.push(i);sfx('tap');draw();}updCheck();};
+   q.canCheck=()=>q.picked.length===fr.length;q.nudge='Tap all the fractions first.';
+   q.check=()=>q.picked.every((v,i)=>v===sorted[i]);
+   q.hint=()=>`Change them all to <b>${L}ths</b>, then compare the top numbers.`;
+   q.explain=ok=>{q.picked=sorted.slice();draw();
+     return (ok?'':'Here is the right order. ')+`With ${L} on the bottom: `+sorted.map(i=>`${F(fr[i][0],fr[i][1])} = ${F(fr[i][0]*L/fr[i][1],L)}`).join(', ')+`.<br>`+sorted.map(i=>F(fr[i][0],fr[i][1],'big')).join(' &lt; ');};
+ }},
+};
+Object.assign(TYPES,NEWTYPES);
+Object.assign(TYPE_NAMES,{simplify:'Simplest Form',improper:'Improper & Mixed',compare:'Compare',order:'Ordering'});
+/* harder Match It: tap ALL the equivalent fractions */
+function choiceMulti(q){
+  const g=gcd(q.a,q.b),tn=q.c,td=q.d,sa=q.a/g,sb=q.b/g,maxDen=q.D>=3||sb>12?100:60;
+  const ks=shuffle(range(30).map(i=>i+1).filter(k=>sb*k<=maxDen&&sb*k!==td));
+  const nRight=Math.min(ks.length,q.D>=3?3:pick([2,3]));
+  const right=ks.slice(0,nRight).map(k=>[sa*k,sb*k]);
+  const wrong=[],seen=new Set(right.map(r=>r.join('/')).concat([tn+'/'+td]));
+  const cands=[];ks.forEach(k=>{const n=sa*k,d=sb*k;cands.push([n+1,d],[n-1,d],[n+(d-sb),d],[d-n,d],[sa+k,sb+k],[n,d+sb]);});
+  shuffle(cands).forEach(([n,d])=>{const k=n+'/'+d;if(wrong.length<6-nRight&&n>0&&n<d&&d<=maxDen&&!seen.has(k)&&n*sb!==sa*d){seen.add(k);wrong.push([n,d]);}});
+  for(let t=0;wrong.length<6-nRight&&t<500;t++){const d=pick(ks.length?ks.map(k=>sb*k):[sb*2]),n=rnd(1,d-1),k=n+'/'+d;if(!seen.has(k)&&n*sb!==sa*d){seen.add(k);wrong.push([n,d]);}}
+  const opts=shuffle(right.concat(wrong));q.opts=opts;q.right=new Set(opts.map((o,i)=>o[0]*sb===sa*o[1]?i:-1).filter(i=>i>=0));q.answerKey=[...q.right];q.sel=new Set();
+  setPrompt(`Tap <b>all</b> the fractions that are the same amount as ${F(tn,td,'big')}, then press Check.`);
+  const draw=()=>{stage().innerHTML=`<div class="opts six">${opts.map((o,i)=>`<button class="opt${q.sel.has(i)?' picked':''}${q.done?(q.right.has(i)?' right':q.sel.has(i)?' wrong':''):''}" data-opt="${i}">${F(o[0],o[1])}</button>`).join('')}</div>`;};
+  draw();
+  stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;const i=+b.dataset.opt;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);sfx('tap');draw();updCheck();};
+  q.canCheck=()=>q.sel.size>0;q.nudge='Tap the fractions you think are equivalent.';
+  q.check=()=>q.sel.size===q.right.size&&[...q.sel].every(i=>q.right.has(i));
+  q.hint=()=>`Simplify ${F(tn,td)} first: it is ${F(sa,sb)}. Which fractions are ${F(sa,sb)} with the top and bottom multiplied by the same number?`;
+  q.explain=ok=>{draw();return `${F(tn,td)} = ${F(sa,sb,'big')} in simplest form. The equivalent ones are `+[...q.right].map(i=>F(opts[i][0],opts[i][1])).join(', ')+` (each is ${F(sa,sb)} with the top and bottom multiplied by the same number).`;};
+}
+
 /* ---------- round flow ---------- */
 let R=null,q=null;
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
 function startLevel(id){
   const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
-  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
-  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;
+  const CL=levelD(id);R={L,D:CL,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').innerHTML=`${L.icon} Level ${L.id}: ${L.title} <span class="clvl" id="clvl">⚡ Challenge level ${CL+1}</span>`;
   show('play');next();
 }
 function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');}
@@ -497,17 +723,17 @@ function next(){
   R.idx++;
   if(R.idx>=ROUND)return finishRound();
   const type=R.types[R.idx];
-  q=Object.assign(base(R.L.pairs,R.used),{type,done:false,usedHint:false});
+  q=Object.assign(base(pairsFor(type,R.D,R.L.pairs),R.used),{type,D:R.D,done:false,usedHint:false});
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');
   $('#hintBtn').disabled=false;
-  TYPES[type].render(q);
+  q.D=R.D;TYPES[type].render(q);postRender(q);
   dots();topbar();updCheck();
 }
 function answer(ok){
   if(!q||q.done)return;q.done=true;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
-  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
   else{R.streak=0;sfx('bad');}
   R.results.push(ok);save();
   const expl=q.explain(ok);
@@ -525,11 +751,17 @@ function finishRound(){
   S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
   S.rounds++;S.lastPlayed=new Date().toISOString();
   S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  S.adapt=S.adapt||{};const aOld=S.adapt[L.id]||0;let stepMsg='';
+  if(R.score>=9&&R.D<4&&aOld<2){S.adapt[L.id]=aOld+1;stepMsg=`<p class="stepup">⬆️ Level up! Next round is <b>Challenge level ${levelD(L.id)+1}</b>. 9 or 10 right steps it up.</p>`;}
+  else if(R.score<=4&&aOld>0){S.adapt[L.id]=aOld-1;stepMsg=`<p class="stepup down">Next round goes back to Challenge level ${levelD(L.id)+1} for some practice.</p>`;}
+  else if(R.score>=9)stepMsg=`<p class="stepup">⚡ You're at the top Challenge level for this setting!</p>`;
+  save();
   const nowUnlocked=wasLocked&&unlocked(L.id+1);
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. Use the hints, they help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
     <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
     ${nowUnlocked?`<p class="tag" style="font-size:1.1rem">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${stepMsg}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button>
       <button class="btn orange" id="rAgain">🔁 Play again</button>
@@ -549,7 +781,7 @@ function home(){
   $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
     return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}>
       <span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span>
-      <span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+      <span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span><span class="clv">⚡ Challenge ${levelD(L.id)+1}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
   const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
   const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
   const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
@@ -559,7 +791,7 @@ function home(){
   let best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!best||r>best.r)best={t,r};}});
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:
     (best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%).`:'');
-  $('#unlockAll').checked=!!S.unlockAll;
+  $('#unlockAll').checked=!!S.unlockAll;document.querySelectorAll('[name=diff]').forEach(r=>r.checked=r.value===(DIFFS[S.diff]?S.diff:'challenge'));
   $('#hello').textContent=`Hi ${NAME}!`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Fraction Quest`;
   topbar();show('home');
 }
@@ -567,36 +799,37 @@ function home(){
 /* ---------- worksheet ---------- */
 function makeWorksheet(){
   const used=new Set(),today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
-  const blank='<span class="blank"></span>';
-  // 1 shading
-  const s1=range(3).map(()=>base(EASY.concat([[3,12],[4,12]]),used));
-  // 2 parallel number lines chain
-  const chain=pick([[3,6,12],[3,6,12],[2,4,8],[2,6,12],[4,8],[5,10]]);
-  // 3 missing numbers
-  const s3=range(8).map((_,i)=>{const b=base(ALL,used);b.mode=['num','den','simp','num','simp','num','den','num'][i];return b;});
-  // 4 circle the equivalent
-  const s4=range(4).map(()=>{const b=base(ALL,used);const tv=b.a/b.b;const ds=[];
-    const pool=[[b.a+(b.d-b.b),b.d],[b.a,b.d],[b.c+1,b.d],[b.c-1,b.d],[b.a+1,b.b+1]];
-    const seen=new Set([b.c+'/'+b.d]);pool.forEach(([n,d])=>{const k=n+'/'+d;if(n>0&&n<d&&!seen.has(k)&&Math.abs(n/d-tv)>1e-9){seen.add(k);ds.push([n,d]);}});
-    b.opts=shuffle([[b.c,b.d]].concat(ds.slice(0,2)));return b;});
-  const sec1=(key)=>s1.map((b,i)=>`<div class="wsrow"><b>${String.fromCharCode(97+i)})</b> ${F(b.a,b.b)} ${barSVG({parts:b.b,shaded:range(b.a),color:'#9ca3af',h:40})}</div>
-     <div class="wsrow wsgap"><span style="width:28px"></span> = ${key?F(`<span class="ans">${b.c}</span>`,b.d):F(blank,b.d)} ${barSVG({parts:b.d,shaded:key?range(b.c):[],color:'#fca5a5',h:40})}</div>`).join('');
+  const blank='<span class="blank"></span>',A=(v,key)=>key?`<span class="ans">${v}</span>`:blank;
+  const L=String.fromCharCode;
+  // 1 parallel number lines chain
+  const chain=pick([[3,6,12],[4,8,16],[5,10,20],[2,6,12],[3,9,18],[4,12,24]]);
+  // 2 missing numbers, bigger denominators
+  const s2=range(8).map((_,i)=>{const b=base(i<4?VIS2:HUND,used);b.mode=['num','den','simp','num','simp','num','den','simp'][i];return b;});
+  // 3 simplest form
+  const s3=[];while(s3.length<4){const [a,b]=simpleFrac(10),k=rnd(2,Math.floor(100/b)),key=a+'/'+b;if(b*k<=100&&!used.has('s'+key)){used.add('s'+key);s3.push({a,b,c:a*k,d:b*k});}}
+  // 4 improper <-> mixed
+  const s4=range(4).map(i=>{const d=pick([3,4,5,6,8,10]),w=rnd(1,4),r=rnd(1,d-1);return {d,w,r,n:w*d+r,toM:i%2===0};});
+  // 5 compare
+  const s5=range(4).map((_,i)=>cmpPair(i<2?2:3,used));
+  const ord=orderSet(3,used);const ordS=ord.fr.slice().sort((x,y)=>x[0]/x[1]-y[0]/y[1]);
   const nlLines=key=>nlSVG({lines:chain.map((p,j)=>j===0?{parts:p,labels:'all'}:{parts:p,labels:key?'all':[],blanks:!key}),box:key?range(chain[0]-1).map(i=>(i+1)/chain[0]):null});
-  const mStr=(b,key)=>{const A=v=>key?`<span class="ans">${v}</span>`:blank;
-    if(b.mode==='num')return `${F(b.a,b.b,'big')} = ${F(A(b.c),b.d,'big')}`;
-    if(b.mode==='den')return `${F(b.a,b.b,'big')} = ${F(b.c,A(b.d),'big')}`;
-    return `${F(b.c,b.d,'big')} = ${F(A(b.a),b.b,'big')}`;};
-  const sec4=key=>s4.map((b,i)=>`<div class="choice">${String.fromCharCode(97+i)}) ${F(b.a,b.b,'big')} &nbsp;=&nbsp; ${b.opts.map(o=>`<span class="c" ${key&&o[0]===b.c&&o[1]===b.d?'style="border:3px solid #b91c1c;border-radius:50%;padding:4px 8px"':''}>${F(o[0],o[1],'big')}</span>`).join('')}</div>`).join('');
+  const mStr=(b,key)=>{if(b.mode==='num')return `${F(b.a,b.b,'big')} = ${F(A(b.c,key),b.d,'big')}`;
+    if(b.mode==='den')return `${F(b.a,b.b,'big')} = ${F(b.c,A(b.d,key),'big')}`;
+    return `${F(b.c,b.d,'big')} = ${F(A(b.a,key),b.b,'big')}`;};
+  const sym=(o)=>{const v=o.a*o.d-o.c*o.b;return v>0?'&gt;':v<0?'&lt;':'=';};
   const page=key=>`<div class="page${key?' answers':''}">
-    <h2>${key?'✅ Answer key: ':''}Equivalent Fractions 🍕</h2>
-    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 20</span>'}</div>
-    <h3>1. Fraction walls</h3><div class="instr">Shade the second bar so it shows the same amount as the first. Then write the fraction.</div>${sec1(key)}
-    <h3>2. Parallel number lines</h3><div class="instr">Write the missing fractions under each mark. Draw a box around the fractions that line up with the top line. They are equivalent!</div>${nlLines(key)}
-    <h3>3. Missing numbers</h3><div class="instr">Multiply or divide the top and bottom by the same number.</div><div class="grid2 grid4">${s3.map((b,i)=>`<div>${String.fromCharCode(97+i)}) ${mStr(b,key)}</div>`).join('')}</div>
-    <h3>4. Circle the equivalent fraction</h3><div class="grid2">${sec4(key)}</div>
-    <h3>5. Challenge ⭐</h3><div class="instr">Write three fractions that are equivalent to ${F(1,2)}.</div>
-      <div style="font-size:18px">${F(1,2,'big')} = ${key?`<span class="ans">any of: 2/4, 3/6, 4/8, 5/10, 6/12</span>`:`${F(blank,blank,'big')} = ${F(blank,blank,'big')} = ${F(blank,blank,'big')}`}</div>
-    ${key?'':`<p style="margin-top:14px;font-size:13px">🌟 Great work, ${NAME}! Remember: whatever you do to the bottom, do to the top.</p>`}
+    <h2>${key?'✅ Answer key: ':''}Equivalent Fractions Challenge 🍕</h2>
+    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 26</span>'}</div>
+    <h3>1. Parallel number lines</h3><div class="instr">Write the missing fractions under each mark. Draw a box around the fractions that line up with the top line.</div>${nlLines(key)}
+    <h3>2. Missing numbers</h3><div class="instr">Multiply or divide the top and bottom by the same number.</div><div class="grid2 grid4">${s2.map((b,i)=>`<div>${L(97+i)}) ${mStr(b,key)}</div>`).join('')}</div>
+    <h3>3. Simplest form</h3><div class="instr">Divide the top and bottom by the same number until you can't any more.</div><div class="grid2 grid4">${s3.map((b,i)=>`<div>${L(97+i)}) ${F(b.c,b.d,'big')} = ${F(A(b.a,key),A(b.b,key),'big')}</div>`).join('')}</div>
+    <h3>4. Improper fractions and mixed numbers</h3><div class="instr">Change each one.</div><div class="grid2 grid4">${s4.map((b,i)=>`<div>${L(97+i)}) ${b.toM?`${F(b.n,b.d,'big')} = ${key?M(`<span class="ans">${b.w}</span>`,`<span class="ans">${b.r}</span>`,b.d,'big'):`${blank} ${F(blank,b.d,'big')}`}`:`${M(b.w,b.r,b.d,'big')} = ${F(A(b.n,key),b.d,'big')}`}</div>`).join('')}</div>
+    <h3>5. Compare: write &lt;, &gt; or =</h3><div class="grid2 grid4">${s5.map((o,i)=>`<div>${L(97+i)}) ${F(o.a,o.b,'big')} ${key?`<span class="ans" style="font-size:20px">${sym(o)}</span>`:'<span class="circ"></span>'} ${F(o.c,o.d,'big')}</div>`).join('')}</div>
+    <div class="instr" style="margin-top:6px">e) Write these in order from smallest to largest: &nbsp; ${ord.fr.map(f=>F(f[0],f[1],'big')).join(' &nbsp; ')}</div>
+    <div style="font-size:16px">${key?`<span class="ans">${ordS.map(f=>F(f[0],f[1],'big')).join(' &lt; ')}</span>`:range(ord.fr.length).map(()=>'<span class="blank" style="width:44px;height:30px"></span>').join(' &lt; ')}</div>
+    <h3>6. Challenge ⭐</h3><div class="instr">Write three fractions equivalent to ${F(3,4)} that have a bottom number bigger than 20.</div>
+      <div style="font-size:16px">${F(3,4,'big')} = ${key?`<span class="ans">any of: 18/24, 21/28, 24/32, 30/40, 60/80, 75/100 …</span>`:`${F(blank,blank,'big')} = ${F(blank,blank,'big')} = ${F(blank,blank,'big')}`}</div>
+    ${key?'':`<p style="margin-top:10px;font-size:13px">🌟 Great work, ${NAME}! Whatever you do to the bottom, do to the top.</p>`}
   </div>`;
   $('#sheet').innerHTML=page(false)+page(true);
 }
@@ -609,18 +842,19 @@ $('#checkBtn').onclick=()=>{if(!q||q.done)return;if(!q.canCheck()){$('#hintBox')
 $('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint();$('#hintBox').innerHTML='💡 '+h;$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;sfx('tap');};
 $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
+document.querySelectorAll('[name=diff]').forEach(r=>r.onchange=()=>{if(r.checked){S.diff=r.value;save();home();}});
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
-$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,df=S.diff;S=defState();S.sound=snd;S.diff=df;save();home();}};
 document.addEventListener('keydown',e=>{
   if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
-  if(q.type==='missing'&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}
+  if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if((e.key==='Tab'||e.key==='/'||e.key===' ')&&q.fields&&q.fields.length>1){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}
 });
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
 if(PLAYER)$('#switchBtn').classList.remove('hidden');
 // test hook (harmless)
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,_answer:answer,makeWorksheet:typeof makeWorksheet==='function'?makeWorksheet:null};
 home();
 })();
 </script>

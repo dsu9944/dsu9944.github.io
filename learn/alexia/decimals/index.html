@@ -218,6 +218,13 @@ table.pv td.hl{background:#fef3c7;border-color:#f59e0b}
 .page .circ{display:inline-block;width:22px;height:22px;border:2px solid #000;border-radius:50%;vertical-align:middle;text-align:center;line-height:19px}
 @media print{.page svg.g100{width:62px}.page .g3>div{font-size:13px}.page .wl{font-size:12px}.page svg.nl{max-width:none}}
 
+.clvl{display:inline-block;font-size:.8rem;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.clv{display:block;font-size:.78rem;color:#92400e;margin-top:2px}
+.stepup{font-size:1.1rem;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 12px;display:inline-block}.stepup.down{background:#fff7ed;color:#9a3412}
+.diffset{background:#f8fafc;border-radius:12px;padding:8px 12px;margin:8px 0}.diffset label{margin-right:14px;white-space:nowrap}.diffset input{width:20px;height:20px;vertical-align:middle}.diffset .small{font-size:.9rem;margin:6px 0 0}
+.dentry.d3{font-size:2.2rem}.dentry.d3 .pvc small{font-size:.62rem}
+.colsum{font-size:1.4rem;font-weight:bold;border-collapse:collapse;margin:6px 0}.colsum td{padding:2px 8px;text-align:right;font-variant-numeric:tabular-nums}.colsum tr.tot td{border-top:3px solid #1f2937}
+@media(max-width:560px){.equation{gap:8px}.dentry.d3{font-size:1.5rem;gap:2px}.dentry.d3 .pvc small{font-size:.5rem}.dentry.d3 .pt{font-size:2rem}}
 </style>
 </head>
 <body>
@@ -235,7 +242,7 @@ table.pv td.hl{background:#fef3c7;border-color:#f59e0b}
     <div class="big">🔎0.1</div>
     <div style="flex:1;min-width:220px">
       <h2 id="hello">Hi!</h2>
-      <p>Time to <b>zoom in on decimals</b>! A tenth is <b>0.1</b> and a hundredth is <b>0.01</b>. You'll put decimals on number lines, zoom in to find hundredths, and find out whether 0.25 really is bigger than 0.3. Finish a level with 6 or more out of 10 to unlock the next one.</p>
+      <p>Time to <b>zoom in on decimals</b>! A tenth is <b>0.1</b> and a hundredth is <b>0.01</b>. You'll put decimals on number lines, zoom in to find hundredths, and find out whether 0.25 really is bigger than 0.3. Finish a level with 6 or more out of 10 to unlock the next one. New: thousandths, rounding and money maths in Levels 10–15! Score 9 or 10 and the level gets harder. ⚡</p>
     </div>
   </div>
   <div class="levels" id="levelGrid"></div>
@@ -250,8 +257,13 @@ table.pv td.hl{background:#fef3c7;border-color:#f59e0b}
   <div class="card">
     <details>
       <summary>👨‍👩‍👧 For grown-ups</summary>
-      <p>Covers decimals to two places (NSW Mathematics K–10, Stage 2). It starts with tenths and hundredths linked to fractions (3/10 = 0.3, 47/100 = 0.47) using bars and 100-grids. Then she places and reads decimals on number lines from 0 to 1, zooms from tenths into hundredths, and goes beyond 1 (1.7 = 1 7/10). After that she compares and orders decimals and finishes with money and measurement problems.</p>
-      <p>The number lines follow the <b>parallel number line</b> style used in class for fractions, with a fraction line lined up above a decimal line and a dashed red box showing they are the same spot. The game looks out for common mistakes. One is thinking a longer decimal is bigger (0.25 &gt; 0.3), which it explains with 100-grids and parallel tenths/hundredths lines. Others are writing 7 hundredths as 0.7 instead of 0.07, swapping the tenths and hundredths digits, and leaving out the whole number. Hints are free but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <p>Covers decimals (NSW Mathematics K–10). It starts with tenths and hundredths linked to fractions (3/10 = 0.3, 47/100 = 0.47) using bars and 100-grids. Then she places and reads decimals on number lines from 0 to 1, zooms from tenths into hundredths, and goes beyond 1 (1.7 = 1 7/10). After that she compares and orders decimals and finishes with money and measurement problems. Levels 10–15 stretch further: thousandths, number lines beyond 3 (such as 6.4 to 7.4 and 3.4 to 3.5), ordering mixed sets of fractions and decimals, adding and subtracting money (including change), and rounding to the nearest whole number, tenth or hundredth. At Challenge level 3 and above, the picture questions (bars and 100-grids) and most multiple-choice questions are swapped for typed answers, and Zoom In! uses numbers bigger than 1.</p>
+      <p>The number lines follow the <b>parallel number line</b> style used in class for fractions, with a fraction line lined up above a decimal line and a dashed red box showing they are the same spot. The game looks out for common mistakes. One is thinking a longer decimal is bigger (0.25 &gt; 0.3), which it explains with 100-grids and parallel tenths/hundredths lines. Others are writing 7 hundredths as 0.7 instead of 0.07, swapping the tenths and hundredths digits, and leaving out the whole number. Hints are free but give 5 points instead of 10 (3 at Challenge level 4 and 5). Progress is saved on this device only.</p>
+      <div class="diffset"><b>Difficulty:</b>
+        <label><input type="radio" name="diff" value="easy"> Easy</label>
+        <label><input type="radio" name="diff" value="normal"> Normal</label>
+        <label><input type="radio" name="diff" value="challenge"> Challenge</label>
+        <p class="small">Challenge (the default) starts each level at Challenge level 3: bigger numbers, fewer pictures and typed answers. Easy is the original version of each level. Getting 9 or 10 right steps that level up (to Challenge level 5); 4 or fewer steps it back down.</p></div>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
         <button class="btn ghost" id="resetBtn">Reset progress</button>
@@ -328,12 +340,21 @@ const LEVELS=[
  {id:7,icon:'📶',title:'Line Them Up',blurb:'Put decimals in order from smallest to largest.',types:['order']},
  {id:8,icon:'💰',title:'Money & Measuring',blurb:'Dollars and cents, metres and centimetres.',types:['money']},
  {id:9,icon:'🏆',title:'Decimal Champion',blurb:'A mix of everything. Can you get 3 stars?',types:['tenths','hund','nl01','zoom','beyond','compare','compare','order','money','money']},
+ {id:10,icon:'🔬',title:'Thousandths',blurb:'Three places after the point: 0.347, 0.045 and 0.007.',types:['thou']},
+ {id:11,icon:'📏',title:'Number Lines Beyond 3',blurb:'Read and place decimals on lines like 6.4 to 7.4 and 3.4 to 3.5.',types:['nlbig']},
+ {id:12,icon:'🔀',title:'Fractions & Decimals',blurb:'Change fractions to decimals and order a mixed set.',types:['fdmix']},
+ {id:13,icon:'💵',title:'Money Maths',blurb:'Add and subtract money, and work out the change.',types:['money2']},
+ {id:14,icon:'🎯',title:'Rounding',blurb:'Round to the nearest whole number, tenth or hundredth.',types:['round']},
+ {id:15,icon:'👑',title:'Decimal Master',blurb:'The toughest mix of everything. Can you get 3 stars?',types:['thou','nlbig','fdmix','money2','round','thou','fdmix','money2','round','compare']},
 ];
 const TYPE_NAMES={tenths:'Tenths',hund:'Hundredths',nl01:'Number Line 0 to 1',zoom:'Zoom In!',beyond:'Beyond One',compare:'Which Is Bigger?',order:'Line Them Up',money:'Money & Measuring'};
 const ROUND=10,UNLOCK=6;
+
+const DIFFS={easy:{base:0,label:'Easy'},normal:{base:1,label:'Normal'},challenge:{base:2,label:'Challenge'}};
+const levelD=id=>Math.min(4,(DIFFS[S.diff]||DIFFS.challenge).base+((S.adapt||{})[id]||0));
 const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
 
-const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[],mistakes:{longer:0,tenthHund:0,swap:0,forgotWhole:0}});
+const defState=()=>({diff:'challenge',adapt:{},levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[],mistakes:{longer:0,tenthHund:0,swap:0,forgotWhole:0}});
 function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));s.mistakes=Object.assign(defState().mistakes,s.mistakes||{});return s;}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -379,7 +400,7 @@ function fracSVG(x,y,n,d,color='#1f2937',size=16){
 }
 /* number lines. Each line: {lo,hi,step (hundredths), lab:'none'|'all'|'ends'|'tenths', labs:[values], fr (fraction labels), marks:[{v,color,label,row}],
    sel, selColor, highlight, interactive, tag}. box: values for the dashed red "same spot" box (parallel lines). zoom: {from,lo,hi} */
-function dl({lines,box=null,zoom=null,w=(window.innerWidth<600?440:680),gap=124,top=64,cls='nl'}){
+function dl({lines,box=null,zoom=null,w=(window.innerWidth<600?440:680),gap=124,top=64,cls='nl',unit=100,fmt=D}){
   const m=40,Lw=w-2*m,H=top+gap*(lines.length-1)+72;
   const Xf=ln=>v=>m+(v-ln.lo)/(ln.hi-ln.lo)*Lw;
   let s=`<svg class="${cls}" viewBox="0 0 ${w} ${H}" aria-label="number line">`;
@@ -392,7 +413,7 @@ function dl({lines,box=null,zoom=null,w=(window.innerWidth<600?440:680),gap=124,
     if(zoom&&zoom.from===j)s+=`<line x1="${X(zoom.lo)}" y1="${y}" x2="${X(zoom.hi)}" y2="${y}" stroke="${OR}" stroke-width="10" stroke-linecap="round" opacity=".9"/>`;
     if(ln.tag)s+=`<text x="${X(ln.lo)-30}" y="${y-30}" font-size="15" font-weight="bold" fill="${ln.tagColor||'#6b7280'}">${ln.tag}</text>`;
     for(let v=ln.lo;v<=ln.hi;v+=st){
-      const x=X(v),whole=v%100===0,tenth=v%10===0,hh=whole?17:(st===1&&tenth)?14:10;
+      const x=X(v),whole=v%unit===0,tenth=v%(unit/10)===0,hh=whole?17:(st===1&&tenth)?14:10;
       s+=`<line x1="${x}" y1="${y-hh}" x2="${x}" y2="${y+hh}" stroke="#1f2937" stroke-width="${whole?3.5:2.5}"/>`;
       const hl=ln.highlight===v;
       let lab=whole||ln.lab==='all'||(ln.lab==='tenths'&&tenth)||(ln.lab==='ends'&&(v===ln.lo||v===ln.hi))||(ln.labs&&ln.labs.includes(v))||hl;
@@ -401,7 +422,7 @@ function dl({lines,box=null,zoom=null,w=(window.innerWidth<600?440:680),gap=124,
       const col=hl?GRN:'#1f2937';
       if(lab){
         if(ln.fr&&!whole)s+=fracSVG(x,y+33,st===10?v/10:v,st===10?10:100,col);
-        else s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="${whole?22:(px<34?15:18)}" font-weight="bold" fill="${col}">${D(v)}</text>`;
+        else s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="${whole?22:(px<34?15:18)}" font-weight="bold" fill="${col}">${fmt(v)}</text>`;
       }
       if(hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;
       if(ln.sel===v&&!hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="${ln.selColor||PU}" stroke="#fff" stroke-width="3"/>`;
@@ -514,7 +535,7 @@ const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,`You're a decimal det
 const youWrote=q=>`You wrote <b>${q.shown()}</b>. `;
 const TYPES={
  /* 1. tenths */
- tenths:{make(q,u){q.n=uniq(u,'t',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,['bar','frac','toFrac']);},render(q){
+ tenths:{make(q,u){q.n=uniq(u,'t',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,q.D>=2?['frac','toFrac']:['bar','frac','toFrac']);},render(q){
    const {n,v,mode}=q;
    if(mode==='toFrac'){setPrompt(`Write ${DS(v)} as a fraction.`);intEntry(q,{max:2,den:10});q.answerKey={n};
      stage().innerHTML=`<div id="vis" class="hidden" style="width:100%"></div>`+eqRow(DS(v,1,'huge'),q.entryHTML)+q.keypadHTML;q.check=()=>{q.entered=q.val();return q.val()===n;};}
@@ -530,7 +551,7 @@ const TYPES={
      `<div style="margin-top:6px">On parallel number lines, ${F(n,10)} and ${D(v)} are in the <b>same spot</b>:</div>`+parallelFD(v);};
  }},
  /* 2. hundredths */
- hund:{make(q,u){q.v=uniq(u,'h',genHund);q.mode=modeOf(q,['grid','frac','words']);},render(q){
+ hund:{make(q,u){q.v=uniq(u,'h',genHund);q.mode=modeOf(q,q.D>=3?['frac']:q.D>=2?['frac','words']:['grid','frac','words']);},render(q){
    const {v,mode}=q,t=tdig(v),h=hdig(v);
    if(mode==='words'){
      setPrompt(`What does ${DS(v,2)} mean?`);
@@ -553,7 +574,7 @@ const TYPES={
      `${F(v,100,'big')} = ${t} tenth${t===1?'':'s'} and ${h} hundredth${h===1?'':'s'} = ${DS(v,2)}${h===0?` = ${DS(v,1)} (the same amount!)`:''}`+pv(v,2);};
  }},
  /* 3. number line 0 to 1 */
- nl01:{make(q,u){q.n=uniq(u,'n',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,['place','read','placeFrac']);},render(q){
+ nl01:{make(q,u){q.n=uniq(u,'n',()=>rnd(1,9));q.v=q.n*10;q.mode=modeOf(q,q.D>=2?['read','placeFrac']:['place','read','placeFrac']);},render(q){
    const {n,v,mode}=q;
    if(mode==='read'){setPrompt(`What decimal is the orange dot on?`);decEntry(q,{ones:0,pl:1});q.answerKey={t:n};
      stage().innerHTML=`<div id="line" style="width:100%">${dl({lines:[{lo:0,hi:100,step:10,lab:'none',marks:[{v}]}]})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
@@ -571,9 +592,9 @@ const TYPES={
      `<div style="margin-top:6px">Parallel number lines show that ${F(n,10)} and ${D(v)} are the <b>same spot</b>:</div>`+parallelFD(v);};
  }},
  /* 4. zoom from tenths into hundredths */
- zoom:{make(q,u){q.v=uniq(u,'z',()=>rnd(0,9)*10+rnd(1,9));q.a=tdig(q.v);q.b=hdig(q.v);q.mode=modeOf(q,['place','read','between']);},render(q){
-   const {v,a,b,mode}=q,lo=a*10,hi=lo+10;
-   const lines=(o={})=>dl({lines:[{lo:0,hi:100,step:10,lab:'all',marks:o.top?[{v,color:o.topCol||OR}]:[]},
+ zoom:{make(q,u){q.v=uniq(u,'z',()=>(q.D>=3?rnd(1,9)*100:0)+rnd(0,9)*10+rnd(1,9));q.a=tdig(q.v);q.b=hdig(q.v);q.mode=modeOf(q,q.D>=2?['place','read']:['place','read','between']);},render(q){
+   const {v,a,b,mode}=q,W0=Math.floor(v/100)*100,lo=W0+a*10,hi=lo+10;
+   const lines=(o={})=>dl({lines:[{lo:W0,hi:W0+100,step:10,lab:'all',marks:o.top?[{v,color:o.topCol||OR}]:[]},
        {lo,hi,step:1,lab:o.reveal?'all':'ends',interactive:o.interactive,sel:o.sel,selColor:o.selColor||PU,highlight:o.reveal?v:null,marks:o.mark?[{v}]:[],labs:o.hint?[lo+5]:null}],zoom:{from:0,lo,hi}});
    const sumUp=`${DS(v,2)} is <b>${a} tenth${a===1?'':'s'} and ${b} hundredth${b===1?'':'s'}</b>. It's between ${D(lo)} and ${D(hi)}, ${b<5?`closer to ${D(lo)}`:b>5?`closer to ${D(hi)}`:'exactly halfway'}.`;
    if(mode==='between'){
@@ -588,7 +609,7 @@ const TYPES={
      q.explain=ok=>{markChoice(q);return sumUp+lines({top:true,reveal:true});};
      return;}
    if(mode==='read'){
-     setPrompt(`Zoom in between ${DS(lo)} and ${DS(hi)}. What decimal is the orange dot on?`);decEntry(q,{ones:0,pl:2});q.answerKey={t:a,h:b};
+     setPrompt(`Zoom in between ${DS(lo)} and ${DS(hi)}. What decimal is the orange dot on?`);decEntry(q,{ones:wdig(v),pl:2});q.answerKey={t:a,h:b};
      stage().innerHTML=`<div id="line" style="width:100%">${lines({mark:true})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
      bindEntry(q);q.refresh();q.check=()=>gradeDec(q,v);
      q.hint=()=>{$('#line').innerHTML=lines({mark:true,hint:true});return `Between ${D(lo)} and ${D(hi)} there are 10 little steps, and each one is 0.01. The middle is ${D(lo+5,2)}. Start at ${D(lo)} and count the steps.`;};
@@ -603,7 +624,7 @@ const TYPES={
    q.explain=ok=>{const mine=q.sel;draw({reveal:true,top:true,selColor:RED,interactive:false});return (ok?'':`You tapped <b>${D(mine,2)}</b> (red dot). `)+sumUp;};
  }},
  /* 5. beyond one */
- beyond:{make(q,u){q.L0=pick([0,100]);const ks=q.L0===0?range(9).map(i=>110+i*10):range(19).map(i=>110+i*10).filter(x=>x!==200);q.v=uniq(u,'b',()=>pick(ks));q.mode=modeOf(q,['place','read','mixed']);},render(q){
+ beyond:{make(q,u){q.L0=pick([0,100]);const ks=q.L0===0?range(9).map(i=>110+i*10):range(19).map(i=>110+i*10).filter(x=>x!==200);q.v=uniq(u,'b',()=>pick(ks));q.mode=modeOf(q,q.D>=2?['place','read']:['place','read','mixed']);},render(q){
    const {v,L0,mode}=q,w=wdig(v),t=tdig(v),lo=L0,hi=L0+200;
    const line=(o={})=>dl({lines:[{lo,hi,step:10,lab:o.reveal?'all':'none',labs:o.hint?[w*100+50]:null,interactive:o.interactive,sel:o.sel,selColor:o.selColor||PU,highlight:o.reveal?v:null,marks:o.mark?[{v}]:[]}]});
    const sumUp=`${DS(v)} = <b>${w}</b> whole${w>1?'s':''} and <b>${t}</b> tenth${t>1?'s':''} = ${M(w,t,10,'big')}`;
@@ -729,29 +750,214 @@ const STORIES=[
    why:`${w} dollars and 5 cents = $${w} + 5 hundredths of a dollar = <b>${money(w*100+5)}</b>. The 0 shows there are no 10c coins.`,vis:null,hintText:`Five cents is 5 hundredths of a dollar. Is that in the tenths box or the hundredths box?`};}},
 ];
 
+/* ===== harder content (difficulty layer) ===== */
+function postRender(q){}
+Object.assign(DEN_WORDS,{1000:['thousandth','thousandths'],2:['half','halves'],4:['quarter','quarters'],5:['fifth','fifths'],20:['twentieth','twentieths'],25:['twenty-fifth','twenty-fifths'],50:['fiftieth','fiftieths']});
+/* thousandths: values are whole numbers of thousandths */
+const D3=(vt,pl)=>{const w=Math.floor(vt/1000),r=vt%1000;if(pl==null)pl=r===0?0:r%100===0?1:r%10===0?2:3;if(pl===0)return String(w);return w+'.'+String(r).padStart(3,'0').slice(0,pl);};
+const DS3=(vt,pl,cls='big')=>`<span class="dec ${cls}">${D3(vt,pl)}</span>`;
+const PLACE=['ones','tenths','hundredths','thousandths'];
+function dec3Entry(q,{ones=0}={}){
+  const spec=[];if(ones==='edit')spec.push(['o',1]);spec.push(['t',1],['h',1],['th',1]);boxes(q,spec);
+  const col=(inner,lab)=>`<span class="pvc">${inner}<small>${lab}</small></span>`;
+  q.entryHTML=`<span class="dentry d3">${col(ones==='edit'?ebox('o','ones'):`<span class="fixed">${ones}</span>`,'ones')}<span class="pt">.</span>${col(ebox('t','tenths'),'tenths')}${col(ebox('h','hundredths'),'hundredths')}${col(ebox('th','thousandths'),'thousandths')}</span>`;
+  q.canCheck=()=>q.f.t.length>0&&q.f.h.length>0&&q.f.th.length>0&&(ones!=='edit'||q.f.o.length>0);
+  q.nudge='Fill in all the boxes first. Use 0 for an empty place.';
+  q.val=()=>(ones==='edit'?+q.f.o:+ones)*1000+(+q.f.t)*100+(+q.f.h)*10+(+q.f.th);
+  q.shown=()=>D3(q.val(),3);
+}
+function moneyEntry(q){
+  boxes(q,[['d',2],['t',1],['h',1]]);
+  const col=(inner,lab)=>`<span class="pvc">${inner}<small>${lab}</small></span>`;
+  q.entryHTML=`<span class="dentry"><span class="pre">$</span>${col(ebox('d','dollars'),'dollars')}<span class="pt">.</span>${col(ebox('t','10c'),'10c')}${col(ebox('h','1c'),'1c')}</span>`;
+  q.canCheck=()=>q.f.d.length>0&&q.f.t.length>0&&q.f.h.length>0;q.nudge='Fill in the dollars and both cents boxes (use 0 if needed).';
+  q.val=()=>(+q.f.d)*100+(+q.f.t)*10+(+q.f.h);q.shown=()=>money(q.val());
+}
+const symCmp=(a,b)=>a<b?0:a===b?1:2;
+/* fraction/decimal pool for ordering (values in hundredths) */
+function fdItem(kind,DD){
+  if(kind==='dec'){const pl=pick([1,2]);let v;do{v=pl===1?rnd(1,9)*10:rnd(1,99);if(DD>=2&&Math.random()<0.4)v+=100*rnd(1,2);}while(pl===2&&v%10===0);return {v,html:`<span class="dec">${D(v)}</span>`,txt:D(v)};}
+  const fr=pick(DD<=0?[[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[1,10],[3,10],[7,10],[9,10]]:[[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5],[3,10],[7,10],[1,20],[7,20],[13,20],[1,25],[6,25],[1,50],[17,50],[9,100],[31,100]]);
+  const v=fr[0]*100/fr[1];
+  if(DD>=2&&Math.random()<0.35){const w=rnd(1,2);return {v:v+100*w,html:M(w,fr[0],fr[1]),txt:`${w} ${fr[0]}/${fr[1]}`,fr:[w,...fr]};}
+  return {v,html:F(fr[0],fr[1]),txt:`${fr[0]}/${fr[1]}`,fr:[0,...fr]};
+}
+function fdSet(DD,n=4){for(let t=0;t<200;t++){const kinds=shuffle(['dec','dec','frac','frac'].concat(n>4?['frac']:[]));const it=kinds.map(k=>fdItem(k,DD));const vs=it.map(o=>o.v);
+  if(new Set(vs).size<n)continue;if(DD>=2&&Math.max(...vs)-Math.min(...vs)>150)continue;if(DD<=1&&Math.max(...vs)>100)continue;return it;}
+  return [fdItem('dec',0),{v:50,html:F(1,2),txt:'1/2'},{v:25,html:F(1,4),txt:'1/4'},{v:80,html:'<span class="dec">0.8</span>',txt:'0.8'}];}
+const NEWTYPES={
+ /* 10. thousandths */
+ thou:{make(q,u){const DD=q.D;const modes=DD<=0?['frac','digit']:DD===1?['frac','digit','compare3']:['frac','digit','compare3','zoom3'];q.mode=modeOf(q,modes);
+   const ones=DD>=2?rnd(1,9):0;
+   const okDigit=vt=>{const d=D3(vt,3).replace('.','').split('');return d.some((x,i)=>x!=='0'&&d.filter(y=>y===x).length===1&&(i>0||vt>=1000));};
+   q.vt=uniq(u,'th',()=>{for(let t=0;t<50;t++){const r=Math.random();const f=r<0.25?rnd(1,9):r<0.45?rnd(10,99):rnd(101,999);const vt=ones*1000+(f%10===0?f+1:f);if(q.mode!=='digit'||okDigit(vt))return vt;}return ones*1000+347;});
+ },render(q){const {vt,mode}=q,DD=q.D,w=Math.floor(vt/1000),r=vt%1000;
+   if(mode==='frac'){const onesEdit=DD>=3&&w>0;dec3Entry(q,{ones:onesEdit?'edit':w});
+     const shownF=w?M(w,r,1000,'huge'):F(r,1000,'huge');q.answerKey=Object.assign(onesEdit?{o:w}:{},{t:Math.floor(r/100),h:Math.floor(r/10)%10,th:r%10});
+     setPrompt(`Write ${w?M(w,r,1000,'big'):F(r,1000,'big')} as a decimal.`);
+     stage().innerHTML=eqRow(shownF,q.entryHTML)+q.keypadHTML;bindEntry(q);q.refresh();
+     q.check=()=>{const v=q.val();q.mistake=null;if(v===vt)return true;if(r<100&&v===w*1000+r*10){q.mistake='placeTrap';noteMistake('tenthHund');}return false;};
+     q.hint=()=>`Thousandths need <b>three</b> places after the point. ${r<100?`${r} thousandths is less than one tenth, so the tenths box is 0${r<10?' and so is the hundredths box':''}.`:''}`;
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q))+(q.mistake==='placeTrap'?`<div class="oops">⚠️ ${D3(q.val(),3)} is ${q.val()%1000} thousandths. ${r} thousandths needs ${r<10?'two zeros':'a zero'} to hold the empty place${r<10?'s':''}.</div>`:'')+
+       `${F(r,1000)} = ${Math.floor(r/100)} tenths, ${Math.floor(r/10)%10} hundredths and ${r%10} thousandths, so ${w?M(w,r,1000):F(r,1000)} = <b>${D3(vt,3)}</b>`+pv3(vt);};
+     return;}
+   if(mode==='digit'){const s=D3(vt,3).replace('.','');const digs=s.split('');const places=range(digs.length).filter(i=>digs[i]!=='0'&&digs.filter(x=>x===digs[i]).length===1&&(i>0||w>0));
+     const pi=pick(places);const dig=+digs[pi];const plIdx=pi;q.dig=dig;q.place=plIdx;
+     setPrompt(`What is the value of the digit <b>${dig}</b> in ${DS3(vt,3)}?`);
+     const opts=DD>=2?[0,1,2,3].map(p=>D3(dig*Math.pow(10,3-p),p===0?0:p)):PLACE.map(p=>`${dig} ${p.replace(/s$/,dig===1?'':'s')}`);
+     const sh=shuffle(range(4));stage().innerHTML=`<div class="cmp"><span class="dec huge">${D3(vt,3)}</span></div>`+choiceHTML(q,sh.map(i=>opts[i]),sh.indexOf(plIdx),'txt');bindChoice(q);
+     q.hint=()=>`After the point the places go: tenths, hundredths, <b>thousandths</b>.`;
+     q.explain=ok=>{markChoice(q);return `The ${dig} is in the <b>${PLACE[plIdx]}</b> place, so it is worth ${PLACE[plIdx]==='ones'?dig:D3(dig*Math.pow(10,3-plIdx))}${plIdx>0?` (${F(dig,Math.pow(10,plIdx))})`:''}.`+pv3(vt);};
+     return;}
+   if(mode==='compare3'){let a=vt%1000,b;const k=pick(['trap','trap','equal','plain']);
+     if(k==='equal'){a=rnd(1,9)*100+rnd(1,9)*10;b=a;} else if(k==='trap'){const t=rnd(2,9);a=t*100+(Math.random()<0.5?0:rnd(1,9)*10);b=(t-1)*100+rnd(10,99);if(b%10===0)b++;} else{do{b=rnd(1,999);}while(b===a);}
+     a+=w*1000;b+=w*1000;const pa=k==='equal'?2:null,pb=k==='equal'?3:null;const sides=Math.random()<0.5?[[a,pa],[b,pb]]:[[b,pb],[a,pa]];q.A=sides[0];q.B=sides[1];
+     const key=symCmp(q.A[0],q.B[0]);
+     setPrompt(`Which sign goes in the circle?`);
+     stage().innerHTML=`<div class="cmp"><span class="dec huge">${D3(q.A[0],q.A[1])}</span><span class="qm">?</span><span class="dec huge">${D3(q.B[0],q.B[1])}</span></div>`+choiceHTML(q,SYM.map((s,i)=>`${s}<small>${SYMW[i]}</small>`),key,'opts3');
+     bindChoice(q);
+     q.hint=()=>`Give them both three decimal places: <b>${D3(q.A[0],3)}</b> and <b>${D3(q.B[0],3)}</b>. Then compare.`;
+     q.explain=ok=>{markChoice(q);return `<div style="font-size:1.3rem">${D3(q.A[0],q.A[1])} ${SYM[key]} ${D3(q.B[0],q.B[1])}</div>With three places: ${D3(q.A[0],3)} is ${q.A[0]%1000} thousandths and ${D3(q.B[0],3)} is ${q.B[0]%1000} thousandths${w?` (plus ${w} whole${w>1?'s':''} each)`:''}. More digits doesn't mean bigger!`;};
+     return;}
+   /* zoom3: read a thousandth on a zoomed number line */
+   const lo=Math.floor(vt/10)*10,hi=lo+10;if(vt===lo)q.vt=vt+rnd(1,9);const v=q.vt;
+   const onesEdit=DD>=3;dec3Entry(q,{ones:onesEdit?'edit':Math.floor(v/1000)});q.answerKey=Object.assign(onesEdit?{o:Math.floor(v/1000)}:{},{t:Math.floor(v%1000/100),h:Math.floor(v%100/10),th:v%10});
+   const line=(o={})=>dl({lines:[{lo,hi,step:1,lab:o.reveal?'all':'ends',marks:[{v}],labs:o.hint?[lo+5]:null,highlight:o.reveal?v:null}],unit:1000,fmt:x=>D3(x,x%10?3:2)});
+   setPrompt(`Zoom in between ${DS3(lo,2)} and ${DS3(hi,2)}. Each little step is 0.001. What decimal is the orange dot on?`);
+   stage().innerHTML=`<div id="line" style="width:100%">${line()}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;bindEntry(q);q.refresh();
+   q.check=()=>q.val()===v;
+   q.hint=()=>{$('#line').innerHTML=line({hint:true});return `There are 10 steps from ${D3(lo,2)} to ${D3(hi,2)}. The middle is ${D3(lo+5,3)}.`;};
+   q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q))+`The dot is ${v-lo} step${v-lo>1?'s':''} of 0.001 after ${D3(lo,2)}, so it's on <b>${D3(v,3)}</b>.`+line({reveal:true});};
+ }},
+ /* 11. number lines beyond 3 */
+ nlbig:{make(q,u){const DD=q.D;q.mode=modeOf(q,['place','read']);
+   const kind=DD<=1?'tenths':DD===2?pick(['tenths','hund']):pick(['offset','hund','offset']);q.kind=kind;
+   const W=DD<=0?rnd(2,5):rnd(3,9);
+   if(kind==='tenths'){q.lo=W*100;q.hi=q.lo+100;q.step=10;q.v=uniq(u,'nb',()=>q.lo+rnd(1,9)*10);}
+   else if(kind==='hund'){q.lo=W*100+rnd(0,9)*10;q.hi=q.lo+10;q.step=1;q.v=uniq(u,'nb',()=>q.lo+rnd(1,9));}
+   else{q.lo=W*100+rnd(1,8)*10;q.hi=q.lo+100;q.step=10;q.v=uniq(u,'nb',()=>{let x;do{x=q.lo+rnd(1,9)*10;}while(x%100===0);return x;});}
+ },render(q){const {lo,hi,step,v,mode,kind}=q;const pl=step===1?2:1;
+   const line=(o={})=>dl({lines:[{lo,hi,step,lab:o.reveal?'all':'ends',interactive:o.interactive,sel:o.sel,selColor:o.selColor||PU,highlight:o.reveal?v:null,marks:o.mark?[{v}]:[],labs:o.hint?[Math.round((lo+hi)/2)]:null}]});
+   const stepTxt=step===1?'0.01':'0.1';
+   const sumUp=`${DS(v,pl)} is ${(v-lo)/step} step${(v-lo)/step>1?'s':''} of ${stepTxt} after ${D(lo)}.`;
+   if(mode==='read'){setPrompt(`What decimal is the orange dot on? Look at the numbers at the ends first.`);decEntry(q,{ones:'edit',pl});q.answerKey=Object.assign({o:wdig(v),t:tdig(v)},pl===2?{h:hdig(v)}:{});
+     stage().innerHTML=`<div id="line" style="width:100%">${line({mark:true})}</div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;bindEntry(q);q.refresh();
+     q.check=()=>gradeDec(q,v);
+     q.hint=()=>{$('#line').innerHTML=line({mark:true,hint:true});return `From ${D(lo)} to ${D(hi)} there are 10 steps, so each step is <b>${stepTxt}</b>. The middle is shown.`;};
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+sumUp+line({reveal:true});};return;}
+   q.answerKey=v;q.sel=null;
+   setPrompt(`Tap where ${DS(v,pl)} goes on the number line, then press Check.`);
+   const draw=(o={})=>{stage().innerHTML=line(Object.assign({interactive:!q.done,sel:q.sel},o));};
+   draw();stage().onclick=e=>{const tk=e.target.closest('[data-tick]');if(!tk||q.done)return;q.sel=+tk.dataset.tick;sfx('tap');draw({hint:q.usedHint});updCheck();};
+   q.canCheck=()=>q.sel!=null;q.nudge='Tap a mark on the number line first.';q.check=()=>q.sel===v;
+   q.hint=()=>{draw({hint:true});return `Each step is <b>${stepTxt}</b>. Start at ${D(lo)} and count.`;};
+   q.explain=ok=>{const mine=q.sel;draw({reveal:true,selColor:RED,interactive:false});return (ok?'':`You tapped <b>${D(mine,pl)}</b> (red dot). `)+sumUp;};
+ }},
+ /* 12. fractions and decimals mixed */
+ fdmix:{make(q,u){const DD=q.D;q.mode=modeOf(q,DD<=0?['toDec','order']:['order','toDec']);
+   if(q.mode==='order'){q.items=fdSet(DD,DD>=3?5:4);q.dir=DD>=2&&Math.random()<0.3?'desc':'asc';}
+   else{const pool=DD<=0?[[1,2],[1,4],[3,4],[1,5],[2,5],[3,5],[4,5]]:[[1,4],[3,4],[2,5],[4,5],[1,20],[3,20],[9,20],[1,25],[7,25],[1,50],[9,50],[3,50]];
+     const fr=uniq(u,'fd',()=>pick(pool).join('/')).split('/').map(Number);const w=DD>=2&&Math.random()<0.5?rnd(1,5):0;q.fr=[w,...fr];q.v=w*100+fr[0]*100/fr[1];}
+ },render(q){
+   if(q.mode==='toDec'){const [w,n,d]=q.fr,v=q.v;const onesEdit=w>0;decEntry(q,{ones:onesEdit?'edit':0,pl:2});q.answerKey=Object.assign(onesEdit?{o:w}:{},{t:tdig(v),h:hdig(v)});
+     const f=w?M(w,n,d,'huge'):F(n,d,'huge');setPrompt(`Write ${w?M(w,n,d,'big'):F(n,d,'big')} as a decimal. Hint: make the bottom number 100 first.`);
+     stage().innerHTML=eqRow(f,q.entryHTML)+`<div id="vis" class="hidden" style="width:100%"></div>`+q.keypadHTML;bindEntry(q);q.refresh();
+     q.check=()=>gradeDec(q,v);const k=100/d;
+     q.hint=()=>`${d} × ${k} = 100, so multiply the top and bottom by ${k}: ${F(n,d)} = ${F(n*k,100)}.`;
+     q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q)+mistakeHTML(q,v))+`${F(n,d)} = ${F(n*k,100)} (× ${k} top and bottom) = ${D(n*k,2)}${w?`, so ${M(w,n,d)} = ${w} + ${D(n*k,2)}`:''} = <b>${D(v,2)}</b>`+(w===0?parallelFD(v%100,{den:100}):'');};
+     return;}
+   const it=q.items,n=it.length,dir=q.dir;const ord=range(n).sort((a,b)=>dir==='asc'?it[a].v-it[b].v:it[b].v-it[a].v);q.answerKey=ord;q.pick=[];
+   setPrompt(`Fractions and decimals! Tap them in order from <b>${dir==='asc'?'smallest':'largest'}</b> to <b>${dir==='asc'?'largest':'smallest'}</b>.`);
+   const draw=()=>{stage().innerHTML=`<div class="slots">${range(n).map(i=>`<div class="slot${q.pick[i]!=null?' full':''}">${q.pick[i]!=null?it[q.pick[i]].html:''}</div>${i<n-1?`<span class="arrow">${dir==='asc'?'&lt;':'&gt;'}</span>`:''}`).join('')}</div>`+
+     `<div class="cards">${it.map((o,i)=>`<button class="cardbtn" data-card="${i}" ${q.pick.includes(i)||q.done?'disabled':''}>${o.html}</button>`).join('')}</div>`+
+     `<div class="row" style="justify-content:center"><button class="btn ghost" data-undo="1" ${q.pick.length&&!q.done?'':'disabled'}>↺ Start again</button></div>`;};
+   draw();stage().onclick=e=>{if(q.done)return;const c=e.target.closest('[data-card]');if(c&&!q.pick.includes(+c.dataset.card)&&q.pick.length<n){q.pick.push(+c.dataset.card);sfx('tap');draw();updCheck();return;}if(e.target.closest('[data-undo]')){q.pick=[];draw();updCheck();}};
+   q.canCheck=()=>q.pick.length===n;q.nudge='Tap all of them first.';
+   q.check=()=>q.pick.every((p,i)=>it[p].v===it[ord[i]].v);
+   q.hint=()=>`Change the fractions into decimals first (make the bottom number 100). ${it.filter(o=>o.fr).slice(0,1).map(o=>`For example ${F(o.fr[1],o.fr[2])} = ${D(o.fr[1]*100/o.fr[2],2)}.`).join('')}`;
+   q.explain=ok=>{q.pick=ord.slice();draw();const asc=range(n).sort((a,b)=>it[a].v-it[b].v);const lo=Math.floor(it[asc[0]].v/100)*100,hi=Math.ceil((it[asc[n-1]].v+1)/100)*100;
+     return `<div class="chips">${it.map(o=>`<span>${o.html} = ${D(o.v,2)}</span>`).join('')}</div><div style="font-size:1.3rem;font-weight:bold">${ord.map(i=>it[i].html).join(dir==='asc'?' &lt; ':' &gt; ')}</div>`+
+       dl({lines:[{lo,hi,step:10,lab:'all',marks:asc.map((i,j)=>({v:it[i].v,label:it[i].txt,color:[BL,OR,PU,GRN,RED][j],row:j%3}))}],top:110});};
+ }},
+ /* 13. money maths */
+ money2:{make(q,u){const DD=q.D;const modes=DD<=0?['add','change']:DD<=2?['add','change','diff']:['add','change','three','diff'];q.mode=q.forceMode||modeOf(q,modes);
+   const price=()=>DD<=0?rnd(10,95)*10:DD===1?rnd(20,190)*5:rnd(105,2499);
+   const ITEMS=['a book','a ball','a puzzle','a hat','a toy koala','a drink bottle','a yo-yo','a kite','a pencil case','a sticker book','a skipping rope','a torch'];
+   const its=shuffle(ITEMS.slice());
+   for(let t=0;t<60;t++){
+     if(q.mode==='add'){const a=price(),b=price();if(a%10===0&&b%10===0&&DD>=2)continue;Object.assign(q,{items:[[its[0],a],[its[1],b]],ans:a+b});}
+     else if(q.mode==='three'){const a=price(),b=price(),c=price();if(a+b+c>4999)continue;Object.assign(q,{items:[[its[0],a],[its[1],b],[its[2],c]],ans:a+b+c});}
+     else if(q.mode==='change'){const n=DD>=3?2:1;const ps=range(n).map(price);const tot=ps.reduce((x,y)=>x+y,0);const note=[1000,2000,5000].find(x=>x>tot);if(!note)continue;Object.assign(q,{items:ps.map((p,i)=>[its[i],p]),note,tot,ans:note-tot});}
+     else{const a=price(),b=price();if(a===b)continue;const hi=Math.max(a,b),lo=Math.min(a,b);Object.assign(q,{items:[[its[0],hi],[its[1],lo]],ans:hi-lo});}
+     const k=q.mode+q.ans;if(u.has(k)&&t<50)continue;u.add(k);break;}
+ },render(q){const {mode,items,ans}=q;
+   const list=items.map(([n,p])=>`${n} for <b>${money(p)}</b>`);
+   const text=mode==='add'?`${NAME} buys ${list.join(' and ')}. How much does she spend altogether?`:
+     mode==='three'?`${NAME} buys ${list.slice(0,2).join(', ')} and ${list[2]}. What is the total cost?`:
+     mode==='change'?`${NAME} buys ${list.join(' and ')}. She pays with a <b>${money(q.note).replace('.00','')}</b> note. How much change should she get?`:
+     `${items[0][0][0].toUpperCase()+items[0][0].slice(1)} costs <b>${money(items[0][1])}</b> and ${items[1][0]} costs <b>${money(items[1][1])}</b>. How much more does ${items[0][0].replace(/^an? /,'the ')} cost?`;
+   setPrompt('Read the story, then work it out. After the dollars, tap <b>Next box</b> (or press the . key).');moneyEntry(q);q.answerKey={d:Math.floor(ans/100),t:tdig(ans),h:hdig(ans)};
+   stage().innerHTML=`<div class="story"><span class="emo">💵</span>${text}</div><div id="vis" class="hidden" style="width:100%"></div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;bindEntry(q);q.refresh();
+   q.check=()=>{q.entered=q.val();return q.val()===ans;};
+   const col=(rows,op,res)=>`<table class="colsum">${rows.map((r,i)=>`<tr><td>${i===rows.length-1&&rows.length>1?op:''}</td><td>${money(r)}</td></tr>`).join('')}<tr class="tot"><td>=</td><td>${money(res)}</td></tr></table>`;
+   const work=()=>mode==='add'||mode==='three'?col(items.map(x=>x[1]),'+',ans):mode==='change'?(items.length>1?col(items.map(x=>x[1]),'+',q.tot):'')+col([q.note,q.tot],'−',ans):col([items[0][1],items[1][1]],'−',ans);
+   q.hint=()=>{$('#vis').innerHTML=`<div class="chips"><span>Line up the decimal points!</span></div>`;$('#vis').classList.remove('hidden');
+     return mode==='change'?`Change = what she paid − what it cost.${items.length>1?' Add up the cost first.':''}`:mode==='diff'?`“How much more” means take away: bigger − smaller.`:`Add the dollars and the cents. 100 cents make another dollar.`;};
+   q.explain=ok=>{q.lockBoxes(ok);return (ok?'':youWrote(q))+`Line up the decimal points:<div class="row" style="justify-content:center;gap:24px">${work()}</div>The answer is <b>${money(ans)}</b>.`;};
+ }},
+ /* 14. rounding */
+ round:{make(q,u){const DD=q.D;const modes=DD<=0?['whole']:DD===1?['whole','tenth']:DD===2?['whole','tenth','tenth']:['whole','tenth','hund'];q.mode=q.forceMode||modeOf(q,modes);
+   const half=DD>=2&&Math.random()<0.2;const unit=q.mode==='whole'?1000:q.mode==='tenth'?100:10;
+   const gen=()=>{for(let t=0;t<50;t++){let vt;
+     if(q.mode==='whole'){const w=rnd(DD<=0?1:2,DD<=0?9:49);let f=DD<=1?rnd(1,9)*100:rnd(1,99)*10;if(half)f=500;else if(f===500)f=600;vt=w*1000+f;}
+     else if(q.mode==='tenth'){const w=rnd(0,9),tt=rnd(0,9);let h=rnd(1,9);if(half)h=5;else if(h===5)h=6;vt=w*1000+tt*100+h*10;}
+     else{const w=rnd(0,9),hh=rnd(0,99);let th=rnd(1,9);if(half)th=5;else if(th===5)th=4;vt=w*1000+hh*10+th;}
+     const lo=Math.floor(vt/unit)*unit,ans=vt-lo>=unit/2?lo+unit:lo;if(q.mode!=='whole'&&ans>=10000)continue;return vt;}return 3450;};
+   q.vt=uniq(u,'r'+q.mode,gen);
+ },render(q){const {mode,vt}=q;
+   const unit=mode==='whole'?1000:mode==='tenth'?100:10;const lo=Math.floor(vt/unit)*unit,hi=lo+unit,ans=vt-lo>=unit/2?hi:lo;q.ans=ans;
+   const pl=mode==='whole'?0:mode==='tenth'?1:2;const vPl=mode==='whole'?(vt%100?2:1):mode==='tenth'?2:3;
+   const name={whole:'the nearest whole number',tenth:'the nearest tenth',hund:'the nearest hundredth'}[mode];
+   setPrompt(`Round ${DS3(vt,vPl)} to <b>${name}</b>.`);
+   if(mode==='whole'){intEntry(q,{max:2});q.answerKey={n:ans/1000};q.check=()=>{q.entered=q.val();return q.val()*1000===ans;};}
+   else if(mode==='tenth'){decEntry(q,{ones:'edit',pl:1});if(ans>=10000){/* two-digit ones: use a typed whole-number box */}
+     q.answerKey={o:Math.floor(ans/1000),t:Math.floor(ans%1000/100)};q.check=()=>{q.entered=q.val();return q.val()*10===ans;};}
+   else{decEntry(q,{ones:'edit',pl:2});q.answerKey={o:Math.floor(ans/1000),t:Math.floor(ans%1000/100),h:Math.floor(ans%100/10)};q.check=()=>{q.entered=q.val();return q.val()*10===ans;};}
+   const line=(o={})=>dl({lines:[{lo,hi,step:unit/10,lab:'ends',labs:[lo+unit/2],marks:[{v:vt,label:D3(vt,vPl),color:OR}],highlight:o.reveal?ans:null}],unit:mode==='whole'?1000:mode==='tenth'?1000:1000,fmt:x=>D3(x,x===lo+unit/2?pl+1:pl),top:84});
+   stage().innerHTML=`<div id="vis" class="hidden" style="width:100%"></div><div class="equation">${q.entryHTML}</div>`+q.keypadHTML;bindEntry(q);q.refresh();
+   const nextDig=Math.floor((vt-lo)/(unit/10));
+   q.hint=()=>{$('#vis').innerHTML=line();$('#vis').classList.remove('hidden');return `It's between <b>${D3(lo,pl)}</b> and <b>${D3(hi,pl)}</b>. Look at the next digit: 5 or more rounds <b>up</b>.`;};
+   q.explain=ok=>{q.lockBoxes(ok);$('#vis').innerHTML=line({reveal:true});$('#vis').classList.remove('hidden');
+     return (ok?'':`You wrote <b>${q.shown()}</b>. `)+`${D3(vt,vPl)} is between ${D3(lo,pl)} and ${D3(hi,pl)}. The next digit is <b>${nextDig}</b>, ${nextDig>=5?'5 or more, so round <b>up</b>':'less than 5, so round <b>down</b>'}. ${D3(vt,vPl)} rounds to <b>${D3(ans,pl)}</b>.`+(nextDig===5&&(vt-lo)===unit/2?' (Exactly halfway rounds up.)':'');};
+ }},
+};
+function pv3(vt){const s=String(vt%1000).padStart(3,'0');return `<table class="pv" aria-label="place value chart"><tr><th>Ones</th><th></th><th>Tenths</th><th>Hundredths</th><th>Thousandths</th></tr><tr><td>${Math.floor(vt/1000)}</td><td class="pt">.</td><td>${s[0]}</td><td>${s[1]}</td><td>${s[2]}</td></tr></table>`;}
+Object.assign(TYPES,NEWTYPES);
+Object.assign(TYPE_NAMES,{thou:'Thousandths',nlbig:'Number Lines Beyond 3',fdmix:'Fractions & Decimals',money2:'Money Maths',round:'Rounding'});
+
 /* ---------- round flow ---------- */
 let R=null,q=null;
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
 function startLevel(id){
   const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
-  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
-  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+  const CL=levelD(id);R={L,D:CL,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').innerHTML=`${L.icon} Level ${L.id}: ${L.title} <span class="clvl" id="clvl">⚡ Challenge level ${CL+1}</span>`;show('play');next();
 }
 function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');}
 function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
 function next(){
   R.idx++;if(R.idx>=ROUND)return finishRound();
   const type=R.types[R.idx];
-  q={type,done:false,usedHint:false};TYPES[type].make(q,R.used);
+  q={type,D:R.D,done:false,usedHint:false};TYPES[type].make(q,R.used);
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
-  TYPES[type].render(q);dots();topbar();updCheck();
+  q.D=R.D;TYPES[type].render(q);postRender(q);dots();topbar();updCheck();
 }
 function answer(ok){
   if(!q||q.done)return;q.done=true;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
-  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
   else{R.streak=0;sfx('bad');}
   R.results.push(ok);save();
   const expl=q.explain(ok);
@@ -767,11 +973,17 @@ function finishRound(){
   const wasLocked=L.id<LEVELS.length&&!unlocked(L.id+1);
   S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
   S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  S.adapt=S.adapt||{};const aOld=S.adapt[L.id]||0;let stepMsg='';
+  if(R.score>=9&&R.D<4&&aOld<2){S.adapt[L.id]=aOld+1;stepMsg=`<p class="stepup">⬆️ Level up! Next round is <b>Challenge level ${levelD(L.id)+1}</b>. 9 or 10 right steps it up.</p>`;}
+  else if(R.score<=4&&aOld>0){S.adapt[L.id]=aOld-1;stepMsg=`<p class="stepup down">Next round goes back to Challenge level ${levelD(L.id)+1} for some practice.</p>`;}
+  else if(R.score>=9)stepMsg=`<p class="stepup">⚡ You're at the top Challenge level for this setting!</p>`;
+  save();
   const nowUnlocked=wasLocked&&unlocked(L.id+1);
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. Use the hints, they help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
     <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
     ${nowUnlocked?`<p class="tag" style="font-size:1.1rem">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${stepMsg}
     ${L.id===LEVELS.length&&st>=1?`<p style="font-size:1.2rem">🏆 You finished Decimal Zoom, ${NAME}!</p>`:''}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
@@ -787,7 +999,7 @@ function home(){
   R=null;q=null;
   $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Decimal Zoom`;
   $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
-    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span><span class="clv">⚡ Challenge ${levelD(L.id)+1}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
   const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
   const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
   const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
@@ -799,49 +1011,54 @@ function home(){
     mk.swap?`🔁 Swapped the tenths and hundredths digits ${mk.swap} time${mk.swap>1?'s':''}.`:'',
     mk.forgotWhole?`1️⃣ Forgot the whole number ${mk.forgotWhole} time${mk.forgotWhole>1?'s':''}.`:''].filter(Boolean);
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%). `:'')+(tips.length?'<br>'+tips.join('<br>'):'');
-  $('#unlockAll').checked=!!S.unlockAll;topbar();show('home');
+  $('#unlockAll').checked=!!S.unlockAll;document.querySelectorAll('[name=diff]').forEach(r=>r.checked=r.value===(DIFFS[S.diff]?S.diff:'challenge'));topbar();show('home');
 }
 
 /* ---------- worksheet ---------- */
 function makeWorksheet(){
   const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
   const B='<span class="blank"></span>',BL_='<span class="blank" style="width:54px"></span>',A=(v,key,wide)=>key?`<span class="ans">${v}</span>`:(wide?BL_:B),Lt=i=>String.fromCharCode(97+i)+')';
-  const n10=()=>{let x;do{x=rnd(11,99);}while(x%10===0);return x;};
-  // 1. grids
-  const g=shuffle([rnd(1,9),rnd(1,9)*10,n10(),n10()]);
-  // 2. conversions
-  const c1=rnd(1,9),c2=rnd(1,9),c3=n10(),c4=rnd(1,9),c5=rnd(1,9),c6=n10();
-  const conv=[k=>`${F(c1,10,'big')} = ${A(D(c1*10),k,1)}`,k=>`${D(c2,2)} = ${F(A(c2,k),100,'big')}`,k=>`${F(c3,100,'big')} = ${A(D(c3,2),k,1)}`,
-              k=>`${D(c4*10)} = ${F(A(c4,k),10,'big')}`,k=>`${F(c5,100,'big')} = ${A(D(c5,2),k,1)}`,k=>`${D(c6,2)} = ${F(A(c6,k),100,'big')}`];
+  const u=new Set();
+  // 1. thousandths
+  const th=[rnd(101,999),rnd(11,99),rnd(1,9),rnd(1,9)*1000+rnd(101,999)].map(x=>x%10?x:x+1);
+  const s1=[k=>`${F(th[0],1000,'big')} = ${A(D3(th[0],3),k,1)}`,k=>`${D3(th[1],3)} = ${F(A(th[1],k),1000,'big')}`,k=>`${F(th[2],1000,'big')} = ${A(D3(th[2],3),k,1)}`,k=>`${D3(th[3],3)} = ${M(Math.floor(th[3]/1000),A(th[3]%1000,k),1000,'big')}`];
+  // 2. fractions to decimals
+  const fp=shuffle([[3,4],[7,20],[2,5],[9,50],[3,25],[1,4],[11,20],[4,5]]).slice(0,4);fp[2]=[rnd(1,3),...fp[2]];
+  const fv=f=>f.length===3?f[0]*100+f[1]*100/f[2]:f[0]*100/f[1];
   // 3. number lines
-  const p1=rnd(1,4)*10,p2=rnd(6,9)*10,p3=n10();
-  const za=rnd(1,8),zl=za*10,zA=zl+rnd(1,4),zB=zl+rnd(6,9);
-  const bl=pick([0,100]);const bc=range(19).map(i=>bl+10+i*10).filter(x=>x%100);let bA,bB2;do{bA=pick(bc);bB2=pick(bc);}while(Math.abs(bA-bB2)<30||(bl===0&&Math.max(bA,bB2)<100));if(bA>bB2)[bA,bB2]=[bB2,bA];
-  // 4. compare, 5. order
-  const cmps=['trap','equal','hundTenth','whole','trap','plain'].map(k=>genCompare(k));
-  const ords=[genOrder(),genOrder()];
-  // 6. word problems
-  const ws=[STORIES[1],STORIES[3],STORIES[10]].map(T=>T.make());
-  // 7. spot the mistake
-  const sx=rnd(3,8),sA=sx*10,sB=(sx-rnd(1,2))*10+rnd(1,9);
+  const W=rnd(3,7),lo3=W*100;let cA,cB;do{cA=lo3+rnd(1,19)*10;cB=lo3+rnd(1,19)*10;}while(Math.abs(cA-cB)<40||cA%100===0||cB%100===0);if(cA>cB)[cA,cB]=[cB,cA];
+  const zl=rnd(1,98)*10,zA=zl+rnd(1,4),zB=zl+rnd(6,9);
+  // 4. compare thousandths
+  const cmp=range(6).map(i=>{let a,b,pa=null,pb=null;const k=['trap','equal','plain','trap','whole','plain'][i];
+    if(k==='equal'){a=rnd(1,9)*100+rnd(1,9)*10;b=a;pa=2;pb=3;}else if(k==='trap'){const t=rnd(2,9);a=t*100;b=(t-1)*100+rnd(10,99);if(b%10===0)b++;}
+    else if(k==='whole'){a=1000+rnd(1,9)*10;b=rnd(901,999);}else{a=rnd(101,999);do{b=rnd(101,999);}while(b===a);}
+    return Math.random()<0.5?[[a,pa],[b,pb]]:[[b,pb],[a,pa]];});
+  // 5. order
+  const ords=[fdSet(1,4),fdSet(2,4)];
+  // 6. money
+  const mq=['add','change','diff'].map(m=>{const q={D:2,type:'money2',forceMode:m};TYPES.money2.make(q,u);return q;});
+  // 7. rounding
+  const rq=['whole','whole','tenth','tenth','hund','hund'].map(m=>{const q={D:3,forceMode:m};TYPES.round.make(q,u);return q;});
+  const rAns=q=>{const unit=q.mode==='whole'?1000:q.mode==='tenth'?100:10;const lo=Math.floor(q.vt/unit)*unit;return D3(q.vt-lo>=unit/2?lo+unit:lo,q.mode==='whole'?0:q.mode==='tenth'?1:2);};
+  const rName={whole:'nearest whole',tenth:'nearest tenth',hund:'nearest hundredth'};
+  const mText=q=>{const it=q.items;return q.mode==='add'?`${NAME} buys ${it[0][0]} for ${money(it[0][1])} and ${it[1][0]} for ${money(it[1][1])}. How much altogether?`:
+    q.mode==='change'?`${NAME} buys ${it.map(x=>`${x[0]} for ${money(x[1])}`).join(' and ')} and pays with a ${money(q.note).replace('.00','')} note. How much change?`:
+    `${it[0][0][0].toUpperCase()+it[0][0].slice(1)} costs ${money(it[0][1])} and ${it[1][0]} costs ${money(it[1][1])}. How much more is ${it[0][0].replace(/^an? /,'the ')}?`;};
   const page=key=>`<div class="page${key?' answers':''}">
-    <h2>${key?'✅ Answer key: ':''}Decimals: Tenths &amp; Hundredths 🔎</h2>
+    <h2>${key?'✅ Answer key: ':''}Decimals Challenge: Thousandths, Rounding &amp; Money 🔎</h2>
     <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 29</span>'}</div>
-    <h3>1. Shade and write</h3><div class="instr">Each grid is 1 whole. Write the shaded part as a decimal and as a fraction.</div>
-    <div class="g4">${g.map((v,i)=>`<div>${Lt(i)}<br>${grid100(v,{size:100,col:'#9ca3af'})}<div style="margin-top:2px">${A(D(v,2),key,1)} = ${F(A(v,key),100)}</div></div>`).join('')}</div>
-    <h3>2. Fractions and decimals</h3><div class="g3">${conv.map((f,i)=>`<div>${Lt(i)} ${f(key)}</div>`).join('')}</div>
+    <h3>1. Thousandths</h3><div class="g4">${s1.map((f,i)=>`<div>${Lt(i)} ${f(key)}</div>`).join('')}</div>
+    <h3>2. Fractions to decimals</h3><div class="instr">Make the bottom number 100 first.</div><div class="g4">${fp.map((f,i)=>`<div>${Lt(i)} ${f.length===3?M(f[0],f[1],f[2],'big'):F(f[0],f[1],'big')} = ${A(D(fv(f),2),key,1)}</div>`).join('')}</div>
     <h3>3. Number lines</h3>
-    <div class="wl">a) Draw an arrow to show <b>${D(p1)}</b>, <b>${D(p2)}</b> and <b>${D(p3,2)}</b>.</div>
-    ${dl({lines:[{lo:0,hi:100,step:10,lab:'none',marks:key?[{v:p1,label:D(p1),color:'#b91c1c'},{v:p2,label:D(p2),color:'#b91c1c'},{v:p3,label:D(p3,2),color:'#b91c1c',row:Math.abs(p3-p1)<12||Math.abs(p3-p2)<12?1:0}]:[]}],w:1000,top:key?62:26,gap:100})}
-    <div class="lines2"><div><div class="wl">b) Zoom in! What decimals are at A and B?<br>A = ${A(D(zA,2),key,1)} &nbsp; B = ${A(D(zB,2),key,1)}</div>
-      ${dl({lines:[{lo:zl,hi:zl+10,step:1,lab:'ends',marks:[{v:zA,label:'A',color:'#111'},{v:zB,label:'B',color:'#111'}]}],w:560})}</div>
-      <div><div class="wl">c) What decimals are at C and D?<br>C = ${A(D(bA),key,1)} &nbsp; D = ${A(D(bB2),key,1)}</div>
-      ${dl({lines:[{lo:bl,hi:bl+200,step:10,lab:'none',marks:[{v:bA,label:'C',color:'#111'},{v:bB2,label:'D',color:'#111'}]}],w:560})}</div></div>
-    <h3>4. Compare: write &lt;, &gt; or =</h3><div class="g3">${cmps.map((c,i)=>`<div>${Lt(i)} <b>${D(c.L.v,c.L.p)}</b> ${key?`<span class="ans">${SYM[cmpSym(c.L.v,c.Rt.v)]}</span>`:'<span class="circ"></span>'} <b>${D(c.Rt.v,c.Rt.p)}</b></div>`).join('')}</div>
-    <h3>5. Put in order from smallest to largest</h3>${ords.map((o,i)=>`<div class="wl" style="font-size:14px">${Lt(i)} ${o.map(v=>`<b>${D(v)}</b>`).join(', ')} &nbsp;→&nbsp; ${key?`<span class="ans">${o.slice().sort((x,y)=>x-y).map(v=>D(v)).join(' &lt; ')}</span>`:'_____ &lt; _____ &lt; _____ &lt; _____'}</div>`).join('')}
-    <h3>6. Money and measuring</h3>${ws.map((w,i)=>`<div class="wl" style="font-size:14px">${Lt(i)} ${w.text} ${key?`<span class="ans">${w.kind==='int'?w.ans+' '+(w.post||''):(w.pre||'')+D(w.ans,w.pl)+(w.post?' '+w.post:'')}</span>`:'&nbsp;Answer: ________'}</div>`).join('')}
-    <h3>7. Spot the mistake</h3><div class="wl" style="font-size:14px">Sam says <b>${D(sB,2)}</b> is bigger than <b>${D(sA)}</b> because ${sB} is bigger than ${sx}. Is Sam right? Explain. ${key?`<span class="ans">No. ${D(sA)} = ${D(sA,2)} (${sA} hundredths), which is bigger than ${D(sB,2)} (${sB} hundredths). Compare the tenths first: ${sx} tenths &gt; ${tdig(sB)} tenths.</span>`:'<br>________________________________________________________________'}</div>
-    ${key?'':`<p style="margin:6px 0 0;font-size:12px">🌟 Great work, ${NAME}! Remember: tenths come straight after the point, and 0.3 = 0.30.</p>`}
+    <div class="lines2"><div><div class="wl">a) What decimals are at C and D?<br>C = ${A(D(cA),key,1)} &nbsp; D = ${A(D(cB),key,1)}</div>
+      ${dl({lines:[{lo:lo3,hi:lo3+200,step:10,lab:'none',marks:[{v:cA,label:'C',color:'#111'},{v:cB,label:'D',color:'#111'}]}],w:560})}</div>
+      <div><div class="wl">b) Zoom in! What decimals are at A and B?<br>A = ${A(D3(zA,3),key,1)} &nbsp; B = ${A(D3(zB,3),key,1)}</div>
+      ${dl({lines:[{lo:zl,hi:zl+10,step:1,lab:'ends',marks:[{v:zA,label:'A',color:'#111'},{v:zB,label:'B',color:'#111'}]}],w:560,unit:1000,fmt:x=>D3(x,2)})}</div></div>
+    <h3>4. Compare: write &lt;, &gt; or =</h3><div class="g3">${cmp.map(([x,y],i)=>`<div>${Lt(i)} <b>${D3(x[0],x[1])}</b> ${key?`<span class="ans">${SYM[symCmp(x[0],y[0])]}</span>`:'<span class="circ"></span>'} <b>${D3(y[0],y[1])}</b></div>`).join('')}</div>
+    <h3>5. Order from smallest to largest</h3>${ords.map((o,i)=>`<div class="wl" style="font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">${Lt(i)} ${o.map(x=>x.html).join(', ')} &nbsp;→&nbsp; ${key?`<span class="ans">${o.slice().sort((x,y)=>x.v-y.v).map(x=>x.txt).join(' &lt; ')}</span>`:'_____ &lt; _____ &lt; _____ &lt; _____'}</div>`).join('')}
+    <h3>6. Money</h3>${mq.map((q,i)=>`<div class="wl" style="font-size:14px">${Lt(i)} ${mText(q)} ${key?`<span class="ans">${money(q.ans)}</span>`:'&nbsp;Answer: ________'}</div>`).join('')}
+    <h3>7. Rounding</h3><div class="g3">${rq.map((q,i)=>`<div>${Lt(i)} ${D3(q.vt,q.mode==='whole'?(q.vt%100?2:1):q.mode==='tenth'?2:3)} to the ${rName[q.mode]}: ${A(rAns(q),key,1)}</div>`).join('')}</div>
+    ${key?'':`<p style="margin:6px 0 0;font-size:12px">🌟 Great work, ${NAME}! Line up the decimal points, and 5 or more rounds up.</p>`}
   </div>`;
   $('#sheet').innerHTML=page(false)+page(true);
 }
@@ -858,13 +1075,14 @@ $('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint()
 $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+document.querySelectorAll('[name=diff]').forEach(r=>r.onchange=()=>{if(r.checked){S.diff=r.value;save();home();}});
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
-$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,df=S.diff;S=defState();S.sound=snd;S.diff=df;save();home();}};
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 document.addEventListener('keydown',e=>{if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
   if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Tab'||e.key==='.'||e.key==='/'){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,D};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,D,TYPES,levelD,_answer:answer,makeWorksheet:typeof makeWorksheet==='function'?makeWorksheet:null};
 home();
 })();
 

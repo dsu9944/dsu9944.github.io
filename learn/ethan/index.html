@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2563eb">
-<title>Number Facts Sprint – Make 10, Doubles &amp; More</title>
+<title>Number Facts Sprint – Facts to 20, Two-Digit Jumps &amp; More</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%A9%3C/text%3E%3C/svg%3E">
 <style>
 :root{--blue:#2563eb;--blue2:#3b82f6;--green:#16a34a;--green2:#22c55e;--red:#ef4444;--orange:#f97316;--yellow:#facc15;--ink:#1f2937;--gold:#f59e0b}
@@ -124,7 +124,27 @@ svg.tf{width:min(80vw,300px);height:auto}
  .page svg.tf{width:120px}
  .page .blank{width:32px;height:24px}
 }
+
+.clvl{display:inline-block;font-size:.85rem;background:#fef3c7;color:#92400e;border:2px solid #f59e0b;border-radius:999px;padding:1px 10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.lvl .clv{font-size:.8rem;color:#92400e;font-weight:bold}
+.stepup{font-size:1.1rem;font-weight:bold;background:#fef3c7;border-radius:14px;padding:8px 12px;display:inline-block}
+.opts.cards{grid-template-columns:repeat(3,1fr);max-width:600px}
+.opts.cards .opt{font-size:1.6rem}
+.opt.picked{background:#dbeafe;border-color:var(--blue)}
+.opt.dim{opacity:.55}
+.fam{display:flex;gap:10px;justify-content:center;font-size:1.8rem;font-weight:bold}
+.fam span{background:#fef3c7;border:3px solid #f59e0b;border-radius:14px;padding:4px 14px}
+.fam span:first-child{background:#dcfce7;border-color:#16a34a}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:4px 20px}
+.facts .eqn{font-size:1.7rem;margin:4px 0}
+.ansbox.mb{cursor:pointer;min-width:1.8em}
+.ansbox.mb.cur{background:#fde68a;border-color:var(--orange)}
+svg.jl{width:100%;height:auto}
+@media (max-width:560px){.opts.cards{grid-template-columns:repeat(2,1fr)}.facts{grid-template-columns:1fr}}
 </style>
+</head>
+<body>
+
 </head>
 <body>
 <header class="topbar">
@@ -140,7 +160,7 @@ svg.tf{width:min(80vw,300px);height:auto}
     <div class="big">🏃</div>
     <div style="flex:1;min-width:220px">
       <h2 id="hello">Hi!</h2>
-      <p>Speedcubers learn moves until they're super fast. Let's do that with <b>number facts</b>! Make 10, doubles and more. Get 6 or more out of 10 to unlock the next level.</p>
+      <p>Speedcubers learn moves until they're super fast. Let's do that with <b>number facts</b>! Make 10 and 20, doubles and halves, jumps through the ten, missing numbers and more. Get 6 or more out of 10 to unlock the next level. Get 9 or 10 and the next round gets harder ⚡.</p>
     </div>
   </div>
   <div class="levels" id="levelGrid"></div>
@@ -156,8 +176,13 @@ svg.tf{width:min(80vw,300px);height:auto}
   <div class="card">
     <details>
       <summary>👨‍👩‍👦 For grown-ups</summary>
-      <p>This game practises <b>quick addition and subtraction facts</b> from the NSW Mathematics K–10 syllabus (Stage 1, additive relations): combinations to 10, doubles, near doubles, making ten to add (bridging) and subtracting by thinking addition. It starts with ten-frame pictures and moves to doing it in your head. The last level is a speed round with a bonus for quick answers. Getting it right counts more than being fast.</p>
-      <p>The 🔈 button reads each question aloud. Hints are free to use but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <p>This game practises <b>quick addition and subtraction facts</b> from the NSW Mathematics K–10 syllabus (additive relations), going from combinations to 10 up to harder next-stage work: facts to 20, bridging through ten with teen and two-digit numbers, adding and taking away tens, missing numbers on either side of the equals sign, fact families, and doubles and halves to 100. Levels 7 and 14 are timed sprints with a bonus for quick answers. Getting it right counts more than being fast.</p>
+      <p><b>Challenge levels:</b> each level runs at a challenge level from 1 to 5. Higher levels use bigger numbers, ask for typed answers instead of multiple choice, hide the ten-frame pictures until a hint is used, and give a shorter speed-bonus time. A score of 9 or 10 moves that level up one challenge step for the next round. A score of 4 or less moves it back down, but never below the setting you choose here.</p>
+      <div class="row" style="margin-bottom:8px" role="radiogroup" aria-label="Difficulty"><b>Difficulty:</b>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="easy"> Easy</label>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="normal"> Normal</label>
+        <label class="row" style="gap:4px"><input type="radio" name="diff" value="challenge" checked> Challenge</label></div>
+      <p style="font-size:.9rem">Easy starts at challenge level 1 (like the original game, with pictures and multiple choice). Normal starts at 2. Challenge starts at 3. The 🔈 button reads each question aloud. Hints still help, but give 5 points instead of 10 (3 points from challenge level 4). Progress is saved on this device only.</p>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
         <button class="btn ghost" id="resetBtn">Reset progress</button>
@@ -218,19 +243,29 @@ const range=n=>[...Array(n).keys()];
 const RED='#ef4444',BLUE='#3b82f6',GREY='#cbd5e1';
 
 const LEVELS=[
- {id:1,icon:'🔟',title:'Ten-Frame Friends',blurb:'How many more to fill the ten-frame?',types:['frame10']},
- {id:2,icon:'🤝',title:'Make 10 Pairs',blurb:'Which numbers go together to make 10?',types:['bond']},
- {id:3,icon:'🪞',title:'Double Trouble',blurb:'Doubles are the same number twice: 4 + 4!',types:['double']},
- {id:4,icon:'➕',title:'Near Doubles',blurb:'6 + 7 is double 6, plus 1 more.',types:['near']},
- {id:5,icon:'🌉',title:'Bridge to 10',blurb:'Make 10 first, then add the rest.',types:['bridge']},
+ {id:1,icon:'🔟',title:'Ten-Frame Friends',blurb:'How many more to make 10, then 20?',types:['frame10']},
+ {id:2,icon:'🤝',title:'Make 10 Pairs',blurb:'Partners to 10, 20 and even 100!',types:['bond']},
+ {id:3,icon:'🪞',title:'Double Trouble',blurb:'Doubles and halves: 8 + 8, half of 16…',types:['double']},
+ {id:4,icon:'➕',title:'Near Doubles',blurb:'7 + 8 is double 7, plus 1 more.',types:['near']},
+ {id:5,icon:'🌉',title:'Bridge to 10',blurb:'Make 10 (or the next ten) first, then add the rest.',types:['bridge']},
  {id:6,icon:'➖',title:'Take It Away',blurb:'Use the facts you know to take away.',types:['subtract']},
- {id:7,icon:'🧊',title:'Speedcuber Sprint',blurb:'Everything mixed, in your head. Quick answers get bonus points!',types:['frame10','bond','double','near','bridge','subtract','bond','double','bridge','subtract'],speed:true},
+ {id:7,icon:'🧊',title:'Speedcuber Sprint',blurb:'Levels 1–6 mixed, in your head. Quick answers get bonus points!',types:['frame10','bond','double','near','bridge','subtract','bond','double','bridge','subtract'],speed:true},
+ {id:8,icon:'🔢',title:'Facts to 20',blurb:'Add and take away up to 20 in your head.',types:['facts20']},
+ {id:9,icon:'🚀',title:'Teen Bridges',blurb:'14 − 6 and 17 + 5: jump through the ten.',types:['teen']},
+ {id:10,icon:'🦘',title:'Two-Digit Jumps',blurb:'47 + 30 and 63 − 8: jump by tens and ones.',types:['twodig']},
+ {id:11,icon:'❓',title:'Missing Numbers',blurb:'? + 8 = 15 and 14 = 6 + ?',types:['missing']},
+ {id:12,icon:'👨‍👩‍👦',title:'Fact Families',blurb:'Three numbers, four facts.',types:['family']},
+ {id:13,icon:'💯',title:'Doubles & Halves to 100',blurb:'Double 35, half of 76.',types:['dbl100']},
+ {id:14,icon:'🏆',title:'Speedcuber Pro',blurb:'All the hard facts mixed and timed. Beat the clock!',types:['facts20','teen','twodig','missing','dbl100','teen','twodig','missing','facts20','dbl100'],speed:true,pro:true},
 ];
-const TYPE_NAMES={frame10:'Ten-Frame Friends',bond:'Make 10 Pairs',double:'Double Trouble',near:'Near Doubles',bridge:'Bridge to 10',subtract:'Take It Away'};
-const ROUND=10,UNLOCK=6,SPEED_MS=8000;
+const TYPE_NAMES={frame10:'Ten-Frame Friends',bond:'Make 10 Pairs',double:'Double Trouble',near:'Near Doubles',bridge:'Bridge to 10',subtract:'Take It Away',facts20:'Facts to 20',teen:'Teen Bridges',twodig:'Two-Digit Jumps',missing:'Missing Numbers',family:'Fact Families',dbl100:'Doubles & Halves to 100'};
+const ROUND=10,UNLOCK=6;
+const DIFFS={easy:{name:'Easy',base:0},normal:{name:'Normal',base:1},challenge:{name:'Challenge',base:2}};
+const levelD=id=>Math.min(4,(DIFFS[S.diff]||DIFFS.challenge).base+((S.adapt||{})[id]||0));
+const speedMs=(L,D)=>(L.pro?[12000,10000,8000,7000,6000]:[9000,8000,6000,5000,4500])[D];
 const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
 
-const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
+const defState=()=>({diff:'challenge',adapt:{},levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[]});
 function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -285,117 +320,315 @@ function bindChoice(q){stage().onclick=e=>{const b=e.target.closest('[data-opt]'
 function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
 function distract(ans,lo,hi,extra=[]){const set=new Set();extra.concat([ans+1,ans-1,ans+2,ans-2,ans+10,ans-10]).forEach(v=>{if(v!==ans&&v>=lo&&v<=hi)set.add(v);});
   const d=shuffle([...set]).slice(0,3);while(d.length<3){const v=rnd(lo,hi);if(v!==ans&&!d.includes(v))d.push(v);}return shuffle([ans].concat(d));}
+/* ---------- difficulty ----------
+ D (0..4) = base from grown-ups setting (Easy 0, Normal 1, Challenge 2) + adaptive steps for that level (0..2) */
 function keypadUI(q){
   q.input='';
   const html=`<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 5">⌫ Delete</button></div>`;
-  q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(q.input.length<2)q.input+=k;sfx('tap');const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
+  q.key=k=>{if(q.done)return;if(k==='del')q.input=q.input.slice(0,-1);else if(/^\d$/.test(k)&&q.input.length<3)q.input+=k;sfx('tap');const b=$('#ansBox');if(b)b.innerHTML=q.input||'&nbsp;';updCheck();};
   q.canCheck=()=>q.input.length>0;q.nudge='Type a number first.';
   q.check=()=>parseInt(q.input,10)===q.answerKey;
   return html;
 }
 function bindKeys(q){stage().onclick=e=>{const b=e.target.closest('[data-key]');if(b)q.key(b.dataset.key);};}
 function revealBox(q,ok){const kp=document.querySelector('.keypad');if(kp)kp.remove();const b=$('#ansBox');if(b){b.textContent=q.answerKey;b.style.borderColor=ok?'#16a34a':'#ef4444';}}
-/* visuals shown only on hint in speed level */
-function visualSlot(q,html){return `<div id="vis" class="${q.speed?'hidden':''}">${html}</div>`;}
+/* several answer boxes (fact families) */
+const MB=i=>`<span class="ansbox mb" id="mb${i}" data-box="${i}">&nbsp;</span>`;
+function multiKeys(q,answers){
+  q.inputs=answers.map(()=> '');q.cur=0;q.answers=answers;
+  const paint=()=>answers.forEach((_,i)=>{const b=$('#mb'+i);if(b){b.innerHTML=q.inputs[i]||'&nbsp;';b.classList.toggle('cur',i===q.cur&&!q.done);}});
+  q.paint=paint;
+  q.key=k=>{if(q.done)return;if(k==='del')q.inputs[q.cur]=q.inputs[q.cur].slice(0,-1);else if(k==='next')q.cur=(q.cur+1)%answers.length;else if(/^\d$/.test(k)&&q.inputs[q.cur].length<3)q.inputs[q.cur]+=k;sfx('tap');paint();updCheck();};
+  q.canCheck=()=>q.inputs.every(v=>v.length>0);q.nudge='Fill in every box. Tap a box to choose it.';
+  q.check=()=>q.inputs.every((v,i)=>parseInt(v,10)===answers[i]);
+  return `<div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}<button data-key="del" style="grid-column:span 2">⌫</button><button data-key="next" style="grid-column:span 3">Next box ➜</button></div>`;
+}
+function bindMulti(q){stage().onclick=e=>{const bx=e.target.closest('[data-box]');if(bx&&!q.done){q.cur=+bx.dataset.box;q.paint();return;}const b=e.target.closest('[data-key]');if(b)q.key(b.dataset.key);};setTimeout(q.paint,0);}
+/* visuals: hidden at higher difficulty and in speed rounds until a hint is used */
+function visualSlot(q,html){return `<div id="vis" class="${q.hideVis||!html?'hidden':''}">${html}</div>`;}
 function showVis(html){const v=$('#vis');if(v){if(html)v.innerHTML=html;v.classList.remove('hidden');}}
+/* ten-frames for a sequence of coloured groups, split into frames of 10 */
+function seqFrames(groups,T){const cells=[];groups.forEach(g=>{for(let i=0;i<g.n;i++)cells.push(g);});const out=[];
+  for(let f=0;f<Math.max(1,T/10);f++){const gs=[];cells.slice(f*10,f*10+10).forEach(c=>{const l=gs[gs.length-1];if(l&&l.src===c)l.n++;else gs.push(Object.assign({},c,{n:1,src:c}));});out.push(tfSVG(gs));}
+  return out.length>1?frames(out[0],out[1],false):one(out[0]);}
+/* number line with jumps */
+function jumpSVG(start,steps){
+  const pts=[start];steps.forEach(s=>pts.push(pts[pts.length-1]+s));
+  const back=steps.length&&steps.every(s=>s<0),n=steps.length,gap=150,W=80+n*gap,xs=pts.map((_,i)=>back?W-40-i*gap:40+i*gap);
+  let s=`<svg class="jl" viewBox="0 0 ${W} 120" style="max-width:${W*1.3}px" aria-label="number line">`;
+  s+=`<line x1="10" y1="88" x2="${W-10}" y2="88" stroke="#1f2937" stroke-width="3"/>`;
+  steps.forEach((st,i)=>{const x1=xs[i],x2=xs[i+1],mx=(x1+x2)/2;
+    s+=`<path d="M${x1},84 Q${mx},20 ${x2},84" fill="none" stroke="${st<0?RED:BLUE}" stroke-width="4" marker-end="url(#ah)"/>`;
+    s+=`<text x="${mx}" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="${st<0?RED:BLUE}">${st<0?'−':'+'}${Math.abs(st)}</text>`;});
+  pts.forEach((p,i)=>{s+=`<line x1="${xs[i]}" y1="80" x2="${xs[i]}" y2="96" stroke="#1f2937" stroke-width="3"/><text x="${xs[i]}" y="116" text-anchor="middle" font-size="20" font-weight="bold" fill="${i===pts.length-1?'#16a34a':'#1f2937'}">${p}</text>`;});
+  return s+`<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#1f2937"/></marker></defs></svg>`;
+}
+const jl=h=>`<div class="frames">${h}</div>`;
+/* bridge-through-ten jumps for a + b (b>0) or a − b */
+function addJumps(a,b){const up=Math.ceil((a+1)/10)*10-a;return b>up&&a%10!==0?[up,b-up]:[b];}
+function subJumps(a,b){const dn=a%10;return dn>0&&b>dn?[-dn,-(b-dn)]:[-b];}
+const sayN=s=>String(s).replace(/−/g,' take away ').replace(/\+/g,' plus ').replace(/=/g,' equals ').replace(/\?/g,' what ');
+const ansPick=(q,ans,lo,hi,extra)=>q.D===0&&!q.forceKeys?choiceUI(q,distract(ans,lo,hi,extra)):keypadUI(q);
+function bindAns(q){if(q.opts)bindChoice(q);else bindKeys(q);}
+function showAns(q,ok){if(q.opts){markChoice(q);const b=$('#ansBox');if(b)b.textContent=q.answerKey;}else revealBox(q,ok);}
+const youSaid=(q,ok)=>ok?'':`You ${q.opts?'picked':'wrote'} <b>${q.opts?q.opts[q.chosen]:q.input}</b>. `;
+const split=n=>[Math.floor(n/10)*10,n%10];
+function bridgeExplain(a,b,op){const j=op==='+'?addJumps(a,b):subJumps(a,b);
+  return `${jl(jumpSVG(a,j))}<div class="big2">${j.length>1?`${a} ${op} ${Math.abs(j[0])} = ${a+j[0]}, &nbsp; ${a+j[0]} ${op} ${Math.abs(j[1])} = ${a+j[0]+j[1]}`:`${a} ${op} ${b} = ${op==='+'?a+b:a-b}`}</div>`;}
+function bridgeHint(a,b,op){const j=op==='+'?addJumps(a,b):subJumps(a,b);
+  return j.length>1?(op==='+'?`Jump to the next ten first: ${a} + ${j[0]} = ${a+j[0]}. Then add the ${j[1]} left over.`:`Jump back to the ten first: ${a} − ${-j[0]} = ${a+j[0]}. Then take away ${-j[1]} more.`):(op==='+'?`Count on ${b} from ${a}. Start at ${a}!`:`Think addition: ${b} + ? = ${a}.`);}
 
 const TYPES={
- /* L1: how many more to make 10 (visual, tap a number) */
- frame10:{make(q,used){q.n=uniq(used,()=>rnd(1,9),'f');q.answerKey=10-q.n;},
-  render(q){
-   setPrompt(q.speed?`<b>${q.n}</b> and how many more make <b>10</b>?`:`There are <b>${q.n}</b> counters. How many more to make <b>10</b>?`);
-   stage().innerHTML=visualSlot(q,one(tfSVG([{n:q.n,color:RED}])))+(q.speed?`<div class="eqn">${q.n} + ${BOX} = 10</div>`:'')+choiceUI(q,range(11),'numrow');
-   bindChoice(q);
-   q.hint=()=>{showVis(one(tfSVG([{n:q.n,color:RED},{n:10-q.n,color:BLUE,ghost:true,label:true}])));return `Count the <b>empty</b> squares! Each one needs a counter.`;};
-   q.explain=ok=>{markChoice(q);showVis(one(tfSVG([{n:q.n,color:RED},{n:10-q.n,color:BLUE,label:true}])));
-     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`The ${10-q.n} blue counters fill the frame.<div class="big2">${q.n} + ${10-q.n} = 10</div>`;};
+ /* L1: how many more to make 10 / 20 / the next ten */
+ frame10:{make(q,used){const D=q.D;
+   if(D>=3&&Math.random()<0.35){const t=rnd(2,8)*10,o=rnd(1,9);q.n=t+o;q.T=t+10;q.mode='decade';used.add('f'+q.n);}
+   else{q.T=D>=2&&Math.random()<0.8?20:10;q.n=uniq(used,()=>rnd(1,q.T-1),'f'+q.T+'-');q.mode='frame';}
+   q.answerKey=q.T-q.n;},
+  render(q){const {n,T}=q;
+   setPrompt(q.hideVis?`<b>${n}</b> and how many more make <b>${T}</b>?`:`There are <b>${n}</b> counters. How many more to make <b>${T}</b>?`,`${n} and how many more make ${T}?`);
+   const vis=q.mode==='frame'?seqFrames([{n,color:RED}],T):'';
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${n} + ${BOX} = ${T}</div>`+(q.D===0&&T===10?choiceUI(q,range(11),'numrow'):keypadUI(q));
+   bindAns(q);
+   q.hint=()=>{if(q.mode==='decade'){const [t,o]=split(n);return `${n} is ${t} and ${o}. How many more does ${o} need to make 10?`;}
+     showVis(seqFrames([{n,color:RED},{n:T-n,color:BLUE,ghost:true,label:true}],T));return T===20?`Two ten-frames make 20. Count the <b>empty</b> squares.`:`Count the <b>empty</b> squares! Each one needs a counter.`;};
+   q.explain=ok=>{showAns(q,ok);if(q.mode==='frame')showVis(seqFrames([{n,color:RED},{n:T-n,color:BLUE,label:true}],T));
+     return youSaid(q,ok)+(q.mode==='decade'?`${n % 10} + ${10-n%10} = 10, so ${n} + ${T-n} = ${T}.`:`The ${T-n} blue counters fill ${T===20?'both frames':'the frame'}.`)+`<div class="big2">${n} + ${T-n} = ${T}</div>`;};
  }},
- /* L2: bonds to 10 (choice) */
- bond:{make(q,used){q.n=uniq(used,()=>rnd(0,10),'b');q.mode=pick(['add','add','front','sub']);q.answerKey=10-q.n;},
-  render(q){
-   const n=q.n,m=10-n;
-   const eq=q.mode==='add'?`${n} + ${BOX} = 10`:q.mode==='front'?`${BOX} + ${n} = 10`:`10 − ${n} = ${BOX}`;
-   setPrompt(q.mode==='sub'?`What is <b>10 take away ${n}</b>?`:`What goes with <b>${n}</b> to make <b>10</b>?`);
-   stage().innerHTML=`<div class="eqn">${eq}</div>`+visualSlot(q,'')+choiceUI(q,distract(m,0,10));
-   bindChoice(q);
-   q.hint=()=>{showVis(one(tfSVG(q.mode==='sub'?[{n:10,color:RED}]:[{n,color:RED}],q.mode==='sub'?{cross:n}:{})));
-     return q.mode==='sub'?`Picture a full ten-frame. Cross out ${n}. How many are left?`:`Picture ${n} counters in a ten-frame. How many empty squares?`;};
-   q.explain=ok=>{markChoice(q);const b=$('#ansBox');if(b)b.textContent=m;
-     const vis=q.mode==='sub'?one(tfSVG([{n:10,color:RED}],{cross:n})):one(tfSVG([{n,color:RED},{n:m,color:BLUE}]));
-     $('#vis').innerHTML=vis;$('#vis').classList.remove('hidden');
-     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`<b>${n}</b> and <b>${m}</b> are partners. They make 10!<div class="big2">${n} + ${m} = 10 &nbsp; 10 − ${n} = ${m}</div>`;};
+ /* L2: partners to 10 / 20 / 100, sometimes "tap all the pairs" */
+ bond:{make(q,used){const D=q.D;
+   q.T=D===0?10:D===1?pick([10,20]):D===2?pick([20,20,10]):pick([20,100,100]);
+   q.mode=D>=2&&Math.random()<0.35?'multi':pick(['add','add','front','sub']);
+   const gen=()=>q.T===100?rnd(1,9)*10:q.T===20?rnd(1,19):rnd(0,10);
+   q.n=uniq(used,gen,'b'+q.T+q.mode);q.answerKey=q.T-q.n;
+   if(q.mode==='multi'){const T=q.T,step=T===100?10:1,k=rnd(2,3),right=new Set();
+     while(right.size<k){const x=T===100?rnd(1,9)*10:rnd(1,T-1);right.add(Math.min(x,T-x)+'+'+Math.max(x,T-x));}
+     const cards=[...right].map(s=>{const [a,b]=s.split('+').map(Number);return {a,b,ok:true};});
+     while(cards.length<6){const x=T===100?rnd(1,9)*10:rnd(1,T-1),off=pick([-2,-1,1,2])*step,y=T-x+off;
+       if(y>0&&!cards.some(c=>(c.a===x&&c.b===y)||(c.a===y&&c.b===x)))cards.push({a:x,b:y,ok:false});}
+     q.cards=shuffle(cards.map(c=>Math.random()<0.5?c:{a:c.b,b:c.a,ok:c.ok}));q.sel=new Set();}
+ },
+  render(q){const {n,T}=q,m=T-n;
+   if(q.mode==='multi'){
+     setPrompt(`Tap <b>all</b> the pairs that make <b>${T}</b>!`,`Tap all the pairs that make ${T}. There might be more than one!`);
+     stage().innerHTML=`<div class="opts cards">${q.cards.map((c,i)=>`<button class="opt" data-card="${i}">${c.a} + ${c.b}</button>`).join('')}</div>`;
+     q.canCheck=()=>q.sel.size>0;q.nudge='Tap the pairs that make '+T+' first.';q.check=()=>q.cards.every((c,i)=>c.ok===q.sel.has(i));
+     stage().onclick=e=>{const b=e.target.closest('[data-card]');if(!b||q.done)return;const i=+b.dataset.card;q.sel.has(i)?q.sel.delete(i):q.sel.add(i);b.classList.toggle('picked');sfx('tap');updCheck();};
+     q.hint=()=>T===100?`Count in tens. 30 needs 70 more to make 100.`:`For each card, add the numbers. Only keep the ones that make exactly ${T}.`;
+     q.explain=ok=>{document.querySelectorAll('[data-card]').forEach((b,i)=>{const c=q.cards[i];b.classList.add(c.ok?'right':q.sel.has(i)?'wrong':'dim');b.innerHTML=`${c.a} + ${c.b} = ${c.a+c.b}`;});
+       return `${ok?'':'Check each card: green ones make '+T+'.'}<div class="big2">${q.cards.filter(c=>c.ok).map(c=>`${c.a} + ${c.b} = ${T}`).join(' &nbsp; ')}</div>`;};
+     return;}
+   const eq=q.mode==='add'?`${n} + ${BOX} = ${T}`:q.mode==='front'?`${BOX} + ${n} = ${T}`:`${T} − ${n} = ${BOX}`;
+   setPrompt(q.mode==='sub'?`What is <b>${T} take away ${n}</b>?`:`What goes with <b>${n}</b> to make <b>${T}</b>?`,q.mode==='sub'?`What is ${T} take away ${n}?`:`What goes with ${n} to make ${T}?`);
+   stage().innerHTML=`<div class="eqn">${eq}</div>`+visualSlot(q,'')+(q.D===0?choiceUI(q,distract(m,0,T)):keypadUI(q));
+   bindAns(q);
+   q.hint=()=>{if(T===100)return `Count in tens from ${n}: ${n+10}, ${n+20}… How many tens to get to 100?`;
+     showVis(seqFrames(q.mode==='sub'?[{n:T,color:RED}]:[{n,color:RED},{n:m,color:BLUE,ghost:true}],T));
+     return q.mode==='sub'?`Picture ${T} counters. Take away ${n}. How many are left?`:T===20?`Think of 10 first. ${n} needs ${m} more to make ${T}.`.replace(` ${m} more`,' how many more'):`Picture ${n} counters in a ten-frame. How many empty squares?`;};
+   q.explain=ok=>{showAns(q,ok);if(T<=20)showVis(seqFrames([{n,color:RED},{n:m,color:BLUE}],T));
+     return youSaid(q,ok)+`<b>${n}</b> and <b>${m}</b> are partners. They make ${T}!<div class="big2">${n} + ${m} = ${T} &nbsp; ${T} − ${n} = ${m}</div>`;};
  }},
- /* L3: doubles (keypad) */
- double:{make(q,used){q.n=uniq(used,()=>rnd(1,10),'d');q.answerKey=2*q.n;},
-  render(q){
-   const n=q.n;
-   setPrompt(pick([`What is <b>double ${n}</b>?`,`Double trouble! <b>${n} + ${n}</b> = ?`]));
-   stage().innerHTML=visualSlot(q,frames(tfSVG([{n,color:RED}]),tfSVG([{n,color:BLUE}])))+`<div class="eqn">${n} + ${n} = ${BOX}</div>`+keypadUI(q);
+ /* L3: doubles and halves */
+ double:{make(q,used){const D=q.D;const R=[[1,10],[1,15],[6,20],[11,30],[15,50]][D];
+   q.mode=D>=1&&Math.random()<0.35?'half':'double';q.n=uniq(used,()=>rnd(R[0],R[1]),'d'+q.mode);q.answerKey=q.mode==='double'?2*q.n:q.n;},
+  render(q){const n=q.n,m=2*n,dbl=q.mode==='double';
+   setPrompt(dbl?`What is <b>double ${n}</b>?`:`What is <b>half of ${m}</b>?`,dbl?`What is double ${n}?`:`What is half of ${m}?`);
+   const vis=n<=10?frames(tfSVG([{n,color:RED}]),tfSVG([{n,color:BLUE}])):'';
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${dbl?`${n} + ${n} = ${BOX}`:`half of ${m} = ${BOX}`}</div>`+keypadUI(q);
    bindKeys(q);
-   q.hint=()=>{showVis(frames(tfSVG([{n,color:RED}]),tfSVG([{n,color:BLUE}])));
-     return n<=5?`Show ${n} fingers on each hand. How many fingers altogether?`:`${n} is 5 and ${n-5}. Double 5 is 10, double ${n-5} is ${2*(n-5)}. Put them together!`;};
-   q.explain=ok=>{revealBox(q,ok);showVis(frames(tfSVG([{n,color:RED,label:true}]),tfSVG([{n,color:BLUE,label:true}])));
-     return (ok?'':`You wrote <b>${q.input}</b>. `)+`Two groups of ${n} make ${2*n}.<div class="big2">double ${n} = ${2*n}</div>`;};
+   const [t,o]=split(n);
+   q.hint=()=>{if(vis)showVis(vis);
+     if(!dbl)return `Which number doubles to make ${m}? ${m>=20?`Split ${m} into ${split(m)[0]} and ${split(m)[1]}, and halve each part.`:`Share ${m} into 2 equal groups.`}`;
+     return n<=5?`Show ${n} fingers on each hand. How many fingers altogether?`:n<=10?`${n} is 5 and ${n-5}. Double 5 is 10, double ${n-5} is ${2*(n-5)}. Put them together!`:`Double the tens, then double the ones: double ${t} is ${2*t}, double ${o} is ${2*o}.`;};
+   q.explain=ok=>{revealBox(q,ok);if(vis)showVis(frames(tfSVG([{n,color:RED,label:true}]),tfSVG([{n,color:BLUE,label:true}])));
+     const parts=n>10?` (double ${t} = ${2*t}, double ${o} = ${2*o})`:'';
+     return youSaid(q,ok)+(dbl?`Two groups of ${n} make ${m}${parts}.`:`${n} + ${n} = ${m}, so half of ${m} is ${n}${parts}.`)+`<div class="big2">double ${n} = ${m} &nbsp; half of ${m} = ${n}</div>`;};
  }},
- /* L4: near doubles (choice) */
- near:{make(q,used){q.n=uniq(used,()=>rnd(1,9),'n');q.big=Math.random()<0.5;q.answerKey=2*q.n+1;},
-  render(q){
-   const n=q.n,a=q.big?n+1:n,b=q.big?n:n+1;
-   setPrompt(`What is <b>${a} + ${b}</b>?`);
-   const vis=frames(tfSVG([{n:a,color:RED}].concat(q.big?[]:[])),tfSVG([{n:b,color:BLUE}]));
-   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${a} + ${b} = ${BOX}</div>`+choiceUI(q,distract(2*n+1,2,20,[2*n,2*n+2]));
-   bindChoice(q);
+ /* L4: near doubles */
+ near:{make(q,used){const D=q.D,R=[[1,9],[1,9],[4,14],[9,24],[15,49]][D];
+   q.mode=D>=3&&Math.random()<0.3?'two':'one';q.n=uniq(used,()=>rnd(R[0],R[1]),'n'+q.mode);q.big=Math.random()<0.5;
+   if(q.mode==='two'){q.a=q.big?q.n+1:q.n-1;q.b=q.big?q.n-1:q.n+1;}else{q.a=q.big?q.n+1:q.n;q.b=q.big?q.n:q.n+1;}
+   q.answerKey=q.a+q.b;},
+  render(q){const {n,a,b}=q;
+   setPrompt(`What is <b>${a} + ${b}</b>?`,`What is ${a} plus ${b}?`);
+   const vis=a<=10&&b<=10&&q.mode==='one'?frames(tfSVG([{n:a,color:RED}]),tfSVG([{n:b,color:BLUE}])):'';
+   stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${a} + ${b} = ${BOX}</div>`+ansPick(q,a+b,2,40,[2*n,2*n+2]);
+   bindAns(q);
    const starred=x=>x===n+1?[{n,color:x===a?RED:BLUE},{n:1,color:'#facc15',star:true}]:[{n,color:x===a?RED:BLUE}];
-   q.hint=()=>{showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));return `The numbers are next-door neighbours! Double ${n} is ${2*n}. Then add the ⭐ one more.`;};
-   q.explain=ok=>{markChoice(q);const bx=$('#ansBox');if(bx)bx.textContent=2*n+1;showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));
-     return (ok?'':`You picked <b>${q.opts[q.chosen]}</b>. `)+`${a} + ${b} is <b>double ${n}</b> (${2*n}) and <b>1 more</b> (the ⭐).<div class="big2">${2*n} + 1 = ${2*n+1}</div>`;};
+   q.hint=()=>{if(vis)showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));
+     return q.mode==='two'?`Move 1 from ${Math.max(a,b)} to ${Math.min(a,b)}. Now it's double ${n}!`:`The numbers are next-door neighbours! Double ${n} is ${2*n}. Then add 1 more.`;};
+   q.explain=ok=>{showAns(q,ok);if(vis)showVis(frames(tfSVG(starred(a)),tfSVG(starred(b))));
+     return youSaid(q,ok)+(q.mode==='two'?`${a} + ${b} is the same as ${n} + ${n}.<div class="big2">double ${n} = ${2*n}</div>`:`${a} + ${b} is <b>double ${n}</b> (${2*n}) and <b>1 more</b>.<div class="big2">${2*n} + 1 = ${2*n+1}</div>`);};
  }},
- /* L5: bridge to 10 (keypad) */
- bridge:{make(q,used){const k=uniq(used,()=>{const a=rnd(6,9),b=rnd(11-a,9);return a+'+'+b;},'g').split('+').map(Number);q.a=k[0];q.b=k[1];if(Math.random()<0.3){[q.a,q.b]=[q.b,q.a];q.swap=true;}q.answerKey=q.a+q.b;},
+ /* L5: bridge to 10 (and the next ten) */
+ bridge:{make(q,used){const D=q.D,pDec=[0,0,0.3,0.5,0.7][D];
+   if(Math.random()<pDec){const hi=[0,0,29,59,89][D];q.mode='decade';const k=uniq(used,()=>{let a;do{a=rnd(11,hi);}while(a%10<2);return a+'+'+rnd(11-a%10,9);},'gd').split('+').map(Number);q.a=k[0];q.b=k[1];}
+   else{q.mode='ten';const k=uniq(used,()=>{const a=rnd(D>=2?5:6,9),b=rnd(11-a,9);return a+'+'+b;},'g').split('+').map(Number);q.a=k[0];q.b=k[1];if(Math.random()<0.3){[q.a,q.b]=[q.b,q.a];q.swap=true;}}
+   q.answerKey=q.a+q.b;},
   render(q){
+   setPrompt(`What is <b>${q.a} + ${q.b}</b>?`,`What is ${q.a} plus ${q.b}?`);
+   if(q.mode==='decade'){stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${q.a} + ${q.b} = ${BOX}</div>`+keypadUI(q);bindKeys(q);
+     q.hint=()=>{showVis(jl(jumpSVG(q.a,[addJumps(q.a,q.b)[0]])));return bridgeHint(q.a,q.b,'+');};
+     q.explain=ok=>{revealBox(q,ok);return youSaid(q,ok)+'Make the next ten first.'+bridgeExplain(q.a,q.b,'+');};return;}
    const big=Math.max(q.a,q.b),small=Math.min(q.a,q.b),need=10-big,rest=small-need;
-   setPrompt(`What is <b>${q.a} + ${q.b}</b>?`);
    const vis=frames(tfSVG([{n:q.a,color:RED}]),tfSVG([{n:q.b,color:BLUE}]));
    stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${q.a} + ${q.b} = ${BOX}</div>`+keypadUI(q);
    bindKeys(q);
    const bridged=frames(tfSVG([{n:big,color:big===q.a?RED:BLUE},{n:need,color:big===q.a?BLUE:RED,star:true}]),tfSVG([{n:rest,color:big===q.a?BLUE:RED}]),true);
    q.hint=()=>{showVis(bridged);return `Start with ${big}. It needs <b>${need}</b> more to make 10 (the ⭐ counters). Then add the ${rest} left over.`;};
    q.explain=ok=>{revealBox(q,ok);showVis(bridged);
-     return (ok?'':`You wrote <b>${q.input}</b>. `)+`Move ${need} over to fill the first ten-frame.<div class="big2">${big} + ${need} = 10, &nbsp; 10 + ${rest} = ${10+rest}</div>`;};
+     return youSaid(q,ok)+`Move ${need} over to fill the first ten-frame.<div class="big2">${big} + ${need} = 10, &nbsp; 10 + ${rest} = ${10+rest}</div>`;};
  }},
- /* L6: subtraction using facts (keypad) */
- subtract:{make(q,used){
-   const mode=pick(['ten','double','teen','bridge']);let t,s;
+ /* L6: subtraction using facts */
+ subtract:{make(q,used){const D=q.D;
+   const modes=D<=1?['ten','double','teen','bridge']:D===2?['ten','double','teen','bridge','bridge','bridge']:D===3?['double','bridge','bridge','big','big']:['bridge','big','big','big'];
+   const mode=pick(modes);let t,s;
    for(let i=0;i<40;i++){
-     if(mode==='ten'){t=10;s=rnd(1,9);}else if(mode==='double'){s=rnd(2,9);t=2*s;}else if(mode==='teen'){s=rnd(1,9);t=10+s;}else{const o=rnd(1,8);t=10+o;s=rnd(o+1,9);}
+     if(mode==='ten'){t=10;s=rnd(1,9);}else if(mode==='double'){s=rnd(2,D>=3?15:9);t=2*s;}else if(mode==='teen'){s=rnd(1,9);t=10+s;}
+     else if(mode==='bridge'){const o=rnd(1,8);t=10+o;s=rnd(o+1,9);}
+     else{const o=rnd(1,8);t=rnd(2,8)*10+o;s=rnd(o+1,9);}
      if(!used.has('s'+t+'-'+s))break;}
    used.add('s'+t+'-'+s);q.mode=mode;q.t=t;q.s=s;q.answerKey=t-s;},
   render(q){
    const t=q.t,s=q.s,ans=t-s;
    setPrompt(`What is <b>${t} − ${s}</b>?`,`What is ${t} take away ${s}?`);
-   const tfs=framesFor(t,RED);
-   const vis=tfs.length>1?frames(tfs[0],tfs[1],false):one(tfs[0]);
+   const tfs=t<=20?framesFor(t,RED):null;
+   const vis=!tfs?'':tfs.length>1?frames(tfs[0],tfs[1],false):one(tfs[0]);
    stage().innerHTML=visualSlot(q,vis)+`<div class="eqn">${t} − ${s} = ${BOX}</div>`+keypadUI(q);
    bindKeys(q);
    const crossed=()=>{if(t<=10)return one(tfSVG([{n:t,color:RED}],{cross:s}));
      const ones=t-10;const c2=Math.min(s,ones),c1=s-c2;
      return frames(tfSVG([{n:10,color:RED}],{cross:c1}),tfSVG([{n:ones,color:RED}],{cross:c2}),false);};
-   const H={ten:`Think of partners to 10: ${s} + ? = 10`,double:`${t} is double ${s}! So ${t} − ${s} = ?`,teen:`${t} is 10 and ${s}. Take away the ${s}. What's left?`,bridge:`Take away ${t-10} first to get to 10. Then take away ${s-(t-10)} more.`};
-   const E={ten:`${s} + ${ans} = 10, so 10 − ${s} = ${ans}.`,double:`Double ${s} is ${t}, so ${t} − ${s} = ${s}.`,teen:`${t} is 10 and ${s}. Take away the ${s} and 10 is left.`,bridge:`${t} − ${t-10} = 10, then 10 − ${s-(t-10)} = ${ans}.`};
-   q.hint=()=>{showVis(vis);return H[q.mode];};
-   q.explain=ok=>{revealBox(q,ok);showVis(crossed());return (ok?'':`You wrote <b>${q.input}</b>. `)+`Cross out ${s} and count what's left.<div class="big2">${E[q.mode]}</div>`;};
+   const H={ten:`Think of partners to 10: ${s} + ? = 10`,double:`${t} is double ${s}! So ${t} − ${s} = ?`,teen:`${t} is 10 and ${s}. Take away the ${s}. What's left?`,bridge:bridgeHint(t,s,'−'),big:bridgeHint(t,s,'−')};
+   const E={ten:`${s} + ${ans} = 10, so 10 − ${s} = ${ans}.`,double:`Double ${s} is ${t}, so ${t} − ${s} = ${s}.`,teen:`${t} is 10 and ${s}. Take away the ${s} and 10 is left.`};
+   q.hint=()=>{if(t<=20)showVis(vis);else showVis(jl(jumpSVG(t,[subJumps(t,s)[0]])));return H[q.mode];};
+   q.explain=ok=>{revealBox(q,ok);
+     if(q.mode==='bridge'||q.mode==='big'){if(t<=20)showVis(crossed());return youSaid(q,ok)+'Jump back to the ten first.'+bridgeExplain(t,s,'−');}
+     if(t<=20)showVis(crossed());return youSaid(q,ok)+`Cross out ${s} and count what's left.<div class="big2">${E[q.mode]}</div>`;};
+ }},
+ /* L8: facts to 20 */
+ facts20:{make(q,used){const D=q.D;
+   const r=Math.random();q.mode=D>=4&&r<0.25?'miss':D>=3&&r<0.5?'three':pick(['add','sub']);
+   const k=uniq(used,()=>{if(q.mode==='three'){const a=rnd(2,9),b=rnd(1,9),c=rnd(1,Math.max(1,Math.min(9,20-a-b)));return [a,b,c].join(',');}
+     const a=rnd(D>=1?5:2,9),b=rnd(D>=1?11-a:1,9);return [a,b].join(',');},'t'+q.mode).split(',').map(Number);
+   q.nums=k;
+   if(q.mode==='add'){[q.a,q.b]=k;q.answerKey=q.a+q.b;}
+   else if(q.mode==='sub'){q.a=k[0]+k[1];q.b=k[1];q.answerKey=q.a-q.b;}
+   else if(q.mode==='three'){q.answerKey=k[0]+k[1]+k[2];}
+   else{q.a=k[0];q.c=k[0]+k[1];q.answerKey=k[1];}},
+  render(q){let eq,sp;
+   if(q.mode==='add'){eq=`${q.a} + ${q.b} = ${BOX}`;sp=`What is ${q.a} plus ${q.b}?`;}
+   else if(q.mode==='sub'){eq=`${q.a} − ${q.b} = ${BOX}`;sp=`What is ${q.a} take away ${q.b}?`;}
+   else if(q.mode==='three'){eq=`${q.nums.join(' + ')} = ${BOX}`;sp=`What is ${q.nums.join(' plus ')}?`;}
+   else{eq=`${q.a} + ${BOX} = ${q.c}`;sp=`${q.a} plus what equals ${q.c}?`;}
+   setPrompt(`Quick! <span style="font-size:.9em">${q.mode==='miss'?'What is missing?':'Work it out in your head.'}</span>`,sp);
+   stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${eq}</div>`+keypadUI(q);bindKeys(q);
+   q.hint=()=>{if(q.mode==='three'){const [a,b,c]=q.nums;return a+b===10||b+c===10||a+c===10?'Look for two numbers that make 10 and add them first!':`Add two numbers first: ${a} + ${b} = ${a+b}. Then add ${c}.`;}
+     if(q.mode==='add')return bridgeHint(q.a,q.b,'+');if(q.mode==='sub')return bridgeHint(q.a,q.b,'−');return `Count on from ${q.a} to ${q.c}. How many jumps?`;};
+   q.explain=ok=>{revealBox(q,ok);
+     if(q.mode==='add')return youSaid(q,ok)+bridgeExplain(q.a,q.b,'+');if(q.mode==='sub')return youSaid(q,ok)+bridgeExplain(q.a,q.b,'−');
+     if(q.mode==='three'){const [a,b,c]=q.nums;return youSaid(q,ok)+`<div class="big2">${a} + ${b} = ${a+b}, &nbsp; ${a+b} + ${c} = ${a+b+c}</div>`;}
+     return youSaid(q,ok)+jl(jumpSVG(q.a,addJumps(q.a,q.answerKey)))+`<div class="big2">${q.a} + ${q.answerKey} = ${q.c}</div>`;};
+ }},
+ /* L9: teen bridges */
+ teen:{make(q,used){const D=q.D;
+   const modes=[['add1','sub'],['add1','sub','add20'],['add1','sub','sub','add20'],['sub','add20','sub20','sub20'],['add20','sub20','add30','sub20']][D];
+   q.mode=pick(modes);let a,b;
+   const k=uniq(used,()=>{
+     if(q.mode==='add1'){a=rnd(5,9);b=rnd(11-a,9);}
+     else if(q.mode==='sub'){const o=rnd(1,8);a=10+o;b=rnd(o+1,9);}
+     else if(q.mode==='add20'){const o=rnd(2,9);a=10+o;b=rnd(11-o,9);}
+     else if(q.mode==='sub20'){const o=rnd(1,8);a=20+o;b=rnd(o+1,9);}
+     else{const o=rnd(2,9);a=20+o;b=rnd(11-o,9);}
+     return a+','+b;},'te').split(',').map(Number);
+   q.a=k[0];q.b=k[1];q.op=q.mode.startsWith('sub')?'−':'+';q.answerKey=q.op==='+'?q.a+q.b:q.a-q.b;},
+  render(q){setPrompt(`What is <b>${q.a} ${q.op} ${q.b}</b>?`,`What is ${q.a} ${q.op==='+'?'plus':'take away'} ${q.b}?`);
+   stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${q.a} ${q.op} ${q.b} = ${BOX}</div>`+keypadUI(q);bindKeys(q);
+   q.hint=()=>{const j=q.op==='+'?addJumps(q.a,q.b):subJumps(q.a,q.b);showVis(jl(jumpSVG(q.a,[j[0]])));return bridgeHint(q.a,q.b,q.op);};
+   q.explain=ok=>{revealBox(q,ok);return youSaid(q,ok)+'Jump through the ten.'+bridgeExplain(q.a,q.b,q.op);};
+ }},
+ /* L10: two-digit +/- one-digit and +/- tens */
+ twodig:{make(q,used){const D=q.D;
+   const modes=[['add1','sub1','addT','subT'],['add1','sub1','addT','subT'],['add1','sub1','addT','subT','add1','sub1'],['add1','sub1','addT','subT','addTO'],['add1','sub1','addTO','subTO','addT','subT']][D];
+   const bridge=D>=2;q.mode=pick(modes);let a,b;
+   const k=uniq(used,()=>{
+     if(q.mode==='add1'){if(bridge){do{a=rnd(21,88);}while(a%10<2);b=rnd(11-a%10,Math.min(9,99-a));}else{do{a=rnd(21,88);}while(a%10>8);b=rnd(1,9-a%10);}}
+     else if(q.mode==='sub1'){if(bridge){do{a=rnd(21,98);}while(a%10>8);b=rnd(a%10+1,9);}else{do{a=rnd(21,99);}while(a%10<1);b=rnd(1,a%10);}}
+     else if(q.mode==='addT'){a=rnd(11,79);b=rnd(1,Math.floor((99-a)/10))*10;}
+     else if(q.mode==='subT'){a=rnd(31,99);b=rnd(1,Math.floor((a-1)/10))*10;}
+     else if(q.mode==='addTO'){do{a=rnd(11,68);}while(a%10>8);b=rnd(1,Math.floor((89-a)/10))*10+rnd(1,9-a%10);}
+     else{do{a=rnd(35,99);}while(a%10<1);b=rnd(1,Math.floor(a/10)-1)*10+rnd(1,a%10);}
+     return a+','+b;},'2d').split(',').map(Number);
+   q.a=k[0];q.b=k[1];q.op=q.mode.startsWith('sub')?'−':'+';q.answerKey=q.op==='+'?q.a+q.b:q.a-q.b;},
+  steps(q){const {a,b,op}=q,sg=op==='+'?1:-1;
+   if(q.mode==='addT'||q.mode==='subT')return b/10<=4?Array(b/10).fill(10*sg):[b*sg];
+   if(q.mode==='addTO'||q.mode==='subTO'){const [t,o]=split(b);return [t*sg,o*sg];}
+   return op==='+'?addJumps(a,b):subJumps(a,b);},
+  render(q){const {a,b,op}=q;setPrompt(`What is <b>${a} ${op} ${b}</b>?`,`What is ${a} ${op==='+'?'plus':'take away'} ${b}?`);
+   stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${a} ${op} ${b} = ${BOX}</div>`+keypadUI(q);bindKeys(q);
+   const tens=q.mode.endsWith('T');
+   q.hint=()=>{const st=TYPES.twodig.steps(q);showVis(jl(jumpSVG(a,[st[0]])));
+     return tens?`Only the tens change! ${a} has ${Math.floor(a/10)} tens. ${op==='+'?'Add':'Take away'} ${b/10} tens.`:q.mode.endsWith('TO')?`${op==='+'?'Add':'Take away'} the tens first (${split(b)[0]}), then the ones (${split(b)[1]}).`:bridgeHint(a,b,op);};
+   q.explain=ok=>{revealBox(q,ok);const st=TYPES.twodig.steps(q);let p=a;const parts=st.map(s=>{const f=`${p} ${s<0?'−':'+'} ${Math.abs(s)} = ${p+s}`;p+=s;return f;});
+     return youSaid(q,ok)+(tens?`The ones digit stays the same. Only the tens jump.`:'Jump along the number line.')+jl(jumpSVG(a,st))+`<div class="big2">${parts.length>2?`${a} ${op} ${b} = ${q.answerKey}`:parts.join(', &nbsp; ')}</div>`;};
+ }},
+ /* L11: missing numbers on either side */
+ missing:{make(q,used){const D=q.D,R=[10,20,20,30,50][D],F=[[1,2],[1,2,3,4],[1,2,3,4,5,6],[1,2,3,4,5,6,7],[1,2,3,4,5,6,7,8]][D];
+   q.form=pick(F);let a,b,c,x;
+   const k=uniq(used,()=>{a=rnd(D>=3?3:1,Math.min(R-2,D>=3?19:9));b=rnd(2,Math.min(R-a,D>=3?19:9));if(a+b>R)b=R-a;x=rnd(1,Math.min(9,a+b-1));return [a,b,x].join(',');},'m'+q.form).split(',').map(Number);
+   [a,b,x]=k;c=a+b;q.a=a;q.b=b;q.c=c;q.x=x;
+   const E={1:[`${BOX} + ${b} = ${c}`,a],2:[`${a} + ${BOX} = ${c}`,b],3:[`${c} = ${a} + ${BOX}`,b],4:[`${c} = ${BOX} + ${b}`,a],5:[`${c} − ${BOX} = ${a}`,b],6:[`${BOX} − ${b} = ${a}`,c],7:[`${a} = ${c} − ${BOX}`,b],8:[`${a} + ${BOX} = ${c-x} + ${x}`,b]};
+   q.eq=E[q.form][0];q.answerKey=E[q.form][1];},
+  render(q){setPrompt('What is the <b>missing number</b>?',`What is the missing number? ${sayN(q.eq.replace(/<[^>]+>[^<]*<\/span>/,' what '))}`);
+   stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${q.eq}</div>`+keypadUI(q);bindKeys(q);
+   q.hint=()=>q.form===8?`Work out the right side first: ${q.c-q.x} + ${q.x} = ${q.c}. Both sides must be the same.`:q.form>=5?`Use the fact family of ${q.a}, ${q.b} and ${q.c}. The biggest number is ${q.c}.`:`The = means both sides are the same. What goes with ${q.form===1||q.form===4?q.b:q.a} to make ${q.c}?`;
+   q.explain=ok=>{revealBox(q,ok);return youSaid(q,ok)+`${q.a}, ${q.b} and ${q.c} are a fact family.<div class="big2">${q.a} + ${q.b} = ${q.c} &nbsp; ${q.c} − ${q.b} = ${q.a}</div>`;};
+ }},
+ /* L12: fact families */
+ family:{make(q,used){const D=q.D;
+   q.mode=D>=1&&Math.random()<0.4?'odd':'fill';
+   const k=uniq(used,()=>{let a,b;if(D<=0){a=rnd(1,4);b=rnd(a+1,10-a);}else if(D<=2){a=rnd(2,9);b=rnd(a+1,Math.min(18,20-a));}else if(D===3){a=rnd(3,9);b=rnd(11,29);}else{a=rnd(11,29);b=rnd(11,49);while(a===b||(a%10)+(b%10)>9){a=rnd(11,29);b=rnd(11,49);}}
+     if(a===b)b++;return a+','+b;},'fa').split(',').map(Number);
+   q.a=Math.min(k[0],k[1]);q.b=Math.max(k[0],k[1]);q.c=q.a+q.b;const {a,b,c}=q;
+   if(q.mode==='fill'){q.facts=[[`${a} + ${b} = ${MB(0)}`,c],[`${b} + ${MB(1)} = ${c}`,a],[`${c} − ${a} = ${MB(2)}`,b],[`${MB(3)} − ${b} = ${a}`,c]];q.answerKey=q.facts.map(f=>f[1]);}
+   else{const good=[`${a} + ${b} = ${c}`,`${b} + ${a} = ${c}`,`${c} − ${a} = ${b}`,`${c} − ${b} = ${a}`];
+     const bad=pick([`${c} − ${a} = ${b+1}`,`${a} + ${b} = ${c-1}`,`${c} + ${a} = ${b}`,`${b} − ${a} = ${c}`,`${c} − ${b} = ${a+10}`]);
+     q.opts=shuffle(shuffle(good).slice(0,3).concat([bad]));q.answerKey=bad;q.noCheck=true;}},
+  render(q){const {a,b,c}=q;
+   const house=`<div class="fam"><span>${c}</span><span>${a}</span><span>${b}</span></div>`;
+   if(q.mode==='odd'){setPrompt(`Which fact is <b>not</b> in the family?`,`The family is ${a}, ${b} and ${c}. Which fact is not true?`);
+     stage().innerHTML=house+`<div class="opts cards">${q.opts.map((o,i)=>`<button class="opt" data-opt="${i}">${o}</button>`).join('')}</div>`;bindChoice(q);
+     q.hint=()=>`Check each fact. Work out the answer and see if it matches.`;
+     q.explain=ok=>{markChoice(q);return youSaid(q,ok)+`<b>${q.answerKey}</b> is not true. The family facts are:<div class="big2">${a} + ${b} = ${c} &nbsp; ${b} + ${a} = ${c}<br>${c} − ${a} = ${b} &nbsp; ${c} − ${b} = ${a}</div>`;};return;}
+   setPrompt(`Fill in the <b>fact family</b>!`,`Fill in the fact family for ${a}, ${b} and ${c}. Tap a box, then type. Fill all four.`);
+   stage().innerHTML=house+`<div class="facts">${q.facts.map(f=>`<div class="eqn">${f[0]}</div>`).join('')}</div>`+multiKeys(q,q.answerKey);bindMulti(q);
+   q.hint=()=>`The biggest number, ${c}, is the whole. Adding the two parts makes ${c}. Taking a part away from ${c} leaves the other part.`;
+   q.explain=ok=>{q.done=true;const kp=document.querySelector('.keypad');if(kp)kp.remove();q.facts.forEach((f,i)=>{const bx=$('#mb'+i);if(bx){const r=parseInt(q.inputs[i],10)===f[1];bx.textContent=f[1];bx.style.borderColor=r?'#16a34a':'#ef4444';bx.classList.remove('cur');}});
+     return (ok?'':`Look at the red boxes. `)+`${a} and ${b} are the parts. ${c} is the whole.`;};
+ }},
+ /* L13: doubles and halves to 100 */
+ dbl100:{make(q,used){const D=q.D;
+   q.mode=pick(['double','half']);
+   const gen=()=>{if(q.mode==='double'){if(D===0)return pick([5,10,15,20,25,30,35,40,45,50]);if(D===1)return pick([rnd(11,24),rnd(1,5)*10,rnd(1,9)*5]);if(D===2)return rnd(11,40);return rnd(16,50);}
+     if(D===0)return rnd(1,5)*10;if(D===1)return rnd(11,44);if(D===2)return rnd(10,40);return rnd(15,50);};
+   q.n=uniq(used,gen,'h'+q.mode);q.answerKey=q.mode==='double'?2*q.n:q.n;},
+  render(q){const n=q.n,m=2*n,dbl=q.mode==='double',[t,o]=split(n);
+   setPrompt(dbl?`What is <b>double ${n}</b>?`:`What is <b>half of ${m}</b>?`,dbl?`What is double ${n}?`:`What is half of ${m}?`);
+   stage().innerHTML=visualSlot(q,'')+`<div class="eqn">${dbl?`${n} + ${n} = ${BOX}`:`half of ${m} = ${BOX}`}</div>`+keypadUI(q);bindKeys(q);
+   const [mt,mo]=split(m);
+   q.hint=()=>dbl?`Split ${n} into ${t} and ${o}. Double ${t} is ${2*t}. Double ${o} is ${2*o}. Put them together.`:`Split ${m} into ${mt} and ${mo}. Half of ${mt} is ${mt/2}. Half of ${mo} is ${mo/2}. Put them together.`;
+   q.explain=ok=>{revealBox(q,ok);return youSaid(q,ok)+(dbl?`double ${t} = ${2*t}, double ${o} = ${2*o}`:`half of ${mt} = ${mt/2}, half of ${mo} = ${mo/2}`)+`<div class="big2">double ${n} = ${m} &nbsp; half of ${m} = ${n}</div>`;};
  }},
 };
 function uniq(used,gen,prefix){let v;for(let i=0;i<40;i++){v=gen();if(!used.has(prefix+v))break;}used.add(prefix+v);return v;}
 
 /* ---------- round flow ---------- */
-let R=null,q=null,speedTimer=null;
+let R=null,q=null;
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
 function startLevel(id){
   const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
-  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
-  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+  const D=levelD(id);R={L,D,ms:speedMs(L,D),idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').innerHTML=`${L.icon} Level ${L.id}: ${esc(L.title)} <span class="clvl" id="clvl" title="Challenge level">⚡ Challenge level ${D+1}</span>`;show('play');next();
 }
 function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');
   $('#runner').style.left=(R.score/ROUND*88)+'%';}
@@ -403,20 +636,20 @@ function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidd
 function next(){
   R.idx++;if(R.idx>=ROUND)return finishRound();
   const type=R.types[R.idx];
-  q={type,done:false,usedHint:false,speed:!!R.L.speed,start:Date.now()};
+  q={type,D:R.D,done:false,usedHint:false,speed:!!R.L.speed,start:Date.now()};q.hideVis=q.speed||q.D>=2;
   TYPES[type].make(q,R.used);
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   TYPES[type].render(q);
   if(q.speed){stage().insertAdjacentHTML('afterbegin','<div class="speed" title="Speed bonus"><i id="speedBar"></i></div>');
-    requestAnimationFrame(()=>{const b=$('#speedBar');if(b){b.style.transition=`width ${SPEED_MS}ms linear`;b.style.width='0%';}});}
+    requestAnimationFrame(()=>{const b=$('#speedBar');if(b){b.style.transition=`width ${R.ms}ms linear`;b.style.width='0%';}});}
   dots();topbar();updCheck();
 }
 function answer(ok){
   if(!q||q.done)return;q.done=true;
-  const fast=q.speed&&(Date.now()-q.start)<=SPEED_MS;
+  const fast=q.speed&&(Date.now()-q.start)<=R.ms;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
-  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;if(fast&&!q.usedHint)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;if(fast&&!q.usedHint)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
   else{R.streak=0;sfx('bad');}
   R.results.push(ok);save();
   const expl=q.explain(ok);
@@ -434,10 +667,14 @@ function finishRound(){
   S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
   S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
   const nowUnlocked=wasLocked&&unlocked(L.id+1);
+  S.adapt=S.adapt||{};const oldA=S.adapt[L.id]||0;let step='';
+  if(R.score>=9&&R.D<4){S.adapt[L.id]=Math.min(2,oldA+1);}else if(R.score<=4&&oldA>0){S.adapt[L.id]=oldA-1;}
+  const newD=levelD(L.id);if(newD>R.D)step=`<p class="stepup">⬆️ Level up! Next round is <b>Challenge level ${newD+1}</b>: bigger numbers, fewer pictures.</p>`;else if(newD<R.D)step=`<p class="stepup" style="background:#e0f2fe">Next round goes back to Challenge level ${newD+1} for more practice.</p>`;else if(R.D>=4&&R.score>=9)step=`<p class="stepup">🏅 You're at the top Challenge level!</p>`;
+  save();
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. The hints help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${esc(msg)}</h2>
     <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
-    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}${step}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
       ${L.id<LEVELS.length&&unlocked(L.id+1)?`<button class="btn green" id="rNext">Next level ➜</button>`:''}</div>`;
@@ -452,7 +689,7 @@ function home(){
   R=null;q=null;
   $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Number Facts Sprint`;
   $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
-    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${u?`<span class="clv">⚡ Challenge ${levelD(L.id)+1}</span>`:''}${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
   const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
   const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
   const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
@@ -460,30 +697,32 @@ function home(){
   $('#stickers').innerHTML=range(LEVELS.length*3).map(i=>`<span class="stk" style="${i<totalStars?'background:'+CUBE[i%6]:''}"></span>`).join('');
   let worst=null,best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};if(!best||r>best.r)best={t,r};}});
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${esc(NAME)}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%).`:'');
-  $('#unlockAll').checked=!!S.unlockAll;topbar();show('home');
+  $('#unlockAll').checked=!!S.unlockAll;document.querySelectorAll('[name=diff]').forEach(r=>r.checked=r.value===(DIFFS[S.diff]?S.diff:'challenge'));topbar();show('home');
 }
 
 /* ---------- worksheet ---------- */
 function makeWorksheet(){
   const today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
   const B='<span class="blank"></span>',A=(v,key)=>key?`<span class="ans">${v}</span>`:B,L=i=>String.fromCharCode(97+i)+')';
-  const s1=shuffle(range(9).map(i=>i+1)).slice(0,4);
-  const s2=shuffle(range(11)).slice(0,6).map((n,i)=>({n,front:i%2===1}));
-  const s3=shuffle(range(10).map(i=>i+1)).slice(0,6);
-  const s4=shuffle(range(8).map(i=>i+2)).slice(0,4);
-  const s5=shuffle([[8,5],[9,4],[7,6],[8,7],[9,6],[7,5],[9,3],[8,4],[6,5]]).slice(0,4);
-  const u6=new Set();const s6=range(6).map(()=>{const o={};TYPES.subtract.make(o,u6);return [o.t,o.s];});
+  const gen=(type,n,D=3)=>{const used=new Set();return range(n).map(()=>{const o={D};TYPES[type].make(o,used);return o;});};
+  const s1=shuffle(range(19).map(i=>i+1)).slice(0,3).map(n=>({n,T:20})).concat(range(3).map(()=>{const n=rnd(2,8)*10+rnd(1,9);return {n,T:Math.ceil(n/10)*10};}));
+  const s2=gen('missing',6,4);
+  const s3=gen('teen',6,3);
+  const s4=(()=>{const u=new Set(),out=[];['add1','sub1','addT','subT','add1','sub1'].forEach(m=>{let o;for(let t=0;t<30;t++){o={D:3};TYPES.twodig.make(o,u);if(o.mode===m)break;}out.push(o);});return out;})();
+  const s5=gen('family',8,2).filter(o=>o.mode==='fill').slice(0,2);while(s5.length<2){const o={D:0};TYPES.family.make(o,new Set());if(o.mode==='fill')s5.push(o);}
+  const s6=gen('dbl100',6,3);
+  const eqHTML=(h,ans,key)=>h.replace(BOX,A(ans,key)).replace(/<span class="ansbox mb"[^>]*>&nbsp;<\/span>/g,'');
   const page=key=>`<div class="page${key?' answers':''}">
-    <h2>${key?'✅ Answer key: ':''}Number Facts 🧩</h2>
-    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 30</span>'}</div>
-    <h3>1. Make 10</h3><div class="instr">Draw more counters to fill the ten-frame. How many did you draw?</div>
-    <div class="g four">${s1.map((n,i)=>`<div style="flex-direction:column;align-items:flex-start">${L(i)} ${tfSVG(key?[{n,color:'#9ca3af'},{n:10-n,color:'#fca5a5'}]:[{n,color:'#9ca3af'}])}<span>${n} + ${A(10-n,key)} = 10</span></div>`).join('')}</div>
-    <h3>2. Partners to 10</h3><div class="g">${s2.map((o,i)=>`<div>${L(i)} ${o.front?`${A(10-o.n,key)} + ${o.n}`:`${o.n} + ${A(10-o.n,key)}`} = 10</div>`).join('')}</div>
-    <h3>3. Doubles</h3><div class="g">${s3.map((n,i)=>`<div>${L(i)} ${n} + ${n} = ${A(2*n,key)}</div>`).join('')}</div>
-    <h3>4. Near doubles</h3><div class="instr">Use the double to help: 6 + 7 is double 6 and 1 more.</div><div class="g two">${s4.map((n,i)=>`<div>${L(i)} ${n} + ${n+1} = ${A(2*n+1,key)} <span style="font-size:14px">(double ${n} = ${A(2*n,key)})</span></div>`).join('')}</div>
-    <h3>5. Bridge to 10</h3><div class="instr">Make 10 first, then add the rest.</div><div class="g two">${s5.map(([a,b],i)=>`<div>${L(i)} ${a} + ${b} = ${a} + ${A(10-a,key)} + ${A(b-(10-a),key)} = ${A(a+b,key)}</div>`).join('')}</div>
-    <h3>6. Take it away</h3><div class="g">${s6.map(([t,s],i)=>`<div>${L(i)} ${t} − ${s} = ${A(t-s,key)}</div>`).join('')}</div>
-    ${key?'':`<p style="margin-top:12px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: make 10, use doubles, and think addition to take away.</p>`}
+    <h2>${key?'✅ Answer key: ':''}Number Facts Sprint 🧩</h2>
+    <div class="meta"><span>Name: <b>${esc(NAME)}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 38</span>'}</div>
+    <h3>1. Make 20 and the next ten</h3><div class="g">${s1.map((o,i)=>`<div>${L(i)} ${o.n} + ${A(o.T-o.n,key)} = ${o.T}</div>`).join('')}</div>
+    <h3>2. Missing numbers</h3><div class="instr">The = sign means both sides are the same.</div><div class="g">${s2.map((o,i)=>`<div>${L(i)} ${eqHTML(o.eq,o.answerKey,key)}</div>`).join('')}</div>
+    <h3>3. Jump through the ten</h3><div class="g">${s3.map((o,i)=>`<div>${L(i)} ${o.a} ${o.op} ${o.b} = ${A(o.answerKey,key)}</div>`).join('')}</div>
+    <h3>4. Two-digit jumps</h3><div class="instr">Use tens and ones, or draw a number line.</div><div class="g">${s4.map((o,i)=>`<div>${L(i)} ${o.a} ${o.op} ${o.b} = ${A(o.answerKey,key)}</div>`).join('')}</div>
+    <h3>5. Fact families</h3><div class="g two">${s5.map((o,i)=>`<div style="flex-direction:column;align-items:flex-start">${L(i)} <b>${o.a}, ${o.b}, ${o.c}</b>
+       <span>${o.a} + ${o.b} = ${A(o.c,key)}</span><span>${o.b} + ${A(o.a,key)} = ${o.c}</span><span>${o.c} − ${o.a} = ${A(o.b,key)}</span><span>${A(o.c,key)} − ${o.b} = ${o.a}</span></div>`).join('')}</div>
+    <h3>6. Doubles and halves to 100</h3><div class="g">${s6.map((o,i)=>`<div>${L(i)} ${o.mode==='double'?`double ${o.n}`:`half of ${2*o.n}`} = ${A(o.answerKey,key)}</div>`).join('')}</div>
+    ${key?'':`<p style="margin-top:10px;font-size:13px">🌟 Great work, ${esc(NAME)}! Remember: jump to the ten first, and use fact families to find missing numbers.</p>`}
   </div>`;
   $('#sheet').innerHTML=page(false)+page(true);
 }
@@ -500,13 +739,14 @@ $('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint()
 $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+document.querySelectorAll('[name=diff]').forEach(r=>r.onchange=()=>{if(r.checked){S.diff=r.value;save();home();}});
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
-$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,df=S.diff;S=defState();S.sound=snd;S.diff=df;save();home();}};
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 document.addEventListener('keydown',e=>{if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
-  if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Enter')$('#checkBtn').click();}});
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME};
+  if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Tab'&&q.inputs){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,makeWorksheet};
 home();
 })();
 </script>

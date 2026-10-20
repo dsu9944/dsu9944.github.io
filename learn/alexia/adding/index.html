@@ -169,6 +169,13 @@ svg.nl{width:100%;max-width:760px;height:auto}
 .keypad button[data-key="del"]{grid-column:span 2;font-size:1.1rem}
 .badge{display:inline-block;background:#dcfce7;color:#166534;border-radius:999px;padding:2px 10px;font-size:.85rem;font-weight:bold}
 
+.clvl{display:inline-block;font-size:.8rem;background:#fef3c7;color:#92400e;border-radius:999px;padding:2px 10px;margin-left:6px;vertical-align:middle;white-space:nowrap}
+.clv{display:block;font-size:.78rem;color:#92400e;margin-top:2px}
+.stepup{font-size:1.1rem;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 12px;display:inline-block}.stepup.down{background:#fff7ed;color:#9a3412}
+.diffset{background:#f8fafc;border-radius:12px;padding:8px 12px;margin:8px 0}.diffset label{margin-right:14px;white-space:nowrap}.diffset input{width:20px;height:20px;vertical-align:middle}.diffset .small{font-size:.9rem;margin:6px 0 0}
+.mixed.huge{font-size:2.6em}.mixed.big{font-size:1.4em}
+.page .mixed.big{font-size:1.35em}
+@media(max-width:560px){.equation{gap:6px}.equation .frac.huge{font-size:1.8em}.equation .mixed.huge{font-size:1.6em}.wwrap{font-size:1.8rem}.wwrap small{font-size:.6rem;max-width:4.5em;text-align:center}.equation .op{font-size:1.6rem}}
 </style>
 </head>
 <body>
@@ -186,7 +193,7 @@ svg.nl{width:100%;max-width:760px;height:auto}
     <div class="big">🍕➕</div>
     <div style="flex:1;min-width:220px">
       <h2 id="hello">Hi!</h2>
-      <p>You're a fraction expert now, so let's <b>add and take away</b> fractions! When the pieces are the same size, just count them. <b>The bottom number stays the same.</b> Finish a level with 6 or more out of 10 to unlock the next one.</p>
+      <p>You're a fraction expert now, so let's <b>add and take away</b> fractions! When the pieces are the same size, just count them. <b>The bottom number stays the same.</b> Finish a level with 6 or more out of 10 to unlock the next one. New: different bottom numbers, mixed numbers and two-step stories in Levels 9–12! Score 9 or 10 and the level gets harder. ⚡</p>
     </div>
   </div>
   <div class="levels" id="levelGrid"></div>
@@ -201,8 +208,13 @@ svg.nl{width:100%;max-width:760px;height:auto}
   <div class="card">
     <details>
       <summary>👨‍👩‍👧 For grown-ups</summary>
-      <p>Covers adding and subtracting fractions with the same denominator (NSW Mathematics K–10, Stage 2), starting with fraction bars and pizzas, then number-line jumps in the parallel number line style used in class. It moves on to missing numbers, a gentle first look at totals bigger than one whole (5/4 = 1 1/4), and word problems. A common mistake is adding the bottom numbers (2/5 + 1/5 = 3/10). The game spots it and shows on parallel number lines why it gives a different amount.</p>
-      <p>Denominators: 2, 3, 4, 5, 6, 8, 10, 12. An answer that is equivalent (e.g. 1/2 instead of 2/4) is accepted. Hints are free but give 5 points instead of 10. Progress is saved on this device only.</p>
+      <p>Covers adding and subtracting fractions with the same denominator (NSW Mathematics K–10), starting with fraction bars and pizzas, then number-line jumps in the parallel number line style used in class. It moves on to missing numbers, a gentle first look at totals bigger than one whole (5/4 = 1 1/4), and word problems. Levels 9–12 stretch further: related denominators (1/2 + 3/8, 2/3 − 1/6), adding and subtracting mixed numbers (with regrouping), and two-step word problems. A common mistake is adding the bottom numbers (2/5 + 1/5 = 3/10). The game spots it and shows on parallel number lines why it gives a different amount.</p>
+      <p>Denominators: 2–12 at Easy, growing to 15, 16, 20 and 24 at higher Challenge levels. At Challenge level 3 and above, the pictures for Take Away, Missing Parts and Beyond One Whole stay hidden until a hint is used, and Pizza Plus asks for a typed answer. An answer that is equivalent (e.g. 1/2 instead of 2/4) is accepted. Hints are free but give 5 points instead of 10 (3 at Challenge level 4 and 5). Progress is saved on this device only.</p>
+      <div class="diffset"><b>Difficulty:</b>
+        <label><input type="radio" name="diff" value="easy"> Easy</label>
+        <label><input type="radio" name="diff" value="normal"> Normal</label>
+        <label><input type="radio" name="diff" value="challenge"> Challenge</label>
+        <p class="small">Challenge (the default) starts each level at Challenge level 3: bigger numbers, fewer pictures and typed answers. Easy is the original version of each level. Getting 9 or 10 right steps that level up (to Challenge level 5); 4 or fewer steps it back down.</p></div>
       <div class="row">
         <label class="row" style="gap:6px"><input type="checkbox" id="unlockAll" style="width:24px;height:24px"> Unlock all levels</label>
         <button class="btn ghost" id="resetBtn">Reset progress</button>
@@ -263,7 +275,7 @@ const M=(w,n,d,cls='')=>n===0?`<span class="mixed ${cls}"><span class="wn">${w}<
 const eqv=(n1,d1,n2,d2)=>d1>0&&d2>0&&n1*d2===n2*d1;
 const OR='#ff8a3d',BL='#3b82f6',GR='#22c55e',PK='#fda4af';
 
-const DENS=[2,3,4,5,6,8,10,12];
+let DENS=[2,3,4,5,6,8,10,12];
 const LEVELS=[
  {id:1,icon:'🧱',title:'Bar Builder',blurb:'Add the coloured pieces of a fraction bar.',types:['bar']},
  {id:2,icon:'🍕',title:'Pizza Plus',blurb:'Put the slices together on one pizza.',types:['pizza']},
@@ -273,12 +285,19 @@ const LEVELS=[
  {id:6,icon:'🚀',title:'Beyond One Whole',blurb:'When the pieces fill more than 1 whole: 5/4 = 1 1/4.',types:['beyond']},
  {id:7,icon:'📖',title:'Word Problems',blurb:'Fraction stories about pizza, dance, ribbon and more.',types:['word']},
  {id:8,icon:'🏆',title:'Fraction Champion',blurb:'A mix of everything. Can you get 3 stars?',types:['bar','pizza','nljump','sub','missing','beyond','word','word','sub','beyond']},
+ {id:9,icon:'🔗',title:'Different Bottoms',blurb:'Related denominators: 1/2 + 3/8, 2/3 − 1/6. Make them the same first!',types:['related']},
+ {id:10,icon:'🔢',title:'Mixed Numbers',blurb:'Add and subtract mixed numbers like 2 1/4 + 1 3/4, with regrouping.',types:['mixednum']},
+ {id:11,icon:'📚',title:'Two-Step Stories',blurb:'Word problems that take two steps to solve.',types:['multistep']},
+ {id:12,icon:'👑',title:'Fraction Master',blurb:'The toughest mix of everything. Can you get 3 stars?',types:['related','mixednum','multistep','related','mixednum','multistep','beyond','missing','word','sub']},
 ];
 const TYPE_NAMES={bar:'Bar Builder',pizza:'Pizza Plus',nljump:'Number Line Jumps',sub:'Take Away',missing:'Missing Parts',beyond:'Beyond One Whole',word:'Word Problems'};
 const ROUND=10,UNLOCK=6;
+
+const DIFFS={easy:{base:0,label:'Easy'},normal:{base:1,label:'Normal'},challenge:{base:2,label:'Challenge'}};
+const levelD=id=>Math.min(4,(DIFFS[S.diff]||DIFFS.challenge).base+((S.adapt||{})[id]||0));
 const starsFor=s=>s>=10?3:s>=8?2:s>=UNLOCK?1:0;
 
-const defState=()=>({levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[],mistakes:{addDen:0}});
+const defState=()=>({diff:'challenge',adapt:{},levels:{},points:0,answered:0,correct:0,bestStreak:0,rounds:0,lastPlayed:null,byType:{},unlockAll:false,sound:true,history:[],mistakes:{addDen:0}});
 function load(){try{return Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -417,7 +436,7 @@ function sameAmountNote(q,tn,td){const v=q.entered;if(!v)return '';if(v.w||v.d!=
 function genAdd(used,{over=false}={}){
   let g;
   for(let t=0;t<80;t++){
-    const d=over?pick([3,4,5,6,8,10]):pick(DENS);
+    const d=over?pick(DENS===DENS0?[3,4,5,6,8,10]:DENS.filter(x=>x>2&&x<=16)):pick(DENS);
     let a,b;
     if(!over){if(d===2&&Math.random()<0.7)continue;a=rnd(1,d-1);b=rnd(1,d-a);}
     else{a=rnd(2,d-1);const lo=d-a+1;if(lo>d-1)continue;b=rnd(lo,d-1);}
@@ -452,11 +471,12 @@ const TYPES={
  }},
  /* 2. pizzas (choice) */
  pizza:{make:(q,u)=>Object.assign(q,genAdd(u)),render(q){
+   if(q.D>=2)return pizzaTyped(q);
    const {a,b,d,s}=q;
    setPrompt(`${NAME} ate ${F(a,d,'big')} of a pizza and Mia ate ${F(b,d,'big')} of the same pizza. How much did they eat altogether?`);
    const cands=[[s,2*d],[s+1,d],[s-1,d],[s,d+1],[a*b,d],[s+2,d]];
    const seen=new Set([s+'/'+d]),dis=[];
-   cands.forEach(([n,dd])=>{const k=n+'/'+dd;if(n>0&&n<=dd&&dd<=24&&!seen.has(k)&&!eqv(n,dd,s,d)){seen.add(k);dis.push([n,dd]);}});
+   cands.forEach(([n,dd])=>{const k=n+'/'+dd;if(n>0&&n<=dd&&dd<=48&&!seen.has(k)&&!eqv(n,dd,s,d)){seen.add(k);dis.push([n,dd]);}});
    const opts=shuffle([[s,d]].concat(dis.slice(0,3)));q.opts=opts;q.answerKey=opts.findIndex(o=>o[0]===s&&o[1]===d);q.noCheck=true;
    stage().innerHTML=`<div class="pizzas"><div class="pz">${pizzaSVG(d,runs([[a,OR]]))}<div>${NAME}: ${F(a,d)}</div></div><div class="pz">${pizzaSVG(d,Array(a).fill(null).concat(runs([[b,BL]])))}<div>Mia: ${F(b,d)}</div></div></div>`+
      `<div class="opts">${opts.map((o,i)=>`<button class="opt" data-opt="${i}">${F(o[0],o[1])}</button>`).join('')}</div>`;
@@ -577,29 +597,200 @@ const STORIES=[
  {id:10,emo:'🏊',op:'+',dens:[5,10],text:(a,b,d)=>`In swimming, ${NAME} swam ${fs(a,d)} of a lap doing backstroke and ${fs(b,d)} of a lap doing breaststroke. How much of the lap did she swim?`,answer:(s,d)=>`She swam ${fs(s,d)} of the lap.`},
 ];
 
+/* ===== harder content (difficulty layer) ===== */
+Object.assign(DEN_WORDS,{7:['seventh','sevenths'],9:['ninth','ninths'],14:['fourteenth','fourteenths'],15:['fifteenth','fifteenths'],16:['sixteenth','sixteenths'],18:['eighteenth','eighteenths'],20:['twentieth','twentieths'],24:['twenty-fourth','twenty-fourths'],25:['twenty-fifth','twenty-fifths'],30:['thirtieth','thirtieths']});
+const DENS0=DENS.slice();
+const DENSBY=[DENS0,[3,4,5,6,8,10,12],[4,5,6,8,9,10,12,15,16],[5,6,8,9,10,12,15,16,20],[6,8,9,10,12,15,16,20,24]];
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+const mixedOf=(n,d)=>n>=d?M(Math.floor(n/d),n%d,d):F(n,d);
+const mixedBig=(n,d)=>n>=d?M(Math.floor(n/d),n%d,d,'big'):F(n,d,'big');
+function postRender(q){
+  if(q.D>=2&&['sub','missing','beyond'].includes(q.type)){const v=$('#vis');if(v){v.classList.add('hidden');
+    const h=q.hint,e=q.explain;q.hint=()=>{const r=h();$('#vis').classList.remove('hidden');return r;};q.explain=ok=>{const r=e(ok);$('#vis').classList.remove('hidden');return r;};}}
+}
+/* pizza at higher levels: type the answer */
+function pizzaTyped(q){
+  const {a,b,d,s}=q;q.answerKey={n:s,d};
+  setPrompt(`${NAME} ate ${F(a,d,'big')} of a pizza and Mia ate ${F(b,d,'big')} of the same pizza. How much did they eat altogether? Type the fraction.`);
+  entry(q,{n:'edit',d:'edit'});
+  stage().innerHTML=`<div class="pizzas"><div class="pz">${pizzaSVG(d,runs([[a,OR]]),70)}<div>${NAME}</div></div><div class="pz">${pizzaSVG(d,Array(a).fill(null).concat(runs([[b,BL]])),70)}<div>Mia</div></div></div>`+eqRow(`${F(a,d,'huge')}<span class="op">+</span>${F(b,d,'huge')}`,q.entryHTML)+q.keypadHTML;
+  bindEntry(q);q.refresh();
+  q.check=()=>grade(q,s,d);
+  q.hint=()=>`The pizza still has ${d} slices, so the bottom number is <b>${d}</b>. How many slices were eaten?`;
+  q.explain=ok=>{q.lockBoxes(ok);return (ok?'':`You wrote ${enteredHTML(q.entered)}. `)+mistakeHTML(q)+`${a} slices + ${b} slices = <b>${s} slices</b> out of ${d}.<br>${F(a,d,'big')} + ${F(b,d,'big')} = ${F(s,d,'big')}`+(ok?sameAmountNote(q,s,d):'');};
+}
+/* generic typed-answer check: any equivalent amount; optional mixed-number form */
+function gradeT(q,tn,td,{needMixed=false}={}){
+  const v=q.val();q.entered=v;q.mistake=null;
+  if(!v.d){q.mistake='zeroDen0';return false;}
+  let ok=eqv(v.w*v.d+v.n,v.d,tn,td);
+  if(ok&&needMixed&&!(v.n<v.d))ok=false,q.mistake='notMixed';
+  if(!ok&&q.wrongs)for(const [k,f] of Object.entries(q.wrongs))if(f(v)){q.mistake=k;break;}
+  if(q.mistake==='addBoth'){S.mistakes=S.mistakes||{addDen:0};S.mistakes.addDen++;}
+  return ok;
+}
+function oopsHTML(q){
+  const m=q.mistake;if(!m)return '';
+  if(m==='notMixed')return `<div class="oops">Your amount is right, but in a <b>mixed number</b> the fraction part must be <b>less than one whole</b>.</div>`;
+  if(m==='addBoth')return `<div class="oops">⚠️ <b>Watch out: we don't add the bottom numbers!</b> First make the pieces the same size (the same bottom number), then add the tops.</div>`;
+  if(m==='noConvert')return `<div class="oops">⚠️ The pieces were different sizes! ${F(q.a,q.b)} has to be changed into ${DEN_WORDS[q.dd]?DEN_WORDS[q.dd][1]:'pieces of '+q.dd} first.</div>`;
+  if(m==='noRegroup')return `<div class="oops">⚠️ You can't take ${q.n2} from ${q.n1} in the fraction part, so swap 1 whole for ${F(q.d,q.d)} first (regroup).</div>`;
+  if(m==='zeroDen0')return `<div class="oops">A fraction can't have 0 on the bottom.</div>`;
+  return '';
+}
+function relPair(D,u){
+  for(let t=0;t<150;t++){
+    const b=pick(D<=0?[2,3,4,5]:D===1?[2,3,4,5,6]:[2,3,4,5,6,8]),k=pick(D>=3?[2,3,4,5]:[2,3,4]),dd=b*k;
+    if(dd>(D<=0?12:D===1?16:D===2?20:30))continue;
+    const op=D<=0?'+':pick(['+','+','-']);
+    const a=rnd(1,b-1),c=rnd(1,dd-1),A=a*k;
+    if(op==='-'&&A===c)continue;
+    const s=op==='+'?A+c:Math.abs(A-c);
+    if(op==='+'&&D<=1&&s>dd)continue;
+    if(op==='+'&&D===2&&s>dd&&Math.random()<0.5)continue;
+    if(c%k===0&&Math.random()<0.7)continue;
+    const bigFirst=op==='-'?(c>A):Math.random()<0.5;
+    const key=[a,b,c,dd,op].join('/');if(u.has(key)&&t<120)continue;u.add(key);
+    return {a,b,c,dd,k,op,bigFirst,A,s};
+  }
+  return {a:1,b:2,c:1,dd:4,k:2,op:'+',bigFirst:false,A:2,s:3};
+}
+const NEWTYPES={
+ /* 9. related denominators */
+ related:{make(q,u){Object.assign(q,relPair(q.D,u));},render(q){
+   const {a,b,c,dd,k,op,bigFirst,A,s}=q;q.d=dd;
+   const L=bigFirst?F(c,dd,'huge'):F(a,b,'huge'),Rr=bigFirst?F(a,b,'huge'):F(c,dd,'huge');
+   const opS=op==='+'?'+':'−';
+   q.answerKey={n:s,d:dd};
+   setPrompt(`${op==='+'?'Add':'Subtract'}. The bottom numbers are different, so make them the same first!`);
+   entry(q,{w:'opt',n:'edit',d:'edit'});
+   stage().innerHTML=eqRow(`${L}<span class="op">${opS}</span>${Rr}`,q.entryHTML)+`<div id="vis" style="width:100%" class="hidden"></div>`+q.keypadHTML;
+   bindEntry(q);q.refresh();
+   q.wrongs={addBoth:v=>v.w===0&&v.d===b+dd&&(v.n===a+c||v.n===Math.abs(a-c)),noConvert:v=>v.w===0&&v.d===dd&&v.n===(op==='+'?a+c:Math.abs(c-a))};
+   q.check=()=>gradeT(q,s,dd);
+   const W=Math.max(1,Math.ceil(Math.max(s,A,c)/dd));
+   const lines=()=>nlSVG({lines:[{parts:b,wholes:W,mark:a,labels:[a]},{parts:dd,wholes:W,highlight:s,labels:[A],
+       jumps:op==='+'?[{from:0,to:bigFirst?c:A,color:OR},{from:bigFirst?c:A,to:s,color:BL}]:[{from:0,to:bigFirst?c:A,color:OR},{from:bigFirst?c:A,to:s,color:'#e11d48'}]}],box:a/b});
+   q.hint=()=>{$('#vis').innerHTML=lines();$('#vis').classList.remove('hidden');return `${b} × ${k} = ${dd}, so change ${F(a,b)} into ${DEN_WORDS[dd]?DEN_WORDS[dd][1]:dd+'ths'}: ${F(a,b)} = ${F('?',dd)}. The parallel number lines show it.`;};
+   q.explain=ok=>{q.lockBoxes(ok);$('#vis').innerHTML=lines();$('#vis').classList.remove('hidden');
+     const conv=`${F(a,b)} = ${F(A,dd)} (× ${k} top and bottom)`;
+     const sum=bigFirst?`${F(c,dd,'big')} ${opS} ${F(A,dd,'big')} = ${F(s,dd,'big')}`:`${F(A,dd,'big')} ${opS} ${F(c,dd,'big')} = ${F(s,dd,'big')}`;
+     const sim=gcd(s,dd)>1&&s?` = ${mixedOf(s/gcd(s,dd),dd/gcd(s,dd))}`:'';
+     return (ok?'':`You wrote ${enteredHTML(q.entered)}. `)+oopsHTML(q)+`${conv}<br>${sum}${s>dd?' = '+mixedOf(s,dd):''}${sim}`+(ok&&(q.entered.d!==dd||q.entered.w)?`<br>You wrote ${enteredHTML(q.entered)}, the same amount. Nice!`:'');};
+ }},
+ /* 10. mixed numbers */
+ mixednum:{make(q,u){const D=q.D;
+   for(let t=0;t<120;t++){const d=pick(D<=0?[2,3,4,5]:D===1?[3,4,5,6,8]:[3,4,5,6,8,10,12]);const op=D<=0?'+':pick(['+','-']);
+     const rel=D>=3&&Math.random()<0.6;const k=rel?pick([2,3].filter(x=>d*x<=24)):1;const d2=d*k; // second number may have a related denominator
+     const w1=rnd(1,D>=3?6:4),w2=rnd(1,D>=3?4:3),n1=rnd(1,d2-1),n2=rnd(1,d-1);
+     // first number: w1 n1/d2 ; second: w2 n2/d  (common denominator d2)
+     const T1=w1*d2+n1,T2=w2*d2+n2*k,tot=op==='+'?T1+T2:T1-T2;
+     if(tot<=d2||tot%d2===0)continue;
+     if(op==='-'&&D>=2){const regroup=n1<n2*k;if(!regroup&&Math.random()<0.5)continue;}
+     if(op==='-'&&D<2&&n1<n2*k)continue;
+     if(n1%k===0&&rel&&Math.random()<0.7)continue;
+     const key=[w1,n1,d2,w2,n2,d,op].join('/');if(u.has(key)&&t<100)continue;u.add(key);
+     Object.assign(q,{d,d2,k,op,w1,w2,n1,n2,T1,T2,tot});return;}
+   Object.assign(q,{d:4,d2:4,k:1,op:'+',w1:1,w2:1,n1:1,n2:2,T1:5,T2:6,tot:11});
+ },render(q){const {d,d2,k,op,w1,w2,n1,n2,tot}=q;const opS=op==='+'?'+':'−';
+   const ww=Math.floor(tot/d2),rr=tot%d2;q.answerKey={w:ww,n:rr,d:d2};q.a=n1;q.b=d2;q.dd=d2;q.n1=n1;q.n2=n2*k;
+   setPrompt(`${op==='+'?'Add':'Subtract'} the mixed numbers. Write the answer as a <b>mixed number</b>.`);
+   entry(q,{w:'edit',n:'edit',d:'edit'});
+   stage().innerHTML=eqRow(`${M(w1,n1,d2,'huge')}<span class="op">${opS}</span>${M(w2,n2,d,'huge')}`,q.entryHTML)+`<div id="vis" style="width:100%" class="hidden"></div>`+q.keypadHTML;
+   bindEntry(q);q.refresh();
+   q.wrongs={noRegroup:v=>op==='-'&&n1<n2*k&&v.w===w1-w2&&v.n===n2*k-n1,addBoth:v=>k>1&&v.d===d+d2};
+   q.check=()=>gradeT(q,tot,d2,{needMixed:true});
+   const regroup=op==='-'&&n1<n2*k;
+   q.hint=()=>k>1?`First change ${F(n2,d)} into ${DEN_WORDS[d2]?DEN_WORDS[d2][1]:d2+'ths'}: ${F(n2,d)} = ${F(n2*k,d2)}. Then work out the wholes and the fractions.`:
+     op==='+'?`Add the wholes (${w1} + ${w2}), then add the fractions. If the fractions make more than 1 whole, carry it over!`:
+     regroup?`${n1} ${DEN_WORDS[d2]?DEN_WORDS[d2][1]:''} take away ${n2}? Not enough! Swap one whole for ${F(d2,d2)} first: ${M(w1,n1,d2)} = ${M(w1-1,n1+d2,d2)}.`:`Take away the wholes (${w1} − ${w2}), then take away the fractions.`;
+   q.explain=ok=>{q.lockBoxes(ok);
+     let s=(ok?'':`You wrote ${enteredHTML(q.entered)}. `)+oopsHTML(q);
+     if(k>1)s+=`${F(n2,d)} = ${F(n2*k,d2)}, so ${M(w2,n2,d)} = ${M(w2,n2*k,d2)}.<br>`;
+     if(op==='+'){const fs=n1+n2*k;s+=`Wholes: ${w1} + ${w2} = ${w1+w2}. Fractions: ${F(n1,d2)} + ${F(n2*k,d2)} = ${F(fs,d2)}${fs>=d2?` = ${mixedOf(fs,d2)}`:''}.<br>`;}
+     else if(regroup)s+=`Regroup: ${M(w1,n1,d2)} = ${M(w1-1,n1+d2,d2)}. Then ${w1-1} − ${w2} = ${w1-1-w2} and ${F(n1+d2,d2)} − ${F(n2*k,d2)} = ${F(n1+d2-n2*k,d2)}.<br>`;
+     else s+=`Wholes: ${w1} − ${w2} = ${w1-w2}. Fractions: ${F(n1,d2)} − ${F(n2*k,d2)} = ${F(n1-n2*k,d2)}.<br>`;
+     s+=`<span style="font-size:1.2rem">${M(w1,n1,d2,'big')} ${opS} ${M(w2,n2,d,'big')} = ${M(ww,rr,d2,'big')}</span>`;
+     if(tot<=4*d2&&d2<=12){const vis=$('#vis');vis.innerHTML=op==='+'?wholesBars(d2,[[q.T1,OR],[q.T2,BL]]).replace(/1st whole|2nd whole/g,''):wholesBars(d2,[[q.T1,OR]],{crosses:range(q.T2).map(i=>q.T1-1-i),labels:false});vis.classList.remove('hidden');}
+     return s+(ok?sameAmountNote(q,tot,d2):'');};
+ }},
+ /* 11. multi-step word problems */
+ multistep:{make(q,u){const D=q.D;
+   const avail=MSTORIES.filter(t=>!u.has('ms'+t.id));const T=pick(avail.length?avail:MSTORIES);u.add('ms'+T.id);
+   for(let t=0;t<200;t++){const g=T.gen(D);if(g&&g.ans>0&&(T.allowWhole||g.ans%g.L!==0)){Object.assign(q,g,{story:T});return;}}
+   const g=MSTORIES[0].gen(0);Object.assign(q,g,{story:MSTORIES[0]});
+ },render(q){const {story,L,ans}=q;q.answerKey={n:ans,d:L};
+   setPrompt('Read the story. It takes <b>two steps</b>! Write the answer as a fraction or a mixed number.');
+   entry(q,{w:'opt',n:'edit',d:'edit'});
+   stage().innerHTML=`<div class="story"><span class="emo">${story.emo}</span>${story.text(q)}</div><div id="vis" style="width:100%" class="hidden"></div>`+`<div class="equation">${q.entryHTML}</div>`+q.keypadHTML;
+   bindEntry(q);q.refresh();
+   q.wrongs={oneStep:v=>q.one!=null&&eqv(v.w*v.d+v.n,v.d,q.one,L)};
+   q.check=()=>gradeT(q,ans,L);
+   q.hint=()=>story.hint(q);
+   q.explain=ok=>{q.lockBoxes(ok);
+     return (ok?'':`You wrote ${enteredHTML(q.entered)}. `)+(q.mistake==='oneStep'?`<div class="oops">That's only the answer to the <b>first step</b>. Keep going!</div>`:'')+story.steps(q)+`<br>${story.answer(q)}`+(ok&&(q.entered.d!==L||q.entered.w&&ans<L)?`<br>You wrote ${enteredHTML(q.entered)}, the same amount. Nice!`:'');};
+ }},
+};
+/* multi-step stories. Each gen returns {L (common denominator), ans (numerator over L), one (numerator after step 1)}, plus numbers for the text. */
+const pd=D=>D<=1?pick([4,6,8,10,12]):pick([2,3,4,5]);
+const MSTORIES=[
+ {id:1,emo:'🎀',gen(D){const L=D<=1?pick([4,5,8,10]):pick([8,10,12]);const b=D<=1?L:pick([2,4].filter(x=>L%x===0)),k=L/b;const W=rnd(2,3),x=rnd(1,b-1),y=rnd(1,L-1);const one=W*L-x*k,ans=one-y;if(ans<=0||one>W*L)return null;return {L,W,x,b,y,k,one,ans};},
+  text:q=>`${NAME} had ${q.W} metres of ribbon. She used ${F(q.x,q.b)} of a metre for a bow and then ${F(q.y,q.L)} of a metre for a costume. How much ribbon is left?`,
+  hint:q=>`Step 1: ${q.W} − ${F(q.x,q.b)}. Step 2: take away ${F(q.y,q.L)}. Tip: ${q.W} metres = ${F(q.W*q.L,q.L)}.`,
+  steps:q=>`${q.W} = ${F(q.W*q.L,q.L)}${q.k>1?` and ${F(q.x,q.b)} = ${F(q.x*q.k,q.L)}`:''}.<br>Step 1: ${F(q.W*q.L,q.L)} − ${F(q.x*q.k,q.L)} = ${F(q.one,q.L)}<br>Step 2: ${F(q.one,q.L)} − ${F(q.y,q.L)} = ${F(q.ans,q.L,'big')}${q.ans>=q.L?' = '+mixedBig(q.ans,q.L):''}`,
+  answer:q=>`There is ${mixedOf(q.ans,q.L)} m of ribbon left.`},
+ {id:2,emo:'🍕',allowWhole:false,gen(D){const L=D<=1?pick([6,8,10,12]):pick([6,8,10,12]);const b=D<=1?L:pick([2,3,4].filter(x=>L%x===0&&x<L)),k=L/b;const x=rnd(1,b-1),y=rnd(1,L-1);const one=x*k+y,ans=L-one;if(ans<=0)return null;return {L,x,b,y,k,one,ans};},
+  text:q=>`Mia ate ${F(q.x,q.b)} of a pizza and Leo ate ${F(q.y,q.L)} of the same pizza. What fraction of the pizza is left?`,
+  hint:q=>`Step 1: how much did they eat altogether? Step 2: take that away from 1 whole pizza (${F(q.L,q.L)}).`,
+  steps:q=>`${q.k>1?`${F(q.x,q.b)} = ${F(q.x*q.k,q.L)}.<br>`:''}Step 1: ${F(q.x*q.k,q.L)} + ${F(q.y,q.L)} = ${F(q.one,q.L)} eaten<br>Step 2: ${F(q.L,q.L)} − ${F(q.one,q.L)} = ${F(q.ans,q.L,'big')}`,
+  answer:q=>`${F(q.ans,q.L)} of the pizza is left.`},
+ {id:3,emo:'🏃',allowWhole:true,gen(D){const L=D<=1?pick([4,5,10]):pick([4,8,10,12]);const b=D<=1?L:pick([2,4,5].filter(x=>L%x===0&&x<L)),k=L/b;const x=rnd(1,L-1),y=rnd(1,b-1),z=rnd(1,L-1);const one=x+y*k,ans=one+z;return {L,x,b,y,z,k,one,ans};},
+  text:q=>`${NAME} ran ${F(q.x,q.L)} of a kilometre on Monday, ${F(q.y,q.b)} of a kilometre on Tuesday and ${F(q.z,q.L)} of a kilometre on Wednesday. How far did she run altogether?`,
+  hint:q=>`Add the first two days, then add Wednesday.${q.k>1?` Change ${F(q.y,q.b)} into ${q.L}ths first.`:''}`,
+  steps:q=>`${q.k>1?`${F(q.y,q.b)} = ${F(q.y*q.k,q.L)}.<br>`:''}Step 1: ${F(q.x,q.L)} + ${F(q.y*q.k,q.L)} = ${F(q.one,q.L)}<br>Step 2: ${F(q.one,q.L)} + ${F(q.z,q.L)} = ${F(q.ans,q.L,'big')}${q.ans>=q.L?' = '+mixedBig(q.ans,q.L):''}`,
+  answer:q=>`She ran ${mixedOf(q.ans,q.L)} km.`},
+ {id:4,emo:'🧃',gen(D){const L=D<=1?pick([4,5,8]):pick([4,6,8,10]);const b=D<=1?L:pick([2,4,5].filter(x=>L%x===0&&x<L)),k=L/b;const W=rnd(1,2),r=rnd(1,L-1),x=rnd(1,L-1),y=rnd(1,b-1);const start=W*L+r,one=start-x,ans=one+y*k;if(one<=0)return null;return {L,W,r,x,b,y,k,one,ans,start};},
+  text:q=>`A jug had ${M(q.W,q.r,q.L)} litres of juice. ${NAME} poured out ${F(q.x,q.L)} of a litre, then her dad added ${F(q.y,q.b)} of a litre. How much juice is in the jug now?`,
+  hint:q=>`Step 1: ${M(q.W,q.r,q.L)} = ${F(q.start,q.L)}. Take away ${F(q.x,q.L)}. Step 2: add ${F(q.y,q.b)}${q.k>1?` (that's ${F(q.y*q.k,q.L)})`:''}.`,
+  steps:q=>`${M(q.W,q.r,q.L)} = ${F(q.start,q.L)}.<br>Step 1: ${F(q.start,q.L)} − ${F(q.x,q.L)} = ${F(q.one,q.L)}<br>Step 2: ${F(q.one,q.L)} + ${F(q.y*q.k,q.L)} = ${F(q.ans,q.L,'big')}${q.ans>=q.L?' = '+mixedBig(q.ans,q.L):''}`,
+  answer:q=>`There are ${mixedOf(q.ans,q.L)} litres in the jug.`},
+ {id:5,emo:'🎨',gen(D){const L=D<=1?pick([6,8,10]):pick([6,8,10,12]);const b=D<=1?L:pick([2,3,4,5].filter(x=>L%x===0&&x<L)),k=L/b;const x=rnd(1,b-1),y=rnd(1,L-1);const one=L-x*k,ans=one-y;if(ans<=0)return null;return {L,x,b,y,k,one,ans};},
+  text:q=>`A tin of paint was full. ${NAME} used ${F(q.x,q.b)} of the tin on a fence and then ${F(q.y,q.L)} of the tin on a cubby house. How much of the tin is left?`,
+  hint:q=>`A full tin is 1 whole = ${F(q.L,q.L)}. Take away the fence, then take away the cubby house.`,
+  steps:q=>`${q.k>1?`${F(q.x,q.b)} = ${F(q.x*q.k,q.L)}.<br>`:''}Step 1: ${F(q.L,q.L)} − ${F(q.x*q.k,q.L)} = ${F(q.one,q.L)}<br>Step 2: ${F(q.one,q.L)} − ${F(q.y,q.L)} = ${F(q.ans,q.L,'big')}`,
+  answer:q=>`${F(q.ans,q.L)} of the tin is left.`},
+ {id:6,emo:'🎹',allowWhole:true,gen(D){const L=4;const b=D<=1?4:2,k=L/b;const x=rnd(1,3),y=rnd(1,b-1),z=rnd(2,3);const one=x+y*k,ans=one*z;return {L,x,b,y,z,k,one,ans};},
+  text:q=>`Each day ${NAME} practises piano for ${F(q.x,q.L)} of an hour and dance for ${F(q.y,q.b)} of an hour. How many hours does she practise in ${q.z} days?`,
+  hint:q=>`Step 1: how long each day? Step 2: ${q.z} days is ${q.z} lots of that.`,
+  steps:q=>`${q.k>1?`${F(q.y,q.b)} = ${F(q.y*q.k,q.L)}.<br>`:''}Step 1: ${F(q.x,q.L)} + ${F(q.y*q.k,q.L)} = ${F(q.one,q.L)} each day<br>Step 2: ${q.z} × ${F(q.one,q.L)} = ${F(q.ans,q.L,'big')}${q.ans>=q.L?' = '+mixedBig(q.ans,q.L):''}`,
+  answer:q=>`She practises ${mixedOf(q.ans,q.L)} hours.`},
+];
+Object.assign(TYPES,NEWTYPES);
+Object.assign(TYPE_NAMES,{related:'Related Denominators',mixednum:'Mixed Numbers',multistep:'Multi-Step Stories'});
+
 /* ---------- round flow ---------- */
 let R=null,q=null;
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
 function startLevel(id){
   const L=LEVELS.find(l=>l.id===id);if(!L||!unlocked(id))return;
-  R={L,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
-  $('#lvlName').textContent=`${L.icon} Level ${L.id}: ${L.title}`;show('play');next();
+  const CL=levelD(id);R={L,D:CL,idx:-1,score:0,streak:0,best:0,points:0,results:[],used:new Set(),types:shuffle(range(ROUND).map(i=>L.types[i%L.types.length]))};
+  $('#lvlName').innerHTML=`${L.icon} Level ${L.id}: ${L.title} <span class="clvl" id="clvl">⚡ Challenge level ${CL+1}</span>`;show('play');next();
 }
 function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R.results.length?(R.results[i]?'ok':'no'):i===R.idx?'cur':''}"></span>`).join('');}
 function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
 function next(){
   R.idx++;if(R.idx>=ROUND)return finishRound();
   const type=R.types[R.idx];
-  q={type,done:false,usedHint:false};TYPES[type].make(q,R.used);
+  DENS=DENSBY[R.D]||DENS0;if(type==='nljump')DENS=DENS.filter(x=>x<=16);q={type,D:R.D,done:false,usedHint:false};TYPES[type].make(q,R.used);
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
-  TYPES[type].render(q);dots();topbar();updCheck();
+  q.D=R.D;TYPES[type].render(q);postRender(q);dots();topbar();updCheck();
 }
 function answer(ok){
   if(!q||q.done)return;q.done=true;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
-  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?5:10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
+  if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
   else{R.streak=0;sfx('bad');}
   R.results.push(ok);save();
   const expl=q.explain(ok);
@@ -615,11 +806,17 @@ function finishRound(){
   const wasLocked=L.id<LEVELS.length&&!unlocked(L.id+1);
   S.levels[L.id]={best:Math.max(prev.best,R.score),stars:Math.max(prev.stars,st),plays:prev.plays+1};
   S.rounds++;S.lastPlayed=new Date().toISOString();S.history.push({t:S.lastPlayed,level:L.id,score:R.score});S.history=S.history.slice(-40);save();
+  S.adapt=S.adapt||{};const aOld=S.adapt[L.id]||0;let stepMsg='';
+  if(R.score>=9&&R.D<4&&aOld<2){S.adapt[L.id]=aOld+1;stepMsg=`<p class="stepup">⬆️ Level up! Next round is <b>Challenge level ${levelD(L.id)+1}</b>. 9 or 10 right steps it up.</p>`;}
+  else if(R.score<=4&&aOld>0){S.adapt[L.id]=aOld-1;stepMsg=`<p class="stepup down">Next round goes back to Challenge level ${levelD(L.id)+1} for some practice.</p>`;}
+  else if(R.score>=9)stepMsg=`<p class="stepup">⚡ You're at the top Challenge level for this setting!</p>`;
+  save();
   const nowUnlocked=wasLocked&&unlocked(L.id+1);
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. Use the hints, they help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
     <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
     ${nowUnlocked?`<p class="tag" style="font-size:1.1rem">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}
+    ${stepMsg}
     ${L.id===LEVELS.length&&st>=1?`<p style="font-size:1.2rem">🏆 You finished the Fraction Add-venture, ${NAME}!</p>`:''}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
@@ -635,7 +832,7 @@ function home(){
   R=null;q=null;
   $('#hello').textContent=`Hi ${NAME}! 👋`;$('#titleName').textContent=NAME;document.title=`${NAME}'s Fraction Add-venture`;
   $('#levelGrid').innerHTML=LEVELS.map(L=>{const u=unlocked(L.id),p=S.levels[L.id]||{stars:0,best:0};
-    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
+    return `<button class="lvl${u?'':' locked'}" data-level="${L.id}" ${u?'':'aria-disabled="true"'}><span class="num">${L.id}</span><span class="ic">${u?L.icon:'🔒'}</span><span class="t">${L.title}</span><span class="b">${u?L.blurb:`Get ${UNLOCK}/10 on Level ${L.id-1} to unlock.`}</span><span class="s">${'★'.repeat(p.stars)}${'☆'.repeat(3-p.stars)}</span><span class="clv">⚡ Challenge ${levelD(L.id)+1}</span>${p.best?`<span class="b">Best: ${p.best}/10</span>`:''}</button>`;}).join('');
   const totalStars=Object.values(S.levels).reduce((a,l)=>a+(l.stars||0),0);
   const acc=S.answered?Math.round(100*S.correct/S.answered)+'%':'–';
   const last=S.lastPlayed?new Date(S.lastPlayed).toLocaleDateString('en-AU',{weekday:'short',day:'numeric',month:'short'}):'–';
@@ -643,31 +840,33 @@ function home(){
   let worst=null,best=null;Object.entries(S.byType).forEach(([t,v])=>{if(v.n>=5){const r=v.c/v.n;if(!worst||r<worst.r)worst={t,r};if(!best||r>best.r)best={t,r};}});
   const ad=(S.mistakes&&S.mistakes.addDen)||0;
   $('#tricky').innerHTML=!S.answered?`Play a level to see your progress here, ${NAME}!`:(best?`💪 Strongest: <b>${TYPE_NAMES[best.t]}</b> (${Math.round(best.r*100)}%). `:'')+(worst&&worst.r<0.8&&worst.t!==(best&&best.t)?`🎯 Keep practising: <b>${TYPE_NAMES[worst.t]}</b> (${Math.round(worst.r*100)}%). `:'')+(ad?`<br>⚠️ Added the bottom numbers ${ad} time${ad>1?'s':''}. Remember, the bottom number stays the same!`:'');
-  $('#unlockAll').checked=!!S.unlockAll;topbar();show('home');
+  $('#unlockAll').checked=!!S.unlockAll;document.querySelectorAll('[name=diff]').forEach(r=>r.checked=r.value===(DIFFS[S.diff]?S.diff:'challenge'));topbar();show('home');
 }
 
 /* ---------- worksheet ---------- */
 function makeWorksheet(){
   const u=new Set(),today=new Date().toLocaleDateString('en-AU',{day:'numeric',month:'long',year:'numeric'});
   const B='<span class="blank"></span>',A=(v,key)=>key?`<span class="ans">${v}</span>`:B,Lt=i=>String.fromCharCode(97+i)+')';
-  const s1=range(3).map(()=>genAdd(u));
-  const s2=range(2).map(()=>{let g;do{g=genAdd(u);}while(g.d<4||g.d>8);return g;});
+  const keep=DENS;DENS=DENSBY[2];
+  const s2=range(2).map(()=>{let g;do{g=genAdd(u,{over:Math.random()<0.5});}while(g.d<5||g.d>10);return g;});
   const s3=range(8).map(i=>i%3===2?genSub(u):genAdd(u));
-  const s4=(()=>{const g=genAdd(u);return g;})();
-  const s5=range(3).map(()=>genAdd(u,{over:true}));
-  const wp=[STORIES[0],STORIES[4],STORIES[7]].map(T=>{const d=T.dens[0];let a,b;if(T.op==='+'&&!T.over){a=rnd(1,d-2);b=rnd(1,d-a);}else if(T.over){a=3;b=rnd(2,3);}else{a=rnd(3,d-1);b=rnd(1,a-1);}return {T,a,b,d,s:T.op==='+'?a+b:a-b};});
+  const s4=range(4).map(i=>relPair(i<2?1:3,u));
+  const s5=range(4).map(i=>{const q={D:i<2?2:3};TYPES.mixednum.make(q,u);return q;});
+  const sm=(()=>{const g=genAdd(u);return g;})();
+  const wp=[MSTORIES[1],MSTORIES[3]].map(T=>{let g;for(let t=0;t<200;t++){g=T.gen(2);if(g&&g.ans>0&&g.ans%g.L!==0)break;}return Object.assign(g,{story:T});});
+  DENS=keep;
+  const ansF=(n,d)=>n>=d&&n%d?`${Math.floor(n/d)} ${n%d}/${d}`:n%d===0?`${n}/${d} = ${n/d}`:`${n}/${d}`;
   const page=key=>`<div class="page${key?' answers':''}">
-    <h2>${key?'✅ Answer key: ':''}Adding &amp; Taking Away Fractions ➕</h2>
-    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 20</span>'}</div>
-    <h3>1. Colour and add</h3><div class="instr">The first part is shaded. Colour the second part, then write the total.</div>
-    ${s1.map((g,i)=>`<div class="wsrow"><b>${Lt(i)}</b> ${barSVG({parts:g.d,fills:runs([[g.a,'#9ca3af']].concat(key?[[g.b,'#fca5a5']]:[])),h:34})} <span style="font-size:18px;white-space:nowrap">${F(g.a,g.d)} + ${F(g.b,g.d)} = ${key?F(A(g.s,1),A(g.d,1)):F(B,B)}</span></div>`).join('')}
-    <h3>2. Number line jumps</h3><div class="instr">Draw the two jumps on the number line and write where you land.</div>
-    <div class="grid2">${s2.map((g,i)=>`<div style="display:block"><div style="display:flex;align-items:center;gap:6px;font-size:16px">${Lt(i)} ${F(g.a,g.d)} + ${F(g.b,g.d)} = ${key?F(A(g.s,1),g.d):F(B,g.d)}</div>${nlSVG({w:680,lines:[{parts:g.d,wholes:1,labels:key?'all':[],highlight:key?g.s:null,jumps:key?[{from:0,to:g.a,color:'#ea580c'},{from:g.a,to:g.s,color:'#2563eb'}]:[]}]})}</div>`).join('')}</div>
-    <h3>3. Add and take away</h3><div class="grid2 grid4">${s3.map((g,i)=>`<div>${Lt(i)} ${F(g.a,g.d,'big')} ${g.op} ${F(g.b,g.d,'big')} = ${key?F(A(g.s,1),A(g.d,1),'big'):F(B,B,'big')}</div>`).join('')}</div>
-    <h3>4. Spot the mistake</h3><div style="font-size:16px">Sam says ${F(s4.a,s4.d,'big')} + ${F(s4.b,s4.d,'big')} = ${F(s4.s,2*s4.d,'big')}. Is Sam right? What is the correct answer? ${key?`<span class="ans">No. Sam added the bottom numbers. The pieces stay the same size, so the answer is ${s4.s}/${s4.d}${s4.s===s4.d?' (1 whole)':''}.</span>`:'______________________________'}</div>
-    <h3>5. Beyond one whole</h3><div class="instr">Write each answer as a fraction and as a mixed number.</div><div class="grid2">${s5.map((g,i)=>`<div>${Lt(i)} ${F(g.a,g.d,'big')} + ${F(g.b,g.d,'big')} = ${key?F(A(g.s,1),g.d,'big'):F(B,g.d,'big')} = ${key?`<span class="ans">${M(1,g.s-g.d,g.d,'big')}</span>`:`${B} ${F(B,g.d,'big')}`}</div>`).join('')}</div>
-    <h3>6. Word problems</h3>${wp.map((w,i)=>`<div style="font-size:15px;margin:4px 0">${Lt(i)} ${w.T.text(w.a,w.b,w.d)} ${key?`<span class="ans">${w.T.op==='+'?`${w.a}/${w.d} + ${w.b}/${w.d}`:`${w.a}/${w.d} − ${w.b}/${w.d}`} = ${w.s}/${w.d}${w.s>w.d?` = 1 ${w.s-w.d}/${w.d}`:''}</span>`:' &nbsp;Answer: ________'}</div>`).join('')}
-    ${key?'':`<p style="margin:6px 0 0;font-size:12px">🌟 Great work, ${NAME}! Remember: same-sized pieces, so the bottom number stays the same.</p>`}
+    <h2>${key?'✅ Answer key: ':''}Adding &amp; Taking Away Fractions: Challenge ➕</h2>
+    <div class="meta"><span>Name: <b>${NAME}</b></span><span>Date: ${today}</span>${key?'':'<span>Score: ____ / 21</span>'}</div>
+    <h3>1. Number line jumps</h3><div class="instr">Draw the two jumps on the number line and write where you land.</div>
+    <div class="grid2">${s2.map((g,i)=>`<div style="display:block"><div style="display:flex;align-items:center;gap:6px;font-size:16px">${Lt(i)} ${F(g.a,g.d)} + ${F(g.b,g.d)} = ${key?F(A(g.s,1),g.d):F(B,g.d)}</div>${nlSVG({w:680,lines:[{parts:g.d,wholes:g.s>g.d?2:1,labels:key?'all':[],highlight:key?g.s:null,jumps:key?[{from:0,to:g.a,color:'#ea580c'},{from:g.a,to:g.s,color:'#2563eb'}]:[]}]})}</div>`).join('')}</div>
+    <h3>2. Add and take away</h3><div class="grid2 grid4">${s3.map((g,i)=>`<div>${Lt(i)} ${F(g.a,g.d,'big')} ${g.op==='-'?'−':'+'} ${F(g.b,g.d,'big')} = ${key?F(A(g.s,1),A(g.d,1),'big'):F(B,B,'big')}</div>`).join('')}</div>
+    <h3>3. Different bottom numbers</h3><div class="instr">Make the bottom numbers the same first.</div><div class="grid2 grid4">${s4.map((g,i)=>{const L=g.bigFirst?F(g.c,g.dd,'big'):F(g.a,g.b,'big'),R=g.bigFirst?F(g.a,g.b,'big'):F(g.c,g.dd,'big');return `<div>${Lt(i)} ${L} ${g.op==='-'?'−':'+'} ${R} = ${key?`<span class="ans">${ansF(g.s,g.dd)}</span>`:F(B,B,'big')}</div>`;}).join('')}</div>
+    <h3>4. Mixed numbers</h3><div class="instr">Write each answer as a mixed number.</div><div class="grid2">${s5.map((g,i)=>`<div>${Lt(i)} ${M(g.w1,g.n1,g.d2,'big')} ${g.op==='-'?'−':'+'} ${M(g.w2,g.n2,g.d,'big')} = ${key?`<span class="ans">${ansF(g.tot,g.d2)}</span>`:`${B} ${F(B,B,'big')}`}</div>`).join('')}</div>
+    <h3>5. Spot the mistake</h3><div style="font-size:15px">Sam says ${F(sm.a,sm.d,'big')} + ${F(sm.b,sm.d,'big')} = ${F(sm.s,2*sm.d,'big')}. Is Sam right? What is the correct answer? ${key?`<span class="ans">No. Sam added the bottom numbers. The pieces stay the same size, so the answer is ${sm.s}/${sm.d}${sm.s===sm.d?' (1 whole)':''}.</span>`:'______________________________'}</div>
+    <h3>6. Two-step word problems</h3>${wp.map((w,i)=>`<div style="font-size:15px;margin:4px 0">${Lt(i)} ${w.story.text(w)} ${key?`<span class="ans">${ansF(w.ans,w.L)}</span>`:' &nbsp;Answer: ________'}</div>`).join('')}
+    ${key?'':`<p style="margin:6px 0 0;font-size:12px">🌟 Great work, ${NAME}! Make the pieces the same size first, then the bottom number stays the same.</p>`}
   </div>`;
   $('#sheet').innerHTML=page(false)+page(true);
 }
@@ -684,13 +883,14 @@ $('#hintBtn').onclick=()=>{if(!q||q.done)return;q.usedHint=true;const h=q.hint()
 $('#wsBtn').onclick=()=>{makeWorksheet();show('worksheet');};
 $('#wsNew').onclick=makeWorksheet;$('#wsBack').onclick=home;$('#wsPrint').onclick=()=>window.print();
 window.addEventListener('beforeprint',()=>{if(!$('#sheet').innerHTML.trim())makeWorksheet();});
+document.querySelectorAll('[name=diff]').forEach(r=>r.onchange=()=>{if(r.checked){S.diff=r.value;save();home();}});
 $('#unlockAll').onchange=e=>{S.unlockAll=e.target.checked;save();home();};
-$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound;S=defState();S.sound=snd;save();home();}};
+$('#resetBtn').onclick=()=>{if(confirm(`Reset all of ${NAME}'s progress in this game on this device?`)){const snd=S.sound,df=S.diff;S=defState();S.sound=snd;S.diff=df;save();home();}};
 $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 document.addEventListener('keydown',e=>{if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
   if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Tab'||e.key==='/'){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,_answer:answer,makeWorksheet:typeof makeWorksheet==='function'?makeWorksheet:null};
 home();
 })();
 
