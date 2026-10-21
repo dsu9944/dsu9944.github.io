@@ -7,3 +7,4 @@ window.DAILY_TOPICS_EXTRA = window.DAILY_TOPICS_EXTRA || [];
 /* Add entries below this line, for example:
 DAILY_FOCUS.push({date:'2026-10-22', topicId:'percent', title:'Percentages', note:'Practised at school today', until:'2026-10-24'});
 */
+DAILY_FOCUS.push({date:'2026-10-22', topicId:'money', title:'Money: dollars and cents', note:'Practised at school', until:'2026-10-24'});
