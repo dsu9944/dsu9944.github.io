@@ -43,6 +43,16 @@ h2{color:#7c3aed;text-align:center;font-size:1.9rem;margin:10px 0 18px}
 .btn{background:#7c3aed;color:#fff;font-weight:bold;box-shadow:0 4px 0 #5b21b6}
 .btn.ghost{background:#ede9fe;color:#7c3aed;box-shadow:0 4px 0 #c4b5fd}
 .center{text-align:center}
+.today{display:flex;gap:16px;align-items:center;text-decoration:none;color:#1f2937;background:linear-gradient(120deg,#fff7ed,#fdf2ff);border-radius:26px;padding:18px 20px;border:5px solid #f59e0b;box-shadow:0 8px 22px rgba(245,158,11,.25);margin-bottom:18px;transition:transform .12s}
+.today:hover{transform:translateY(-3px)}
+.today .ti{font-size:3.4rem}
+.today .tt{font-size:1.5rem;font-weight:bold;color:#b45309}
+.today .ts{font-size:.95rem;color:#4b5563}
+.today .tw{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.today .tw span{display:inline-flex;flex-direction:column;align-items:center;background:#fff;border:2px solid #e5e7eb;border-radius:10px;padding:2px 7px;font-size:.75rem;font-weight:bold}
+.today .tw span.on{background:#dcfce7;border-color:#86efac}.today .tw span.now{border-color:#f59e0b}
+.today .go{margin-left:auto;background:#f59e0b;color:#fff;font-weight:bold;border-radius:999px;padding:10px 18px;white-space:nowrap}
+@media (max-width:560px){.today{flex-wrap:wrap}.today .go{margin-left:0}}
 footer{text-align:center;font-size:.85rem;color:#6b7280;padding:10px 0 24px}
 </style>
 </head>
@@ -60,6 +70,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:10px 0 24px}
   <!-- child home -->
   <section id="kid" class="hidden">
     <div class="who"><div id="kidAvatar"></div><div><h2 id="kidHello" style="margin:0;text-align:left"></h2><div style="color:#6b7280">Pick a game to play!</div></div></div>
+    <div id="todayCard"></div>
     <div class="games" id="games"></div>
     <div class="center" style="margin-top:22px"><button class="btn ghost" id="switchBtn2">👥 Not you? Switch player</button></div>
   </section>
@@ -113,11 +124,22 @@ function renderPicker(){
     return `<button class="prof" data-profile="${id}" style="border-color:${p.color}">${avatarHTML(p)}<span class="nm">${esc(p.name)}</span><span class="sub"><span class="stars">★</span> ${stars} star${stars===1?'':'s'}</span></button>`;}).join('');
   show('picker');
 }
+function todayCard(id){
+  const d=new Date(),pad=n=>String(n).padStart(2,'0'),ymd=x=>`${x.getFullYear()}-${pad(x.getMonth()+1)}-${pad(x.getDate())}`,today=ymd(d);
+  let s=null;try{s=JSON.parse(ls.get(`kidsHub.p.${id}.daily`)||'null');}catch(e){}
+  const days=(s&&s.days)||{},run=s&&s.run,wd=d.getDay(),review=wd===5||wd===6||wd===0;
+  const mon=new Date(d);mon.setDate(d.getDate()-((wd+6)%7));
+  const week=['M','T','W','T','F'].map((l,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);const k=ymd(x);return `<span class="${days[k]&&days[k].done?'on':''}${k===today?' now':''}">${l}<b>${days[k]&&days[k].done?'✅':'·'}</b></span>`;}).join('');
+  const done=days[today]&&days[today].done,going=run&&run.date===today&&!run.finished;
+  const st=done?'✅ Done for today! Great work.':going?'▶️ Keep going where you left off':review?'🏆 Week Review day':'🔀 A fresh mix of your topics';
+  return `<a class="today" href="${id}/daily/index.html?player=${id}" data-today="${id}"><span class="ti">${review?'🏆':'📚'}</span><span><div class="tt">Today's Lesson (15 min)</div><div class="ts">${d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} · ${st}</div><div class="tw">${week}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
+}
 function openKid(id){
   ls.set(CKEY,id);const p=P[id];
   $('#kidAvatar').innerHTML=avatarHTML(p);
   $('#kidHello').textContent=`Hi ${p.name}! 👋`;
   document.title=`${p.name}'s Learning Games`;
+  $('#todayCard').innerHTML=todayCard(id);
   $('#games').innerHTML=GAMES[id].map(g=>{const s=gameStats(id,g);
     return `<a class="game${s&&s.complete?' done':''}" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
       <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${s&&s.complete&&!s.allDone&&g.core?'<span class="badge new">⚡ New challenge levels</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');
