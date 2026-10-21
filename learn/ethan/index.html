@@ -141,6 +141,7 @@ svg.tf{width:min(80vw,300px);height:auto}
 .ansbox.mb.cur{background:#fde68a;border-color:var(--orange)}
 svg.jl{width:100%;height:auto}
 @media (max-width:560px){.opts.cards{grid-template-columns:repeat(2,1fr)}.facts{grid-template-columns:1fr}}
+.redotag{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;background:#fff7ed;color:#c2410c;border:2px solid #fdba74;font-size:.85rem;font-weight:800;vertical-align:middle}.fixedline{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:12px;padding:6px 12px;font-weight:700}.again{font-size:.95rem;margin-top:4px;opacity:.85}
 </style>
 </head>
 <body>
@@ -317,7 +318,7 @@ function choiceUI(q,opts,cls='opts'){
   return `<div class="${cls}">${opts.map((o,i)=>`<button class="opt" data-opt="${i}">${o}</button>`).join('')}</div>`;
 }
 function bindChoice(q){stage().onclick=e=>{const b=e.target.closest('[data-opt]');if(!b||q.done)return;q.chosen=+b.dataset.opt;answer(q.opts[q.chosen]===q.answerKey);};}
-function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
+function markChoice(q){document.querySelectorAll('.opt').forEach((b,i)=>{if(b.dataset.opt!=null)i=+b.dataset.opt;if(q.opts[i]===q.answerKey)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});}
 function distract(ans,lo,hi,extra=[]){const set=new Set();extra.concat([ans+1,ans-1,ans+2,ans-2,ans+10,ans-10]).forEach(v=>{if(v!==ans&&v>=lo&&v<=hi)set.add(v);});
   const d=shuffle([...set]).slice(0,3);while(d.length<3){const v=rnd(lo,hi);if(v!==ans&&!d.includes(v))d.push(v);}return shuffle([ans].concat(d));}
 /* ---------- difficulty ----------
@@ -622,6 +623,41 @@ const TYPES={
 function uniq(used,gen,prefix){let v;for(let i=0;i<40;i++){v=gen();if(!used.has(prefix+v))break;}used.add(prefix+v);return v;}
 
 /* ---------- round flow ---------- */
+/* ---------- redo missed questions (re-asked at the end of the round; stars and unlocking use first attempts only) ---------- */
+const RDO={_m:null,
+ seed(){return 1+Math.floor(Math.random()*2147483646);},
+ on(s){if(this._m)return;this._m=Math.random;let a=s>>>0;Math.random=()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};},
+ off(){if(this._m){Math.random=this._m;this._m=null;}},
+ run(s,f){this.on(s);const rd=R&&R.redo,keep=R?[R.idx,R.used,R.results]:null;if(rd){R.idx=rd.idx;R.used=new Set(rd.used);R.results=R.results.slice(0,rd.idx);}
+   try{return f();}finally{if(rd)[R.idx,R.used,R.results]=keep;this.off();}},
+ order(){return [...document.querySelectorAll('#stage [data-opt]')].map(b=>b.textContent.trim()).join('|');},
+ nOpts(){return document.querySelectorAll('#stage [data-opt]').length;},
+ pending(){const p=(R&&R.rq?R.rq:[]).filter(k=>!k.ok&&!k.out);p.sort((a,b)=>(a.at||0)-(b.at||0));return p[0]||null;},
+ begin(type){const rd=R.redo;return rd?{type:rd.type,sd:rd.sd,used:new Set(rd.used),ub:rd.used}:{type,sd:this.seed(),used:R.used,ub:[...R.used]};},
+ render(fn){this.init();this.run(q._rs+1,fn);if(R.redo)this.shuf();else q._ro=this.order();},
+ /* same question (same seed), answer buttons put in a new order; the buttons keep their data-opt so checking is unchanged */
+ opts(){return [...document.querySelectorAll('#stage [data-opt]')].filter(b=>!(b instanceof SVGElement));},
+ shuf(){const rd=R.redo,bs=this.opts();if(bs.length<2)return;
+   if(!rd.perm||rd.permN!==bs.length||rd.permT!==rd.tries){const ids=bs.map(b=>b.dataset.opt);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(ids[0]);rd.perm=p;rd.permN=bs.length;rd.permT=rd.tries;}
+   this.applyPerm();},
+ applyPerm(){const rd=R&&R.redo;if(!rd||!rd.perm||!q||!q._redo)return;const bs=this.opts();
+   new Set(bs.map(b=>b.parentNode)).forEach(pn=>{const kids=bs.filter(b=>b.parentNode===pn),sorted=kids.slice().sort((a,b)=>rd.perm.indexOf(a.dataset.opt)-rd.perm.indexOf(b.dataset.opt));if(sorted.some((b,i)=>b!==kids[i]))sorted.forEach(b=>pn.appendChild(b));});},
+ init(){if(this._mo||!window.MutationObserver)return;const st=document.getElementById('stage');if(!st)return;this._mo=new MutationObserver(()=>this.applyPerm());this._mo.observe(st,{childList:true,subtree:true});},
+ miss(){if(q._redo)return;R.rq=R.rq||[];R.rq.push({type:q.type,idx:R.idx,sd:q._rs,used:q._ru,order:q._ro,tries:1,ok:false,out:false,at:0});},
+ tag(){const l=$('#lvlName');if(!l)return;let t=document.getElementById('redoTag');const rd=R&&R.redo;
+   if(rd){if(!t){t=document.createElement('span');t.id='redoTag';t.className='redotag';l.appendChild(t);}t.textContent=`🔁 Redo · try ${rd.tries+1} of 3`;}else if(t)t.remove();},
+ nextLabel(last){return !last?'Next question ➜':this.pending()?'🔁 Try again round ➜':'See my results ⭐';},
+ answer(ok,expl){const k=R.redo;let pts=0;
+   if(ok){k.ok=true;R.fixed=(R.fixed||0)+1;pts=2;R.points+=pts;S.points+=pts;save();sfx('good');}
+   else{k.tries++;if(k.tries>=3)k.out=true;sfx('bad');}
+   const ex=expl(ok);const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+   fb.innerHTML=(ok?`<div class="fbtitle">🔧 Fixed it!</div><div>+${pts} points</div>`:k.out?`<div class="fbtitle">🤔 Not quite. Here's the answer, then we'll move on.</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together. You'll get one more go.</div>`)+
+     `<div class="expl">${ex}</div><button class="btn" id="nextBtn">${this.pending()?'🔁 Next try ➜':'See my results ⭐'}</button>`;
+   $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');dots();topbar();$('#nextBtn').onclick=next;
+   setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);},
+ summary(){const rq=R.rq||[];if(!rq.length)return '';const f=rq.filter(k=>k.ok).length;
+   return `<p class="fixedline">🔧 You fixed <b>${f} of ${rq.length}</b> missed question${rq.length>1?'s':''} in the try again round${f<rq.length?' (the answer was shown for the rest)':''}. Stars count first tries.</p>`;}
+};
 let R=null,q=null;
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+(R?R.streak:0);$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
@@ -634,28 +670,28 @@ function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R
   $('#runner').style.left=(R.score/ROUND*88)+'%';}
 function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
 function next(){
-  R.idx++;if(R.idx>=ROUND)return finishRound();
-  const type=R.types[R.idx];
+  R.redo=null;if(R.idx<ROUND)R.idx++;if(R.idx>=ROUND){R.redo=RDO.pending();if(!R.redo)return finishRound();R.nAsk=(R.nAsk||0)+1;R.redo.at=R.nAsk;}
+  const B=RDO.begin(R.types[R.idx]),type=B.type;
   q={type,D:R.D,done:false,usedHint:false,speed:!!R.L.speed,start:Date.now()};q.hideVis=q.speed||q.D>=2;
-  TYPES[type].make(q,R.used);
+  RDO.run(B.sd,()=>TYPES[type].make(q,B.used));q._rs=B.sd;q._ru=B.ub;q._redo=R.redo;
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
-  TYPES[type].render(q);
-  if(q.speed){stage().insertAdjacentHTML('afterbegin','<div class="speed" title="Speed bonus"><i id="speedBar"></i></div>');
+  RDO.render(()=>TYPES[type].render(q));RDO.tag();
+  if(q.speed&&!q._redo){stage().insertAdjacentHTML('afterbegin','<div class="speed" title="Speed bonus"><i id="speedBar"></i></div>');
     requestAnimationFrame(()=>{const b=$('#speedBar');if(b){b.style.transition=`width ${R.ms}ms linear`;b.style.width='0%';}});}
   dots();topbar();updCheck();
 }
 function answer(ok){
-  if(!q||q.done)return;q.done=true;
+  if(!q||q.done)return;q.done=true;if(q._redo)return RDO.answer(ok,o=>q.explain(o));
   const fast=q.speed&&(Date.now()-q.start)<=R.ms;
   S.answered++;const bt=S.byType[q.type]||(S.byType[q.type]={n:0,c:0});bt.n++;
   let pts=0;
   if(ok){R.score++;R.streak++;R.best=Math.max(R.best,R.streak);S.correct++;bt.c++;pts=q.usedHint?(R.D>=3?3:5):10;if(R.streak>=3)pts+=5;if(fast&&!q.usedHint)pts+=5;R.points+=pts;S.points+=pts;S.bestStreak=Math.max(S.bestStreak,R.streak);sfx('good');}
-  else{R.streak=0;sfx('bad');}
+  else{R.streak=0;sfx('bad');RDO.miss();}
   R.results.push(ok);save();
   const expl=q.explain(ok);
   const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
-  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${esc(pick(PRAISE))}</div><div>+${pts} points${fast&&!q.usedHint?' · ⚡ speed bonus!':''}${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>`)+
-    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${R.idx<ROUND-1?'Next question ➜':'See my results ⭐'}</button>`;
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${esc(pick(PRAISE))}</div><div>+${pts} points${fast&&!q.usedHint?' · ⚡ speed bonus!':''}${R.streak>=3?` · 🔥 ${R.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div><div class="again">🔁 You'll get another go at this one at the end of the round.</div>`)+
+    `<div class="expl">${expl}</div><button class="btn" id="nextBtn">${RDO.nextLabel(R.idx>=ROUND-1)}</button>`;
   $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
   const sb=$('#speedBar');if(sb){sb.style.transition='none';}
   dots();topbar();$('#nextBtn').onclick=next;
@@ -673,7 +709,7 @@ function finishRound(){
   save();
   const msg=R.score===10?`Perfect score! Great work, ${NAME}! 🏅`:R.score>=8?`Great work, ${NAME}!`:R.score>=UNLOCK?`Well done, ${NAME}! Keep practising for more stars.`:`Good try, ${NAME}! Have another go. The hints help! 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${esc(msg)}</h2>
-    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>
+    <p style="font-size:1.3rem">You got <b>${R.score} out of ${ROUND}</b> · +${R.points} points · best streak 🔥 ${R.best}</p>${RDO.summary()}
     ${nowUnlocked?`<p style="font-size:1.1rem;font-weight:bold;color:var(--green)">🔓 Level ${L.id+1}: ${LEVELS[L.id].title} unlocked!</p>`:''}${step}
     <div class="row" style="justify-content:center;margin-top:14px">
       <button class="btn ghost" id="rHome">🏠 Levels</button><button class="btn orange" id="rAgain">🔁 Play again</button>
@@ -746,7 +782,7 @@ $('#stage').addEventListener('click',()=>setTimeout(updCheck,0));
 document.addEventListener('keydown',e=>{if(!q)return;
   if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
   if(q.key&&!q.done){if(/^[0-9]$/.test(e.key))q.key(e.key);else if(e.key==='Backspace')q.key('del');else if(e.key==='Tab'&&q.inputs){e.preventDefault();q.key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
-window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,makeWorksheet};
+window.FQ={get q(){return q;},get R(){return R;},get S(){return S;},startLevel,home,LEVELS,STORE,NAME,TYPES,levelD,makeWorksheet};window.FQ.RDO=RDO;window.FQ.answer=ok=>answer(ok);
 home();
 })();
 </script>
