@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Alexia's Daily Lesson</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E">
+<style>
+:root{--ink:#1f2937;--gold:#f59e0b;--green:#16a34a;--green2:#22c55e;--red:#e11d48}
+body.alexia{--main:#7c3aed;--main2:#8b5cf6;--soft:#ede9fe;--soft2:#faf5ff;--line:#ddd6fe;--shadow:#5b21b6;--bar:linear-gradient(90deg,#7c3aed,#ec4899);--bg:linear-gradient(160deg,#fdf2ff,#e0f2fe)}
+body.ethan{--main:#2563eb;--main2:#3b82f6;--soft:#dbeafe;--soft2:#eff6ff;--line:#bfdbfe;--shadow:#1e40af;--bar:linear-gradient(90deg,#2563eb,#16a34a);--bg:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;font-size:18px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:48px;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bar);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
+@media (max-width:560px){.topbar{gap:6px;padding:8px 10px}.topbar .lbl{display:none}.topbar .pill{padding:4px 8px}.topbar h1{font-size:1rem;min-width:0}}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,.08);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--main)}
+.btn{background:var(--main);color:#fff;font-weight:bold;box-shadow:0 4px 0 var(--shadow)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow)}
+.btn.orange{background:#ff8a3d;box-shadow:0 4px 0 #c2410c}.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:var(--soft);color:var(--main);box-shadow:0 4px 0 var(--line)}
+.btn.small{min-height:38px;padding:6px 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.huge{font-size:1.4rem;padding:16px 30px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;background:var(--soft);color:var(--main);border-radius:999px;padding:3px 12px;font-size:.9rem;font-weight:bold}
+.tag.new{background:#fef3c7;color:#92400e}.tag.ok{background:#dcfce7;color:#166534}.tag.school{background:#ffedd5;color:#9a3412}
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:12px 0}
+.sec{background:var(--soft2);border:3px solid var(--line);border-radius:16px;padding:10px;font-size:.95rem}
+.sec b{display:block;color:var(--main);font-size:1.05rem}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center}
+.wd{background:#f8fafc;border:3px solid #e5e7eb;border-radius:14px;padding:6px 2px;font-size:.85rem}
+.wd .dn{font-weight:bold}.wd .st{font-size:1.5rem;line-height:1.4}
+.wd.done{background:#dcfce7;border-color:#86efac}.wd.today{border-color:var(--main);box-shadow:0 0 0 3px var(--line)}.wd.fri{background:#fef9c3}
+.wd.done.fri{background:#bbf7d0}
+.focus{background:#fff7ed;border:3px solid #fb923c;border-radius:18px;padding:12px 14px;margin-bottom:16px}
+details summary{cursor:pointer;font-weight:bold;color:var(--main);min-height:40px;display:flex;align-items:center}
+.path{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.path li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f8fafc;border-radius:12px;padding:6px 10px;font-size:.92rem}
+.path li.cur{background:#fef3c7;border:2px solid #f59e0b}.path li.done{background:#f0fdf4}
+.path .code{color:#6b7280;font-size:.8rem}
+.small{font-size:.88rem;color:#4b5563}
+/* play */
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .secname{font-weight:bold;color:var(--main);font-size:1.15rem;flex:1}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-bottom:12px;font-size:.9rem;font-weight:bold}
+.pbar{height:16px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.pbar>div{height:100%;background:var(--main2);border-radius:999px;transition:width .3s}
+.pbar.time>div{background:linear-gradient(90deg,#22c55e,#facc15)}
+.pbar.time.over>div{background:#fb923c}
+.timesup{background:#fff7ed;border:3px solid #fb923c;border-radius:14px;padding:8px 12px;margin-bottom:10px;text-align:center;font-weight:bold}
+.prompt{font-size:1.3rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:80px}
+.vis{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+svg{display:block;max-width:100%}
+svg.bar{width:100%;max-width:640px;height:auto}
+svg.nl{width:100%;max-width:760px;height:auto}
+svg.pizza{width:min(42vw,200px);height:auto}
+svg.graph{height:auto;width:100%}
+svg.shape{height:auto;width:auto;max-width:100%}
+svg.jl{width:100%;height:auto}
+.gtitle{font-weight:bold;text-align:center;color:#374151}
+.gwrap{max-width:420px;width:100%}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.1rem}
+.hint .guided{display:block;font-size:.85rem;color:#92400e;font-weight:bold}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.1rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tellbox{background:#eff6ff;border:3px solid #60a5fa;border-radius:16px;padding:10px 12px;margin:10px auto;max-width:640px}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:680px}
+.opt{background:#fff;border:4px solid var(--line);font-size:1.6rem;padding:12px 6px;min-height:84px;color:var(--ink)}
+.opt:hover{border-color:var(--main2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+.opts.txt .opt{font-size:1.15rem;min-height:64px}
+.opts.opts3{grid-template-columns:repeat(3,1fr);max-width:600px}
+.opts.opts3 .opt small{display:block;font-size:.85rem;color:#4b5563;font-weight:normal}
+.opts.pics{grid-template-columns:repeat(3,1fr)}.opts.pics .opt{padding:10px}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}.opts.pics{grid-template-columns:1fr}.opt{font-size:1.3rem}}
+.entryrow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-size:2.2rem;font-weight:bold}
+.entryrow small{font-size:1rem;color:#6b7280}
+.op{font-size:2.2rem;font-weight:bold}
+.ebox{display:inline-block;min-width:1.6em;min-height:1.15em;border:3px dashed var(--main2);border-radius:10px;color:var(--main);background:var(--soft2);text-align:center;cursor:pointer;line-height:1.1;margin:2px 0;padding:0 .15em}
+.ebox.active{border-style:solid;border-color:var(--main);background:var(--soft);box-shadow:0 0 0 4px var(--line)}
+.ebox.okb{border-color:var(--green);color:var(--green)}.ebox.badb{border-color:var(--red);color:var(--red)}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:var(--soft);color:var(--main);font-size:1.5rem;font-weight:bold;min-height:56px;box-shadow:0 3px 0 var(--line)}
+.keypad button.wide{grid-column:span 2;font-size:1.05rem}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .15em;font-weight:bold}
+.frac .num{border-bottom:3px solid currentColor;padding:0 .2em}.frac .den{padding:0 .2em}
+.frac.big{font-size:1.5em}.frac.huge,.mixed.huge{font-size:1.15em}
+.mixed{display:inline-flex;align-items:center;font-weight:bold}.mixed .wn{font-size:1.25em;margin-right:.08em}
+.dec{font-weight:bold;white-space:nowrap}.dec.big{font-size:1.4em}.dec.huge{font-size:2.6em}
+.bigq{font-size:2rem;font-weight:bold;text-align:center;margin:6px 0}
+.cmp{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;font-size:1.6rem}
+.cmp .qm{font-size:2.2rem;font-weight:bold;color:var(--main2);border:4px dashed var(--line);border-radius:50%;width:66px;height:66px;display:flex;align-items:center;justify-content:center}
+.story{display:block;font-size:1.2rem;line-height:1.6;background:var(--soft2);border-radius:18px;padding:12px 16px;max-width:720px;margin:0 auto;text-align:left}
+.grids{display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
+table.pv{border-collapse:collapse;margin:8px auto;font-size:1.3rem}
+table.pv th{font-size:.8rem;color:#6b7280;padding:2px 10px;font-weight:normal}
+table.pv td{border:3px solid var(--line);min-width:48px;text-align:center;font-weight:bold;padding:4px 8px;background:var(--soft2)}
+table.pv td.pt{border:none;background:none;min-width:10px}
+table.dtab{border-collapse:collapse;margin:6px auto;font-size:1.15rem}
+table.dtab th,table.dtab td{border:2px solid #cbd5e1;padding:6px 14px;text-align:center}
+table.dtab th{background:var(--soft)}
+.colsum{font-size:1.3rem;font-weight:bold;border-collapse:collapse;margin:6px auto}.colsum td{padding:2px 8px;text-align:right}.colsum tr.tot td{border-top:3px solid #1f2937}
+.groups{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.plate{background:#fef3c7;border:3px solid #f59e0b;border-radius:50%;min-width:84px;min-height:84px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px;font-size:1.3rem;max-width:120px}
+.pict{display:flex;flex-direction:column;gap:6px;font-size:1.6rem;background:#f8fafc;border-radius:14px;padding:10px 14px}
+.pict .lab{display:inline-block;width:130px;font-size:1rem;font-weight:bold}.pict .key{font-size:1rem}
+.compass{font-size:1.5rem;font-weight:bold;text-align:center;line-height:1.5;background:#f8fafc;border-radius:50%;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.tentry b{margin:0 .1em}
+.example{background:#f0fdf4;border:3px solid #86efac;border-radius:18px;padding:12px 16px;max-width:760px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.example h3{margin:0;color:#166534}
+/* results */
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--main);font-size:1.8rem;margin:8px 0}
+table.sum{border-collapse:collapse;margin:10px auto;font-size:1rem;min-width:min(100%,460px)}
+table.sum th,table.sum td{border-bottom:2px solid #e5e7eb;padding:6px 10px;text-align:left}
+.acc{display:inline-block;height:12px;border-radius:6px;background:var(--green2);vertical-align:middle}
+.msg{border-radius:14px;padding:8px 12px;margin:8px auto;max-width:640px}
+.msg.up{background:#ecfdf5;color:#065f46}.msg.next{background:#fef3c7;color:#92400e}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.say{background:var(--soft);color:var(--main);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
+#prompt.bigp{font-size:2.2rem;font-weight:bold}
+a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 18px;border-radius:16px;min-height:48px}
+
+</style>
+</head>
+<body class="alexia">
+<header class="topbar">
+  <h1 id="homeLink" title="Today's lesson">📅 <span id="titleName">Alexia</span>'s Daily Lesson</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Days in a row">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
+  <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥<span class="lbl"> Switch</span></a>
+</header>
+<main>
+<section id="home"><div id="homeBody"></div></section>
+<section id="play" class="hidden">
+  <div class="playhead"><button class="btn ghost" id="quitBtn">⏸️ Pause</button><div class="secname" id="secName"></div></div>
+  <div class="bars"><span>✏️ Questions</span><div class="pbar" id="progBar"><div style="width:0"></div></div><span id="progTxt"></span>
+    <span>⏱️ Time</span><div class="pbar time" id="timeBar"><div style="width:0"></div></div><span id="timeTxt"></span></div>
+  <div class="timesup hidden" id="timesUp">⏰ 15 minutes are up! Great effort. You can finish the last questions, or pause and come back later.</div>
+  <div class="card">
+    <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
+    <div class="vis" id="qvis"></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn green" id="checkBtn">Check ✓</button></div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+<section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+</main>
+<!-- "From school today" entries and extra topic modules live in focus.js (see README.md). -->
+<script src="focus.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== shared helpers and pictures (copied/adapted from the existing games) ===== */
+const OR='#ff8a3d',BL='#3b82f6',GRN='#15803d',RED='#e11d48',PU='#8b5cf6',YEL='#facc15';
+const PAL=['#3b82f6','#f97316','#22c55e','#ec4899','#8b5cf6','#facc15','#14b8a6'];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const range=n=>[...Array(n).keys()];
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const F=(n,d,cls='')=>`<span class="frac ${cls}"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+const M=(w,n,d,cls='')=>`<span class="mixed ${cls}"><span class="wn">${w}</span>${F(n,d)}</span>`;
+/* decimals as whole numbers of hundredths (Decimal Zoom) */
+const plc=v=>v%100===0?0:v%10===0?1:2;
+const D=(v,pl)=>{const w=Math.floor(v/100),r=v%100;if(pl==null)pl=plc(v);if(pl===0)return String(w);if(pl===1)return w+'.'+Math.floor(r/10);return w+'.'+String(r).padStart(2,'0');};
+/* thousandths */
+const D3=(vt,pl)=>{const w=Math.floor(vt/1000),r=vt%1000;if(pl==null)pl=r===0?0:r%100===0?1:r%10===0?2:3;if(pl===0)return String(w);return w+'.'+String(r).padStart(3,'0').slice(0,pl);};
+const money=c=>'$'+Math.floor(c/100)+'.'+String(c%100).padStart(2,'0');
+const DEC=(s,cls='big')=>`<span class="dec ${cls}">${s}</span>`;
+
+function barSVG({parts=10,fills=[],w=600,h=60,labels=null}){
+  const pw=w/parts;let s=`<svg class="bar" viewBox="-6 -8 ${w+12} ${h+16}" aria-label="bar cut into ${parts} parts">`;
+  for(let i=0;i<parts;i++){s+=`<rect x="${i*pw}" y="0" width="${pw}" height="${h}" fill="${fills[i]||'#ffffff'}" stroke="#374151" stroke-width="2"/>`;
+    if(labels&&labels[i]!=null)s+=`<text x="${i*pw+pw/2}" y="${h/2+8}" text-anchor="middle" font-size="22" font-weight="bold" fill="#1f2937">${labels[i]}</text>`;}
+  return s+`<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#1f2937" stroke-width="4"/></svg>`;
+}
+const fillN=(n,col=OR)=>range(n).map(()=>col);
+function grid100(v,{size=200,col=OR}={}){
+  const c=size/10;let s=`<svg class="g100" viewBox="-3 -3 ${size+6} ${size+6}" width="${size}" aria-label="hundred grid with ${v} squares shaded">`;
+  for(let i=0;i<100;i++){const x=Math.floor(i/10)*c,y=(i%10)*c;s+=`<rect x="${x}" y="${y}" width="${c}" height="${c}" fill="${i<v?col:'#fff'}" stroke="#9ca3af" stroke-width="1"/>`;}
+  for(let k=1;k<10;k++)s+=`<line x1="${k*c}" y1="0" x2="${k*c}" y2="${size}" stroke="#374151" stroke-width="2"/>`;
+  return s+`<rect x="0" y="0" width="${size}" height="${size}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+function pizzaSVG({parts,shaded=0,r=90}){
+  const c=r+10,T=2*Math.PI/parts,P=a=>[c+r*Math.cos(a),c+r*Math.sin(a)];
+  let s=`<svg class="pizza" viewBox="0 0 ${2*c} ${2*c}" aria-label="pizza cut into ${parts} slices">`;
+  s+=`<circle cx="${c}" cy="${c}" r="${r+8}" fill="#d9954a"/>`;
+  if(parts===1)return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="${shaded?'#ffb703':'#fff3d6'}" stroke="#8a4b16" stroke-width="2.5"/></svg>`;
+  for(let i=0;i<parts;i++){const a0=-Math.PI/2+i*T,a1=a0+T,[x0,y0]=P(a0),[x1,y1]=P(a1);
+    s+=`<path d="M${c},${c} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${T>Math.PI?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${i<shaded?'#ffb703':'#fff3d6'}" stroke="#8a4b16" stroke-width="2.5"/>`;}
+  return s+'</svg>';
+}
+function fracSVG(x,y,n,d,color='#1f2937',size=16){const hw=d>=100?16:11;
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${n}</text><line x1="${x-hw}" y1="${y+5}" x2="${x+hw}" y2="${y+5}" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+22}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${d}</text>`;}
+/* number line (from Decimal Zoom). values in "unit" sub-units; lines:[{lo,hi,step,lab,labs,marks,highlight,tag}] */
+function dl({lines,w=680,gap=124,top=64,unit=100,fmt=D}){
+  const m=40,Lw=w-2*m,H=top+gap*(lines.length-1)+72;const Xf=ln=>v=>m+(v-ln.lo)/(ln.hi-ln.lo)*Lw;
+  let s=`<svg class="nl" viewBox="0 0 ${w} ${H}" aria-label="number line">`;
+  lines.forEach((ln,j)=>{const y=top+j*gap,X=Xf(ln),st=ln.step,px=X(ln.lo+st)-X(ln.lo);
+    s+=`<line x1="${X(ln.lo)}" y1="${y}" x2="${X(ln.hi)}" y2="${y}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;
+    if(ln.tag)s+=`<text x="${X(ln.lo)-30}" y="${y-30}" font-size="15" font-weight="bold" fill="#6b7280">${ln.tag}</text>`;
+    for(let v=ln.lo;v<=ln.hi+1e-9;v+=st){const x=X(v),whole=v%unit===0,hh=whole?17:10;
+      s+=`<line x1="${x}" y1="${y-hh}" x2="${x}" y2="${y+hh}" stroke="#1f2937" stroke-width="${whole?3.5:2.5}"/>`;
+      const hl=ln.highlight===v;let lab=whole||ln.lab==='all'||(ln.lab==='ends'&&(v===ln.lo||v===ln.hi))||(ln.labs&&ln.labs.includes(v))||hl;
+      if(ln.lab==='all'&&px<26&&!whole&&!hl&&(v/st)%2!==0)lab=false;
+      if(lab){const col=hl?GRN:'#1f2937';if(ln.fr&&!whole)s+=fracSVG(x,y+33,ln.fr(v)[0],ln.fr(v)[1],col);else s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="${whole?22:(px<34?15:18)}" font-weight="bold" fill="${col}">${fmt(v)}</text>`;}
+      if(hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;}
+    (ln.marks||[]).forEach(mk=>{const x=X(mk.v),c=mk.color||OR,ry=y-24-(mk.row||0)*21;
+      if(mk.label!=null){if(mk.row)s+=`<line x1="${x}" y1="${y-10}" x2="${x}" y2="${ry+4}" stroke="${c}" stroke-width="1.5"/>`;
+        s+=`<text x="${x}" y="${ry}" text-anchor="middle" font-size="16" font-weight="bold" fill="${c}" stroke="#fff" stroke-width="4" paint-order="stroke">${mk.label}</text>`;}
+      s+=`<circle cx="${x}" cy="${y}" r="10" fill="${c}" stroke="#fff" stroke-width="3"/>`;});});
+  return s+'</svg>';
+}
+/* column graph (from Data Dash). items:[{icon,name,n,col}] */
+function colSVG(items,{max=10,hl=[],nums=false,title='',scale=1,ylabel=''}={}){
+  const u=26,L=48,T=16,cw=64,gp=24,k=items.length,W=L+k*(cw+gp)+gp/2,base=T+max*u,Hh=base+48,hv=n=>n/scale;
+  let s=`<svg class="graph" viewBox="0 0 ${W} ${Hh}" style="max-width:${Math.round(W*1.15)}px" aria-label="column graph">`;
+  for(let v=0;v<=max;v++){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/>`;
+    s+=`<text x="${L-6}" y="${y+5}" text-anchor="end" font-size="15" fill="#374151">${v*scale}</text>`;}
+  s+=`<line x1="${L}" y1="${T-4}" x2="${L}" y2="${base}" stroke="#1f2937" stroke-width="3"/>`;
+  items.forEach((it,i)=>{const x=L+gp/2+i*(cw+gp)+4,h=hv(it.n);
+    if(h>0)s+=`<rect x="${x}" y="${base-h*u}" width="${cw}" height="${h*u}" rx="4" fill="${it.col}" stroke="${hl.includes(i)?'#111':'rgba(0,0,0,.3)'}" stroke-width="${hl.includes(i)?4:2}"/>`;
+    if(nums||hl.includes(i))s+=`<text x="${x+cw/2}" y="${base-h*u-6}" text-anchor="middle" font-size="19" font-weight="bold" fill="#111">${it.n}</text>`;
+    s+=`<text x="${x+cw/2}" y="${base+32}" text-anchor="middle" font-size="28">${it.icon}</text>`;});
+  return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';
+}
+/* pie chart (from Data Dash): slices [{q,col}] out of den */
+function pieSVG(slices,{r=90,den=4,labels=null}={}){
+  const c=r+10,W=2*c;let a=-Math.PI/2,s=`<svg class="graph" viewBox="0 0 ${W} ${W}" style="max-width:${Math.round(W*1.3)}px" aria-label="pie chart">`;
+  const pt=(ang,rr)=>[c+rr*Math.cos(ang),c+rr*Math.sin(ang)];
+  slices.forEach((sl,i)=>{const da=sl.q/den*2*Math.PI,b=a+da;
+    if(sl.q>=den)s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;
+    else if(sl.q>0){const [x1,y1]=pt(a,r),[x2,y2]=pt(b,r);s+=`<path d="M${c},${c} L${x1},${y1} A${r},${r} 0 ${da>Math.PI?1:0} 1 ${x2},${y2} Z" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;}
+    if(labels&&labels[i]){const [lx,ly]=pt(a+da/2,r*0.6);s+=`<text x="${lx}" y="${ly+6}" text-anchor="middle" font-size="${r*0.17}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${labels[i]}</text>`;}
+    a=b;});
+  return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+/* jump number line (from Number Facts Sprint) */
+function jumpSVG(start,steps){
+  const pts=[start];steps.forEach(s=>pts.push(pts[pts.length-1]+s));
+  const back=steps.length&&steps.every(s=>s<0),n=steps.length,gap=150,W=80+n*gap,xs=pts.map((_,i)=>back?W-40-i*gap:40+i*gap);
+  let s=`<svg class="jl" viewBox="0 0 ${W} 120" style="max-width:${W*1.3}px" aria-label="number line">`;
+  s+=`<line x1="10" y1="88" x2="${W-10}" y2="88" stroke="#1f2937" stroke-width="3"/>`;
+  steps.forEach((st,i)=>{const x1=xs[i],x2=xs[i+1],mx=(x1+x2)/2;
+    s+=`<path d="M${x1},84 Q${mx},20 ${x2},84" fill="none" stroke="${st<0?RED:BL}" stroke-width="4"/>`;
+    s+=`<text x="${mx}" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="${st<0?RED:BL}">${st<0?'−':'+'}${Math.abs(st)}</text>`;});
+  pts.forEach((p,i)=>{s+=`<line x1="${xs[i]}" y1="80" x2="${xs[i]}" y2="96" stroke="#1f2937" stroke-width="3"/><text x="${xs[i]}" y="116" text-anchor="middle" font-size="20" font-weight="bold" fill="${i===pts.length-1?'#16a34a':'#1f2937'}">${p}</text>`;});
+  return s+'</svg>';
+}
+function addJumps(a,b){const up=Math.ceil((a+1)/10)*10-a;return b>up&&a%10!==0?[up,b-up]:[b];}
+function subJumps(a,b){const dn=a%10;return dn>0&&b>dn?[-dn,-(b-dn)]:[-b];}
+/* ---- new pictures for the daily lessons ---- */
+function clockSVG(h,m,{size=200}={}){const c=100,r=90;let s=`<svg class="clock" viewBox="0 0 200 200" width="${size}" aria-label="clock showing ${h}:${String(m).padStart(2,'0')}">`;
+  s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="#fff" stroke="#1f2937" stroke-width="6"/>`;
+  for(let i=0;i<60;i++){const a=i*Math.PI/30,big=i%5===0,r1=big?r-12:r-6;s+=`<line x1="${c+r1*Math.sin(a)}" y1="${c-r1*Math.cos(a)}" x2="${c+(r-2)*Math.sin(a)}" y2="${c-(r-2)*Math.cos(a)}" stroke="#1f2937" stroke-width="${big?3:1.2}"/>`;}
+  for(let i=1;i<=12;i++){const a=i*Math.PI/6;s+=`<text x="${c+(r-27)*Math.sin(a)}" y="${c-(r-27)*Math.cos(a)+7}" text-anchor="middle" font-size="19" font-weight="bold" fill="#1f2937">${i}</text>`;}
+  const ha=((h%12)+m/60)*Math.PI/6,ma=m*Math.PI/30;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+48*Math.sin(ha)}" y2="${c-48*Math.cos(ha)}" stroke="#2563eb" stroke-width="8" stroke-linecap="round"/>`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+72*Math.sin(ma)}" y2="${c-72*Math.cos(ma)}" stroke="#e11d48" stroke-width="5" stroke-linecap="round"/>`;
+  return s+`<circle cx="${c}" cy="${c}" r="6" fill="#1f2937"/></svg>`;}
+/* rectangle on a square grid; cell=size of one unit; labels:true shows side lengths; shade:true fills */
+function rectSVG(w,h,{grid=true,labels=false,unit='',col='#bfdbfe',cut=null}={}){
+  const cs=Math.min(34,Math.floor(300/Math.max(w,h))),W=w*cs+100,H=h*cs+60,x0=70,y0=20;
+  let s=`<svg class="shape" viewBox="0 0 ${W} ${H}" width="${Math.round(W*1.2)}" aria-label="rectangle ${w} by ${h}">`;
+  for(let i=0;i<w;i++)for(let j=0;j<h;j++){const cutOut=cut&&i>=w-cut[0]&&j<cut[1];if(cutOut)continue;s+=`<rect x="${x0+i*cs}" y="${y0+j*cs}" width="${cs}" height="${cs}" fill="${col}" stroke="${grid?'#64748b':col}" stroke-width="${grid?1:0}"/>`;}
+  if(cut){const pts=[[0,0],[w-cut[0],0],[w-cut[0],cut[1]],[w,cut[1]],[w,h],[0,h]];s+=`<polygon points="${pts.map(p=>`${x0+p[0]*cs},${y0+p[1]*cs}`).join(' ')}" fill="none" stroke="#1f2937" stroke-width="4"/>`;}
+  else s+=`<rect x="${x0}" y="${y0}" width="${w*cs}" height="${h*cs}" fill="none" stroke="#1f2937" stroke-width="4"/>`;
+  if(labels){const L=typeof labels==='object'?labels:{};s+=`<text x="${x0+w*cs/2}" y="${y0+h*cs+30}" text-anchor="middle" font-size="18" font-weight="bold">${L.w!=null?L.w:w+' '+unit}</text>`;
+    s+=`<text x="${x0-8}" y="${y0+h*cs/2+6}" text-anchor="end" font-size="18" font-weight="bold">${L.h!=null?L.h:h+(unit?' '+unit:'')}</text>`;}
+  return s+'</svg>';}
+function angleSVG(deg,{label=null,arc=true,size=240,rot=0}={}){const c=120,r=95;const a0=-rot*Math.PI/180,a1=-(rot+deg)*Math.PI/180;
+  let s=`<svg class="shape" viewBox="0 0 240 240" width="${size}" aria-label="angle">`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+r*Math.cos(a0)}" y2="${c+r*Math.sin(a0)}" stroke="#1f2937" stroke-width="5" stroke-linecap="round"/>`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+r*Math.cos(a1)}" y2="${c+r*Math.sin(a1)}" stroke="#1f2937" stroke-width="5" stroke-linecap="round"/>`;
+  if(arc){if(deg===90){const q=22,p=(a,l)=>[c+l*Math.cos(a),c+l*Math.sin(a)];const A=p(a0,q),B=p(a1,q),C=[A[0]+B[0]-c,A[1]+B[1]-c];s+=`<polyline points="${A} ${C} ${B}" fill="none" stroke="${RED}" stroke-width="3"/>`;}
+    else{const ar=34,[x1,y1]=[c+ar*Math.cos(a0),c+ar*Math.sin(a0)],[x2,y2]=[c+ar*Math.cos(a1),c+ar*Math.sin(a1)];s+=`<path d="M${x1},${y1} A${ar},${ar} 0 ${deg>180?1:0} 0 ${x2},${y2}" fill="none" stroke="${RED}" stroke-width="3"/>`;}}
+  if(label!=null){const am=-(rot+deg/2)*Math.PI/180;s+=`<text x="${c+58*Math.cos(am)}" y="${c+58*Math.sin(am)+6}" text-anchor="middle" font-size="20" font-weight="bold" fill="${RED}">${label}</text>`;}
+  return s+`<circle cx="${c}" cy="${c}" r="4" fill="#1f2937"/></svg>`;}
+/* straight line split into two angles */
+function straightSVG(a,{la,lb}={}){const c=150,r=110,ar=-a*Math.PI/180;let s=`<svg class="shape" viewBox="0 0 300 160" width="300" aria-label="angles on a straight line">`;
+  s+=`<line x1="${c-r}" y1="${c-20}" x2="${c+r}" y2="${c-20}" stroke="#1f2937" stroke-width="5"/>`;const cy=c-20;
+  s+=`<line x1="${c}" y1="${cy}" x2="${c+r*Math.cos(ar)}" y2="${cy+r*Math.sin(ar)}" stroke="#1f2937" stroke-width="5"/>`;
+  const m1=ar/2,m2=(ar-Math.PI)/2;s+=`<text x="${c+52*Math.cos(m1)}" y="${cy+52*Math.sin(m1)+6}" text-anchor="middle" font-size="19" font-weight="bold" fill="${BL}">${la}</text><text x="${c+52*Math.cos(m2)}" y="${cy+52*Math.sin(m2)+6}" text-anchor="middle" font-size="19" font-weight="bold" fill="${RED}">${lb}</text>`;
+  return s+'</svg>';}
+/* spinner with coloured sectors [{col,name}] equal size */
+function spinnerSVG(cols,{r=90}={}){const n=cols.length,c=r+10;let s=`<svg class="graph" viewBox="0 0 ${2*c} ${2*c}" style="max-width:${2*c*1.2}px" aria-label="spinner with ${n} equal parts">`;
+  cols.forEach((col,i)=>{const a0=-Math.PI/2+i*2*Math.PI/n,a1=a0+2*Math.PI/n;s+=`<path d="M${c},${c} L${c+r*Math.cos(a0)},${c+r*Math.sin(a0)} A${r},${r} 0 ${n===1?1:0} 1 ${c+r*Math.cos(a1)},${c+r*Math.sin(a1)} Z" fill="${col}" stroke="#fff" stroke-width="3"/>`;});
+  s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/><line x1="${c}" y1="${c}" x2="${c+r*0.3}" y2="${c-r*0.65}" stroke="#111" stroke-width="5" stroke-linecap="round"/><circle cx="${c}" cy="${c}" r="7" fill="#111"/>`;
+  return s+'</svg>';}
+/* bag of marbles: counts [{col,n}] */
+function bagSVG(groups){const all=[];groups.forEach(g=>{for(let i=0;i<g.n;i++)all.push(g.col);});const per=6,rows=Math.ceil(all.length/per),W=per*34+40,H=rows*34+50;
+  let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.2}px" aria-label="bag of ${all.length} marbles">`;
+  s+=`<path d="M10,30 Q${W/2},6 ${W-10},30 L${W-20},${H-6} Q${W/2},${H+4} 20,${H-6} Z" fill="#fef3c7" stroke="#92400e" stroke-width="3"/>`;
+  all.forEach((col,i)=>{s+=`<circle cx="${37+(i%per)*34}" cy="${46+Math.floor(i/per)*34}" r="14" fill="${col}" stroke="rgba(0,0,0,.3)" stroke-width="2"/>`;});
+  return s+'</svg>';}
+/* dot array rows x cols */
+function arraySVG(r,c,{col=BL,ring=0}={}){const g=30,W=c*g+20,H=r*g+20;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${Math.min(560,W*1.4)}px" aria-label="array of ${r} rows of ${c}">`;
+  for(let i=0;i<r;i++)for(let j=0;j<c;j++)s+=`<circle cx="${25+j*g}" cy="${25+i*g}" r="11" fill="${col}"/>`;
+  if(ring)for(let i=0;i<r;i++)s+=`<rect x="8" y="${9+i*g}" width="${W-16}" height="${g-2}" rx="14" fill="none" stroke="${RED}" stroke-width="2"/>`;
+  return s+'</svg>';}
+/* equal groups: g plates with k items each */
+function groupsSVG(g,k,{icon='🍪'}={}){let h='<div class="groups">';for(let i=0;i<g;i++)h+=`<div class="plate">${icon.repeat(k)}</div>`;return h+'</div>';}
+/* coins & notes: list of cents values */
+const COIN={5:['5c','#cbd5e1',22],10:['10c','#cbd5e1',26],20:['20c','#cbd5e1',30],50:['50c','#cbd5e1',33],100:['$1','#fbbf24',27],200:['$2','#fbbf24',24]};
+const NOTE={500:['$5','#f9a8d4'],1000:['$10','#93c5fd'],2000:['$20','#fca5a5'],5000:['$50','#fde68a']};
+function moneySVG(list){let x=10;const parts=[];list.forEach(v=>{if(NOTE[v]){parts.push(`<rect x="${x}" y="14" width="110" height="60" rx="6" fill="${NOTE[v][1]}" stroke="#374151" stroke-width="2"/><text x="${x+55}" y="52" text-anchor="middle" font-size="22" font-weight="bold">${NOTE[v][0]}</text>`);x+=120;}
+  else{const [l,col,r]=COIN[v];parts.push(`<circle cx="${x+r}" cy="44" r="${r}" fill="${col}" stroke="#374151" stroke-width="2"/><text x="${x+r}" y="50" text-anchor="middle" font-size="${r>26?17:15}" font-weight="bold">${l}</text>`);x+=2*r+10;}});
+  return `<svg class="graph" viewBox="0 0 ${x+4} 88" style="max-width:${Math.min(700,(x+4)*1.2)}px" aria-label="money">${parts.join('')}</svg>`;}
+/* MAB blocks: hundreds flats, tens longs, ones */
+function mabSVG(h,t,o){let x=6;let s='';const u=7;for(let i=0;i<h;i++){s+=`<rect x="${x}" y="6" width="${10*u}" height="${10*u}" fill="#fde68a" stroke="#92400e" stroke-width="2"/>`;for(let k=1;k<10;k++)s+=`<line x1="${x+k*u}" y1="6" x2="${x+k*u}" y2="${6+10*u}" stroke="#d97706" stroke-width=".7"/><line x1="${x}" y1="${6+k*u}" x2="${x+10*u}" y2="${6+k*u}" stroke="#d97706" stroke-width=".7"/>`;x+=10*u+8;}
+  for(let i=0;i<t;i++){s+=`<rect x="${x}" y="6" width="${u+2}" height="${10*u}" fill="#93c5fd" stroke="#1e40af" stroke-width="2"/>`;x+=u+8;}
+  for(let i=0;i<o;i++){s+=`<rect x="${x}" y="${6+9*u-2}" width="${u+3}" height="${u+3}" fill="#86efac" stroke="#166534" stroke-width="2"/>`;x+=u+7;}
+  return `<svg class="graph" viewBox="0 0 ${x+6} ${10*u+14}" style="max-width:${Math.min(700,(x+6)*1.6)}px" aria-label="base ten blocks">${s}</svg>`;}
+/* 2D shapes */
+function polySVG(n,{col='#a7f3d0',size=160}={}){const c=80,r=64;const pts=range(n).map(i=>{const a=-Math.PI/2+i*2*Math.PI/n+(n===4?Math.PI/4:0);return `${c+r*Math.cos(a)},${c+r*Math.sin(a)}`;}).join(' ');
+  return `<svg class="shape" viewBox="0 0 160 160" width="${size}" aria-label="shape with ${n} sides"><polygon points="${pts}" fill="${col}" stroke="#1f2937" stroke-width="4"/></svg>`;}
+/* 3D solids, simple drawings */
+function solidSVG(k,{size=170}={}){const st='stroke="#1f2937" stroke-width="3"',dash='stroke="#1f2937" stroke-width="2" stroke-dasharray="5 4" fill="none"';let b='';
+  if(k==='cube'||k==='rectangular prism'){const w=k==='cube'?80:120,h=80,d=36;b=`<polygon points="30,60 ${30+w},60 ${30+w},${60+h} 30,${60+h}" fill="#bfdbfe" ${st}/><polygon points="30,60 ${30+d},${60-d} ${30+w+d},${60-d} ${30+w},60" fill="#dbeafe" ${st}/><polygon points="${30+w},60 ${30+w+d},${60-d} ${30+w+d},${60+h-d} ${30+w},${60+h}" fill="#93c5fd" ${st}/>`;}
+  else if(k==='square pyramid')b=`<polygon points="30,130 120,130 85,20" fill="#fde68a" ${st}/><polygon points="120,130 150,105 85,20" fill="#fcd34d" ${st}/><line x1="30" y1="130" x2="60" y2="105" ${dash}/><line x1="60" y1="105" x2="150" y2="105" ${dash}/><line x1="60" y1="105" x2="85" y2="20" ${dash}/>`;
+  else if(k==='triangular prism')b=`<polygon points="20,130 70,40 120,130" fill="#fbcfe8" ${st}/><polygon points="70,40 140,20 170,105 120,130" fill="#f9a8d4" ${st}/><line x1="20" y1="130" x2="90" y2="110" ${dash}/><line x1="90" y1="110" x2="170" y2="105" ${dash}/><line x1="90" y1="110" x2="140" y2="20" ${dash}/>`;
+  else if(k==='triangular pyramid')b=`<polygon points="25,130 135,130 85,20" fill="#ddd6fe" ${st}/><polygon points="135,130 160,95 85,20" fill="#c4b5fd" ${st}/><line x1="25" y1="130" x2="160" y2="95" ${dash}/>`;
+  else if(k==='cylinder')b=`<rect x="40" y="35" width="100" height="95" fill="#a7f3d0" stroke="none"/><line x1="40" y1="35" x2="40" y2="130" ${st}/><line x1="140" y1="35" x2="140" y2="130" ${st}/><ellipse cx="90" cy="130" rx="50" ry="14" fill="#a7f3d0" ${st}/><ellipse cx="90" cy="35" rx="50" ry="14" fill="#d1fae5" ${st}/>`;
+  else if(k==='cone')b=`<polygon points="40,130 90,20 140,130" fill="#fed7aa" stroke="none"/><line x1="40" y1="130" x2="90" y2="20" ${st}/><line x1="140" y1="130" x2="90" y2="20" ${st}/><ellipse cx="90" cy="130" rx="50" ry="14" fill="#fdba74" ${st}/>`;
+  else if(k==='sphere')b=`<circle cx="90" cy="80" r="60" fill="#fecaca" ${st}/><ellipse cx="90" cy="80" rx="60" ry="16" ${dash}/>`;
+  else if(k==='pentagonal prism')b=`<polygon points="20,95 45,60 80,72 80,118 35,125" fill="#bbf7d0" ${st}/><polygon points="45,60 115,30 150,42 80,72" fill="#dcfce7" ${st}/><polygon points="80,72 150,42 150,88 80,118" fill="#86efac" ${st}/>`;
+  return `<svg class="shape" viewBox="0 0 180 150" width="${size}" aria-label="${k}">${b}</svg>`;}
+/* nets: cube (cross), square pyramid, triangular prism, rectangular prism, cylinder */
+function netSVG(k){const u=40;let s='',W=260,H=200;const sq=(x,y,c='#bfdbfe',w=u,h=u)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" stroke="#1f2937" stroke-width="2.5"/>`;
+  if(k==='cube'){W=4*u+10;H=3*u+10;s=sq(5+u,5)+[0,1,2,3].map(i=>sq(5+i*u,5+u)).join('')+sq(5+u,5+2*u);}
+  else if(k==='rectangular prism'){W=2*u+2*60+10;H=60+2*u+10+u;s=sq(5+u,5,'#bfdbfe',60,u)+sq(5,5+u,'#93c5fd',u,60)+sq(5+u,5+u,'#bfdbfe',60,60)+sq(5+u+60,5+u,'#93c5fd',u,60)+sq(5+2*u+60,5+u,'#bfdbfe',60,60)+sq(5+u,5+u+60,'#bfdbfe',60,u);}
+  else if(k==='square pyramid'){W=3*u+10+40;H=W;const x=5+u+20,y=5+u+20;s=sq(x,y,'#fde68a')+`<polygon points="${x},${y} ${x+u},${y} ${x+u/2},${y-u}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x},${y+u} ${x+u},${y+u} ${x+u/2},${y+2*u}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x},${y} ${x},${y+u} ${x-u},${y+u/2}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x+u},${y} ${x+u},${y+u} ${x+2*u},${y+u/2}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='triangular prism'){W=3*u+10+2*35;H=u+2*35+10;const y=40;s=[0,1,2].map(i=>sq(40+i*u,y,'#f9a8d4')).join('')+`<polygon points="40,${y} 40,${y+u} 5,${y+u/2}" fill="#fbcfe8" stroke="#1f2937" stroke-width="2.5"/><polygon points="${40+3*u},${y} ${40+3*u},${y+u} ${75+3*u},${y+u/2}" fill="#fbcfe8" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='cylinder'){W=200;H=200;s=`<circle cx="100" cy="28" r="23" fill="#d1fae5" stroke="#1f2937" stroke-width="2.5"/>${sq(28,52,'#a7f3d0',144,90)}<circle cx="100" cy="166" r="23" fill="#d1fae5" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='triangular pyramid'){W=180;H=160;s=`<polygon points="10,150 170,150 90,10" fill="#ddd6fe" stroke="#1f2937" stroke-width="2.5"/><polyline points="50,80 130,80 90,150 50,80" fill="none" stroke="#1f2937" stroke-width="2.5"/>`;}
+  return `<svg class="shape" viewBox="0 0 ${W} ${H}" width="${Math.round(W*1.2)}" aria-label="net">${s}</svg>`;}
+/* ruler with an object (length in cm, starting at 0 or offset) */
+function rulerSVG(len,{start=0,max=15,col=OR,item='pencil'}={}){const u=40,W=max*u+40;let s=`<svg class="graph" viewBox="0 0 ${W} 120" style="max-width:${Math.min(720,W)}px" aria-label="ruler">`;
+  s+=`<rect x="${20+start*u}" y="18" width="${len*u}" height="26" rx="10" fill="${col}" stroke="#1f2937" stroke-width="2"/><text x="${20+start*u+len*u/2}" y="37" text-anchor="middle" font-size="15" font-weight="bold">${item}</text>`;
+  s+=`<rect x="10" y="56" width="${W-20}" height="56" fill="#fef9c3" stroke="#a16207" stroke-width="2"/>`;
+  for(let i=0;i<=max;i++){const x=20+i*u;s+=`<line x1="${x}" y1="56" x2="${x}" y2="80" stroke="#1f2937" stroke-width="2"/><text x="${x}" y="102" text-anchor="middle" font-size="16">${i}</text>`;if(i<max)s+=`<line x1="${x+u/2}" y1="56" x2="${x+u/2}" y2="68" stroke="#1f2937" stroke-width="1.5"/>`;}
+  return s+`<text x="${W-24}" y="102" text-anchor="end" font-size="12">cm</text></svg>`;}
+/* grid map with emoji places: places [{x,y,icon}] cols A.. rows 1.. */
+function mapSVG(cols,rows,places){const u=56,W=cols*u+40,H=rows*u+40;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.3}px" aria-label="grid map">`;
+  for(let i=0;i<cols;i++){s+=`<text x="${40+i*u+u/2}" y="${H-10}" text-anchor="middle" font-size="18" font-weight="bold">${'ABCDEFG'[i]}</text>`;}
+  for(let j=0;j<rows;j++){s+=`<text x="20" y="${10+(rows-1-j)*u+u/2+6}" text-anchor="middle" font-size="18" font-weight="bold">${j+1}</text>`;}
+  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)s+=`<rect x="${40+i*u}" y="${10+j*u}" width="${u}" height="${u}" fill="#ecfdf5" stroke="#94a3b8" stroke-width="1.5"/>`;
+  places.forEach(p=>{s+=`<text x="${40+p.x*u+u/2}" y="${10+(rows-1-p.y)*u+u/2+12}" text-anchor="middle" font-size="32">${p.icon}</text>`;});
+  return s+'</svg>';}
+/* tally marks for n */
+function tallySVG(n){const g=Math.floor(n/5),r=n%5;let x=8,s='';for(let i=0;i<g;i++){for(let k=0;k<4;k++)s+=`<line x1="${x+k*10}" y1="6" x2="${x+k*10}" y2="46" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;s+=`<line x1="${x-6}" y1="40" x2="${x+36}" y2="12" stroke="${RED}" stroke-width="4" stroke-linecap="round"/>`;x+=58;}
+  for(let k=0;k<r;k++)s+=`<line x1="${x+k*10}" y1="6" x2="${x+k*10}" y2="46" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;x+=r*10+8;
+  return `<svg class="graph" viewBox="0 0 ${Math.max(x,40)} 52" style="max-width:${Math.max(x,40)*1.4}px;height:auto" aria-label="${n} tally marks">${s}</svg>`;}
+/* line graph: pts [{lab,v}] */
+function lineSVG(pts,{max=40,step=5,title=''}={}){const L=46,T=14,u=6,W=L+pts.length*70+20,base=T+max*u,H=base+40;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.2}px" aria-label="line graph">`;
+  for(let v=0;v<=max;v+=step){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W-10}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/><text x="${L-6}" y="${y+5}" text-anchor="end" font-size="14">${v}</text>`;}
+  const P=pts.map((p,i)=>[L+40+i*70,base-p.v*u]);s+=`<polyline points="${P.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${BL}" stroke-width="4"/>`;
+  P.forEach((p,i)=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${BL}"/><text x="${p[0]}" y="${base+26}" text-anchor="middle" font-size="15" font-weight="bold">${pts[i].lab}</text>`;});
+  return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';}
+/* simple table */
+const tableHTML=(head,rows)=>`<table class="dtab"><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+
+/* ===== seeded random + question builders (used by every topic module) ===== */
+let RNG=Math.random;
+const rnd=(a,b)=>a+Math.floor(RNG()*(b-a+1));
+const pick=a=>a[Math.floor(RNG()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const chance=p=>RNG()<p;
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return (h>>>0);}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* multiple choice: correct + distractors -> {kind,choices,answer} (unique, shuffled, max n) */
+function opts(correct,distract,{n=4,cls=''}={}){const seen=new Set([String(correct)]);const list=[correct];
+  for(const d of distract){if(list.length>=n)break;const k=String(d);if(!seen.has(k)){seen.add(k);list.push(d);}}
+  const sh=shuffle(list.slice());return {kind:'choice',choices:sh,answer:sh.indexOf(correct),cls};}
+/* fixed-order choices (e.g. likely/unlikely scale) */
+const fixedOpts=(list,correctIdx,cls='txt')=>({kind:'choice',choices:list,answer:correctIdx,cls});
+const numDistract=(a,spread=[1,-1,2,-2,10,-10],min=0)=>spread.map(s=>a+s).filter(x=>x>=min&&x!==a);
+/* typed answers: layout uses [[id]] placeholders for answer boxes */
+const num=(ans,{pre='',post='',len}={})=>({kind:'entry',fields:[{id:'a',len:len||Math.max(2,String(ans).length+1)}],layout:`${pre}[[a]]${post}`,answer:{a:String(ans)}});
+const decE=(ans,{pre='',post=''}={})=>({kind:'entry',dot:true,fields:[{id:'a',len:7}],layout:`${pre}[[a]]${post}`,answer:{a:String(ans)}});
+const fracE=(n,d,{den=false}={})=>({kind:'entry',fields:den?[{id:'n',len:3}]:[{id:'n',len:3},{id:'d',len:3}],layout:`<span class="frac huge"><span class="num">[[n]]</span><span class="den">${den?d:'[[d]]'}</span></span>`,answer:den?{n:String(n)}:{n:String(n),d:String(d)}});
+const mixedE=(w,n,d,{den=false}={})=>({kind:'entry',fields:[{id:'w',len:2},{id:'n',len:3}].concat(den?[]:[{id:'d',len:3}]),layout:`<span class="mixed huge"><span class="wn">[[w]]</span><span class="frac"><span class="num">[[n]]</span><span class="den">${den?d:'[[d]]'}</span></span></span>`,answer:den?{w:String(w),n:String(n)}:{w:String(w),n:String(n),d:String(d)}});
+const timeE=(h,m)=>({kind:'entry',fields:[{id:'h',len:2},{id:'m',len:2}],layout:`<span class="tentry">[[h]]<b>:</b>[[m]]</span>`,answer:{h:String(h),m:String(m).padStart(2,'0')}});
+const qrE=(q,r)=>({kind:'entry',fields:[{id:'q',len:3},{id:'r',len:2}],layout:`[[q]] <small>remainder</small> [[r]]`,answer:{q:String(q),r:String(r)}});
+const two=(a,b,{la='',lb='',mid=' '}={})=>({kind:'entry',fields:[{id:'a',len:String(a).length+1},{id:'b',len:String(b).length+1}],layout:`${la}[[a]]${mid}${lb}[[b]]`,answer:{a:String(a),b:String(b)}});
+/* a value check for fraction answers that accepts any equivalent fraction */
+const fracCheck=(n,d)=>v=>+v.d>0&&(+v.n)*d===n*(+v.d);
+const mixedCheck=(w,n,d)=>v=>{const dd=v.d!=null?+v.d:d;return dd>0&&((+v.w)*dd+(+v.n))*d===(w*d+n)*dd&&(+v.n)<dd;};
+const big=h=>`<div class="bigq">${h}</div>`;
+const plural=(n,w,p)=>`${n} ${n===1?w:(p||w+'s')}`;
+
+/* ===== Alexia's topic modules (Stage 2 into Stage 3) =====
+   Each module: {id,title,icon,code,blurb,subs(lvl)->[...],gen(H,lvl,sub)->question,example(H)->{html}}.
+   lvl 0 = Year 4 level, 1 = harder Year 4, 2 = Year 5, 3 = Year 5 stretch. */
+const SIGNS=['&lt;','=','&gt;'],SIGNW=['is less than','is equal to','is greater than'];
+const signOpts=k=>({kind:'choice',choices:SIGNS.map((s,i)=>`${s}<small>${SIGNW[i]}</small>`),answer:k,cls:'opts3'});
+const cmpK=(a,b)=>a<b?0:a===b?1:2;
+const TOPICS_A=[
+{id:'quick',title:'Quick Facts',icon:'⚡',code:'MA3-MR-01',warm:true,blurb:'Times tables, division facts, ×10 and fraction–decimal facts.',
+ subs:l=>l>=2?['times','divide','tens','fd']:['times','times','divide','tens'],
+ gen(H,l,sub){
+  if(sub==='times'){const a=rnd(3,l>=1?12:10),b=rnd(l>=1?4:2,l>=1?12:10);const t=l>=2&&chance(0.4);const B=t?b*10:b;
+    return Object.assign({prompt:`${a} × ${B} = ?`,vis:'',hint:t?`Work out ${a} × ${b} first, then make it 10 times bigger.`:`Use a fact you know. ${a} × ${b} = ${a} × ${b-1} + ${a}.`,explain:`${a} × ${B} = <b>${a*B}</b>`},num(a*B));}
+  if(sub==='divide'){const a=rnd(3,12),b=rnd(3,l>=1?12:10);return Object.assign({prompt:`${a*b} ÷ ${a} = ?`,hint:`Think: ${a} × what = ${a*b}?`,explain:`${a} × ${b} = ${a*b}, so ${a*b} ÷ ${a} = <b>${b}</b>`},num(b));}
+  if(sub==='tens'){if(l<2){const a=rnd(11,99),k=pick([10,100]);return Object.assign({prompt:`${a} × ${k} = ?`,hint:`Multiplying by ${k} moves every digit ${k===10?'one place':'two places'} to the left.`,explain:`${a} × ${k} = <b>${a*k}</b>`},num(a*k));}
+    const x=rnd(11,99),up=chance(0.5);/* x tenths */
+    if(up)return Object.assign({prompt:`${D(x*10)} × 10 = ?`,hint:`× 10 moves each digit one place to the left.`,explain:`${D(x*10)} × 10 = <b>${x}</b>. Each digit is worth 10 times more.`},decE(String(x)));
+    return Object.assign({prompt:`${D(x*10)} ÷ 10 = ?`,hint:`÷ 10 moves each digit one place to the right.`,explain:`${D(x*10)} ÷ 10 = <b>${D(x)}</b>. Each digit is worth 10 times less.`},decE(D(x)));}
+  const P=[[1,2,'0.5'],[1,4,'0.25'],[3,4,'0.75'],[1,5,'0.2'],[2,5,'0.4'],[3,5,'0.6'],[1,10,'0.1'],[7,10,'0.7'],[9,100,'0.09'],[1,8,'0.125'],[3,8,'0.375']].slice(0,l>=3?11:9);const [n,d,s]=pick(P);
+  return Object.assign({prompt:`Write ${F(n,d,'big')} as a decimal.`,hint:`Make the bottom number 10, 100 or 1000.`,explain:`${F(n,d)} = <b>${s}</b>`},decE(s));},
+ example(){return {html:`${big('7 × 8 = 56')}<p>Don't know it? Use a fact you do know: 7 × 4 = 28, and double it: 28 + 28 = <b>56</b>.</p>`};}},
+
+{id:'eqfrac',title:'Equivalent Fractions',icon:'🍕',code:'MA2-PF-01 → MA3-RQF-01',game:'fractions',blurb:'Same amount, different names: 1/2 = 2/4 = 4/8.',
+ subs:l=>l>=1?['missing','simplify','compare']:['missing','missing','compare'],
+ gen(H,l,sub){
+  if(sub==='missing'){const b=rnd(2,l>=1?10:5),a=rnd(1,b-1),k=rnd(2,l>=1?6:4);const vis=barSVG({parts:b,fills:fillN(a)})+barSVG({parts:b*k,fills:fillN(a*k,BL)});
+    const askDen=l>=2&&chance(0.4);
+    if(askDen)return {sub,prompt:`Find the missing number: ${F(a,b,'big')} = ${F(a*k,'?','big')}`,vis:'',kind:'entry',fields:[{id:'d',len:3}],layout:`${F(a,b,'huge')} <span class="op">=</span> <span class="frac huge"><span class="num">${a*k}</span><span class="den">[[d]]</span></span>`,answer:{d:String(b*k)},
+      hint:`The top number was multiplied by ${k}. Do the same to the bottom.`,explain:`${a} × ${k} = ${a*k}, so ${b} × ${k} = <b>${b*k}</b>.`+vis};
+    return Object.assign({sub,prompt:`Find the missing number: ${F(a,b,'big')} = ${F('?',b*k,'big')}`,hint:`The bottom number was multiplied by ${k}. Do the same to the top.`,explain:`${F(a,b)} = ${F(a*k,b*k)} (× ${k} top and bottom). The bars show the same amount:`+vis,
+      layoutPre:`${F(a,b,'huge')} <span class="op">=</span> `},fracE(a*k,b*k,{den:true}));}
+  if(sub==='simplify'){let a,b;do{b=rnd(2,l>=2?12:8);a=rnd(1,b-1);}while(gcd(a,b)!==1);const k=rnd(2,l>=2?8:5);
+    return Object.assign({sub,prompt:`Simplify ${F(a*k,b*k,'big')} to its simplest form.`,hint:`Find the biggest number that divides into both ${a*k} and ${b*k}.`,explain:`Divide the top and bottom by ${k}: ${F(a*k,b*k)} = <b>${F(a,b)}</b>.`+barSVG({parts:b,fills:fillN(a)}),
+      layoutPre:`${F(a*k,b*k,'huge')} <span class="op">=</span> `},fracE(a,b));}
+  let a,b,c,d;for(let t=0;t<50;t++){b=rnd(2,l>=2?10:6);d=l>=2?rnd(2,10):b*rnd(2,3);a=rnd(1,b-1);c=rnd(1,d-1);if(b!==d&&(chance(0.2)||a*d!==c*b))break;}
+  const k=cmpK(a*d,c*b),L=lcm(b,d);
+  return Object.assign({sub,prompt:`Which sign goes in the circle?`,vis:`<div class="cmp">${F(a,b,'huge')}<span class="qm">?</span>${F(c,d,'huge')}</div>`,hint:`Make the bottom numbers the same. Try ${L}ths.`,
+    explain:`${F(a,b)} = ${F(a*L/b,L)} and ${F(c,d)} = ${F(c*L/d,L)}. So ${F(a,b)} ${SIGNS[k]} ${F(c,d)}.`+barSVG({parts:b,fills:fillN(a)})+barSVG({parts:d,fills:fillN(c,BL)})},signOpts(k));},
+ example(){return {html:`${big(`${F(3,4,'huge')} = ${F(6,8,'huge')}`)}${barSVG({parts:4,fills:fillN(3)})}${barSVG({parts:8,fills:fillN(6,BL)})}<p>Multiply the top <b>and</b> the bottom by the same number (here × 2). The shaded part stays the same size.</p>`};}},
+
+{id:'addfrac',title:'Adding & Subtracting Fractions',icon:'➕',code:'MA3-RQF-02',game:'addfractions',blurb:'Same denominators, mixed numbers, then related denominators (Year 5).',
+ subs:l=>l>=2?['same','sub','related','word']:['same','sub','word'],
+ gen(H,l,sub){
+  if(sub==='same'){const d=rnd(3,l>=1?12:8);let a,b;
+    if(l>=1){a=rnd(2,d-1);b=rnd(Math.max(1,d-a+1),d-1);if((a+b)%d===0)b=b>1?b-1:b;const s=a+b;
+      if(s>d&&s%d){const w=Math.floor(s/d),n=s%d;return Object.assign({sub,prompt:`${F(a,d,'big')} + ${F(b,d,'big')} = ? Write it as a mixed number.`,hint:`Add the tops: ${a} + ${b}. ${d} ${d}ths make 1 whole.`,
+        explain:`${a} + ${b} = ${s}, so the answer is ${F(s,d)}. ${d}/${d} = 1 whole, so ${F(s,d)} = <b>${M(w,n,d)}</b>.`+barSVG({parts:d,fills:fillN(d)})+barSVG({parts:d,fills:fillN(n)})},mixedE(w,n,d,{den:true}));}}
+    a=rnd(1,d-2);b=rnd(1,d-1-a);return Object.assign({sub,prompt:`${F(a,d,'big')} + ${F(b,d,'big')} = ?`,hint:`The bottom number stays ${d}. Add the top numbers.`,
+      explain:`${a} ${d}ths + ${b} ${d}ths = <b>${F(a+b,d)}</b>.`+barSVG({parts:d,fills:fillN(a).concat(fillN(b,BL))})},fracE(a+b,d,{den:true}));}
+  if(sub==='sub'){const d=rnd(3,l>=1?10:8);
+    if(l>=2){const w=rnd(2,4),a=rnd(1,d-2),b=rnd(a+1,d-1);const tot=w*d+a-b,W=Math.floor(tot/d),n=tot%d;
+      return Object.assign({sub,prompt:`${M(w,a,d,'big')} − ${F(b,d,'big')} = ?`,hint:`${F(b,d)} is more than ${F(a,d)}. Break one whole into ${d} ${d}ths: ${M(w,a,d)} = ${M(w-1,a+d,d)}.`,
+        explain:`${M(w,a,d)} = ${M(w-1,a+d,d)}. Then ${a+d} − ${b} = ${a+d-b}, so the answer is <b>${M(W,n,d)}</b>.`},n?mixedE(W,n,d,{den:true}):num(W));}
+    const a=rnd(2,d-1),b=rnd(1,a-1);return Object.assign({sub,prompt:`${F(a,d,'big')} − ${F(b,d,'big')} = ?`,hint:`Take away the top numbers. The bottom stays ${d}.`,explain:`${a} − ${b} = ${a-b}, so the answer is <b>${F(a-b,d)}</b>.`+barSVG({parts:d,fills:fillN(a-b).concat(fillN(b,'#fda4af'))})},fracE(a-b,d,{den:true}));}
+  if(sub==='related'){const b=pick([2,3,4,5]),k=pick(b<=3?[2,3,4]:[2]),D2=b*k;let a=rnd(1,b-1),c=rnd(1,D2-1);if(l<3)while(a*k+c>=D2&&c>1)c--;
+    const s=a*k+c;const res=s>D2&&l>=3&&s%D2?mixedE(Math.floor(s/D2),s%D2,D2,{den:true}):fracE(s,D2,{den:true});
+    return Object.assign({sub,prompt:`${F(a,b,'big')} + ${F(c,D2,'big')} = ?`,hint:`Change ${F(a,b)} into ${D2}ths first: × ${k} top and bottom.`,
+      explain:`${F(a,b)} = ${F(a*k,D2)}. Then ${F(a*k,D2)} + ${F(c,D2)} = <b>${F(s,D2)}</b>${s>D2&&s%D2?` = ${M(Math.floor(s/D2),s%D2,D2)}`:''}.`+barSVG({parts:b,fills:fillN(a)})+barSVG({parts:D2,fills:fillN(a*k).concat(fillN(c,BL))})},res);}
+  const d=pick([6,8,10,12]),a=rnd(1,d/2-1),b=rnd(1,d/2-1),who=pick(['Mia','Zoe','Ruby']);
+  return Object.assign({sub:'word',prompt:`<span class="story">🍕 ${NAME} ate ${F(a,d)} of a pizza and ${who} ate ${F(b,d)}. What fraction of the pizza did they eat altogether?</span>`,vis:pizzaSVG({parts:d,shaded:0,r:70}),
+    hint:`Add the slices: ${a} + ${b}. The pizza has ${d} slices.`,explain:`${a} + ${b} = ${a+b} slices out of ${d}: <b>${F(a+b,d)}</b>.`+pizzaSVG({parts:d,shaded:a+b,r:70})},fracE(a+b,d,{den:true}));},
+ example(){return {html:`${big(`${F(1,2,'huge')} + ${F(1,4,'huge')} = ?`)}<p>Make the bottom numbers the same: ${F(1,2)} = ${F(2,4)}.</p>${barSVG({parts:4,fills:[OR,OR,BL]})}<p>${F(2,4)} + ${F(1,4)} = <b>${F(3,4)}</b>. Only add the <b>top</b> numbers. The bottom number tells you the size of the pieces.</p>`};}},
+
+{id:'decline',title:'Decimals on a Number Line',icon:'📍',code:'MA2-RN-02',game:'decimals',blurb:'Tenths and hundredths on number lines, comparing and ordering.',
+ subs:l=>['read','compare','order'],
+ gen(H,l,sub){
+  if(sub==='read'){let line,ans,hint;
+    if(l===0){const n=rnd(1,9);line={lo:0,hi:100,step:10,lab:'ends',marks:[{v:n*10}]};ans=D(n*10);hint='There are 10 jumps from 0 to 1, so each jump is 0.1.';}
+    else if(l===1){const W=rnd(1,4)*100;const v=W+rnd(1,9)*10;line={lo:W,hi:W+100,step:10,lab:'ends',marks:[{v}]};ans=D(v);hint=`Each jump is 0.1. Start at ${D(W)}.`;}
+    else{const lo=rnd(0,29)*10,v=lo+rnd(1,9);line={lo,hi:lo+10,step:1,lab:'ends',marks:[{v}]};ans=D(v,2);hint=`Between ${D(lo,1)} and ${D(lo+10,1)} there are 10 little steps of 0.01.`;}
+    return Object.assign({sub,prompt:'What decimal is the orange dot on?',vis:dl({lines:[line]}),hint,explain:`The dot is on <b>${ans}</b>.`+dl({lines:[Object.assign({},line,{lab:'all',highlight:line.marks[0].v})]})},decE(ans));}
+  if(sub==='compare'){let a,b;if(chance(0.5)){const x=rnd(2,9);a=x*10;b=(x-1)*10+rnd(1,9);}else{a=rnd(11,99);do{b=rnd(11,99);}while(b===a);}
+    if(l>=2){a+=100*rnd(0,2);b+=100*rnd(0,2);}const s=chance(0.5)?[a,b]:[b,a];const k=cmpK(s[0],s[1]);
+    return Object.assign({sub,prompt:'Which sign goes in the circle?',vis:`<div class="cmp">${DEC(D(s[0]),'huge')}<span class="qm">?</span>${DEC(D(s[1]),'huge')}</div>`,hint:`Give both two decimal places: ${D(s[0],2)} and ${D(s[1],2)}.`,
+      explain:`${D(s[0],2)} ${SIGNS[k]} ${D(s[1],2)}. More digits doesn't mean bigger! Compare ones, then tenths, then hundredths.`},signOpts(k));}
+  const vals=new Set();while(vals.size<4){let v=chance(0.5)?rnd(1,9)*10:rnd(1,99);if(l>=1&&chance(0.3))v+=100;vals.add(v);}const V=[...vals];const big_=chance(0.5);const ans=big_?Math.max(...V):Math.min(...V);
+  return Object.assign({sub,prompt:`Which decimal is the <b>${big_?'largest':'smallest'}</b>?`,hint:'Give them all two decimal places, then compare.',explain:`With two places: ${V.map(v=>D(v,2)).join(', ')}. The ${big_?'largest':'smallest'} is <b>${D(ans)}</b>.`},opts(D(ans),V.filter(v=>v!==ans).map(v=>D(v))));},
+ example(){return {html:`${dl({lines:[{lo:0,hi:100,step:10,lab:'all',marks:[{v:70}]}]})}<p>From 0 to 1 there are 10 equal jumps, so each jump is <b>0.1</b>. The dot is 7 jumps along: <b>0.7</b>.</p>`};}},
+
+{id:'thou',title:'Decimals to Thousandths',icon:'🔬',code:'MA3-RN-02',game:'decimals',blurb:'Three decimal places: read, compare, order and round.',
+ subs:l=>l>=2?['frac','digit','compare','order','round']:['frac','digit','compare','order'],
+ gen(H,l,sub){
+  const w=l>=2?rnd(0,9):0;
+  if(sub==='frac'){const r=pick([rnd(1,9),rnd(11,99),rnd(101,999)]),vt=w*1000+r;const sf=w?M(w,r,1000,'big'):F(r,1000,'big');
+    return Object.assign({sub,prompt:`Write ${sf} as a decimal.`,hint:`Thousandths need <b>three</b> places after the point.${r<100?' Use zeros to hold empty places.':''}`,explain:`${F(r,1000)} = ${D3(r,3)}, so the answer is <b>${D3(vt,3)}</b>.`},decE(D3(vt,3)));}
+  if(sub==='digit'){let vt,s,idx;for(let t=0;t<50;t++){vt=w*1000+rnd(101,999);s=D3(vt,3).replace('.','');idx=rnd(1,3);if(s[idx]!=='0'&&s.split('').filter(c=>c===s[idx]).length===1)break;}
+    const dg=+s[idx],PL=['ones','tenths','hundredths','thousandths'];
+    const vals=[dg+'',D3(dg*100,1),D3(dg*10,2),D3(dg,3)];
+    return Object.assign({sub,prompt:`What is the value of the digit <b>${dg}</b> in ${DEC(D3(vt,3))}?`,hint:'After the point the places are tenths, hundredths, thousandths.',explain:`The ${dg} is in the <b>${PL[idx]}</b> place, so it is worth <b>${vals[idx]}</b>.`},opts(vals[idx],vals.filter((_,i)=>i!==idx),{cls:'txt'}));}
+  if(sub==='compare'){let a,b;const k0=pick(['trap','trap','equal','plain']);
+    if(k0==='trap'){const t=rnd(2,9);a=t*100;b=(t-1)*100+rnd(10,99);if(b%10===0)b++;}else if(k0==='equal'){a=rnd(1,9)*100+rnd(1,9)*10;b=a;}else{a=rnd(101,999);do{b=rnd(101,999);}while(b===a);}
+    a+=w*1000;b+=w*1000;const s=chance(0.5)?[[a,k0==='equal'?2:null],[b,k0==='equal'?3:null]]:[[b,k0==='equal'?3:null],[a,k0==='equal'?2:null]];const k=cmpK(s[0][0],s[1][0]);
+    return Object.assign({sub,prompt:'Which sign goes in the circle?',vis:`<div class="cmp">${DEC(D3(s[0][0],s[0][1]),'huge')}<span class="qm">?</span>${DEC(D3(s[1][0],s[1][1]),'huge')}</div>`,hint:`Give them both three places: ${D3(s[0][0],3)} and ${D3(s[1][0],3)}.`,
+      explain:`${D3(s[0][0],3)} ${SIGNS[k]} ${D3(s[1][0],3)}. Compare the places from left to right. More digits doesn't mean bigger!`},signOpts(k));}
+  if(sub==='order'){const set=new Set();const t=rnd(1,8);while(set.size<4){const kind=rnd(0,2);set.add(w*1000+(kind===0?t*100:kind===1?t*100+rnd(1,9)*10+rnd(0,9):(t+rnd(-1,1))*100+rnd(1,99)));}
+    const V=[...set].filter(v=>v>0);const big_=chance(0.5),ans=big_?Math.max(...V):Math.min(...V);
+    return Object.assign({sub,prompt:`Which is the <b>${big_?'largest':'smallest'}</b>?`,hint:'Give them all three decimal places first.',explain:`With three places: ${V.map(v=>D3(v,3)).join(', ')}. The ${big_?'largest':'smallest'} is <b>${D3(ans)}</b>.`},opts(D3(ans),V.filter(v=>v!==ans).map(v=>D3(v))));}
+  const toT=chance(0.5);let vt;do{vt=w*1000+rnd(1,999);}while(vt%10===0||(toT&&vt%100===50)||(!toT&&vt%10===5));
+  const unit=toT?100:10,lo=Math.floor(vt/unit)*unit,ans=vt-lo>=unit/2?lo+unit:lo;const pl=toT?1:2;
+  return Object.assign({sub:'round',prompt:`Round ${DEC(D3(vt,3))} to the nearest <b>${toT?'tenth':'hundredth'}</b>.`,hint:`Look at the ${toT?'hundredths':'thousandths'} digit. 5 or more rounds up.`,
+    explain:`${D3(vt,3)} is between ${D3(lo,pl)} and ${D3(lo+unit,pl)}. It rounds to <b>${D3(ans,pl)}</b>.`},decE(D3(ans,pl)));},
+ example(){return {html:`${big(`${F(47,1000,'huge')} = ${DEC('0.047','huge')}`)}<table class="pv"><tr><th>Ones</th><th></th><th>Tenths</th><th>Hundredths</th><th>Thousandths</th></tr><tr><td>0</td><td class="pt">.</td><td>0</td><td>4</td><td>7</td></tr></table><p>47 thousandths is less than one tenth, so the tenths place gets a <b>0</b>. Always use three places for thousandths.</p>`};}},
+
+{id:'multdiv',title:'Multiplication & Division',icon:'✖️',code:'MA3-MR-01',blurb:'2-digit × 1-digit, division with remainders, factors and multiples.',
+ subs:l=>['x21','x21','div','factors','multiples'],
+ gen(H,l,sub){
+  if(sub==='x21'){let a,b;if(l===0){a=rnd(12,49);b=rnd(2,6);}else if(l===1){a=rnd(23,99);b=rnd(3,9);}else if(l===2){a=rnd(112,499);b=rnd(3,9);}else{a=rnd(12,39);b=rnd(11,19);}
+    const parts=b>=10?[[a,10],[a,b-10]]:[[a-a%10,b],[a%10,b]];const area=`<table class="dtab"><tr><th>×</th>${b>=10?`<th>10</th><th>${b-10}</th>`:`<th>${a-a%10}</th><th>${a%10}</th>`}</tr><tr><th>${b>=10?a:b}</th>${parts.map(p=>`<td>${p[0]*p[1]}</td>`).join('')}</tr></table>`;
+    return Object.assign({sub,prompt:`${a} × ${b} = ?`,hint:`Split it up: ${b>=10?`${a} × 10 and ${a} × ${b-10}`:`${a-a%10} × ${b} and ${a%10} × ${b}`}, then add.`,explain:`${area}${parts.map(p=>p[0]*p[1]).join(' + ')} = <b>${a*b}</b>`},num(a*b));}
+  if(sub==='div'){const b=rnd(3,9);const q=l>=2?rnd(21,99):rnd(4,l>=1?19:12);const r=l>=1?rnd(1,b-1):0;const n=b*q+r;
+    const base={sub,prompt:`${n} ÷ ${b} = ?${r?' Give the remainder too.':''}`,hint:`How many ${b}s make ${n}? Try ${b} × ${Math.floor(q/10)*10||q} first.`,explain:`${b} × ${q} = ${b*q}${r?`, and ${n} − ${b*q} = ${r} left over`:''}. So ${n} ÷ ${b} = <b>${q}${r?` remainder ${r}`:''}</b>.`};
+    return Object.assign(base,r?qrE(q,r):num(q));}
+  if(sub==='factors'){if(l>=2&&chance(0.5)){const N=pick([12,16,18,20,24,28,30,36,40,42,48]);const f=range(N).map(i=>i+1).filter(i=>N%i===0);
+      return Object.assign({sub,prompt:`How many factors does ${N} have?`,hint:'Find the factor pairs: 1 × '+N+', 2 × ?, ...',explain:`Factors of ${N}: ${f.join(', ')}. That's <b>${f.length}</b>.`},num(f.length));}
+    const N=pick([12,15,18,20,24,28,30,32,36,40,45,48,56,60,72]);const f=range(N-1).map(i=>i+2).filter(i=>N%i===0&&i<N);const fa=pick(f);const nf=range(Math.min(N,15)).map(i=>i+2).filter(i=>N%i!==0);
+    return Object.assign({sub,prompt:`Which number is a <b>factor</b> of ${N}?`,hint:'A factor divides in exactly, with nothing left over.',explain:`${N} ÷ ${fa} = ${N/fa} exactly, so <b>${fa}</b> is a factor of ${N}.`},opts(fa,shuffle(nf)));}
+  if(l>=2&&chance(0.5)){const [a,b]=pick([[4,6],[3,4],[6,8],[4,10],[6,9],[5,6],[8,12],[3,5]]);const L=lcm(a,b);
+    return Object.assign({sub,prompt:`What is the lowest common multiple of ${a} and ${b}?`,hint:`List the multiples of ${b}: ${b}, ${2*b}, ${3*b}, ... Which one is also a multiple of ${a}?`,explain:`Multiples of ${a}: ${range(6).map(i=>a*(i+1)).join(', ')}…<br>Multiples of ${b}: ${range(5).map(i=>b*(i+1)).join(', ')}…<br>The first one in both lists is <b>${L}</b>.`},num(L));}
+  const k=rnd(3,l>=1?12:9),m=k*rnd(3,12);const nm=[m+1,m-1,m+2,k*rnd(3,12)+1,m+k-1].filter(x=>x%k!==0);
+  return Object.assign({sub,prompt:`Which number is a <b>multiple</b> of ${k}?`,hint:`Multiples of ${k} are in the ${k} times table.`,explain:`${k} × ${m/k} = <b>${m}</b>.`},opts(m,nm));},
+ example(){return {html:`${big('34 × 6 = ?')}<table class="dtab"><tr><th>×</th><th>30</th><th>4</th></tr><tr><th>6</th><td>180</td><td>24</td></tr></table><p>Split 34 into 30 and 4. 30 × 6 = 180 and 4 × 6 = 24. Add them: 180 + 24 = <b>204</b>.</p>`};}},
+
+{id:'fracqty',title:'Fractions of Amounts & Mixed Numbers',icon:'🍫',code:'MA3-RQF-01/02',blurb:'3/4 of 24, improper fractions and mixed numbers.',
+ subs:l=>l>=2?['of','toMixed','toImproper','compare']:['of','of','toMixed','toImproper'],
+ gen(H,l,sub){
+  if(sub==='of'){const d=pick(l>=2?[3,4,5,6,8,10,12]:[2,3,4,5,8,10]),k=rnd(2,l>=2?12:8),n=l===0?1:rnd(1,d-1),Q=d*k;
+    return Object.assign({sub,prompt:`What is ${F(n,d,'big')} of ${Q}?`,vis:barSVG({parts:d,fills:fillN(0)}),hint:`Split ${Q} into ${d} equal parts: ${Q} ÷ ${d}. Then take ${n} of them.`,
+      explain:`${Q} ÷ ${d} = ${k}, so each part is ${k}. ${n} part${n>1?'s':''} = ${n} × ${k} = <b>${n*k}</b>.`+barSVG({parts:d,fills:fillN(n),labels:range(d).map(()=>k)})},num(n*k));}
+  if(sub==='toMixed'){const d=rnd(2,l>=1?10:6),w=rnd(1,l>=1?5:3),n=rnd(1,d-1),p=w*d+n;
+    return Object.assign({sub,prompt:`Write ${F(p,d,'big')} as a mixed number.`,hint:`How many whole ${d}s fit into ${p}? ${d} × ${w} = ${w*d}.`,explain:`${p} ÷ ${d} = ${w} remainder ${n}, so ${F(p,d)} = <b>${M(w,n,d)}</b>.`+range(w).map(()=>barSVG({parts:d,fills:fillN(d),h:36})).join('')+barSVG({parts:d,fills:fillN(n),h:36}),check:mixedCheck(w,n,d)},mixedE(w,n,d,{den:l<1}));}
+  if(sub==='toImproper'){const d=rnd(2,l>=1?12:8),w=rnd(1,l>=1?6:3),n=rnd(1,d-1);
+    return Object.assign({sub,prompt:`Write ${M(w,n,d,'big')} as an improper fraction.`,hint:`Each whole is ${d} ${d}ths. ${w} × ${d} + ${n}.`,explain:`${w} × ${d} = ${w*d}, plus ${n} = ${w*d+n}. So ${M(w,n,d)} = <b>${F(w*d+n,d)}</b>.`},fracE(w*d+n,d,{den:true}));}
+  let a,b,c,d;for(let t=0;t<40;t++){b=rnd(2,8);d=rnd(2,8);a=rnd(1,2*b);c=rnd(1,2*d);if(b!==d&&a*d!==c*b)break;}const k=cmpK(a*d,c*b),L=lcm(b,d);
+  const show=(x,y)=>x>y&&x%y?M(Math.floor(x/y),x%y,y,'huge'):F(x,y,'huge');
+  return Object.assign({sub,prompt:'Which sign goes in the circle?',vis:`<div class="cmp">${show(a,b)}<span class="qm">?</span>${show(c,d)}</div>`,hint:`Change both to ${L}ths.`,explain:`${F(a,b)} = ${F(a*L/b,L)} and ${F(c,d)} = ${F(c*L/d,L)}, so the first ${SIGNW[k]} the second.`},signOpts(k));},
+ example(){return {html:`${big(`${F(3,4,'huge')} of 20 = ?`)}${barSVG({parts:4,fills:fillN(3),labels:[5,5,5,5]})}<p>Split 20 into 4 equal parts: 20 ÷ 4 = 5. Take 3 parts: 3 × 5 = <b>15</b>.</p>`};}},
+
+{id:'percent',title:'Percentages',icon:'💯',code:'MA3-RN-03',blurb:'Per cent means out of 100. Benchmarks and percentages of amounts.',
+ subs:l=>l>=1?['grid','convert','of','of','largest']:['grid','convert','of'],
+ gen(H,l,sub){
+  if(sub==='grid'){const p=rnd(3,97);return Object.assign({sub,prompt:'What percentage of the grid is coloured?',vis:`<div class="grids">${grid100(p,{size:200})}</div>`,hint:'There are 100 squares. Each column is 10 squares.',explain:`${p} out of 100 squares = <b>${p}%</b>.`},num(p,{post:'%'}));}
+  if(sub==='convert'){const P=[[50,'1/2','0.5'],[25,'1/4','0.25'],[75,'3/4','0.75'],[10,'1/10','0.1'],[20,'1/5','0.2'],[40,'2/5','0.4'],[5,'1/20','0.05'],[1,'1/100','0.01']].slice(0,l>=2?8:5);const [p,f,dd]=pick(P);
+    if(chance(0.5)){const fs=P.map(x=>x[1]);return Object.assign({sub,prompt:`Which fraction is the same as <b>${p}%</b>?`,hint:'Per cent means out of 100.',explain:`${p}% = ${F(p,100)} = <b>${f}</b>.`},opts(f,shuffle(fs.filter(x=>x!==f)),{cls:'txt'}));}
+    return Object.assign({sub,prompt:`Write <b>${p}%</b> as a decimal.`,hint:`${p}% = ${p} hundredths.`,explain:`${p}% = ${F(p,100)} = <b>${dd}</b>.`},decE(dd));}
+  if(sub==='of'){const ps=l===0?[50,10]:l===1?[50,25,75,10]:l===2?[10,20,25,75,5,30]:[15,35,5,60,12,40];let p,Q;for(let t=0;t<60;t++){p=pick(ps);Q=pick([20,40,60,80,120,200,240,300,400,160]);if(p*Q%100===0)break;}
+    const ans=p*Q/100;return Object.assign({sub,prompt:`What is ${p}% of ${Q}?`,hint:p%10===0?`10% of ${Q} is ${Q/10}. ${p}% is ${p/10} lots of that.`:`Find 10% (${Q/10}) or 1% (${Q/100}) first.`,explain:`10% of ${Q} = ${Q/10}. ${p}% of ${Q} = <b>${ans}</b>.`},num(ans));}
+  const P=shuffle([[rnd(31,49),'pc'],[rnd(5,9)*10,'dec'],[pick([[1,4],[3,10],[2,5],[3,5]]),'frac']]);const vals=P.map(([v,k])=>k==='pc'?v:k==='dec'?v:v[0]*100/v[1]);const labs=P.map(([v,k])=>k==='pc'?v+'%':k==='dec'?D(v):`${v[0]}/${v[1]}`);
+  const mx=vals.indexOf(Math.max(...vals));if(vals.filter(v=>v===vals[mx]).length>1)return this.gen(H,l,'of');
+  return Object.assign({sub:'largest',prompt:'Which is the <b>largest</b>?',hint:'Change them all into percentages.',explain:labs.map((s,i)=>`${s} = ${vals[i]}%`).join(', ')+`. The largest is <b>${labs[mx]}</b>.`},{kind:'choice',choices:labs,answer:mx,cls:'opts3'});},
+ example(){return {html:`<div class="grids">${grid100(25,{size:150})}</div><p>25 out of 100 squares are coloured. <b>Per cent</b> means "out of 100", so that's <b>25%</b> = ${F(25,100)} = ${F(1,4)} = 0.25.</p><p>To find 25% of 80: a quarter of 80 is <b>20</b>.</p>`};}},
+
+{id:'money',title:'Money & Decimals',icon:'💵',code:'MA3-RN-02 · MA3-AR-01',blurb:'Totals, change, unit prices and discounts.',
+ subs:l=>l>=2?['total','change','times','discount']:l>=1?['total','change','times','unit']:['total','change','times'],
+ gen(H,l,sub){const ITEMS=['a book','a hat','a puzzle','a ball','a kite','a torch','a sticker book','a drink bottle'];const it=shuffle(ITEMS.slice());const price=()=>l===0?rnd(10,95)*10:rnd(105,l>=2?2499:1499);
+  if(sub==='total'){const n=l>=2?3:2,ps=range(n).map(price),t=ps.reduce((a,b)=>a+b,0);return Object.assign({sub,prompt:`<span class="story">🛍️ ${NAME} buys ${ps.map((p,i)=>`${it[i]} for <b>${money(p)}</b>`).join(' and ')}. How much altogether?</span>`,hint:'Line up the decimal points and add.',explain:`${ps.map(money).join(' + ')} = <b>${money(t)}</b>`},decE(money(t).slice(1),{pre:'$'}));}
+  if(sub==='change'){const p=price(),note=[500,1000,2000,5000].find(x=>x>p);return Object.assign({sub,prompt:`<span class="story">💵 ${NAME} buys ${it[0]} for <b>${money(p)}</b> and pays with a <b>${money(note).replace('.00','')}</b> note. How much change?</span>`,hint:`Count up from ${money(p)} to ${money(note)}.`,explain:`${money(note)} − ${money(p)} = <b>${money(note-p)}</b>`},decE(money(note-p).slice(1),{pre:'$'}));}
+  if(sub==='times'){const p=l===0?rnd(2,9)*50:rnd(105,950),k=rnd(3,l>=1?9:5);return Object.assign({sub,prompt:`<span class="story">🧁 Cupcakes cost <b>${money(p)}</b> each. How much do ${k} cupcakes cost?</span>`,hint:`${k} × ${money(p)}. Work in cents: ${k} × ${p}c.`,explain:`${k} × ${p}c = ${k*p}c = <b>${money(k*p)}</b>`},decE(money(k*p).slice(1),{pre:'$'}));}
+  if(sub==='unit'){const k=pick([3,4,5,6]),u=rnd(4,40)*5;return Object.assign({sub,prompt:`<span class="story">🍎 A bag of ${k} apples costs <b>${money(k*u)}</b>. How much is one apple?</span>`,hint:`Divide by ${k}. Work in cents: ${k*u}c ÷ ${k}.`,explain:`${k*u}c ÷ ${k} = ${u}c = <b>${money(u)}</b>`},decE(money(u).slice(1),{pre:'$'}));}
+  const pc=pick([10,25,50,20]);let p;do{p=rnd(4,80)*100;}while(p*pc%100!==0);const off=p*pc/100;
+  return Object.assign({sub:'discount',prompt:`<span class="story">🏷️ A scooter costs <b>${money(p)}</b>. It's on sale with <b>${pc}% off</b>. What is the sale price?</span>`,hint:`Find ${pc}% of ${money(p)} first, then take it away.`,explain:`${pc}% of ${money(p)} = ${money(off)}. ${money(p)} − ${money(off)} = <b>${money(p-off)}</b>`},decE(money(p-off).slice(1),{pre:'$'}));},
+ example(){return {html:`<p>${NAME} buys a book for <b>$12.45</b> and pays with a <b>$20</b> note.</p><table class="colsum"><tr><td></td><td>$20.00</td></tr><tr><td>−</td><td>$12.45</td></tr><tr class="tot"><td>=</td><td>$7.55</td></tr></table><p>Line up the decimal points. Or count up: $12.45 → $12.50 (5c) → $13 (50c) → $20 ($7). Total change <b>$7.55</b>.</p>`};}},
+
+{id:'time24',title:'24-hour Time & Timetables',icon:'🕰️',code:'MA3-NSM-02',blurb:'am/pm, 24-hour time, durations and timetables.',
+ subs:l=>l>=1?['to24','to12','duration','timetable']:['to24','to12','duration'],
+ gen(H,l,sub){const hm=(h,m)=>`${h}:${String(m).padStart(2,'0')}`;const h24=(h,m)=>`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+  if(sub==='to24'){const h=rnd(1,12),m=rnd(0,11)*5,pm=chance(0.65);const H=pm?(h===12?12:h+12):(h===12?0:h);
+    return Object.assign({sub,prompt:`Write <b>${hm(h,m)} ${pm?'pm':'am'}</b> in 24-hour time.`,vis:clockSVG(h,m,{size:160}),hint:pm?'After midday, add 12 to the hours.':'Before midday, the hours stay the same (12 am is 00).',explain:`${hm(h,m)} ${pm?'pm':'am'} = <b>${h24(H,m)}</b>`},timeE(H,m));}
+  if(sub==='to12'){const H=rnd(13,23),m=rnd(0,11)*5;const r=`${hm(H-12,m)} pm`;return Object.assign({sub,prompt:`What is <b>${h24(H,m)}</b> in 12-hour time?`,hint:'Take away 12 from the hours. It is after midday, so it is pm.',explain:`${H} − 12 = ${H-12}, so ${h24(H,m)} is <b>${r}</b>.`},opts(r,[`${hm(H-12,m)} am`,`${hm(H-10,m)} pm`,`${hm(H%10||10,m)} pm`,`${hm(H-11,m)} pm`],{cls:'txt'}));}
+  if(sub==='duration'){const sH=rnd(7,l>=2?20:16),sM=rnd(0,11)*5;const dur=l===0?rnd(2,11)*5:rnd(7,l>=2?40:20)*5;const e=sH*60+sM+dur;const E=[Math.floor(e/60),e%60];const fmt=l>=2?h24:(h,m)=>`${hm(h>12?h-12:h,m)} ${h>=12?'pm':'am'}`;
+    if(l>=2&&dur>=60)return Object.assign({sub,prompt:`A movie starts at <b>${fmt(sH,sM)}</b> and ends at <b>${fmt(E[0],E[1])}</b>. How long is it?`,hint:'Count on the whole hours first, then the minutes.',explain:`From ${fmt(sH,sM)} to ${fmt(E[0],E[1])} is <b>${Math.floor(dur/60)} h ${dur%60} min</b> (${dur} minutes).`,check:v=>(+v.a)*60+(+v.b)===dur},two(Math.floor(dur/60),dur%60,{mid:' <small>h</small> ',lb:''}),{layout:'[[a]] <small>h</small> [[b]] <small>min</small>'});
+    return Object.assign({sub,prompt:`Soccer training starts at <b>${fmt(sH,sM)}</b> and finishes at <b>${fmt(E[0],E[1])}</b>. How many minutes is that?`,hint:`Count on to the next o'clock first.`,explain:`From ${fmt(sH,sM)} to ${fmt(E[0],E[1])} is <b>${dur} minutes</b>.`},num(dur,{post:' min'}));}
+  const stops=['School','Library','Park','Pool','Station'];const t0=rnd(14,16)*60+rnd(0,5)*5;const gaps=[rnd(2,6)*2,rnd(3,9)*2,rnd(2,7)*2,rnd(3,8)*2];const times=[t0];gaps.forEach(g=>times.push(times[times.length-1]+g));
+  const T=x=>h24(Math.floor(x/60),x%60);const a=rnd(0,2),b=rnd(a+1,4);
+  return Object.assign({sub:'timetable',prompt:`Bus timetable: how long does the bus take from the <b>${stops[a]}</b> to the <b>${stops[b]}</b>?`,vis:tableHTML(['Stop','Time'],stops.map((s,i)=>[s,T(times[i])])),hint:`${T(times[b])} take away ${T(times[a])}.`,explain:`${T(times[a])} to ${T(times[b])} is <b>${times[b]-times[a]} minutes</b>.`},num(times[b]-times[a],{post:' min'}));},
+ example(){return {html:`<div class="row" style="justify-content:center">${clockSVG(3,40,{size:140})}</div><p><b>3:40 pm</b> is after midday, so add 12 to the hours: 3 + 12 = 15. In 24-hour time it is <b>15:40</b>.</p><p>Morning times keep their hours: 7:05 am = <b>07:05</b>.</p>`};}},
+
+{id:'areaper',title:'Area & Perimeter',icon:'📐',code:'MA3-2DS-02 · MA3-GM-02',blurb:'Area in square units, perimeter, L-shapes and missing sides.',
+ subs:l=>['area','perim'],
+ gen(H,l,sub){const w=rnd(3,l>=1?12:8),h=rnd(2,l>=1?9:6);
+  if(l>=2&&chance(0.55)){const cw=rnd(1,w-2),ch=rnd(1,h-1);const A=w*h-cw*ch,P=2*(w+h);
+    const vis=rectSVG(w,h,{grid:false,labels:{w:w+' cm',h:h+' cm'},cut:[cw,ch]});const note=`The missing corner is ${cw} cm wide and ${ch} cm tall.`;
+    if(sub==='area')return Object.assign({sub,prompt:`What is the area of this L-shape? ${note}`,vis,hint:`Area of the big rectangle (${w} × ${h}) take away the missing corner (${cw} × ${ch}).`,explain:`${w} × ${h} = ${w*h}, ${cw} × ${ch} = ${cw*ch}. ${w*h} − ${cw*ch} = <b>${A} cm²</b>.`+rectSVG(w,h,{cut:[cw,ch]})},num(A,{post:' cm²'}));
+    return Object.assign({sub,prompt:`What is the perimeter of this L-shape? ${note}`,vis,hint:`The steps add up to the same as the full sides. Perimeter = 2 × (${w} + ${h}).`,explain:`The two short edges of the corner add up to the missing parts, so the perimeter is 2 × (${w} + ${h}) = <b>${P} cm</b>.`},num(P,{post:' cm'}));}
+  if(l>=3){if(sub==='area')return Object.assign({sub,prompt:`A rectangle has an area of <b>${w*h} cm²</b>. One side is <b>${w} cm</b>. How long is the other side?`,vis:rectSVG(w,h,{grid:false,labels:{w:w+' cm',h:'?'}}),hint:`${w} × ? = ${w*h}`,explain:`${w*h} ÷ ${w} = <b>${h} cm</b>.`},num(h,{post:' cm'}));
+    return Object.assign({sub,prompt:`A rectangle has a perimeter of <b>${2*(w+h)} cm</b>. One side is <b>${w} cm</b>. How long is the other side?`,vis:rectSVG(w,h,{grid:false,labels:{w:w+' cm',h:'?'}}),hint:`Half the perimeter is ${w+h} cm = one long side + one short side.`,explain:`${2*(w+h)} ÷ 2 = ${w+h}. ${w+h} − ${w} = <b>${h} cm</b>.`},num(h,{post:' cm'}));}
+  const grid=l===0;const vis=rectSVG(w,h,{grid,labels:grid?false:{w:w+' cm',h:h+' cm'}});
+  if(sub==='area')return Object.assign({sub,prompt:grid?'Each square is 1 cm². What is the area?':'What is the area of this rectangle?',vis,hint:grid?`Count the rows: ${h} rows of ${w}.`:'Area = length × width.',explain:`${w} × ${h} = <b>${w*h} cm²</b>.`+(grid?'':rectSVG(w,h))},num(w*h,{post:' cm²'}));
+  return Object.assign({sub,prompt:grid?'Each square is 1 cm long. What is the perimeter?':'What is the perimeter of this rectangle?',vis,hint:'Perimeter is the distance all the way around: add all 4 sides.',explain:`${w} + ${h} + ${w} + ${h} = <b>${2*(w+h)} cm</b>.`},num(2*(w+h),{post:' cm'}));},
+ example(){return {html:`${rectSVG(5,3,{labels:{w:'5 cm',h:'3 cm'}})}<p><b>Area</b> = how many squares cover it: 3 rows of 5 = 5 × 3 = <b>15 cm²</b>.</p><p><b>Perimeter</b> = the distance around: 5 + 3 + 5 + 3 = <b>16 cm</b>.</p>`};}},
+
+{id:'angles',title:'Angles',icon:'📐',code:'MA3-GM-03',blurb:'Acute, right, obtuse, straight and reflex. Angles on a line and at a point.',
+ subs:l=>l>=2?['type','measure','straight','point']:l>=1?['type','measure','straight']:['type','type','measure'],
+ gen(H,l,sub){const TY=['acute','right','obtuse','straight','reflex'];
+  if(sub==='type'){const k=l===0?rnd(0,2):rnd(0,4);const deg=[rnd(2,8)*10,90,rnd(10,17)*10,180,rnd(20,33)*10][k];const names=l===0?TY.slice(0,3):TY;
+    return Object.assign({sub,prompt:'What type of angle is marked in red?',vis:angleSVG(deg,{rot:rnd(0,1)*20}),hint:'Right = 90°. Acute is smaller, obtuse is between 90° and 180°, straight = 180°, reflex is more than 180°.',explain:`It is about ${deg}°, so it is <b>${TY[k]}</b>.`},fixedOpts(names,k));}
+  if(sub==='measure'){const deg=rnd(2,16)*10;const ds=[deg+30,deg-30,180-deg,deg+60,deg-50].filter(x=>x>0&&x<180&&x!==deg);
+    return Object.assign({sub,prompt:'Estimate the size of the red angle.',vis:angleSVG(deg),hint:'Compare it to a right angle (90°). Is it bigger or smaller?',explain:`The angle is <b>${deg}°</b>. ${deg<90?'It is smaller than a right angle.':deg>90?'It is bigger than a right angle.':'It is a right angle.'}`},opts(deg+'°',ds.map(x=>x+'°'),{cls:'txt'}));}
+  if(sub==='straight'){const a=rnd(3,15)*10+(l>=2?rnd(0,1)*5:0);return Object.assign({sub,prompt:'The angles are on a straight line. What is the missing angle?',vis:straightSVG(180-a,{la:'?',lb:a+'°'}),hint:'Angles on a straight line add up to 180°.',explain:`180° − ${a}° = <b>${180-a}°</b>.`},num(180-a,{post:'°'}));}
+  const a=rnd(8,14)*10,b=rnd(6,12)*10,c=360-a-b;const rays=[0,a,a+b].map(x=>-x*Math.PI/180);
+  const vis=`<svg class="shape" viewBox="0 0 240 240" width="240">${rays.map(r=>`<line x1="120" y1="120" x2="${120+100*Math.cos(r)}" y2="${120+100*Math.sin(r)}" stroke="#1f2937" stroke-width="5"/>`).join('')}${[[a/2,a+'°'],[a+b/2,b+'°'],[a+b+c/2,'?']].map(([m,t])=>`<text x="${120+55*Math.cos(-m*Math.PI/180)}" y="${126+55*Math.sin(-m*Math.PI/180)}" text-anchor="middle" font-size="20" font-weight="bold" fill="${RED}">${t}</text>`).join('')}</svg>`;
+  return Object.assign({sub:'point',prompt:'The angles meet at a point. What is the missing angle?',vis,hint:'Angles at a point add up to 360°.',explain:`360° − ${a}° − ${b}° = <b>${c}°</b>.`},num(c,{post:'°'}));},
+ example(){return {html:`<div class="row" style="justify-content:center">${angleSVG(50,{label:'acute'})}${angleSVG(90,{label:'right'})}${angleSVG(130,{label:'obtuse'})}</div><p>A <b>right angle</b> is 90° (a square corner). <b>Acute</b> angles are smaller, <b>obtuse</b> angles are between 90° and 180°. A straight line is 180°.</p>`};}},
+
+{id:'chance',title:'Chance & Probability',icon:'🎲',code:'MA3-CHAN-01',blurb:'Likely or unlikely, and probabilities as fractions.',
+ subs:l=>l>=1?['words','prob','compare','outcomes']:['words','prob','compare'],
+ gen(H,l,sub){const C=[['red','#ef4444'],['blue','#3b82f6'],['green','#22c55e'],['yellow','#facc15']];
+  if(sub==='words'){const tot=pick([6,8,10]);const k=rnd(0,4);const r=[0,rnd(1,Math.floor(tot/2)-1),tot/2,rnd(tot/2+1,tot-1),tot][k];
+    return Object.assign({sub,prompt:`A bag has ${tot} marbles. ${NAME} takes one without looking. How likely is she to get <b>red</b>?`,vis:bagSVG([{col:'#ef4444',n:r},{col:'#3b82f6',n:tot-r}]),hint:`${r} out of ${tot} are red.`,explain:`${r} out of ${tot} marbles are red, so it is <b>${['impossible','unlikely','even chance','likely','certain'][k]}</b>.`},fixedOpts(['impossible','unlikely','even chance','likely','certain'],k));}
+  if(sub==='prob'){const g=[rnd(1,5),rnd(1,5),rnd(0,4)];const tot=g.reduce((a,b)=>a+b,0);const i=rnd(0,1);
+    const base={sub,prompt:`What is the probability of taking a <b>${C[i][0]}</b> marble?${l>=3?' Write it as a percentage.':' Write it as a fraction.'}`,vis:bagSVG(g.map((n,j)=>({col:C[j][1],n}))),hint:`Probability = number of ${C[i][0]} ÷ total number of marbles (${tot}).`,explain:`${g[i]} out of ${tot} are ${C[i][0]}: <b>${F(g[i],tot)}</b>.`};
+    if(l>=3&&100%tot===0)return Object.assign(base,{explain:base.explain+` That's ${g[i]*100/tot}%.`},num(g[i]*100/tot,{post:'%'}));
+    return Object.assign(base,{check:fracCheck(g[i],tot)},fracE(g[i],tot));}
+  if(sub==='compare'){let a,b,c,d;do{a=rnd(1,5);b=rnd(1,5);c=rnd(1,5);d=rnd(1,5);}while(a*(c+d)===c*(a+b));
+    const k=a*(c+d)>c*(a+b)?0:1;return Object.assign({sub,prompt:'Which bag gives a better chance of getting <b>red</b>?',vis:`<div class="row" style="justify-content:center"><div><b>Bag A</b>${bagSVG([{col:'#ef4444',n:a},{col:'#3b82f6',n:b}])}</div><div><b>Bag B</b>${bagSVG([{col:'#ef4444',n:c},{col:'#3b82f6',n:d}])}</div></div>`,hint:'Compare red out of the total for each bag.',explain:`Bag A: ${F(a,a+b)}. Bag B: ${F(c,c+d)}. <b>Bag ${'AB'[k]}</b> has the better chance.`},fixedOpts(['Bag A','Bag B'],k));}
+  const P=pick([['a normal dice',6],['a spinner with 5 equal parts',5],['tossing two coins (HH, HT, TH, TT)',4],['a spinner with 8 equal parts',8]]);
+  return Object.assign({sub:'outcomes',prompt:`How many possible outcomes are there for ${P[0]}?`,hint:'List every result that could happen.',explain:`There are <b>${P[1]}</b> possible outcomes.`},num(P[1]));},
+ example(){return {html:`${bagSVG([{col:'#ef4444',n:3},{col:'#3b82f6',n:5}])}<p>There are 8 marbles and 3 are red. The probability of red is <b>${F(3,8)}</b> ("3 out of 8"). That is less than half, so red is <b>unlikely</b>.</p>`};}},
+
+{id:'data',title:'Data & Graphs',icon:'📊',code:'MA3-DATA-01/02',game:null,blurb:'Column graphs with scales, line graphs and pie charts.',
+ subs:l=>l>=1?['col','line','pie']:['col','col','line'],
+ gen(H,l,sub){
+  if(sub==='col'){const sc=[2,5,10,10][l];const its=shuffle([['🐶','dogs'],['🐱','cats'],['🐟','fish'],['🐦','birds'],['🐰','rabbits']]).slice(0,4).map((x,i)=>({icon:x[0],name:x[1],n:sc*rnd(1,9),col:PAL[i]}));
+    const mode=pick(['read','diff','total']);const [a,b]=shuffle(range(4)).slice(0,2);if(its[a].n===its[b].n)its[a].n+=its[a].n<10*sc?sc:-sc;const vis=colSVG(its,{max:10,scale:sc});
+    if(mode==='read')return Object.assign({sub,prompt:`How many people chose ${its[a].icon} ${its[a].name}?`,vis,hint:`The scale goes up in ${sc}s.`,explain:`The ${its[a].name} column reaches <b>${its[a].n}</b>.`+colSVG(its,{max:10,scale:sc,hl:[a]})},num(its[a].n));
+    if(mode==='diff'){const d=Math.abs(its[a].n-its[b].n);return Object.assign({sub,prompt:`How many more people chose ${its[a].n>=its[b].n?its[a].icon:its[b].icon} than ${its[a].n>=its[b].n?its[b].icon:its[a].icon}?`,vis,hint:`Read both columns (the scale goes up in ${sc}s), then subtract.`,explain:`${Math.max(its[a].n,its[b].n)} − ${Math.min(its[a].n,its[b].n)} = <b>${d}</b>.`+colSVG(its,{max:10,scale:sc,hl:[a,b]})},num(d));}
+    const t=its.reduce((s,x)=>s+x.n,0);return Object.assign({sub,prompt:'How many people were asked altogether?',vis,hint:`Read every column, then add.`,explain:`${its.map(x=>x.n).join(' + ')} = <b>${t}</b>.`+colSVG(its,{max:10,scale:sc,nums:true})},num(t));}
+  if(sub==='line'){const hrs=['9am','10am','11am','12pm','1pm','2pm'];let v=rnd(10,18);const pts=hrs.map(h=>{v=Math.max(2,Math.min(38,v+rnd(-2,5)));return {lab:h,v};});
+    const vis=lineSVG(pts,{title:'Temperature (°C)'});if(chance(0.5)){const i=rnd(0,5);return Object.assign({sub,prompt:`What was the temperature at ${pts[i].lab}?`,vis,hint:'Find the time at the bottom, go up to the dot, then across.',explain:`At ${pts[i].lab} it was <b>${pts[i].v}°C</b>.`},num(pts[i].v,{post:'°C'}));}
+    const hi=Math.max(...pts.map(p=>p.v)),lo=Math.min(...pts.map(p=>p.v));return Object.assign({sub,prompt:'What is the difference between the highest and lowest temperatures?',vis,hint:'Find the highest dot and the lowest dot.',explain:`${hi} − ${lo} = <b>${hi-lo}°C</b>.`},num(hi-lo,{post:'°C'}));}
+  const N=8*rnd(2,l>=2?10:5);let q=[rnd(1,4)];q.push(rnd(1,7-q[0]-1));q.push(8-q[0]-q[1]);const nm=['🍕 pizza','🌮 tacos','🍝 pasta'];const i=rnd(0,2);
+  return Object.assign({sub,prompt:`${N} children voted for their favourite dinner. How many chose ${nm[i]}?`,vis:pieSVG(q.map((x,j)=>({q:x,col:PAL[j]})),{den:8,labels:nm.map(s=>s.split(' ')[0])}),hint:`The pie has 8 equal pieces. Each piece is ${N} ÷ 8 = ${N/8} children.`,explain:`${nm[i]} is ${F(q[i],8)} of the pie. ${F(q[i],8)} of ${N} = ${q[i]} × ${N/8} = <b>${q[i]*N/8}</b>.`},num(q[i]*N/8));},
+ example(){const its=[{icon:'🐶',n:30,col:PAL[0]},{icon:'🐱',n:15,col:PAL[1]},{icon:'🐟',n:20,col:PAL[2]}];return {html:`${colSVG(its,{max:6,scale:5,nums:true})}<p>Check the <b>scale</b> first: the lines go up in 5s. The dog column is 6 lines high, so 6 × 5 = <b>30</b>.</p>`};}},
+
+{id:'nets',title:'3D Objects & Nets',icon:'🧊',code:'MA3-3DS-01',blurb:'Prisms and pyramids: faces, edges, vertices and nets.',
+ subs:l=>l>=1?['name','fev','net','prop']:['name','fev','net'],
+ gen(H,l,sub){const S={'cube':[6,12,8],'rectangular prism':[6,12,8],'triangular prism':[5,9,6],'square pyramid':[5,8,5],'triangular pyramid':[4,6,4],'pentagonal prism':[7,15,10]};const names=Object.keys(S);
+  if(sub==='name'){const k=pick(names.concat(['cylinder','cone']));return Object.assign({sub,prompt:'What is the name of this 3D object?',vis:solidSVG(k),hint:'Prisms have the same shape at both ends. Pyramids come to a point.',explain:`It is a <b>${k}</b>.`},opts(k,shuffle(names.concat(['cylinder','cone','sphere']).filter(x=>x!==k)),{cls:'txt'}));}
+  if(sub==='fev'){const k=pick(names),w=rnd(0,2),W=['faces','edges','vertices (corners)'][w];return Object.assign({sub,prompt:`How many <b>${W}</b> does a ${k} have?`,vis:solidSVG(k),hint:w===0?'Faces are the flat surfaces. Count the hidden ones too.':w===1?'Edges are where two faces meet.':'Vertices are the corners.',explain:`A ${k} has ${S[k][0]} faces, ${S[k][1]} edges and ${S[k][2]} vertices. Answer: <b>${S[k][w]}</b>.`},num(S[k][w]));}
+  if(sub==='net'){const k=pick(['cube','rectangular prism','square pyramid','triangular prism','cylinder','triangular pyramid']);return Object.assign({sub,prompt:'This net folds up to make which 3D object?',vis:netSVG(k),hint:'Count the faces and look at their shapes.',explain:`It makes a <b>${k}</b>.`+solidSVG(k,{size:120})},opts(k,shuffle(['cube','rectangular prism','square pyramid','triangular prism','cylinder','triangular pyramid','cone'].filter(x=>x!==k)),{cls:'txt'}));}
+  const k=pick(names.filter(x=>x!=='cube'&&x!=='rectangular prism'));return Object.assign({sub:'prop',prompt:`Which object has <b>${S[k][0]} faces</b> and <b>${S[k][2]} vertices</b>?`,hint:'Imagine each object and count.',explain:`A <b>${k}</b> has ${S[k][0]} faces and ${S[k][2]} vertices.`+solidSVG(k,{size:120})},opts(k,shuffle(names.filter(x=>x!==k&&(S[x][0]!==S[k][0]||S[x][2]!==S[k][2]))),{cls:'txt'}));},
+ example(){return {html:`<div class="row" style="justify-content:center">${solidSVG('square pyramid',{size:140})}${netSVG('square pyramid')}</div><p>A <b>square pyramid</b> has a square base and 4 triangles that meet at the top: <b>5 faces, 8 edges, 5 vertices</b>. Its net is the square with a triangle on each side.</p>`};}},
+];
+const CFG_A={player:'alexia',name:'Alexia',theme:'alexia',year:'Year 4 → Year 5',warm:'quick',
+  path:['eqfrac','addfrac','decline','thou','multdiv','fracqty','percent','money','time24','areaper','angles','chance','data','nets'],start:'thou',
+  games:{fractions:'eqfrac',addfractions:'addfrac',decimals:'decline'}};
+
+const BUILTIN=TOPICS_A,CFG=CFG_A;
+/* ===== Daily Lesson engine (shared by both children) ===== */
+const $=s=>document.querySelector(s);
+const PLAYER=CFG.player,NAME=(()=>{try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(pr&&pr[PLAYER]&&pr[PLAYER].name)return String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||CFG.name;}catch(e){}return CFG.name;})();
+const STORE=`kidsHub.p.${PLAYER}.daily`;
+const params=new URLSearchParams(location.search);
+const LESSON_MS=15*60*1000;
+/* ---------- topics: built-in + extra modules from focus.js ---------- */
+const TOPICS={};BUILTIN.forEach(t=>TOPICS[t.id]=t);
+const EXTRA=Array.isArray(window.DAILY_TOPICS_EXTRA)?window.DAILY_TOPICS_EXTRA:[];
+EXTRA.forEach(t=>{if(t&&t.id&&typeof t.gen==='function'&&!TOPICS[t.id])TOPICS[t.id]=Object.assign({icon:'🏫',code:'',blurb:'',subs:()=>[null]},t);});
+const PATH=CFG.path.filter(id=>TOPICS[id]);
+const FOCUS=(Array.isArray(window.DAILY_FOCUS)?window.DAILY_FOCUS:[]).filter(f=>f&&f.date&&TOPICS[f.topicId]);
+const H={rnd,pick,shuffle,chance,range,gcd,lcm,F,M,D,D3,money,DEC,big,plural,esc,opts,fixedOpts,num,decE,fracE,mixedE,timeE,qrE,two,fracCheck,mixedCheck,numDistract,
+  barSVG,fillN,grid100,pizzaSVG,dl,colSVG,pieSVG,jumpSVG,clockSVG,rectSVG,angleSVG,spinnerSVG,bagSVG,arraySVG,groupsSVG,moneySVG,mabSVG,polySVG,solidSVG,netSVG,rulerSVG,mapSVG,tallySVG,lineSVG,tableHTML,get NAME(){return NAME;},COLORS:{OR,BL,GRN,RED,PU,PAL}};
+/* ---------- dates ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseD=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12);};
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return ymd(d);};
+const TODAY=(params.get('date')&&/^\d{4}-\d{2}-\d{2}$/.test(params.get('date')))?params.get('date'):ymd(new Date());
+const dow=s=>parseD(s).getDay(); /* 0 Sun .. 6 Sat */
+const monday=s=>addDays(s,-((dow(s)+6)%7));
+const WEEK=range(7).map(i=>addDays(monday(TODAY),i));
+const daysBetween=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const longDate=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const weekday=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long'});
+const isReviewDay=s=>[5,6,0].includes(dow(s));
+/* ---------- state ---------- */
+const defState=()=>({v:1,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
+function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));return s;}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+if(S.cur==null||S.cur<0||S.cur>PATH.length){S.cur=Math.max(0,PATH.indexOf(CFG.start));}
+const T=id=>S.topics[id]||(S.topics[id]={n:0,c:0,lvl:1,les:[],mastered:false,last:null});
+/* existing games: read only, used as a starting guess of accuracy */
+const GAMEPRIOR={};Object.entries(CFG.games||{}).forEach(([g,tid])=>{try{const s=JSON.parse(localStorage.getItem(`kidsHub.p.${PLAYER}.${g}`)||'null');if(s&&s.answered>=5){GAMEPRIOR[tid]={acc:s.correct/s.answered,n:s.answered,mist:s.mistakes||s.mist||null};}}catch(e){}});
+function acc(id){const t=S.topics[id];if(t&&t.n>=3)return t.c/t.n;const g=GAMEPRIOR[id];if(g)return g.acc;return 0.75;}
+const curTopic=()=>S.cur<PATH.length?PATH[S.cur]:null;
+const doneTopics=()=>PATH.slice(0,S.cur);
+const status=id=>{const i=PATH.indexOf(id);return i<S.cur?'done':i===S.cur?'current':i===S.cur+1?'next':'later';};
+/* focus entries */
+const activeFocus=d=>FOCUS.filter(f=>f.date<=d&&d<=(f.until||f.date));
+const weekFocus=d=>FOCUS.filter(f=>f.date>=monday(d)&&f.date<=d).map(f=>f.topicId);
+/* ---------- weighted picking ---------- */
+function wpick(items,wfn){const ws=items.map(wfn),tot=ws.reduce((a,b)=>a+b,0);let r=RNG()*tot;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
+function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){const c=list.length>1?list.filter(x=>x!==last):list;const p=wpick(c,wfn);out.push(p);last=p;}return out;}
+/* ---------- lesson planning ---------- */
+function planLesson(date,variant=0){
+  RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
+  const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:Math.min(3,T(t).lvl+(o.up||0)),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
+  const focusToday=activeFocus(date),wf=weekFocus(date),cur=curTopic();
+  const pool=doneTopics().concat(cur&&T(cur).les.length?[cur]:[]).concat(wf.filter(x=>!PATH.includes(x)||PATH.indexOf(x)>S.cur)).filter((x,i,a)=>a.indexOf(x)===i);
+  const pl=pool.length?pool:[CFG.warm];
+  const mixW=id=>{const t=S.topics[id];const since=t&&t.last?Math.min(6,daysBetween(t.last,date)):6;return 1+3*(1-acc(id))+since/2+(wf.includes(id)?3:0)+(id===cur?0.5:0);};
+  const review=isReviewDay(date);
+  let kind=review?'review':'mix';
+  if(!review){
+    if(focusToday.length){const f=focusToday[0];add('school',f.topicId,{kind:'example'});for(let i=0;i<5;i++)add('school',f.topicId,{guided:i<2});}
+    for(let i=0;i<6;i++)add('warm',CFG.warm,{});
+    if(cur){add('new',cur,{kind:'example'});for(let i=0;i<5;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
+    const nMix=(focusToday.length?6:9)+(cur?0:5);interleave(pl,nMix,mixW).forEach(t=>add('mix',t));
+    /* fix-it: recent mistakes from the daily log, then weakest topics (daily + game history) */
+    const recent={};S.log.filter(e=>!e.ok&&e.d<=date&&daysBetween(e.d,date)<=14&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');recent[k]=(recent[k]||0)+1;});
+    const keys=Object.keys(recent);const fix=[];
+    const used={};for(let i=0;i<8&&fix.length<4&&keys.length;i++){const k=wpick(keys,x=>recent[x]);fix.push(k);used[k]=(used[k]||0)+1;if(used[k]>=Math.min(2,recent[k]))keys.splice(keys.indexOf(k),1);}
+    const weak=pl.slice().sort((a,b)=>acc(a)-acc(b));while(fix.length<4)fix.push(weak[fix.length%weak.length]+'|');
+    fix.forEach(k=>{const [t,s]=k.split('|');add('fix',t,{sub:s||null});});
+    const ch=pl.concat(cur?[cur]:[]);for(let i=0;i<3;i++)add('challenge',pick(ch),{up:1});
+  }else{
+    for(let i=0;i<4;i++)add('warm',CFG.warm,{});
+    const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<=WEEKOF(date)[3]&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
+    wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
+    let keys=Object.keys(wk);if(new Set(keys.map(k=>k.split('|')[0])).size<3)pl.forEach(t=>{if(!keys.some(k=>k.startsWith(t+'|')))keys.push(t+'|');});
+    const w=k=>1+3*((wk[k]||{}).w||0)+((wk[k]||{}).focus?3:0)+((wk[k]||{}).n?1:0);
+    const tp=k=>k.split('|')[0];let last=null;
+    for(let i=0;i<18;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:k.split('|')[1]||null});}
+    const tough=keys.slice().sort((a,b)=>((wk[b]||{}).w||0)-((wk[a]||{}).w||0)).slice(0,4);
+    for(let i=0;i<4;i++){const k=tough[i%tough.length];const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});}
+  }
+  /* 1-2 "tell a grown-up" prompts on non-warm questions */
+  const cand=items.map((x,i)=>i).filter(i=>items[i].kind!=='example'&&!['warm','school'].includes(items[i].sec));
+  shuffle(cand).slice(0,cand.length>16?2:1).forEach(i=>items[i].tell=true);
+  return {kind,items};
+}
+function WEEKOF(d){const m=monday(d);return range(7).map(i=>addDays(m,i));}
+/* ---------- question generation (deterministic per lesson + index) ---------- */
+window.DAILY_ERRORS=[];
+function makeQ(it,date,variant,idx,sigs){const top=TOPICS[it.t]||TOPICS[CFG.warm];
+  if(it.kind==='example'){let ex;try{RNG=mulberry32(hashStr(`${PLAYER}|${date}|ex|${it.t}`));ex=top.example?top.example(H):null;}catch(e){window.DAILY_ERRORS.push(String(e));}
+    return {example:true,html:ex&&ex.html?ex.html:`<p>${esc(top.blurb||'')}</p>`};}
+  for(let a=0;a<10;a++){RNG=mulberry32(hashStr(`${PLAYER}|${date}|${variant}|${idx}|${a}`));
+    try{const subs=top.subs?top.subs(it.lvl):[null];let sub=it.sub;if(sub&&!subs.includes(sub)&&!(top.subs&&top.subs(3).includes(sub)))sub=null;sub=sub||pick(subs);
+      const q=top.gen.call(top,H,it.lvl,sub);q.sub=q.sub||sub||'';const sig=it.t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
+      if(sigs.has(sig)&&a<9)continue;sigs.add(sig);return q;}catch(e){window.DAILY_ERRORS.push(it.t+': '+e);}}
+  RNG=mulberry32(idx+7);const q=TOPICS[CFG.warm].gen(H,1,pick(TOPICS[CFG.warm].subs(1)));q.sub=q.sub||'';return q;}
+function buildAll(run){const sigs=new Set();return run.items.map((it,i)=>makeQ(it,run.date,run.variant,i,sigs));}
+/* ---------- audio / speech (same as the games) ---------- */
+let actx=null;
+function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];const t=actx.currentTime,vol=kind==='tap'?0.05:0.14;
+  N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const s=t+i*0.12;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});}catch(e){}}
+function say(text){try{if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-AU';u.rate=0.9;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]AU/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+const DW={2:['half','halves'],3:['third','thirds'],4:['quarter','quarters'],5:['fifth','fifths'],8:['eighth','eighths'],10:['tenth','tenths'],100:['hundredth','hundredths'],1000:['thousandth','thousandths']};
+function spoken(el){const c=el.cloneNode(true);c.querySelectorAll('.say,svg').forEach(x=>x.remove());
+  c.querySelectorAll('.mixed .wn').forEach(w=>w.textContent=w.textContent+' and ');
+  c.querySelectorAll('.frac').forEach(f=>{const n=(f.querySelector('.num')||{}).textContent||'',d=(f.querySelector('.den')||{}).textContent||'';const w=DW[+d];
+    f.replaceWith(' '+(w&&/^\d+$/.test(n.trim())?`${n.trim()} ${+n===1?w[0]:w[1]}`:`${n.trim()||'something'} over ${d.trim()||'something'}`)+' ');});
+  return c.textContent.replace(/\$(\d+)\.(\d\d)/g,(m,a,b)=>`${a} dollars ${+b} cents`).replace(/(\d+)\.(\d+)/g,(m,a,b)=>`${a} point ${b.split('').join(' ')}`)
+    .replace(/×/g,' times ').replace(/÷/g,' divided by ').replace(/−/g,' minus ').replace(/cm²/g,' square centimetres').replace(/°C/g,' degrees').replace(/°/g,' degrees').replace(/\?/g,' what? ').replace(/\s+/g,' ').trim();}
+/* ---------- UI helpers ---------- */
+const SECN={school:['🏫','From school today'],warm:['⚡','Warm-up'],new:['🆕','New topic'],mix:['🔀','Mixed practice'],fix:['🔧','Fix-it'],challenge:['🏔️','Challenge finish'],review:['🔁','Week review'],tough:['💪','Toughest of the week']};
+function show(id){['home','play','results'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+const starsFor=p=>p>=0.95?3:p>=0.8?2:p>=0.6?1:0;
+function dayStreak(){let n=0,d=TODAY;if(!(S.days[d]&&S.days[d].done))d=addDays(d,-1);
+  for(let i=0;i<60;i++){const w=dow(d);if(S.days[d]&&S.days[d].done)n++;else if(w!==0&&w!==6)break;d=addDays(d,-1);}return n;}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+dayStreak();$('#streakPill').title='Days in a row';$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function weekHTML(){const L=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  return `<div class="week">${WEEK.map((d,i)=>{const r=S.days[d];return `<div class="wd${r&&r.done?' done':''}${d===TODAY?' today':''}${i===4?' fri':''}" data-day="${d}"><div class="dn">${L[i]}</div><div class="st">${r&&r.done?(r.kind==='review'?'🏆':'✅'):d<TODAY&&i<5?'·':i===4?'🔁':'○'}</div><div>${r&&r.done?'★'.repeat(r.stars||0)||'–':''}</div></div>`;}).join('')}</div>`;}
+/* ---------- home ---------- */
+let RUN=null,QS=null,q=null,tick=null;
+function home(){RUN=null;q=null;clearInterval(tick);
+  document.title=`${NAME}'s Daily Lesson`;$('#titleName').textContent=NAME;
+  const review=isReviewDay(TODAY),done=S.days[TODAY]&&S.days[TODAY].done,inprog=S.run&&S.run.date===TODAY&&!S.run.finished;
+  const plan=inprog?S.run:planLesson(TODAY,0);const counts={};plan.items.forEach(it=>{if(it.kind!=='example')counts[it.sec]=(counts[it.sec]||0)+1;});
+  const nq=Object.values(counts).reduce((a,b)=>a+b,0);const cur=curTopic(),ct=cur?T(cur):null,af=activeFocus(TODAY);
+  const sIt=plan.items.find(x=>x.sec==='school'),schoolTitle=af.length?(af[0].title||TOPICS[af[0].topicId].title):sIt&&TOPICS[sIt.t]?TOPICS[sIt.t].title:'From school';
+  const kindLabel=review?(dow(TODAY)===5?'🏆 Week Review':'🏆 Week Review (catch-up)'):'🔀 Daily Mix';
+  $('#homeBody').innerHTML=`
+  <div class="card hero"><div class="big">${review?'🏆':'📚'}</div><div style="flex:1;min-width:220px">
+    <h2 id="hello">Hi ${NAME}! 👋</h2><div style="font-size:1.25rem" id="todayDate"><b>${weekday(TODAY)}</b>, ${longDate(TODAY).replace(weekday(TODAY)+' ','').replace(/^,\s*/,'')}</div>
+    <div class="row" style="margin-top:6px"><span class="tag" id="kindTag">${kindLabel}</span><span class="tag">⏱️ about 15 minutes · ${nq} questions</span>${done?'<span class="tag ok">✅ Done today!</span>':''}</div></div></div>
+  ${af.length?`<div class="focus" id="focusBox">🏫 <b>From school today: ${esc(af[0].title||TOPICS[af[0].topicId].title)}</b>${af[0].note?`<div class="small">${esc(af[0].note)}</div>`:''}</div>`:''}
+  <div class="card"><b>Today's lesson</b><div class="secs">${Object.keys(SECN).filter(k=>counts[k]).map(k=>`<div class="sec" data-sec="${k}"><b>${SECN[k][0]} ${SECN[k][1]}</b>${counts[k]} question${counts[k]>1?'s':''}${k==='new'&&cur?`<div class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</div>`:''}${k==='school'?`<div class="small">${esc(schoolTitle)}</div>`:''}</div>`).join('')}</div>
+    <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
+    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?`▶️ Keep going (question ${S.run.res.length+1} of ${S.run.items.filter(x=>x.kind!=='example').length})`:'▶️ Start today\'s lesson'}</button>`}</div></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
+  ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
+     <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
+  ${adultHTML()}`;
+  const sb=$('#startBtn');if(sb)sb.onclick=()=>startLesson(false);const ab=$('#againBtn');if(ab)ab.onclick=()=>startLesson(true);
+  bindAdult();topbar();show('home');
+}
+function adultHTML(){
+  return `<div class="card"><details id="adult"><summary>👨‍👩‍👧 For grown-ups: topic path &amp; settings</summary>
+  <p class="small">The path follows the NSW Mathematics K–10 Syllabus (2022), ${esc(CFG.year)}. A topic counts as mastered at 80%+ over 2 lessons (at least 3 questions each lesson), then the next topic appears as the "New topic" section. Mastered topics go into the mixed review. Each topic starts one step harder than ${esc(CFG.year.split(' ')[0]+' '+CFG.year.split(' ')[1])} level and steps up after a 90%+ lesson.</p>
+  <ol class="path" id="pathList">${PATH.map((id,i)=>{const st=status(id),t=S.topics[id],a=t&&t.n?Math.round(100*t.c/t.n)+'%':'–';
+    return `<li class="${st==='done'?'done':st==='current'?'cur':''}" data-topic="${id}"><span>${st==='done'?'✅':st==='current'?'⭐':st==='next'?'⏭️':'🔒'}</span><b>${TOPICS[id].icon} ${esc(TOPICS[id].title)}</b><span class="code">${esc(TOPICS[id].code)}</span><span class="small">${st==='done'?'done':st==='current'?'current':st==='next'?'next':''} · accuracy ${a} · level ${(t?t.lvl:1)+1}/4</span></li>`;}).join('')}</ol>
+  <div class="row"><button class="btn ghost small" id="backBtn" ${S.cur<=0?'disabled':''}>⏪ Go back a topic</button><button class="btn ghost small" id="skipBtn" ${S.cur>=PATH.length?'disabled':''}>⏩ Skip ahead a topic</button></div>
+  <p class="small">${FOCUS.length?`School focus entries: ${FOCUS.map(f=>`${esc(f.date)}${f.until?'–'+esc(f.until):''} ${esc(f.title||f.topicId)}`).join('; ')}.`:'No "From school today" entries right now.'} Lessons are fixed for each day; today is ${esc(TODAY)}.</p>
+  <button class="btn ghost small" id="resetDaily">Reset daily lesson progress</button></details></div>`;}
+function bindAdult(){const bb=$('#backBtn'),sk=$('#skipBtn');
+  if(bb)bb.onclick=()=>{if(S.cur>0){S.cur--;const t=T(PATH[S.cur]);t.mastered=false;t.les=[];resetRunIfUnstarted();save();home();$('#adult').open=true;}};
+  if(sk)sk.onclick=()=>{if(S.cur<PATH.length){T(PATH[S.cur]).skipped=true;S.cur++;resetRunIfUnstarted();save();home();$('#adult').open=true;}};
+  $('#resetDaily').onclick=()=>{if(confirm(`Reset ${NAME}'s daily lesson progress? (The games keep their own progress.)`)){const snd=S.sound;S=defState();S.sound=snd;S.cur=Math.max(0,PATH.indexOf(CFG.start));save();home();}};}
+function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
+/* ---------- play ---------- */
+function startLesson(extra){
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=S.run;if(RUN.doneIdx===RUN.i)RUN.i++;}
+  else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
+    RUN=S.run={date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false};save();}
+  QS=buildAll(RUN);show('play');startTimer();next(true);}
+function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
+function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
+  $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
+  $('#timesUp').classList.toggle('hidden',!!left);}
+const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
+function progUI(){const n=NQ(),d=RUN.res.length;$('#progTxt').textContent=`${d} / ${n}`;$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
+function next(resume){
+  if(!resume)RUN.i++;if(RUN.i>=RUN.items.length)return finish();
+  const it=RUN.items[RUN.i];q=Object.assign({},QS[RUN.i],{it,done:false,usedHint:false,f:{}});
+  const sn=SECN[it.sec]||['',''];const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${it.sec==='challenge'||it.up?' <span class="tag new">⚡ harder</span>':''}`;
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
+  progUI();topbar();
+  if(q.example){$('#prompt').classList.remove('bigp');$('#prompt').innerHTML=`👀 Worked example: ${esc(tname)}`;$('#qvis').innerHTML='';
+    $('#stage').innerHTML=`<div class="example"><h3>Let's look at one together first</h3>${q.html}<button class="btn green" id="gotIt">Got it! Let's try some ➜</button></div>`;
+    $('#controls').classList.add('hidden');$('#gotIt').onclick=()=>{sfx('tap');RUN.i++;save();next(true);};return;}
+  $('#prompt').innerHTML=q.prompt;$('#prompt').classList.toggle('bigp',!/</.test(q.prompt)&&q.prompt.length<24);$('#qvis').innerHTML=q.vis||'';
+  if(q.kind==='choice'){$('#stage').innerHTML=`<div class="opts ${q.cls||''}">${q.choices.map((c,i)=>`<button class="opt" data-opt="${i}">${c}</button>`).join('')}</div>`;}
+  else{q.active=q.fields[0].id;q.fields.forEach(f=>q.f[f.id]='');
+    const lay=(q.layoutPre||'')+q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<span class="ebox" data-field="${id}" id="f_${id}" role="button" aria-label="answer box">&nbsp;</span>`);
+    $('#stage').innerHTML=`<div class="entryrow">${lay}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}${q.dot?'<button data-key=".">.</button>':''}<button data-key="del" class="wide">⌫ Delete</button>${q.fields.length>1?'<button data-key="next" class="wide">Next box ➜</button>':''}</div>`;refresh();}
+  if(it.guided){showHint(true);}
+  updCheck();
+}
+function refresh(){if(!q||!q.fields)return;q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.innerHTML=q.f[f.id]||'&nbsp;';e.classList.toggle('active',!q.done&&f.id===q.active);}});updCheck();}
+function key(k){if(!q||q.done||!q.fields)return;const A=q.active,i=q.fields.findIndex(f=>f.id===A),fl=q.fields[i];
+  if(k==='next')q.active=q.fields[(i+1)%q.fields.length].id;
+  else if(k==='del'){if(!q.f[A]&&i>0){q.active=q.fields[i-1].id;}else q.f[A]=q.f[A].slice(0,-1);}
+  else if(k==='.'){if(q.dot&&!q.f[A].includes('.'))q.f[A]+=(q.f[A]?'.':'0.');}
+  else if(q.f[A].length<fl.len)q.f[A]+=k;
+  sfx('tap');refresh();}
+function updCheck(){const c=$('#checkBtn');if(!q||q.example)return;c.classList.toggle('hidden',q.kind==='choice'||q.done);c.disabled=!(q.fields&&q.fields.every(f=>q.f[f.id]!==''));}
+const same=(a,b)=>{a=String(a).trim();b=String(b).trim();if(/^-?\d*\.?\d+$/.test(a)&&/^-?\d*\.?\d+$/.test(b))return Math.abs(+a- +b)<1e-9;return a===b;};
+function gradeEntry(){if(q.check)return !!q.check(q.f);return q.fields.every(f=>same(q.f[f.id],q.answer[f.id]));}
+function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;$('#hintBox').innerHTML=(guided?'<span class="guided">🧭 Guided practice: here is a tip to get you started</span>':'')+'💡 '+(q.hint||'Have a careful look at the picture.');$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
+function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it;RUN.doneIdx=RUN.i;
+  let pts=0;if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
+  RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint});
+  {const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;}
+  S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);
+  save();
+  if(q.kind==='choice')document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answer)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
+  else{q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.classList.remove('active');e.classList.add(ok?'okb':'badb');}});const kp=document.querySelector('.keypad');if(kp)kp.remove();}
+  const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
+  const correct=q.kind==='choice'?q.choices[q.answer]:q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(q.answer[id]||'')}</b>`);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  const last=RUN.i>=RUN.items.length-1;
+  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+
+    `<div class="expl">${q.explain||''}</div>`+(it.tell?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
+    `<button class="btn" id="nextBtn">${last?'See my results ⭐':'Next question ➜'}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  const tb=$('#toldBtn');if(tb)tb.onclick=()=>{RUN.told++;S.told++;RUN.pts+=5;S.points+=5;save();topbar();tb.disabled=true;tb.textContent='👍 Great explaining!';sfx('good');};
+  $('#nextBtn').onclick=()=>{save();next();};progUI();topbar();
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+/* ---------- finish ---------- */
+function finish(){clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.filter(r=>r.ok).length,p=n?c/n:0,st=starsFor(p);
+  /* per-topic lesson accuracy, mastery and levels */
+  const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
+  const msgs=[];const cur=curTopic();
+  Object.entries(by).forEach(([id,o])=>{if(o.n<3||!TOPICS[id]||TOPICS[id].warm)return;const t=T(id);t.les.push([o.n,o.c,TODAY]);if(t.les.length>12)t.les=t.les.slice(-12);
+    const a=o.c/o.n;if(a>=0.9&&o.n>=4&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
+  let mastered=null;
+  if(cur){const t=T(cur),L=t.les.slice(-2);if(L.length>=2){const nn=L[0][0]+L[1][0],cc=L[0][1]+L[1][1];if(cc/nn>=0.8){t.mastered=true;S.cur++;mastered=cur;}}}
+  const prevDay=S.days[TODAY];
+  if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told};}
+  else{prevDay.extra=(prevDay.extra||0)+1;prevDay.stars=Math.max(prevDay.stars||0,st);}
+  R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());save();
+  const nxt=curTopic();
+  if(mastered)msgs.unshift(`<div class="msg up">🎓 <b>You mastered ${TOPICS[mastered].icon} ${esc(TOPICS[mastered].title)}!</b> It joins your mixed review.</div>`+(nxt?`<div class="msg next">🆕 Next lesson starts a new topic: <b>${TOPICS[nxt].icon} ${esc(TOPICS[nxt].title)}</b></div>`:''));
+  const secRows=Object.keys(SECN).filter(k=>res.some(r=>r.sec===k)).map(k=>{const rr=res.filter(r=>r.sec===k);return `<tr><td>${SECN[k][0]} ${SECN[k][1]}</td><td>${rr.filter(r=>r.ok).length} / ${rr.length}</td></tr>`;}).join('');
+  const msg=p>=0.95?`Amazing, ${NAME}! 🏅`:p>=0.8?`Great work, ${NAME}!`:p>=0.6?`Well done, ${NAME}!`:`Good effort, ${NAME}! Tomorrow's Fix-it will help. 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
+   <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>${msgs.join('')}
+   ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
+   <div style="margin:10px 0">${weekHTML()}</div>
+   <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
+  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;}
+function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.filter(e=>e.d>=wk[0]&&e.d<=TODAY&&TOPICS[e.t]&&!TOPICS[e.t].warm);
+  const daysDone=MT.filter(d=>S.days[d]&&S.days[d].done).length;
+  const by={};L.forEach(e=>{const o=by[e.t]||(by[e.t]={n:0,c:0,en:0,ec:0,tn:0,tc:0});o.n++;if(e.ok)o.c++;if(e.d<TODAY){o.en++;if(e.ok)o.ec++;}else{o.tn++;if(e.ok)o.tc++;}});
+  const rows=Object.entries(by).sort((a,b)=>a[1].c/a[1].n-b[1].c/b[1].n);
+  const improved=rows.filter(([id,o])=>o.en>=2&&o.tn>=2&&o.tc/o.tn>o.ec/o.en+0.05).map(([id])=>TOPICS[id].icon+' '+esc(TOPICS[id].title));
+  const practise=rows.filter(([id,o])=>o.c/o.n<0.8).slice(0,3).map(([id])=>TOPICS[id].icon+' '+esc(TOPICS[id].title));
+  return `<div class="card" id="weekSummary" style="text-align:left;box-shadow:none;border:3px solid var(--line)"><h3 style="margin:0 0 6px;color:var(--main)">📋 My week</h3>
+   <p><b>Days completed (Mon–Thu):</b> ${daysDone} / 4 ${MT.map(d=>S.days[d]&&S.days[d].done?'✅':'⬜').join(' ')}</p>
+   <table class="sum"><tr><th>Topic</th><th>Accuracy this week</th></tr>${rows.map(([id,o])=>{const a=Math.round(100*o.c/o.n);return `<tr><td>${TOPICS[id].icon} ${esc(TOPICS[id].title)}</td><td><span class="acc" style="width:${Math.max(4,a)}px;background:${a>=80?'#22c55e':a>=60?'#facc15':'#fb923c'}"></span> ${a}% <span class="small">(${o.c}/${o.n})</span></td></tr>`;}).join('')}</table>
+   <p><b>🌟 Improved:</b> ${improved.length?improved.join(', '):rows.length?'Steady all week. Keep it up!':'–'}</p>
+   <p><b>🎯 Practise next:</b> ${practise.length?practise.join(', '):'Everything is 80% or better. Ready for new challenges!'}</p>${curTopic()?`<p><b>🧭 Next week's topic:</b> ${TOPICS[curTopic()].icon} ${esc(TOPICS[curTopic()].title)}</p>`:''}</div>`;}
+function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9','#ff8a3d'];
+  for(let i=0;i<50;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=cols[i%cols.length];d.style.animationDuration=(1.8+Math.random()*2)+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+/* ---------- events ---------- */
+$('#homeLink').onclick=()=>{if(RUN&&!RUN.finished)save();home();};
+$('#quitBtn').onclick=()=>{save();home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#sayBtn').onclick=()=>say(spoken($('#prompt')));
+$('#hintBtn').onclick=()=>showHint(false);
+$('#checkBtn').onclick=()=>{if(!q||q.done||q.kind==='choice')return;answer(gradeEntry());};
+$('#stage').addEventListener('click',e=>{if(!q||q.done)return;const o=e.target.closest('[data-opt]');if(o&&q.kind==='choice'){q.chosen=+o.dataset.opt;answer(q.chosen===q.answer);return;}
+  const k=e.target.closest('[data-key]');if(k){key(k.dataset.key);return;}const f=e.target.closest('[data-field]');if(f){q.active=f.dataset.field;refresh();}});
+document.addEventListener('keydown',e=>{if(!q)return;if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.fields&&!q.done){if(/^[0-9]$/.test(e.key))key(e.key);else if(e.key==='.')key('.');else if(e.key==='Backspace')key('del');else if(e.key==='Tab'||e.key===':'||e.key==='/'){e.preventDefault();key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
+window.addEventListener('pagehide',()=>{if(RUN)save();});
+window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
+  correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
+  wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
+  H,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
+home();
+
+})();
+</script>
+</body>
+</html>
