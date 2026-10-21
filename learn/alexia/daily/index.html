@@ -140,6 +140,9 @@ table.sum th,table.sum td{border-bottom:2px solid #e5e7eb;padding:6px 10px;text-
 .say{background:var(--soft);color:var(--main);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
 #prompt.bigp{font-size:2.2rem;font-weight:bold}
 a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 18px;border-radius:16px;min-height:48px}
+.tag.redo{background:#fff7ed;color:#c2410c;border:2px solid #fdba74}
+.redonote{margin:6px 0;font-weight:700;color:#9a3412}
+.fixedline{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 14px;font-weight:700;margin:4px 0}
 
 </style>
 </head>
@@ -755,6 +758,26 @@ function makeQ(it,date,variant,idx,sigs){const top=TOPICS[it.t]||TOPICS[CFG.warm
       if(sigs.has(sig)&&a<9)continue;sigs.add(sig);return q;}catch(e){window.DAILY_ERRORS.push(it.t+': '+e);}}
   RNG=mulberry32(idx+7);const q=TOPICS[CFG.warm].gen(H,1,pick(TOPICS[CFG.warm].subs(1)));q.sub=q.sub||'';return q;}
 function buildAll(run){const sigs=new Set();return run.items.map((it,i)=>makeQ(it,run.date,run.variant,i,sigs));}
+/* ---------- redo missed questions ----------
+   A missed question comes back 3-5 questions later (same question, answer options reshuffled).
+   Missed again: it comes back once more as a near-identical variant (same type, new numbers).
+   Anything still waiting is asked in a final "Try again" round. 3 tries at most, then the answer is shown.
+   Only first attempts count for score, stars, mastery and the Fix-it history. */
+const REDO_MAX=3,REDO_PTS=2;
+const redoGap=(k)=>3+hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|gap|${k.of}|${k.tries}`)%3;
+const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok&&!k.out);
+function pickRedo(dueOnly){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok||k.out)return;if(dueOnly&&k.at>RUN.asked)return;if(best<0||k.at<RUN.rq[best].at)best=i;});return best;}
+const qSig=(t,q)=>t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
+function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
+  if(k.tries>=2){/* near-identical variant: same topic, level and question type, different numbers */
+    const v=makeQ(Object.assign({},it,{sub:base.sub||it.sub}),RUN.date,RUN.variant,`${k.of}|redo${k.tries}`,new Set([qSig(it.t,base)]));
+    if(v&&!v.example&&(v.sub||'')===(base.sub||''))return v;}
+  /* the same question with the answer options in a new order */
+  if(base.kind!=='choice'||!base.choices||base.choices.length<2)return base;
+  RNG=mulberry32(hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|shuf|${k.of}|${k.tries}`));
+  const ids=base.choices.map((c,i)=>i);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(0);
+  return Object.assign({},base,{choices:p.map(i=>base.choices[i]),answer:p.indexOf(base.answer)});}
+function initRedo(R){if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
 /* ---------- audio / speech (same as the games) ---------- */
 let actx=null;
 function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -795,7 +818,7 @@ function home(){RUN=null;q=null;clearInterval(tick);
   ${af.length?`<div class="focus" id="focusBox">🏫 <b>From school today: ${esc(af[0].title||TOPICS[af[0].topicId].title)}</b>${af[0].note?`<div class="small">${esc(af[0].note)}</div>`:''}</div>`:''}
   <div class="card"><b>Today's lesson</b><div class="secs">${Object.keys(SECN).filter(k=>counts[k]).map(k=>`<div class="sec" data-sec="${k}"><b>${SECN[k][0]} ${SECN[k][1]}</b>${counts[k]} question${counts[k]>1?'s':''}${k==='new'&&cur?`<div class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</div>`:''}${k==='school'?`<div class="small">${esc(schoolTitle)}</div>`:''}</div>`).join('')}</div>
     <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
-    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?`▶️ Keep going (question ${S.run.res.length+1} of ${S.run.items.filter(x=>x.kind!=='example').length})`:'▶️ Start today\'s lesson'}</button>`}</div></div>
+    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (try again round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
   <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
   ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
      <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
@@ -818,21 +841,28 @@ function bindAdult(){const bb=$('#backBtn'),sk=$('#skipBtn');
 function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
 /* ---------- play ---------- */
 function startLesson(extra){
-  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=S.run;if(RUN.doneIdx===RUN.i)RUN.i++;}
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=S.run;initRedo(RUN);}
   else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
-    RUN=S.run={date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false};save();}
-  QS=buildAll(RUN);show('play');startTimer();next(true);}
+    RUN=S.run={date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};save();}
+  QS=buildAll(RUN);show('play');startTimer();next(!RUN.awaitNext);}
 function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
 function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
   $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
   $('#timesUp').classList.toggle('hidden',!!left);}
 const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
-function progUI(){const n=NQ(),d=RUN.res.length;$('#progTxt').textContent=`${d} / ${n}`;$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
+function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔁 ${pr}`:'');$('#progTxt').title=pr?`${pr} to try again`:'';$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
 function next(resume){
-  if(!resume)RUN.i++;if(RUN.i>=RUN.items.length)return finish();
-  const it=RUN.items[RUN.i];q=Object.assign({},QS[RUN.i],{it,done:false,usedHint:false,f:{}});
-  const sn=SECN[it.sec]||['',''];const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
-  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${it.sec==='challenge'||it.up?' <span class="tag new">⚡ harder</span>':''}`;
+  if(!resume){if(RUN.rd!=null)RUN.rd=null;else RUN.i++;}
+  RUN.awaitNext=false;
+  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length,prev=RUN.items[RUN.i-1];
+    /* a missed question is due again (never straight after a worked example), or the final Try again round */
+    const k=!mainLeft?pickRedo(false):(prev&&prev.kind==='example')?-1:pickRedo(true);
+    if(k>=0)RUN.rd=k;else if(!mainLeft)return finish();}
+  save();
+  const rk=RUN.rd!=null?RUN.rq[RUN.rd]:null,it=rk?RUN.items[rk.of]:RUN.items[RUN.i];
+  q=Object.assign({},rk?redoQ(rk):QS[RUN.i],{it,done:false,usedHint:false,f:{},redo:rk});
+  const sn=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']);const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔁 Redo · try ${rk.tries+1} of ${REDO_MAX}${rk.tries>=2?' · new numbers':''}</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   progUI();topbar();
   if(q.example){$('#prompt').classList.remove('bigp');$('#prompt').innerHTML=`👀 Worked example: ${esc(tname)}`;$('#qvis').innerHTML='';
@@ -843,7 +873,7 @@ function next(resume){
   else{q.active=q.fields[0].id;q.fields.forEach(f=>q.f[f.id]='');
     const lay=(q.layoutPre||'')+q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<span class="ebox" data-field="${id}" id="f_${id}" role="button" aria-label="answer box">&nbsp;</span>`);
     $('#stage').innerHTML=`<div class="entryrow">${lay}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}${q.dot?'<button data-key=".">.</button>':''}<button data-key="del" class="wide">⌫ Delete</button>${q.fields.length>1?'<button data-key="next" class="wide">Next box ➜</button>':''}</div>`;refresh();}
-  if(it.guided){showHint(true);}
+  if(it.guided&&!rk){showHint(true);}
   updCheck();
 }
 function refresh(){if(!q||!q.fields)return;q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.innerHTML=q.f[f.id]||'&nbsp;';e.classList.toggle('active',!q.done&&f.id===q.active);}});updCheck();}
@@ -857,27 +887,37 @@ function updCheck(){const c=$('#checkBtn');if(!q||q.example)return;c.classList.t
 const same=(a,b)=>{a=String(a).trim();b=String(b).trim();if(/^-?\d*\.?\d+$/.test(a)&&/^-?\d*\.?\d+$/.test(b))return Math.abs(+a- +b)<1e-9;return a===b;};
 function gradeEntry(){if(q.check)return !!q.check(q.f);return q.fields.every(f=>same(q.f[f.id],q.answer[f.id]));}
 function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;$('#hintBox').innerHTML=(guided?'<span class="guided">🧭 Guided practice: here is a tip to get you started</span>':'')+'💡 '+(q.hint||'Have a careful look at the picture.');$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
-function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it;RUN.doneIdx=RUN.i;
-  let pts=0;if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
+function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN.asked=(RUN.asked||0)+1;RUN.awaitNext=true;
+  let pts=0,fbNote='';
+  if(rk){/* a redo: never changes score, mastery or history; a fix earns a small bonus */
+    if(ok){rk.ok=true;RUN.fixed++;pts=REDO_PTS;RUN.pts+=pts;S.points+=pts;sfx('good');}
+    else{rk.tries++;if(rk.tries>=REDO_MAX){rk.out=true;fbNote=`<div class="redonote">That was the last try for this one. Look at how it works, then let's move on.</div>`;}
+      else{rk.at=RUN.asked+redoGap(rk);fbNote=`<div class="redonote">🔁 You'll get one more go soon, with new numbers.</div>`;}sfx('bad');}
+  }else{RUN.doneIdx=RUN.i;
+  if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
   RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint});
   {const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;}
   S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);
+  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};k.at=RUN.asked+redoGap(k);RUN.rq.push(k);fbNote=`<div class="redonote">🔁 We'll come back to this one in a few questions.</div>`;}
+  }
   save();
   if(q.kind==='choice')document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answer)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
   else{q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.classList.remove('active');e.classList.add(ok?'okb':'badb');}});const kp=document.querySelector('.keypad');if(kp)kp.remove();}
   const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
   const correct=q.kind==='choice'?q.choices[q.answer]:q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(q.answer[id]||'')}</b>`);
   const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
-  const last=RUN.i>=RUN.items.length-1;
-  fb.innerHTML=(ok?`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`:`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+
-    `<div class="expl">${q.explain||''}</div>`+(it.tell?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
-    `<button class="btn" id="nextBtn">${last?'See my results ⭐':'Next question ➜'}</button>`;
+  const mainDone=rk?RUN.i>=RUN.items.length:RUN.i>=RUN.items.length-1,pend=pendingRedos().length;
+  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔁 Next try ➜':'🔁 Try again round ➜'):'See my results ⭐'):'Next question ➜';
+  fb.innerHTML=(ok?(rk?`<div class="fbtitle">🔧 Fixed it!</div><div>+${pts} points</div>`:`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`):`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+fbNote+
+    `<div class="expl">${q.explain||''}</div>`+(it.tell&&!rk?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
+    `<button class="btn" id="nextBtn">${nextLbl}</button>`;
   $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
   const tb=$('#toldBtn');if(tb)tb.onclick=()=>{RUN.told++;S.told++;RUN.pts+=5;S.points+=5;save();topbar();tb.disabled=true;tb.textContent='👍 Great explaining!';sfx('good');};
   $('#nextBtn').onclick=()=>{save();next();};progUI();topbar();
   setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
 /* ---------- finish ---------- */
-function finish(){clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.filter(r=>r.ok).length,p=n?c/n:0,st=starsFor(p);
+function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false);RUN.awaitNext=false;return next(true);}
+  clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.filter(r=>r.ok).length,p=n?c/n:0,st=starsFor(p);
   /* per-topic lesson accuracy, mastery and levels */
   const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
   const msgs=[];const cur=curTopic();
@@ -886,7 +926,7 @@ function finish(){clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.f
   let mastered=null;
   if(cur){const t=T(cur),L=t.les.slice(-2);if(L.length>=2){const nn=L[0][0]+L[1][0],cc=L[0][1]+L[1][1];if(cc/nn>=0.8){t.mastered=true;S.cur++;mastered=cur;}}}
   const prevDay=S.days[TODAY];
-  if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told};}
+  if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told,missed:R.rq.length,fixed:R.fixed};}
   else{prevDay.extra=(prevDay.extra||0)+1;prevDay.stars=Math.max(prevDay.stars||0,st);}
   R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());save();
   const nxt=curTopic();
@@ -894,7 +934,8 @@ function finish(){clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.f
   const secRows=Object.keys(SECN).filter(k=>res.some(r=>r.sec===k)).map(k=>{const rr=res.filter(r=>r.sec===k);return `<tr><td>${SECN[k][0]} ${SECN[k][1]}</td><td>${rr.filter(r=>r.ok).length} / ${rr.length}</td></tr>`;}).join('');
   const msg=p>=0.95?`Amazing, ${NAME}! 🏅`:p>=0.8?`Great work, ${NAME}!`:p>=0.6?`Well done, ${NAME}!`:`Good effort, ${NAME}! Tomorrow's Fix-it will help. 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
-   <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>${msgs.join('')}
+   <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>
+   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed${R.fixed<R.rq.length?` (the answer was shown for the other ${R.rq.length-R.fixed})`:'. Brilliant!'}<span class="small"> · score and stars count first tries</span></p>`:''}${msgs.join('')}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
@@ -927,7 +968,7 @@ window.addEventListener('pagehide',()=>{if(RUN)save();});
 window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
   correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
   wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
-  H,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
+  H,redoQ,pendingRedos,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
 home();
 
 })();

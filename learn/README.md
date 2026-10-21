@@ -52,6 +52,11 @@ DAILY_TOPICS_EXTRA.push({
 
 `H` also has `rnd`, `pick` and `shuffle`, which use the day's seed, plus the picture helpers (`barSVG`, `clockSVG`, `rectSVG`, `angleSVG`, `moneySVG`, `colSVG`, `pieSVG` and more; see `daily-src/vis.js`).
 
+## Redo of missed questions
+
+- **Daily lesson:** a missed question comes back 3–5 questions later, with the answer options in a new order. If it is missed again, it comes back once more with the same type of question and new numbers. Any that are still waiting are asked in a "Try again round" before the results screen. Each question gets 3 tries at most; after that the answer is shown and the lesson moves on. Score, stars, mastery and the Fix-it history only count first tries. Fixing a question gives +2 points, and the results screen shows how many were fixed. The redo queue is saved with the lesson, so pausing or refreshing keeps it.
+- **Games:** missed questions are asked again at the end of the round, before the results screen. It is the same question with the options reshuffled, with up to 2 extra tries. Stars, unlocking and the saved stats only count first tries, and the saved progress format is unchanged.
+
 ## Testing
 
 Add `?date=YYYY-MM-DD` to the page address to see the lesson for another day, e.g. `ethan/daily/index.html?date=2026-10-23` for a Friday review.
