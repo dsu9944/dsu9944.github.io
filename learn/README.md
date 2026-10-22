@@ -57,6 +57,21 @@ DAILY_TOPICS_EXTRA.push({
 - **Daily lesson:** a missed question comes back 3–5 questions later, with the answer options in a new order. If it is missed again, it comes back once more with the same type of question and new numbers. Any that are still waiting are asked in a "Try again round" before the results screen. Each question gets 3 tries at most; after that the answer is shown and the lesson moves on. Score, stars, mastery and the Fix-it history only count first tries. Fixing a question gives +2 points, and the results screen shows how many were fixed. The redo queue is saved with the lesson, so pausing or refreshing keeps it.
 - **Games:** missed questions are asked again at the end of the round, before the results screen. It is the same question with the options reshuffled, with up to 2 extra tries. Stars, unlocking and the saved stats only count first tries, and the saved progress format is unchanged.
 
+## Section tiles (daily lesson home)
+Each tile on "Today's lesson" (School, Warm-up, New, Mix, Fix-it, Challenge, Review, Tough) is a button. Tapping one starts or resumes today's lesson at that section's first unanswered question. The other sections stay in the lesson and are still asked afterwards. Questions are seeded by their plan position, so the order never changes the questions, the score or mastery. A finished section's tile, or any tile once today is done, starts extra practice of that section. Extra practice doesn't change the day's score, mastery or the Fix-it history.
+
+## Review mistakes together (parent review)
+The results screen and the home screen (once today's lesson is started) have a "👨‍👦 Review mistakes together (N)" button. It lists every question answered wrong at the first try, showing:
+- the picture;
+- the first answer;
+- the redo attempts;
+- the correct answer;
+- the steps;
+- read-aloud;
+- "Try it again", which reshuffles the question and doesn't score.
+
+You can view the list or one mistake at a time. The day picker covers earlier days and the whole week. The data is kept in the daily store (`rev`) for the last 14 days only. Each of the 5 games has the same button on its results screen, covering that round only; nothing is stored.
+
 ## Testing
 
 Add `?date=YYYY-MM-DD` to the page address to see the lesson for another day, e.g. `ethan/daily/index.html?date=2026-10-23` for a Friday review.
