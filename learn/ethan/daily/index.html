@@ -37,7 +37,13 @@ main{max-width:980px;margin:0 auto;padding:16px}
 .tag{display:inline-block;background:var(--soft);color:var(--main);border-radius:999px;padding:3px 12px;font-size:.9rem;font-weight:bold}
 .tag.new{background:#fef3c7;color:#92400e}.tag.ok{background:#dcfce7;color:#166534}.tag.school{background:#ffedd5;color:#9a3412}
 .secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:12px 0}
-.sec{background:var(--soft2);border:3px solid var(--line);border-radius:16px;padding:10px;font-size:.95rem}
+.sec{background:var(--soft2);border:3px solid var(--line);border-radius:16px;padding:10px;font-size:.95rem;font-family:inherit;color:inherit;text-align:left;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-height:48px;box-shadow:0 3px 0 var(--line);transition:transform .08s,border-color .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.sec:hover{border-color:var(--main);transform:translateY(-2px);box-shadow:0 5px 0 var(--line)}
+.sec:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.sec:focus-visible{outline:4px solid var(--main);outline-offset:2px}
+.sec.full{background:#ecfdf5;border-color:#86efac}
+.sec .secst{font-weight:800}
+.sec .secgo{font-size:.8rem;font-weight:800;color:var(--main);margin-top:2px}
 .sec b{display:block;color:var(--main);font-size:1.05rem}
 .week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center}
 .wd{background:#f8fafc;border:3px solid #e5e7eb;border-radius:14px;padding:6px 2px;font-size:.85rem}
@@ -143,6 +149,18 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
 .tag.redo{background:#fff7ed;color:#c2410c;border:2px solid #fdba74}
 .redonote{margin:6px 0;font-weight:700;color:#9a3412}
 .fixedline{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 14px;font-weight:700;margin:4px 0}
+.rv{text-align:left}.rvhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}.rvhead b{color:var(--main);font-size:1.1rem}
+.rvprompt{justify-content:flex-start}.rvans{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.chip{border-radius:12px;padding:8px 12px;font-weight:700;line-height:1.5}.chip.bad{background:#fef2f2;color:#991b1b;border:2px solid #fecaca}.chip.ok{background:#ecfdf5;color:#065f46;border:2px solid #a7f3d0}
+.chip svg{max-height:110px;width:auto;vertical-align:middle}.rvst{font-weight:700;color:#9a3412}
+.rvexp{background:var(--soft2);border:3px solid var(--line);border-radius:14px;padding:10px 14px;margin:8px 0}.rvexp ol.steps{margin:6px 0 4px;padding-left:22px}.rvexp li{margin:3px 0}
+.rvtry{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}.rvplay{flex-basis:100%}.rvmini{border:3px dashed var(--line);border-radius:14px;padding:10px;margin-top:6px}
+.rvctl{gap:10px;align-items:center;flex-wrap:wrap}.rvctl select{font:inherit;font-size:1rem;padding:8px 10px;border-radius:12px;border:3px solid var(--line);background:#fff;min-height:44px;max-width:100%}
+.seg{display:flex;gap:6px}.rvnav{justify-content:space-between;align-items:center;margin:8px 0 20px}.rvnone{text-align:center;font-size:1.1rem}
+.rvfb{margin-top:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rvprompt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rvvar{background:#fff;border-radius:10px;padding:6px 10px;margin:4px 0;font-weight:600}
+.rvvar .story,.chip .story{display:inline;background:none;padding:0;margin:0;font-size:inherit}.rvmini{text-align:center}.rvmini .keypad{margin:8px auto}.rvmini .opts{margin:8px auto}
+.seg .btn:not(.ghost){color:#fff}
 
 </style>
 </head>
@@ -172,6 +190,7 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
   </div>
 </section>
 <section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+<section id="review" class="hidden"><div id="reviewBody"></div></section>
 </main>
 <!-- "From school today" entries and extra topic modules live in focus.js (see README.md). -->
 <script src="focus.js"></script>
@@ -655,7 +674,11 @@ function makeQ(it,date,variant,idx,sigs){const top=TOPICS[it.t]||TOPICS[CFG.warm
       const q=top.gen.call(top,H,it.lvl,sub);q.sub=q.sub||sub||'';const sig=it.t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
       if(sigs.has(sig)&&a<9)continue;sigs.add(sig);return q;}catch(e){window.DAILY_ERRORS.push(it.t+': '+e);}}
   RNG=mulberry32(idx+7);const q=TOPICS[CFG.warm].gen(H,1,pick(TOPICS[CFG.warm].subs(1)));q.sub=q.sub||'';return q;}
-function buildAll(run){const sigs=new Set();return run.items.map((it,i)=>makeQ(it,run.date,run.variant,i,sigs));}
+/* Questions are generated in original plan order (it.qi), so reordering sections never changes a question. */
+function buildAll(run){const src=run.all||run.items,sigs=new Set(),byQi={};
+  src.map((it,i)=>[it.qi!=null?it.qi:i,it]).sort((a,b)=>a[0]-b[0]).forEach(([qi,it])=>{byQi[qi]=makeQ(it,run.date,run.variant,qi,sigs);});
+  return run.items.map((it,i)=>byQi[it.qi!=null?it.qi:i]);}
+function initRun(R){R.items.forEach((it,i)=>{if(it.qi==null)it.qi=i;});initRedo(R);return R;}
 /* ---------- redo missed questions ----------
    A missed question comes back 3-5 questions later (same question, answer options reshuffled).
    Missed again: it comes back once more as a near-identical variant (same type, new numbers).
@@ -675,7 +698,7 @@ function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
   RNG=mulberry32(hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|shuf|${k.of}|${k.tries}`));
   const ids=base.choices.map((c,i)=>i);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(0);
   return Object.assign({},base,{choices:p.map(i=>base.choices[i]),answer:p.indexOf(base.answer)});}
-function initRedo(R){if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
+function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
 /* ---------- audio / speech (same as the games) ---------- */
 let actx=null;
 function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -693,7 +716,7 @@ function spoken(el){const c=el.cloneNode(true);c.querySelectorAll('.say,svg').fo
     .replace(/×/g,' times ').replace(/÷/g,' divided by ').replace(/−/g,' minus ').replace(/cm²/g,' square centimetres').replace(/°C/g,' degrees').replace(/°/g,' degrees').replace(/\?/g,' what? ').replace(/\s+/g,' ').trim();}
 /* ---------- UI helpers ---------- */
 const SECN={school:['🏫','From school today'],warm:['⚡','Warm-up'],new:['🆕','New topic'],mix:['🔀','Mixed practice'],fix:['🔧','Fix-it'],challenge:['🏔️','Challenge finish'],review:['🔁','Week review'],tough:['💪','Toughest of the week']};
-function show(id){['home','play','results'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function show(id){['home','play','results','review'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
 const starsFor=p=>p>=0.95?3:p>=0.8?2:p>=0.6?1:0;
 function dayStreak(){let n=0,d=TODAY;if(!(S.days[d]&&S.days[d].done))d=addDays(d,-1);
   for(let i=0;i<60;i++){const w=dow(d);if(S.days[d]&&S.days[d].done)n++;else if(w!==0&&w!==6)break;d=addDays(d,-1);}return n;}
@@ -705,6 +728,7 @@ let RUN=null,QS=null,q=null,tick=null;
 function home(){RUN=null;q=null;clearInterval(tick);
   document.title=`${NAME}'s Daily Lesson`;$('#titleName').textContent=NAME;
   const review=isReviewDay(TODAY),done=S.days[TODAY]&&S.days[TODAY].done,inprog=S.run&&S.run.date===TODAY&&!S.run.finished;
+  const tr=S.run&&S.run.date===TODAY?initRun(S.run):null;
   const plan=inprog?S.run:planLesson(TODAY,0);const counts={};plan.items.forEach(it=>{if(it.kind!=='example')counts[it.sec]=(counts[it.sec]||0)+1;});
   const nq=Object.values(counts).reduce((a,b)=>a+b,0);const cur=curTopic(),ct=cur?T(cur):null,af=activeFocus(TODAY);
   const sIt=plan.items.find(x=>x.sec==='school'),schoolTitle=af.length?(af[0].title||TOPICS[af[0].topicId].title):sIt&&TOPICS[sIt.t]?TOPICS[sIt.t].title:'From school';
@@ -714,13 +738,18 @@ function home(){RUN=null;q=null;clearInterval(tick);
     <h2 id="hello">Hi ${NAME}! 👋</h2><div style="font-size:1.25rem" id="todayDate"><b>${weekday(TODAY)}</b>, ${longDate(TODAY).replace(weekday(TODAY)+' ','').replace(/^,\s*/,'')}</div>
     <div class="row" style="margin-top:6px"><span class="tag" id="kindTag">${kindLabel}</span><span class="tag">⏱️ about 15 minutes · ${nq} questions</span>${done?'<span class="tag ok">✅ Done today!</span>':''}</div></div></div>
   ${af.length?`<div class="focus" id="focusBox">🏫 <b>From school today: ${esc(af[0].title||TOPICS[af[0].topicId].title)}</b>${af[0].note?`<div class="small">${esc(af[0].note)}</div>`:''}</div>`:''}
-  <div class="card"><b>Today's lesson</b><div class="secs">${Object.keys(SECN).filter(k=>counts[k]).map(k=>`<div class="sec" data-sec="${k}"><b>${SECN[k][0]} ${SECN[k][1]}</b>${counts[k]} question${counts[k]>1?'s':''}${k==='new'&&cur?`<div class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</div>`:''}${k==='school'?`<div class="small">${esc(schoolTitle)}</div>`:''}</div>`).join('')}</div>
+  <div class="card"><b>Today's lesson</b><div class="secs" id="secTiles">${Object.keys(SECN).filter(k=>counts[k]).map(k=>{const pr=tr?secProgress(tr,k):{n:counts[k],d:0},full=pr.n&&pr.d>=pr.n,doneAll=done&&!inprog;
+      const st=full?'✅ done':pr.d?`${pr.d}/${pr.n} done`:`${pr.n} question${pr.n>1?'s':''}`,act=doneAll||full?'Tap to practise again':pr.d?'Tap to carry on here':inprog||tr?'Tap to go here':'Tap to start here';
+      return `<button type="button" class="sec${full?' full':''}" data-sec="${k}" aria-label="${SECN[k][1]}: ${st}. ${act}"><b>${SECN[k][0]} ${SECN[k][1]}</b><span class="secst">${st}</span>${k==='new'&&cur?`<span class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</span>`:''}${k==='school'?`<span class="small">${esc(schoolTitle)}</span>`:''}<span class="secgo">${act} ➜</span></button>`;}).join('')}</div>
     <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
+    ${done||tr?`<div class="row" style="margin-top:12px;justify-content:center"><button class="btn orange" id="revBtn">👨‍👦 Review mistakes together (${revCount(TODAY)})</button></div>`:''}
     <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (try again round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
   <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
   ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
      <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
   ${adultHTML()}`;
+  {const rb=$('#revBtn');if(rb)rb.onclick=()=>openReview(TODAY,'home');}
+  document.querySelectorAll('#secTiles [data-sec]').forEach(b=>b.onclick=()=>{sfx('tap');goSection(b.dataset.sec);});
   const sb=$('#startBtn');if(sb)sb.onclick=()=>startLesson(false);const ab=$('#againBtn');if(ab)ab.onclick=()=>startLesson(true);
   bindAdult();topbar();show('home');
 }
@@ -731,35 +760,66 @@ function adultHTML(){
     return `<li class="${st==='done'?'done':st==='current'?'cur':''}" data-topic="${id}"><span>${st==='done'?'✅':st==='current'?'⭐':st==='next'?'⏭️':'🔒'}</span><b>${TOPICS[id].icon} ${esc(TOPICS[id].title)}</b><span class="code">${esc(TOPICS[id].code)}</span><span class="small">${st==='done'?'done':st==='current'?'current':st==='next'?'next':''} · accuracy ${a} · level ${(t?t.lvl:1)+1}/4</span></li>`;}).join('')}</ol>
   <div class="row"><button class="btn ghost small" id="backBtn" ${S.cur<=0?'disabled':''}>⏪ Go back a topic</button><button class="btn ghost small" id="skipBtn" ${S.cur>=PATH.length?'disabled':''}>⏩ Skip ahead a topic</button></div>
   <p class="small">${FOCUS.length?`School focus entries: ${FOCUS.map(f=>`${esc(f.date)}${f.until?'–'+esc(f.until):''} ${esc(f.title||f.topicId)}`).join('; ')}.`:'No "From school today" entries right now.'} Lessons are fixed for each day; today is ${esc(TODAY)}.</p>
-  <button class="btn ghost small" id="resetDaily">Reset daily lesson progress</button></details></div>`;}
-function bindAdult(){const bb=$('#backBtn'),sk=$('#skipBtn');
+  <div class="row"><button class="btn ghost small" id="pastRev">👨‍👦 Review mistakes (past days)</button><button class="btn ghost small" id="resetDaily">Reset daily lesson progress</button></div></details></div>`;}
+function bindAdult(){$('#pastRev').onclick=()=>openReview(TODAY,'home');const bb=$('#backBtn'),sk=$('#skipBtn');
   if(bb)bb.onclick=()=>{if(S.cur>0){S.cur--;const t=T(PATH[S.cur]);t.mastered=false;t.les=[];resetRunIfUnstarted();save();home();$('#adult').open=true;}};
   if(sk)sk.onclick=()=>{if(S.cur<PATH.length){T(PATH[S.cur]).skipped=true;S.cur++;resetRunIfUnstarted();save();home();$('#adult').open=true;}};
   $('#resetDaily').onclick=()=>{if(confirm(`Reset ${NAME}'s daily lesson progress? (The games keep their own progress.)`)){const snd=S.sound;S=defState();S.sound=snd;S.cur=Math.max(0,PATH.indexOf(CFG.start));save();home();}};}
 function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
 /* ---------- play ---------- */
+/* ---------- section tiles: jump to a section, or practise it again ---------- */
+function firstOpen(R){return R.i+(R.awaitNext&&R.rd==null?1:0);} /* first position not yet answered */
+function secProgress(R,k){const n=R.items.filter(it=>it.sec===k&&it.kind!=='example').length,d=R.res.filter(r=>r.sec===k).length;return {n,d:Math.min(d,n)};}
+function todaysRun(){return S.run&&S.run.date===TODAY?initRun(S.run):null;}
+function goSection(k){
+  const done=S.days[TODAY]&&S.days[TODAY].done,cur=todaysRun(),inprog=cur&&!cur.finished;
+  if(!inprog&&done)return practiseSection(k,null);
+  RUN=inprog?cur:(S.run=newRun(0,false,planLesson(TODAY,0)));
+  const st=firstOpen(RUN),rest=RUN.items.slice(st),mine=rest.filter(it=>it.sec===k);
+  if(!mine.some(it=>it.kind!=='example'))return practiseSection(k,RUN); /* section already finished: extra practice */
+  /* move this section's unanswered items (worked example first, as planned) to the front of what is left */
+  RUN.items=RUN.items.slice(0,st).concat(mine,rest.filter(it=>it.sec!==k));
+  RUN.i=st;RUN.rd=null;RUN.awaitNext=false;save();
+  QS=buildAll(RUN);show('play');startTimer();next(true,true);}
+/* extra practice of one section: never changes the day's score, mastery, topic stats or Fix-it history */
+function practiseSection(k,src){
+  let all,variant;
+  if(src){all=src.items.slice().sort((a,b)=>a.qi-b.qi);variant=src.variant;} /* the same questions again */
+  else{S.pn=(S.pn||0)+1;variant=1000+S.pn;const p=planLesson(TODAY,variant);p.items.forEach((it,i)=>it.qi=i);all=p.items;} /* today is done: a fresh set */
+  const items=all.filter(it=>it.sec===k).map(it=>Object.assign({},it,{tell:false}));
+  if(!items.some(it=>it.kind!=='example'))return home();
+  RUN={date:TODAY,variant,practice:k,kind:'practice',all,items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};
+  save();QS=buildAll(RUN);show('play');startTimer();next(true);}
+function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res.filter(r=>r.ok).length,sn=SECN[R.practice]||['',''];R.finished=true;save();
+  $('#resultsCard').innerHTML=`<div class="stars">💪</div><h2>Extra practice done, ${NAME}!</h2>
+   <p style="font-size:1.3rem" id="practiceScore">${sn[0]} ${sn[1]}: <b>${c} out of ${n}</b> · +${R.pts} points</p>
+   ${R.rq.length?`<p class="fixedline">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed</p>`:''}
+   <p class="small">Extra practice doesn't change today's lesson score.</p>
+   <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" href="../../index.html">🏠 My games</a></div>`;
+  show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
 function startLesson(extra){
-  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=S.run;initRedo(RUN);}
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);}
   else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
-    RUN=S.run={date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};save();}
+    RUN=S.run=newRun(variant,extra,p);save();}
   QS=buildAll(RUN);show('play');startTimer();next(!RUN.awaitNext);}
+function newRun(variant,extra,p){p.items.forEach((it,i)=>it.qi=i);return {date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};}
 function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
 function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
   $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
   $('#timesUp').classList.toggle('hidden',!!left);}
 const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
 function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔁 ${pr}`:'');$('#progTxt').title=pr?`${pr} to try again`:'';$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
-function next(resume){
+function next(resume,noRedo){
   if(!resume){if(RUN.rd!=null)RUN.rd=null;else RUN.i++;}
   RUN.awaitNext=false;
   if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length,prev=RUN.items[RUN.i-1];
     /* a missed question is due again (never straight after a worked example), or the final Try again round */
-    const k=!mainLeft?pickRedo(false):(prev&&prev.kind==='example')?-1:pickRedo(true);
+    const k=!mainLeft?pickRedo(false):(noRedo||(prev&&prev.kind==='example'))?-1:pickRedo(true);
     if(k>=0)RUN.rd=k;else if(!mainLeft)return finish();}
   save();
   const rk=RUN.rd!=null?RUN.rq[RUN.rd]:null,it=rk?RUN.items[rk.of]:RUN.items[RUN.i];
   q=Object.assign({},rk?redoQ(rk):QS[RUN.i],{it,done:false,usedHint:false,f:{},redo:rk});
-  const sn=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']);const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  const sn0=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
   $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔁 Redo · try ${rk.tries+1} of ${REDO_MAX}${rk.tries>=2?' · new numbers':''}</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   progUI();topbar();
@@ -793,9 +853,9 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
       else{rk.at=RUN.asked+redoGap(rk);fbNote=`<div class="redonote">🔁 You'll get one more go soon, with new numbers.</div>`;}sfx('bad');}
   }else{RUN.doneIdx=RUN.i;
   if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
-  RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint});
-  {const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;}
-  S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);
+  RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint,qi:it.qi});
+  if(!RUN.practice){const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;
+  S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);}
   if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};k.at=RUN.asked+redoGap(k);RUN.rq.push(k);fbNote=`<div class="redonote">🔁 We'll come back to this one in a few questions.</div>`;}
   }
   save();
@@ -803,6 +863,7 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
   else{q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.classList.remove('active');e.classList.add(ok?'okb':'badb');}});const kp=document.querySelector('.keypad');if(kp)kp.remove();}
   const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
   const correct=q.kind==='choice'?q.choices[q.answer]:q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(q.answer[id]||'')}</b>`);
+  if(!RUN.practice)revRecord(q,it,rk,ok,correct);
   const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
   const mainDone=rk?RUN.i>=RUN.items.length:RUN.i>=RUN.items.length-1,pend=pendingRedos().length;
   const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔁 Next try ➜':'🔁 Try again round ➜'):'See my results ⭐'):'Next question ➜';
@@ -815,6 +876,7 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
   setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
 /* ---------- finish ---------- */
 function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false);RUN.awaitNext=false;return next(true);}
+  if(RUN.practice)return finishPractice();
   clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.filter(r=>r.ok).length,p=n?c/n:0,st=starsFor(p);
   /* per-topic lesson accuracy, mastery and levels */
   const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
@@ -834,10 +896,11 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
    <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>
    ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed${R.fixed<R.rq.length?` (the answer was shown for the other ${R.rq.length-R.fixed})`:'. Brilliant!'}<span class="small"> · score and stars count first tries</span></p>`:''}${msgs.join('')}
+   ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
-  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;}
+  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;const rv=$('#rRev');if(rv)rv.onclick=()=>openReview(TODAY,'results');}
 function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.filter(e=>e.d>=wk[0]&&e.d<=TODAY&&TOPICS[e.t]&&!TOPICS[e.t].warm);
   const daysDone=MT.filter(d=>S.days[d]&&S.days[d].done).length;
   const by={};L.forEach(e=>{const o=by[e.t]||(by[e.t]={n:0,c:0,en:0,ec:0,tn:0,tc:0});o.n++;if(e.ok)o.c++;if(e.d<TODAY){o.en++;if(e.ok)o.ec++;}else{o.tn++;if(e.ok)o.tc++;}});
@@ -851,6 +914,82 @@ function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.fil
    <p><b>🎯 Practise next:</b> ${practise.length?practise.join(', '):'Everything is 80% or better. Ready for new challenges!'}</p>${curTopic()?`<p><b>🧭 Next week's topic:</b> ${TOPICS[curTopic()].icon} ${esc(TOPICS[curTopic()].title)}</p>`:''}</div>`;}
 function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9','#ff8a3d'];
   for(let i=0;i<50;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=cols[i%cols.length];d.style.animationDuration=(1.8+Math.random()*2)+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+/* ---------- review mistakes together (grown-up + child) ----------
+   Every question answered wrong at the FIRST attempt is kept for 14 days in S.rev[date]:
+   the question (prompt, picture, options/boxes, answer, explanation), the child's first answer,
+   and each later redo attempt. Extra-practice runs are not recorded. */
+const REV_DAYS=14,REV_MAX=60;
+const givenHTML=q=>q.kind==='choice'?(q.chosen!=null?q.choices[q.chosen]:'–'):q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc((q.f&&q.f[id])||'')||'–'}</b>`);
+function revPayload(q){const o={};['prompt','vis','kind','choices','answer','cls','layout','layoutPre','fields','dot','hint','explain','sub'].forEach(k=>{if(q[k]!==undefined)o[k]=q[k];});
+  if(o.vis&&o.vis.length>40000)o.vis='';return JSON.parse(JSON.stringify(o));}
+function revPrune(){if(!S.rev)S.rev={};const lim=addDays(TODAY,-(REV_DAYS-1));Object.keys(S.rev).forEach(d=>{if(d<lim)delete S.rev[d];});}
+function revRecord(q,it,rk,ok,correct){try{revPrune();const L=S.rev[RUN.date]||(S.rev[RUN.date]=[]);const id=`${RUN.variant}|${it.qi}`;
+  if(!rk){if(!ok&&L.length<REV_MAX)L.push({id,v:RUN.variant,qi:it.qi,it:{t:it.t,lvl:it.lvl,sub:it.sub||null,sec:it.sec,up:it.up||0},kind:RUN.kind,q:revPayload(q),a:givenHTML(q),c:correct,tries:[],fixed:false,out:false});}
+  else{const e=L.find(x=>x.id===id);if(!e)return;const nn=q.prompt!==e.q.prompt||JSON.stringify(q.answer)!==JSON.stringify(e.q.answer);
+    e.tries.push({a:givenHTML(q),ok,c:correct,p:nn?q.prompt:null,x:nn?q.explain:null});if(ok)e.fixed=true;if(rk.out)e.out=true;}}catch(err){window.DAILY_ERRORS.push('rev '+err);}}
+/* a lesson saved before this feature: rebuild its questions (same seed) from the saved run; the answers given were not stored */
+function revLegacy(){const R=S.run;if(!R||R.date!==TODAY||!R.res||!R.res.some(r=>!r.ok))return [];
+  if((S.rev&&S.rev[TODAY]||[]).some(e=>e.v===R.variant))return [];
+  initRun(R);let qs;try{qs=buildAll(R);}catch(e){return [];}
+  const pos=R.items.map((it,i)=>i).filter(i=>R.items[i].kind!=='example');const out=[];
+  R.res.forEach((r,j)=>{if(r.ok)return;const i=r.qi!=null?R.items.findIndex(x=>x.qi===r.qi):pos[j];if(i==null||i<0||!qs[i])return;const it=R.items[i],qq=qs[i];
+    const k=(R.rq||[]).find(x=>x.of===i);const c=qq.kind==='choice'?qq.choices[qq.answer]:qq.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(qq.answer[id]||'')}</b>`);
+    out.push({id:`${R.variant}|${it.qi}`,v:R.variant,qi:it.qi,it:{t:it.t,lvl:it.lvl,sub:it.sub||null,sec:it.sec,up:it.up||0},kind:R.kind,q:revPayload(qq),a:null,c,tries:[],fixed:!!(k&&k.ok),out:!!(k&&k.out),legacy:true,ntries:k?k.tries-1+(k.ok?1:0):0,d:TODAY});});
+  return out;}
+function revList(sel){const ds=sel==='week'?WEEK:[sel];let L=[];ds.forEach(d=>{L=L.concat((S.rev&&S.rev[d]||[]).filter(e=>e&&e.q&&e.it).map(e=>Object.assign({d},e)));if(d===TODAY)L=L.concat(revLegacy());});return L;}
+const revCount=d=>revList(d).length;
+let RV={sel:TODAY,mode:'list',i:0,from:'home'};
+function revSteps(ex){if(!ex)return '';const parts=String(ex).split(/<br\s*\/?>|(?<=[.!?])\s+(?=[A-Z])/).map(x=>x.trim()).filter(Boolean);
+  return parts.length>1?`<ol class="steps">${parts.map(p=>`<li>${p}</li>`).join('')}</ol>`:`<div>${parts[0]||''}</div>`;}
+function revItem(e,n,N){const T0=TOPICS[e.it.t],sn=SECN[e.it.sec]||['',''],pend=!e.fixed&&!e.out&&e.d===TODAY&&S.run&&S.run.date===TODAY&&!S.run.finished;
+  const tries=e.tries.map((t,j)=>`<div class="chip ${t.ok?'ok':'bad'}">${t.ok?'✅':'❌'} Try ${j+2}${t.p?` <span class="small">· same type, new numbers:</span><div class="rvvar">${t.p}</div>`:''}${t.p?'Answer: ':': '}${t.a}${!t.ok&&t.p?` <span class="small">(correct: ${t.c})</span>`:''}</div>`).join('');
+  const st=e.fixed?'🔧 Fixed it on a later try!':e.out?'The answer was shown after 3 tries.':pend?'⏳ Still waiting in the Try again round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
+  return `<article class="card rv" data-rv="${n}" aria-label="Mistake ${n+1} of ${N}">
+   <div class="rvhead"><b>Mistake ${n+1} of ${N}</b><span class="tag">${sn[0]} ${sn[1]}</span><span class="tag">${T0?T0.icon+' '+esc(T0.title):''}</span>${RV.sel==='week'?`<span class="small">${weekday(e.d)}</span>`:''}</div>
+   <div class="prompt rvprompt"><span class="rvp">${e.q.prompt}</span><button class="say rvsay" aria-label="Read the question aloud">🔈</button></div>
+   ${e.q.vis?`<div class="vis">${e.q.vis}</div>`:''}
+   <div class="rvans"><div class="chip bad">❌ ${esc(NAME)}'s first answer: ${e.a!=null?e.a:'<i>not recorded (this lesson started before the review screen was added)</i>'}</div>${tries}
+    <div class="rvst">${st}</div><div class="chip ok">✅ Correct answer: ${e.c}</div></div>
+   <div class="rvexp"><b>👣 Step by step</b>${revSteps(e.q.explain)}${e.q.hint?`<div class="small">💡 Tip: ${e.q.hint}</div>`:''}</div>
+   <div class="rvtry"><button class="btn green" data-try="${n}">🔁 Try it again</button><button class="btn ghost" data-sayexp="${n}">🔈 Read the steps</button><div class="rvplay" id="rvplay${n}"></div></div></article>`;}
+function openReview(sel,from){RV={sel:sel||TODAY,mode:RV.mode||'list',i:0,from:from||'home'};renderReview();show('review');}
+function renderReview(){const L=revList(RV.sel),N=L.length;if(RV.i>=N)RV.i=Math.max(0,N-1);
+  const days=Object.keys(S.rev||{}).concat(WEEK.filter(d=>d<=TODAY)).filter((d,i,a)=>a.indexOf(d)===i).sort().reverse();
+  const lab=d=>`${d===TODAY?'Today':weekday(d)} ${parseD(d).getDate()} ${parseD(d).toLocaleDateString('en-AU',{month:'short'})}${(S.days[d]&&S.days[d].kind==='review')||(revList(d)[0]||{}).kind==='review'?' · 🏆 Week review':''} (${revCount(d)})`;
+  const opts=days.map(d=>`<option value="${d}"${RV.sel===d?' selected':''}>${lab(d)}</option>`).join('')+`<option value="week"${RV.sel==='week'?' selected':''}>📆 This whole week (${revCount('week')})</option>`;
+  const body=!N?`<div class="card rvnone">🎉 <b>No mistakes to look at${RV.sel==='week'?' this week':RV.sel===TODAY?' today':' on this day'}.</b><div class="small">${RV.sel===TODAY&&!(S.days[TODAY]&&S.days[TODAY].done)&&!(S.run&&S.run.date===TODAY)?'Today\'s lesson hasn\'t been started yet.':'Questions answered wrong the first time show up here, with the answer and the steps.'} Choose another day above to look back.</div></div>`:
+   RV.mode==='one'?revItem(L[RV.i],RV.i,N)+`<div class="row rvnav"><button class="btn ghost" id="rvPrev" ${RV.i<=0?'disabled':''}>◀ Previous</button><span><b>${RV.i+1}</b> of ${N}</span><button class="btn" id="rvNext" ${RV.i>=N-1?'disabled':''}>Next mistake ▶</button></div>`:L.map((e,n)=>revItem(e,n,N)).join('');
+  $('#reviewBody').innerHTML=`<div class="card rvtop"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0;color:var(--main)">👨‍👦 Review mistakes together</h2><button class="btn ghost" id="rvBack">⬅ Back</button></div>
+    <p class="small">Look at each question together: what ${esc(NAME)} answered, the correct answer and the steps. Tap <b>Try it again</b> to have another go (no score change).</p>
+    <div class="row rvctl"><label for="rvDay"><b>Day:</b></label><select id="rvDay">${opts}</select>
+     <div class="seg" role="group" aria-label="View"><button class="btn small ${RV.mode==='list'?'':'ghost'}" id="rvList" aria-pressed="${RV.mode==='list'}">📋 List</button><button class="btn small ${RV.mode==='one'?'':'ghost'}" id="rvOne" aria-pressed="${RV.mode==='one'}">👉 One at a time</button></div></div></div>${body}`;
+  $('#rvBack').onclick=()=>{if(RV.from==='results'){show('results');}else home();};
+  $('#rvDay').onchange=e=>{RV.sel=e.target.value;RV.i=0;renderReview();};
+  $('#rvList').onclick=()=>{RV.mode='list';renderReview();};$('#rvOne').onclick=()=>{RV.mode='one';renderReview();};
+  const pv=$('#rvPrev'),nx=$('#rvNext');if(pv)pv.onclick=()=>{RV.i--;renderReview();window.scrollTo(0,0);};if(nx)nx.onclick=()=>{RV.i++;renderReview();window.scrollTo(0,0);};
+  document.querySelectorAll('#reviewBody .rvsay').forEach(b=>b.onclick=()=>say(spoken(b.parentNode.querySelector('.rvp'))));
+  document.querySelectorAll('#reviewBody [data-sayexp]').forEach(b=>b.onclick=()=>say(spoken(b.closest('.rv').querySelector('.rvexp'))));
+  document.querySelectorAll('#reviewBody [data-try]').forEach(b=>b.onclick=()=>revTry(L[+b.dataset.try],+b.dataset.try));}
+/* "Try it again": a small stand-alone question player inside the card (options reshuffled, no points, no score change) */
+function revTry(e,n){const box=document.getElementById('rvplay'+n);if(!box)return;let Q=Object.assign({},e.q);
+  try{const it=Object.assign({},e.it);const g=makeQ(it,e.d,e.v,e.qi,new Set());if(g&&g.prompt===e.q.prompt&&JSON.stringify(g.answer)===JSON.stringify(e.q.answer)&&g.check)Q.check=g.check;}catch(err){}
+  const f={};let active=null,done=false;
+  const draw=()=>{if(Q.kind==='choice'){const ids=Q.choices.map((c,i)=>i),p=shuffle(ids.slice());if(p.length>1&&p.join()===ids.join())p.push(p.shift());
+      box.innerHTML=`<div class="rvmini"><div class="small"><b>Your turn!</b> Pick an answer.</div><div class="opts ${Q.cls||''}">${p.map(i=>`<button class="opt" data-ro="${i}">${Q.choices[i]}</button>`).join('')}</div><div class="rvfb" aria-live="polite"></div></div>`;
+      box.querySelectorAll('[data-ro]').forEach(b=>b.onclick=()=>{if(done)return;done=true;const i=+b.dataset.ro,ok=i===Q.answer;
+        box.querySelectorAll('[data-ro]').forEach(x=>{if(+x.dataset.ro===Q.answer)x.classList.add('right');else if(x===b)x.classList.add('wrong');});fbk(ok);});}
+    else{Q.fields.forEach(x=>f[x.id]='');active=Q.fields[0].id;
+      const lay=(Q.layoutPre||'')+Q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<span class="ebox" data-rf="${id}" role="button" tabindex="0" aria-label="answer box">&nbsp;</span>`);
+      box.innerHTML=`<div class="rvmini"><div class="small"><b>Your turn!</b> Type the answer, then Check.</div><div class="entryrow">${lay}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(k=>`<button data-rk="${k}">${k}</button>`).join('')}${Q.dot?'<button data-rk=".">.</button>':''}<button data-rk="del" class="wide">⌫ Delete</button>${Q.fields.length>1?'<button data-rk="next" class="wide">Next box ➜</button>':''}</div><div class="row" style="justify-content:center"><button class="btn green" data-rcheck>Check ✓</button></div><div class="rvfb" aria-live="polite"></div></div>`;
+      const ref=()=>{Q.fields.forEach(x=>{const el=box.querySelector(`[data-rf="${x.id}"]`);if(el){el.innerHTML=f[x.id]||'&nbsp;';el.classList.toggle('active',!done&&x.id===active);}});};ref();
+      box.querySelectorAll('[data-rf]').forEach(el=>el.onclick=()=>{active=el.dataset.rf;ref();});
+      box.querySelectorAll('[data-rk]').forEach(b=>b.onclick=()=>{if(done)return;const k=b.dataset.rk,i=Q.fields.findIndex(x=>x.id===active),fl=Q.fields[i];
+        if(k==='next')active=Q.fields[(i+1)%Q.fields.length].id;else if(k==='del')f[active]=f[active].slice(0,-1);else if(k==='.'){if(Q.dot&&!f[active].includes('.'))f[active]+=f[active]?'.':'0.';}else if(f[active].length<fl.len)f[active]+=k;sfx('tap');ref();});
+      box.querySelector('[data-rcheck]').onclick=()=>{if(done||!Q.fields.every(x=>f[x.id]!==''))return;done=true;const ok=Q.check?!!Q.check(f):Q.fields.every(x=>same(f[x.id],Q.answer[x.id]));
+        Q.fields.forEach(x=>{const el=box.querySelector(`[data-rf="${x.id}"]`);if(el){el.classList.remove('active');el.classList.add(ok?'okb':'badb');}});box.querySelector('.keypad').remove();fbk(ok);};}};
+  const fbk=ok=>{sfx(ok?'good':'bad');box.querySelector('.rvfb').innerHTML=(ok?`<div class="chip ok">🎉 Yes! That's it.</div>`:`<div class="chip bad">🤔 Not yet. The answer is ${e.c}. Look at the steps together.</div>`)+`<button class="btn ghost small" data-again>🔁 Try once more</button>`;
+    box.querySelector('[data-again]').onclick=()=>{done=false;draw();};};
+  draw();box.scrollIntoView({behavior:'smooth',block:'nearest'});}
 /* ---------- events ---------- */
 $('#homeLink').onclick=()=>{if(RUN&&!RUN.finished)save();home();};
 $('#quitBtn').onclick=()=>{save();home();};
@@ -866,7 +1005,7 @@ window.addEventListener('pagehide',()=>{if(RUN)save();});
 window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
   correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
   wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
-  H,redoQ,pendingRedos,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
+  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
 home();
 
 })();

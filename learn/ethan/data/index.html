@@ -227,6 +227,16 @@ svg.tf{width:min(80vw,300px);height:auto}
 
 @media (max-width:560px){.opts.graphs.g4{grid-template-columns:1fr}}
 .redotag{display:inline-block;margin-left:8px;padding:2px 10px;border-radius:999px;background:#fff7ed;color:#c2410c;border:2px solid #fdba74;font-size:.85rem;font-weight:800;vertical-align:middle}.fixedline{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:12px;padding:6px 12px;font-weight:700}.again{font-size:.95rem;margin-top:4px;opacity:.85}
+#rdoRev{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.5);overflow:auto;padding:14px;-webkit-overflow-scrolling:touch}#rdoRev.hidden{display:none}
+.rdoPanel{max-width:900px;margin:0 auto;background:#fff;border-radius:22px;padding:16px;box-shadow:0 10px 40px rgba(0,0,0,.25);text-align:left}
+.rdoTop{display:flex;justify-content:space-between;align-items:center;gap:10px}.rdoTop h2{margin:0;font-size:1.4rem}.rdoSmall{font-size:.9rem;opacity:.85}
+.rdoSeg,.rdoBtns,.rdoNav{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.rdoNav{justify-content:space-between}
+.rdoItem{border:3px solid #e5e7eb;border-radius:18px;padding:12px;margin:12px 0}.rdoHead b{font-size:1.1rem}
+.rdoQ{display:flex;align-items:center;gap:8px;font-size:1.15rem;margin:6px 0;flex-wrap:wrap}.rdoSay{border:0;background:#eef2ff;border-radius:999px;width:44px;height:44px;font-size:1.1rem;cursor:pointer}
+.rdoSnap{pointer-events:none;border:2px dashed #e5e7eb;border-radius:14px;padding:8px;margin:4px 0;overflow-x:auto}.rdoSnap svg{max-width:100%;height:auto}
+.rdoLbl{font-weight:800;margin:6px 0}.rdoLbl.bad{color:#b91c1c}.rdoLbl.ok{color:#047857}
+.rdoExp{background:#ecfdf5;border:2px solid #a7f3d0;border-radius:14px;padding:10px 14px;margin:8px 0}.rdoSteps{margin:6px 0;padding-left:22px}.rdoSteps li{margin:3px 0}
+body.rdoOpen{overflow:hidden}
 </style>
 </head>
 <body>
@@ -842,11 +852,11 @@ const RDO={_m:null,
  applyPerm(){const rd=R&&R.redo;if(!rd||!rd.perm||!q||!q._redo)return;const bs=this.opts();
    new Set(bs.map(b=>b.parentNode)).forEach(pn=>{const kids=bs.filter(b=>b.parentNode===pn),sorted=kids.slice().sort((a,b)=>rd.perm.indexOf(a.dataset.opt)-rd.perm.indexOf(b.dataset.opt));if(sorted.some((b,i)=>b!==kids[i]))sorted.forEach(b=>pn.appendChild(b));});},
  init(){if(this._mo||!window.MutationObserver)return;const st=document.getElementById('stage');if(!st)return;this._mo=new MutationObserver(()=>this.applyPerm());this._mo.observe(st,{childList:true,subtree:true});},
- miss(){if(q._redo)return;R.rq=R.rq||[];R.rq.push({type:q.type,idx:R.idx,sd:q._rs,used:q._ru,order:q._ro,tries:1,ok:false,out:false,at:0});},
+ miss(){if(q._redo)return;R.rq=R.rq||[];q._miss={type:q.type,idx:R.idx,sd:q._rs,used:q._ru,order:q._ro,tries:1,ok:false,out:false,at:0};R.rq.push(q._miss);},
  tag(){const l=$('#lvlName');if(!l)return;let t=document.getElementById('redoTag');const rd=R&&R.redo;
-   if(rd){if(!t){t=document.createElement('span');t.id='redoTag';t.className='redotag';l.appendChild(t);}t.textContent=`🔁 Redo · try ${rd.tries+1} of 3`;}else if(t)t.remove();},
+   if(rd){if(!t){t=document.createElement('span');t.id='redoTag';t.className='redotag';l.appendChild(t);}t.textContent=rd.review?'🔁 Try it again · no score':`🔁 Redo · try ${rd.tries+1} of 3`;}else if(t)t.remove();},
  nextLabel(last){return !last?'Next question ➜':this.pending()?'🔁 Try again round ➜':'See my results ⭐';},
- answer(ok,expl){const k=R.redo;let pts=0;
+ answer(ok,expl){const k=R.redo;q._ok=ok;if(k&&k.review)return this.reviewAnswer(ok,expl);let pts=0;
    if(ok){k.ok=true;R.fixed=(R.fixed||0)+1;pts=2;R.points+=pts;S.points+=pts;save();sfx('good');}
    else{k.tries++;if(k.tries>=3)k.out=true;sfx('bad');}
    const ex=expl(ok);const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
@@ -855,8 +865,53 @@ const RDO={_m:null,
    $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');dots();topbar();$('#nextBtn').onclick=next;
    setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);},
  summary(){const rq=R.rq||[];if(!rq.length)return '';const f=rq.filter(k=>k.ok).length;
-   return `<p class="fixedline">🔧 You fixed <b>${f} of ${rq.length}</b> missed question${rq.length>1?'s':''} in the try again round${f<rq.length?' (the answer was shown for the rest)':''}. Stars count first tries.</p>`;}
+   return this.revBtn()+`<p class="fixedline">🔧 You fixed <b>${f} of ${rq.length}</b> missed question${rq.length>1?'s':''} in the try again round${f<rq.length?' (the answer was shown for the rest)':''}. Stars count first tries.</p>`;}
 };
+
+/* ---------- review mistakes together (end of round; this round only, nothing is saved) ---------- */
+Object.assign(RDO,{_force:null,rv:{mode:'list',i:0},
+ clean(el){if(!el)return '';const d=document.createElement('div');d.innerHTML=el.innerHTML;d.querySelectorAll('.keypad,[data-key],.speed,#controls,.say,button.say').forEach(x=>x.remove());
+   d.querySelectorAll('[id]').forEach(x=>x.removeAttribute('id'));d.querySelectorAll('button').forEach(x=>{x.disabled=true;x.setAttribute('tabindex','-1');});return d.innerHTML;},
+ snap(){if(!q||!q.done||q._snapped)return;q._snapped=1;const ex=document.querySelector('#feedback .expl');
+   const sn={p:this.clean($('#prompt')),st:this.clean($('#stage')),ex:ex?this.clean(ex):'',ok:!!q._ok};
+   if(q._redo&&!q._redo.review){(q._redo.snaps=q._redo.snaps||[]).push(sn);}else if(!q._redo&&q._miss){q._miss.snap=sn;}},
+ speak(t){try{if(typeof say==='function')return say(t);if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang='en-AU';u.rate=0.9;speechSynthesis.speak(u);}catch(e){}},
+ txt(h){const d=document.createElement('div');d.innerHTML=h;d.querySelectorAll('svg').forEach(x=>x.remove());return d.textContent.replace(/\s+/g,' ').trim();},
+ steps(ex){const parts=String(ex||'').split(/<br\s*\/?>|(?<=[.!?])\s+(?=[A-Z])/).map(x=>x.trim()).filter(Boolean);return parts.length>1?`<ol class="rdoSteps">${parts.map(p=>`<li>${p}</li>`).join('')}</ol>`:`<div>${parts[0]||''}</div>`;},
+ misses(){return (R&&R.rq?R.rq:[]).filter(k=>k.snap);},
+ revBtn(){const n=this.misses().length;return n?`<div style="margin:10px 0"><button class="btn orange" id="rdoRevBtn">👨‍👦 Review mistakes together (${n})</button></div>`:'';},
+ item(k,n,N){const s=k.snap,sn=k.snaps||[];
+   return `<article class="rdoItem" aria-label="Mistake ${n+1} of ${N}"><div class="rdoHead"><b>Mistake ${n+1} of ${N}</b></div>
+    <div class="rdoQ"><span class="rdoP">${s.p}</span><button class="rdoSay" data-rdosay="${n}" aria-label="Read the question aloud">🔈</button></div>
+    <div class="rdoLbl bad">❌ ${NAME}'s first answer (marked in red):</div><div class="rdoSnap">${s.st}</div>
+    ${sn.map((t,j)=>`<div class="rdoLbl ${t.ok?'ok':'bad'}">${t.ok?'✅':'❌'} Try ${j+2}: ${t.ok?'fixed it!':'not yet'}</div>`).join('')}
+    ${!k.ok&&!sn.length?'<div class="rdoLbl">Not tried again yet.</div>':''}${k.out?'<div class="rdoLbl">The answer was shown after 3 tries.</div>':''}
+    <div class="rdoExp"><b>✅ The answer, step by step</b>${this.steps(s.ex)}</div>
+    <div class="rdoBtns"><button class="btn green" data-rdotry="${n}">🔁 Try it again</button><button class="btn ghost" data-rdosayx="${n}">🔈 Read the steps</button></div></article>`;},
+ review(){let o=document.getElementById('rdoRev');if(!o){o=document.createElement('div');o.id='rdoRev';o.setAttribute('role','dialog');o.setAttribute('aria-label','Review mistakes together');document.body.appendChild(o);}
+   const L=this.misses(),N=L.length,V=this.rv;if(V.i>=N)V.i=Math.max(0,N-1);
+   o.innerHTML=`<div class="rdoPanel"><div class="rdoTop"><h2>👨‍👦 Review mistakes together</h2><button class="btn ghost" id="rdoClose">✖ Close</button></div>
+    <p class="rdoSmall">The questions ${NAME} got wrong the first time in this round: the answer given, the correct answer and the steps. <b>Try it again</b> doesn't change the score.</p>
+    <div class="rdoSeg"><button class="btn ${V.mode==='list'?'':'ghost'}" id="rdoList" aria-pressed="${V.mode==='list'}">📋 List</button><button class="btn ${V.mode==='one'?'':'ghost'}" id="rdoOne" aria-pressed="${V.mode==='one'}">👉 One at a time</button></div>
+    ${!N?'<p>🎉 No mistakes this round!</p>':V.mode==='one'?this.item(L[V.i],V.i,N)+`<div class="rdoNav"><button class="btn ghost" id="rdoPrev" ${V.i<=0?'disabled':''}>◀ Previous</button><span><b>${V.i+1}</b> of ${N}</span><button class="btn" id="rdoNext" ${V.i>=N-1?'disabled':''}>Next mistake ▶</button></div>`:L.map((k,n)=>this.item(k,n,N)).join('')}</div>`;
+   o.classList.remove('hidden');document.body.classList.add('rdoOpen');o.scrollTop=0;
+   const b=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f;};
+   b('rdoClose',()=>this.close());b('rdoList',()=>{V.mode='list';this.review();});b('rdoOne',()=>{V.mode='one';this.review();});
+   b('rdoPrev',()=>{V.i--;this.review();});b('rdoNext',()=>{V.i++;this.review();});
+   o.querySelectorAll('[data-rdosay]').forEach(x=>x.onclick=()=>this.speak(this.txt(L[+x.dataset.rdosay].snap.p)));
+   o.querySelectorAll('[data-rdosayx]').forEach(x=>x.onclick=()=>this.speak(this.txt(L[+x.dataset.rdosayx].snap.ex)));
+   o.querySelectorAll('[data-rdotry]').forEach(x=>x.onclick=()=>this.retry(L[+x.dataset.rdotry]));
+   const c=document.getElementById('rdoClose');if(c)c.focus();},
+ close(){const o=document.getElementById('rdoRev');if(o){o.classList.add('hidden');o.innerHTML='';}document.body.classList.remove('rdoOpen');},
+ /* the same question again (same seed), options reshuffled; no points, no change to the round */
+ retry(k){this.close();this._force=Object.assign({},k,{review:true,perm:null,permT:null,tries:(k.tries||1)+10});show('play');next();},
+ reviewAnswer(ok,expl){const ex=expl(ok);sfx(ok?'good':'bad');const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+   fb.innerHTML=(ok?`<div class="fbtitle">🎉 Yes! That's it.</div>`:`<div class="fbtitle">🤔 Not yet. Look at the steps together.</div>`)+`<div class="expl">${ex}</div><button class="btn" id="nextBtn">⬅ Back to the review</button>`;
+   $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');topbar();
+   $('#nextBtn').onclick=()=>{q=null;R.redo=null;show('results');this.review();};setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+});
+document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#rdoRevBtn'))RDO.review();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.body.classList.contains('rdoOpen'))RDO.close();});
 let R=null,q=null;
 function sayQ(){if(S.autoSay!==false)say(speakText);}
 function show(id){['home','play','results','worksheet'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
@@ -870,7 +925,7 @@ function dots(){$('#dots').innerHTML=range(ROUND).map(i=>`<span class="dot ${i<R
   $('#runner').style.left=(R.score/ROUND*88)+'%';}
 function updCheck(){const c=$('#checkBtn');if(!q)return;c.classList.toggle('hidden',!!q.noCheck||q.done);c.disabled=!(q.canCheck&&q.canCheck());}
 function next(){
-  R.redo=null;if(R.idx<ROUND)R.idx++;if(R.idx>=ROUND){R.redo=RDO.pending();if(!R.redo)return finishRound();R.nAsk=(R.nAsk||0)+1;R.redo.at=R.nAsk;}
+  RDO.snap();if(RDO._force){R.redo=RDO._force;RDO._force=null;}else{R.redo=null;if(R.idx<ROUND)R.idx++;if(R.idx>=ROUND){R.redo=RDO.pending();if(!R.redo)return finishRound();R.nAsk=(R.nAsk||0)+1;R.redo.at=R.nAsk;}}
   const B=RDO.begin(R.types[R.idx]),type=B.type;
   q={type,D:R.D,done:false,usedHint:false};
   RDO.run(B.sd,()=>TYPES[type].make(q,B.used));q._rs=B.sd;q._ru=B.ub;q._redo=R.redo;
