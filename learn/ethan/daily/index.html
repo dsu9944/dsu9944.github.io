@@ -635,7 +635,25 @@ function planLesson(date,variant=0){
   const mixW=id=>{const t=S.topics[id];const since=t&&t.last?Math.min(6,daysBetween(t.last,date)):6;return 1+3*(1-acc(id))+since/2+(wf.includes(id)?3:0)+(id===cur?0.5:0);};
   const review=isReviewDay(date);
   let kind=review?'review':'mix';
-  if(!review){
+  if(!review&&focusToday.length){
+    /* school-focus day: the school topic is most of the lesson (about 17 of 27 questions), spread through the sections;
+       a short warm-up and 3 questions on the current path topic keep mastery tracking going (3 is the per-lesson minimum). */
+    const f=focusToday[0].topicId;
+    add('school',f,{kind:'example'});for(let i=0;i<6;i++)add('school',f,{guided:i<2});
+    for(let i=0;i<3;i++)add('warm',CFG.warm,{});
+    if(cur){if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<3;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
+    const opl=pl.filter(x=>x!==f);const others=opl.length?interleave(opl,2+(cur?0:3),mixW):[];
+    const nF=6,mixList=[];let oi=0;const nT=nF+others.length;for(let i=0;i<nT;i++){const wantO=others.length&&oi<others.length&&Math.floor((i+1)*others.length/nT)>oi;mixList.push(wantO?others[oi++]:f);}
+    mixList.forEach(t=>add('mix',t));
+    const fm={};S.log.filter(e=>!e.ok&&e.t===f&&e.d<=date&&daysBetween(e.d,date)<=14).forEach(e=>{if(e.s)fm[e.s]=(fm[e.s]||0)+1;});
+    const fks=Object.keys(fm);
+    const recent={};S.log.filter(e=>!e.ok&&e.t!==f&&e.d<=date&&daysBetween(e.d,date)<=14&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');recent[k]=(recent[k]||0)+1;});
+    const rk=Object.keys(recent);const weak=(opl.length?opl:pl).slice().sort((a,b)=>acc(a)-acc(b));
+    const ok1=rk.length?wpick(rk,x=>recent[x]):weak[0]+'|';
+    add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});{const [t,s]=ok1.split('|');add('fix',t,{sub:s||null});}
+    add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});add('fix',f,{});
+    const ch=opl.concat(cur?[cur]:[]);add('challenge',f,{up:1});add('challenge',ch.length?pick(ch):f,{up:1});add('challenge',f,{up:1});
+  }else if(!review){
     if(focusToday.length){const f=focusToday[0];add('school',f.topicId,{kind:'example'});for(let i=0;i<5;i++)add('school',f.topicId,{guided:i<2});}
     for(let i=0;i<6;i++)add('warm',CFG.warm,{});
     if(cur){add('new',cur,{kind:'example'});for(let i=0;i<5;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
@@ -648,15 +666,29 @@ function planLesson(date,variant=0){
     fix.forEach(k=>{const [t,s]=k.split('|');add('fix',t,{sub:s||null});});
     const ch=pl.concat(cur?[cur]:[]);for(let i=0;i<3;i++)add('challenge',pick(ch),{up:1});
   }else{
-    for(let i=0;i<4;i++)add('warm',CFG.warm,{});
+    const sf=wf.concat(focusToday.map(f=>f.topicId)).filter((x,i,a)=>a.indexOf(x)===i);
+    for(let i=0;i<(sf.length?3:4);i++)add('warm',CFG.warm,{});
     const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<=WEEKOF(date)[3]&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
     wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
     let keys=Object.keys(wk);if(new Set(keys.map(k=>k.split('|')[0])).size<3)pl.forEach(t=>{if(!keys.some(k=>k.startsWith(t+'|')))keys.push(t+'|');});
     const w=k=>1+3*((wk[k]||{}).w||0)+((wk[k]||{}).focus?3:0)+((wk[k]||{}).n?1:0);
     const tp=k=>k.split('|')[0];let last=null;
+    if(sf.length){
+      /* week with school focus: 13 of the 18 review questions are this week's school topics (taken in turn, using
+         their mistake subs when there are any), spread among 5 questions from the rest of the week */
+      const okeys=keys.filter(k=>!sf.includes(tp(k)));const fsub=t=>{const ks=Object.keys(wk).filter(k=>tp(k)===t&&k.split('|')[1]&&wk[k].w>0);return ks.length&&chance(0.5)?wpick(ks,k=>wk[k].w).split('|')[1]:null;};
+      const nO=okeys.length?5:0,nT=18;let fi=0,oi=0;
+      for(let i=0;i<nT;i++){const wantO=nO&&oi<nO&&Math.floor((i+1)*nO/nT)>oi;
+        if(wantO){const c=okeys.length>1?okeys.filter(k=>tp(k)!==last):okeys;const k=wpick(c,w);last=tp(k);oi++;add('review',tp(k),{sub:k.split('|')[1]||null});}
+        else{const t=sf[fi++%sf.length];last=t;add('review',t,{sub:fsub(t)});}}
+      const tough=keys.filter(k=>(wk[k]||{}).w>0).sort((a,b)=>wk[b].w-wk[a].w);const tl=[];
+      sf.forEach(t=>{const k=tough.find(x=>tp(x)===t);tl.push(k||t+'|');});tough.forEach(k=>{if(tl.length<4&&!tl.includes(k))tl.push(k);});while(tl.length<4)tl.push(sf[tl.length%sf.length]+'|');
+      tl.slice(0,4).forEach(k=>{const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});});
+    }else{
     for(let i=0;i<18;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:k.split('|')[1]||null});}
     const tough=keys.slice().sort((a,b)=>((wk[b]||{}).w||0)-((wk[a]||{}).w||0)).slice(0,4);
     for(let i=0;i<4;i++){const k=tough[i%tough.length];const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});}
+    }
   }
   /* 1-2 "tell a grown-up" prompts on non-warm questions */
   const cand=items.map((x,i)=>i).filter(i=>items[i].kind!=='example'&&!['warm','school'].includes(items[i].sec));
@@ -671,7 +703,7 @@ function makeQ(it,date,variant,idx,sigs){const top=TOPICS[it.t]||TOPICS[CFG.warm
     return {example:true,html:ex&&ex.html?ex.html:`<p>${esc(top.blurb||'')}</p>`};}
   for(let a=0;a<10;a++){RNG=mulberry32(hashStr(`${PLAYER}|${date}|${variant}|${idx}|${a}`));
     try{const subs=top.subs?top.subs(it.lvl):[null];let sub=it.sub;if(sub&&!subs.includes(sub)&&!(top.subs&&top.subs(3).includes(sub)))sub=null;sub=sub||pick(subs);
-      const q=top.gen.call(top,H,it.lvl,sub);q.sub=q.sub||sub||'';const sig=it.t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
+      const q=top.gen.call(top,H,it.lvl,sub);q.sub=q.sub||sub||'';const sig=it.t+'|'+q.prompt+'|'+(top.dedupByText&&q.kind==='choice'&&q.choices?String(q.choices[q.answer]):JSON.stringify(q.answer))+'|'+(q.vis||'').length;
       if(sigs.has(sig)&&a<9)continue;sigs.add(sig);return q;}catch(e){window.DAILY_ERRORS.push(it.t+': '+e);}}
   RNG=mulberry32(idx+7);const q=TOPICS[CFG.warm].gen(H,1,pick(TOPICS[CFG.warm].subs(1)));q.sub=q.sub||'';return q;}
 /* Questions are generated in original plan order (it.qi), so reordering sections never changes a question. */

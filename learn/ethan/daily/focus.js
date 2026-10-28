@@ -192,4 +192,161 @@ window.DAILY_TOPICS_EXTRA.push((function(){
 <p><b>Two rules at once:</b> in a Venn diagram, the middle is for things that fit <b>both</b> rules, like a shape that is red <b>and</b> a triangle. Shapes that fit neither rule go outside.</p>${venn({label:'Red',test:i=>i.col==='red'},{label:'Triangles',test:i=>i.shape==='triangle'},P)}`};}};
 })());
 
+/* ===== Faces, edges and vertices of 3D objects (school topic, 29 Oct 2026). Not on the mastery path.
+   Conventions used everywhere in this topic (stated in the explanations too):
+   face = flat surface; edge = where two faces/surfaces meet; vertex = corner point where edges meet.
+   cylinder: 2 flat faces + 1 curved surface, 2 edges, 0 vertices.
+   cone: 1 flat face + 1 curved surface, 1 edge, 1 vertex (the apex, the pointy top).
+   sphere: 1 curved surface, 0 flat faces, 0 edges, 0 vertices. ===== */
+window.DAILY_TOPICS_EXTRA.push((function(){
+  const AX=0.5,AY=0.42;
+  const box=(w,h,d)=>({V:[[0,0,0],[w,0,0],[w,h,0],[0,h,0],[0,0,d],[w,0,d],[w,h,d],[0,h,d]],F:[[0,1,2,3],[4,5,6,7],[0,1,5,4],[3,2,6,7],[0,3,7,4],[1,2,6,5]]});
+  const GEO={
+    'cube':box(100,100,100),
+    'rectangular prism':box(160,90,90),
+    'triangular prism':{V:[[0,0,0],[120,0,0],[60,100,0],[0,0,130],[120,0,130],[60,100,130]],F:[[0,1,2],[3,4,5],[0,1,4,3],[1,2,5,4],[2,0,3,5]]},
+    'square pyramid':{V:[[0,0,0],[130,0,0],[130,0,130],[0,0,130],[65,140,65]],F:[[0,1,2,3],[0,1,4],[1,2,4],[2,3,4],[3,0,4]]},
+    'triangular pyramid':{V:[[0,0,0],[150,0,0],[40,0,120],[70,135,35]],F:[[0,1,2],[0,1,3],[1,2,3],[2,0,3]]}};
+  /* facts; f = flat faces, c = curved surfaces */
+  const D={
+    'cube':{f:6,c:0,e:12,v:8,fs:'6 squares',fc:'top 1 + bottom 1 + 4 around the sides = 6',ec:'4 around the top + 4 around the bottom + 4 going up the sides = 12',vc:'4 corners on top + 4 corners on the bottom = 8',like:'a dice'},
+    'rectangular prism':{f:6,c:0,e:12,v:8,fs:'6 rectangles',fc:'top 1 + bottom 1 + 4 around the sides = 6',ec:'4 around the top + 4 around the bottom + 4 going up the sides = 12',vc:'4 corners on top + 4 corners on the bottom = 8',like:'a cereal box'},
+    'triangular prism':{f:5,c:0,e:9,v:6,fs:'2 triangles and 3 rectangles',fc:'2 triangle ends + 3 rectangles = 5',ec:'3 on the front triangle + 3 on the back triangle + 3 joining them = 9',vc:'3 corners on the front triangle + 3 on the back triangle = 6',like:'a tent or a Toblerone box'},
+    'square pyramid':{f:5,c:0,e:8,v:5,fs:'1 square and 4 triangles',fc:'1 square base + 4 triangles = 5',ec:'4 around the square base + 4 going up to the top = 8',vc:'4 corners on the base + 1 at the top = 5',like:'the pyramids in Egypt'},
+    'triangular pyramid':{f:4,c:0,e:6,v:4,fs:'4 triangles',fc:'1 triangle base + 3 triangles = 4',ec:'3 around the base + 3 going up to the top = 6',vc:'3 corners on the base + 1 at the top = 4',like:'a party hat with a triangle base'},
+    'cylinder':{f:2,c:1,e:2,v:0,fs:'2 circles',like:'a tin can'},
+    'cone':{f:1,c:1,e:1,v:1,fs:'1 circle',like:'an ice-cream cone'},
+    'sphere':{f:0,c:1,e:0,v:0,fs:'none',like:'a ball'}};
+  const POLY=Object.keys(GEO),CURV=['cylinder','cone','sphere'],ALL=POLY.concat(CURV);
+  const W={f:'faces',e:'edges',v:'vertices'},W1={f:'face',e:'edge',v:'vertex'};
+  const CONV='(We count a <b>face</b> as a flat surface. A curved surface is counted on its own.)';
+  /* ---- polyhedron drawing: oblique view, hidden edges dashed ---- */
+  function geom(k){const g=GEO[k];const P=g.V.map(([x,y,z])=>[x+AX*z,y+AY*z]);const cen=[0,1,2].map(i=>g.V.reduce((s,p)=>s+p[i],0)/g.V.length);
+    const vis=g.F.map(f=>{const p=f.map(i=>g.V[i]);let n=[0,0,0];for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];n[0]+=(a[1]-b[1])*(a[2]+b[2]);n[1]+=(a[2]-b[2])*(a[0]+b[0]);n[2]+=(a[0]-b[0])*(a[1]+b[1]);}
+      const fc=[0,1,2].map(i=>p.reduce((s,q)=>s+q[i],0)/p.length);if(n[0]*(fc[0]-cen[0])+n[1]*(fc[1]-cen[1])+n[2]*(fc[2]-cen[2])<0)n=n.map(x=>-x);return n[0]*AX+n[1]*AY-n[2]>1e-6;});
+    const E=[],ek={};g.F.forEach((f,fi)=>f.forEach((a,i)=>{const b=f[(i+1)%f.length],key=Math.min(a,b)+'-'+Math.max(a,b);if(!ek[key]){ek[key]={a:Math.min(a,b),b:Math.max(a,b),faces:[]};E.push(ek[key]);}ek[key].faces.push(fi);}));
+    E.forEach(e=>e.hidden=!e.faces.some(fi=>vis[fi]));const vh=g.V.map((p,i)=>!g.F.some((f,fi)=>vis[fi]&&f.includes(i)));
+    return {g,P,vis,E,vh};}
+  const FILL='#bfdbfe',HF='#fde047',HE='#ea580c',HV='#dc2626';
+  function poly(k,{size=170,hl={},labels=false}={}){const {g,P,vis,E,vh}=geom(k);
+    const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),pad=16,sc=Math.min(170/(x1-x0),130/(y1-y0));
+    const S=i=>[(pad+(P[i][0]-x0)*sc).toFixed(1),(pad+(y1-P[i][1])*sc).toFixed(1)];const w=(x1-x0)*sc+2*pad,h=(y1-y0)*sc+2*pad;
+    let b='';g.F.forEach((f,fi)=>{if(!vis[fi])return;const on=hl.faces==='all'||(hl.face!=null&&hl.face===fi);b+=`<polygon points="${f.map(i=>S(i).join(',')).join(' ')}" fill="${on?HF:FILL}" stroke="none"/>`;});
+    const hlE=e=>hl.edges==='all'||(hl.edge&&((hl.edge[0]===e.a&&hl.edge[1]===e.b)||(hl.edge[0]===e.b&&hl.edge[1]===e.a)));
+    E.filter(e=>e.hidden).forEach(e=>{const [p,q]=[S(e.a),S(e.b)];b+=`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="${hlE(e)?HE:'#1f2937'}" stroke-width="${hlE(e)?5:2.5}" stroke-dasharray="7 5"/>`;});
+    E.filter(e=>!e.hidden).forEach(e=>{const [p,q]=[S(e.a),S(e.b)];b+=`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="${hlE(e)?HE:'#1f2937'}" stroke-width="${hlE(e)?7:3.5}" stroke-linecap="round"/>`;});
+    const hv=i=>hl.verts==='all'||hl.vert===i;
+    g.V.forEach((p,i)=>{if(!hv(i))return;const s=S(i);b+=`<circle cx="${s[0]}" cy="${s[1]}" r="7" fill="${vh[i]?'#fff':HV}" stroke="${HV}" stroke-width="3"/>`;});
+    if(hl.edges==='all'||hl.verts==='all'){const L=hl.edges==='all'?E.map(e=>{const p=S(e.a),q=S(e.b);return [(+p[0]+ +q[0])/2,(+p[1]+ +q[1])/2];}):g.V.map((p,i)=>S(i).map(Number));
+      if(labels)L.forEach((p,i)=>{b+=`<text x="${p[0]}" y="${p[1]-8}" font-size="13" font-weight="bold" text-anchor="middle" fill="#7c2d12" font-family="sans-serif" stroke="#fff" stroke-width="3" paint-order="stroke">${i+1}</text>`;});}
+    if(hl.text)hl.text.forEach(t=>{const s=t.v!=null?S(t.v).map(Number):null;const x=s?s[0]+(t.dx||0):t.x,y=s?s[1]+(t.dy||0):t.y;b+=`<text x="${x}" y="${y}" font-size="15" font-weight="bold" fill="${t.col||'#111827'}" font-family="sans-serif" stroke="#fff" stroke-width="4" paint-order="stroke">${t.s}</text>`;});
+    const ex=hl.text?80:0,ey=hl.text?30:0;return `<svg class="shape" viewBox="${-ex/2} ${-ey/2} ${w+ex} ${h+ey}" width="${Math.round(size*(w+ex)/200)}" style="max-width:100%;height:auto" role="img" aria-label="${k}">${b}</svg>`;}
+  /* curved solids: hl = 'flat' | 'curved' | 'edges' | 'apex' */
+  function curved(k,{size=170,hl=''}={}){const st='stroke="#1f2937" stroke-width="3.5"',dash='stroke="#1f2937" stroke-width="2.5" stroke-dasharray="7 5" fill="none"';const F=FILL,C='#c7d2fe';let b='';
+    const eS=hl==='edges'?`stroke="${HE}" stroke-width="7"`:st,eD=hl==='edges'?`stroke="${HE}" stroke-width="5" stroke-dasharray="7 5" fill="none"`:dash;
+    if(k==='cylinder'){b=`<rect x="40" y="40" width="120" height="110" fill="${hl==='curved'?HF:C}"/><line x1="40" y1="40" x2="40" y2="150" ${st}/><line x1="160" y1="40" x2="160" y2="150" ${st}/>`+
+      `<path d="M40 150 A60 16 0 0 0 160 150" fill="none" ${eS}/><path d="M40 150 A60 16 0 0 1 160 150" ${eD}/><ellipse cx="100" cy="40" rx="60" ry="16" fill="${hl==='flat'?HF:F}" ${eS}/>`;}
+    else if(k==='cone'){b=`<polygon points="40,150 100,25 160,150" fill="${hl==='curved'?HF:C}"/><line x1="40" y1="150" x2="100" y2="25" ${st}/><line x1="160" y1="150" x2="100" y2="25" ${st}/>`+
+      (hl==='flat'?`<ellipse cx="100" cy="150" rx="60" ry="16" fill="${HF}" opacity=".8"/>`:'')+`<path d="M40 150 A60 16 0 0 0 160 150" fill="none" ${eS}/><path d="M40 150 A60 16 0 0 1 160 150" ${eD}/>`+(hl==='apex'?`<circle cx="100" cy="25" r="8" fill="${HV}" stroke="${HV}" stroke-width="3"/>`:'');}
+    else b=`<circle cx="100" cy="95" r="68" fill="${hl==='curved'?HF:C}" ${st}/><path d="M32 95 A68 18 0 0 0 168 95" fill="none" stroke="#1f2937" stroke-width="2"/><path d="M32 95 A68 18 0 0 1 168 95" ${dash}/>`;
+    return `<svg class="shape" viewBox="0 0 200 175" width="${size}" style="max-width:100%;height:auto" role="img" aria-label="${k}">${b}</svg>`;}
+  const pic=(k,o)=>GEO[k]?poly(k,o):curved(k,o);
+  const fig=(k,o={})=>`<figure style="margin:0;text-align:center;display:inline-block">${pic(k,Object.assign({size:130},o))}<figcaption style="font-size:.95rem">${o.cap||k}</figcaption></figure>`;
+  const rowF=(list,o)=>`<div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:flex-end">${list.map(k=>fig(k,o)).join('')}</div>`;
+  const art=k=>/^[aeiou]/.test(k)?'an':'a';
+  const Cap=s=>s[0].toUpperCase()+s.slice(1);
+  /* counting steps for any solid and property */
+  const countSteps=(k,p)=>{const d=D[k];if(GEO[k])return d[p+'c'];
+    if(p==='f')return k==='sphere'?'a sphere has no flat faces, only 1 curved surface':`${d.f} flat circle face${d.f>1?'s':''}, plus 1 curved surface (not counted as a face)`;
+    if(p==='e')return k==='cylinder'?'1 edge where the top meets the curved surface + 1 at the bottom = 2':k==='cone'?'1 edge where the circle base meets the curved surface':'no faces meet, so 0 edges';
+    return k==='cone'?'1 vertex: the pointy top (the apex)':`no corners, so 0 vertices`;};
+  const hlFor=(k,p)=>GEO[k]?(p==='f'?{faces:'all'}:p==='e'?{edges:'all'}:{verts:'all'}):(p==='f'?'flat':p==='e'?'edges':'apex');
+
+  function gCount(H,l){const k=H.pick(l>=2?POLY:l>=1?POLY:['cube','square pyramid','triangular prism']);const p=H.pick(l>=1?['f','e','v','e','v']:['f','v']);const d=D[k];
+    const hint=p==='f'?'Faces are the flat surfaces. Count the ones you can see, then the hidden ones at the back and bottom.':p==='e'?'Edges are the lines where two faces meet. Count the solid lines and the dashed (hidden) lines.':'Vertices are the corners. Count the corners you can see, then the hidden ones where the dashed lines meet.';
+    return Object.assign({sub:'count',prompt:`How many <b>${W[p]}</b> does this ${k} have?`,vis:poly(k,{})+`<div class="small">Dashed lines are hidden edges at the back.</div>`,hint,
+      explain:`${Cap(W[p])} are ${p==='f'?'the flat surfaces':p==='e'?'where two faces meet':'the corner points'}.<br>Count them in parts: ${countSteps(k,p)}.<br>A ${k} has <b>${d[p]}</b> ${W[p]}.`+poly(k,{hl:hlFor(k,p),labels:true})},H.num(d[p]));}
+
+  function gWhich(H,l){for(let t=0;t<50;t++){const p=H.pick(['f','e','v']);const k=H.pick(POLY);const val=D[k][p];
+      const others=H.shuffle(POLY.filter(x=>x!==k&&D[x][p]!==val));if(others.length<2)continue;const opt=others.slice(0,l>=1?3:2);if(l>=1&&p==='v'&&H.chance(0.4)&&!opt.includes('cone'))opt[opt.length-1]='cone';
+      if(opt.some(x=>D[x][p]===val))continue;const list=H.shuffle([k].concat(opt));
+      return Object.assign({sub:'which',prompt:`Which object has exactly <b>${val} ${W[p]}</b>?`,vis:rowF(list,{size:120}),hint:`Count the ${W[p]} on each one. Dashed lines show hidden edges.`,
+        explain:list.map(x=>`${Cap(x)}: ${D[x][p]} ${W[p]}${x==='cone'&&p==='v'?' (the apex)':''}`).join('<br>')+`<br>Only the <b>${k}</b> has ${val} ${W[p]}.`},H.opts(k,opt,{cls:'txt'}));}
+    throw new Error('which: none');}
+
+  const DESC={'cube':['I have 6 flat faces and they are all squares.','I have 6 square faces, 12 edges and 8 vertices.'],
+    'rectangular prism':['I have 6 flat faces. They are rectangles, and they are not all squares.','I am shaped like a cereal box: 6 rectangle faces, 12 edges, 8 vertices.'],
+    'triangular prism':['I have 2 triangle faces and 3 rectangle faces.','I have 5 faces, 9 edges and 6 vertices.'],
+    'square pyramid':['I have 1 square face and 4 triangle faces that meet at a point.','I have 5 faces, 8 edges and 5 vertices.'],
+    'triangular pyramid':['All 4 of my faces are triangles.','I have 4 faces, 6 edges and 4 vertices.'],
+    'cylinder':['I have 2 flat circle faces and 1 curved surface. I can roll and stack.'],
+    'cone':['I have 1 flat circle face, 1 curved surface and 1 pointy vertex.'],
+    'sphere':['I have 1 curved surface, no flat faces, no edges and no vertices.']};
+  function gName(H,l){const k=H.pick(ALL);const ds=DESC[k];const s=l>=1?H.pick(ds):ds[0];
+    let dis=H.shuffle(ALL.filter(x=>x!==k));if(k==='cube')dis=['rectangular prism'].concat(dis.filter(x=>x!=='rectangular prism'));if(k==='rectangular prism')dis=['cube'].concat(dis.filter(x=>x!=='cube'));
+    const d=D[k];const facts=GEO[k]?`A ${k} has ${d.f} faces (${d.fs}), ${d.e} edges and ${d.v} vertices`:k==='sphere'?'A sphere has 1 curved surface and no flat faces, edges or vertices':k==='cone'?'A cone has 1 flat circle face, 1 curved surface, 1 edge and 1 vertex (the apex)':'A cylinder has 2 flat circle faces, 1 curved surface, 2 edges and 0 vertices';
+    return Object.assign({sub:'name',prompt:`What am I? <i>“${s}”</i>`,hint:`Picture each object and check every clue.`,
+      explain:`Check each clue.<br>${facts}, so every clue fits.<br>It is like ${d.like}. Answer: <b>${k}</b>.`+rowF([k],{size:140})},H.opts(k,dis,{cls:'txt'}));}
+
+  function gCurved(H,l){const v=H.pick(l>=1?['onlyflat','both','nflat','ncurved','edgecv','edgecv']:['onlyflat','both','nflat','ncurved']);
+    if(v==='onlyflat'){const k=H.pick(POLY),o=H.shuffle(CURV.slice());const list=H.shuffle([k].concat(o));
+      return Object.assign({sub:'curved',prompt:`Which object has <b>only flat surfaces</b> (no curved surface)?`,vis:rowF(list,{size:120}),hint:`Could it roll? Things with a curved surface can roll.`,
+        explain:`The ${o.join(', ')} each have a curved surface.<br>The ${k} has only flat faces (${D[k].fs}).<br>Answer: <b>${k}</b>.`},H.opts(k,o,{cls:'txt'}));}
+    if(v==='both'){const k=H.pick(['cylinder','cone']),o=['sphere'].concat(H.shuffle(POLY.slice()).slice(0,2));const list=H.shuffle([k].concat(o));
+      return Object.assign({sub:'curved',prompt:`Which object has <b>both</b> flat faces <b>and</b> a curved surface?`,vis:rowF(list,{size:120}),hint:`Look for one flat part AND one curved part.`,
+        explain:`A sphere is only curved. The ${o.slice(1).join(' and the ')} only have flat faces.<br>The ${k} has ${k==='cylinder'?'2 flat circle faces':'1 flat circle face'} and 1 curved surface.<br>Answer: <b>${k}</b>.`},H.opts(k,o,{cls:'txt'}));}
+    if(v==='nflat'){const k=H.pick(CURV);return Object.assign({sub:'curved',prompt:`How many <b>flat faces</b> does a ${k} have?`,vis:curved(k,{}),hint:`Only count the flat parts, not the curved part.`,
+      explain:`${CONV}<br>${Cap(countSteps(k,'f'))}.<br>Answer: <b>${D[k].f}</b>.`+curved(k,{hl:'flat',size:140})},H.num(D[k].f));}
+    if(v==='ncurved'){const k=H.pick(CURV.concat(H.pick(POLY)));return Object.assign({sub:'curved',prompt:`How many <b>curved surfaces</b> does ${art(k)} ${k} have?`,vis:pic(k,{}),hint:`A curved surface is bendy, like the side of a can.`,
+      explain:`${GEO[k]?`A ${k} has only flat faces (${D[k].fs})`:`The ${k} has one curved surface${k==='sphere'?' all the way round':' going round it'}`}.<br>Answer: <b>${D[k].c}</b>.`+pic(k,GEO[k]?{size:140}:{hl:'curved',size:140})},H.num(D[k].c));}
+    /* edges / vertices of curved solids, with the convention stated */
+    const k=H.pick(['cylinder','cone']),p=k==='cylinder'?H.pick(['e','v']):H.pick(['e','v']);
+    return Object.assign({sub:'curved',prompt:`How many <b>${W[p]}</b> does a ${k} have? <span class="small">(An edge is where two surfaces meet. A vertex is a corner or point.)</span>`,vis:curved(k,{}),hint:p==='e'?`Find where the flat circle meets the curved surface.`:`Is there a pointy corner anywhere?`,
+      explain:`${p==='e'?'An edge is where two surfaces meet.':'A vertex is a corner or a point.'}<br>${Cap(countSteps(k,p))}.<br>Answer: <b>${D[k][p]}</b>.`+curved(k,{hl:p==='e'?'edges':(k==='cone'?'apex':''),size:140})},H.num(D[k][p]));}
+
+  function gShape(H,l){const v=H.pick(l>=1?['allsq','base','tpr','tpr','spy','cylf']:['allsq','base','tpr','cylf']);
+    if(v==='allsq'){const k=H.pick(['cube','triangular pyramid']);const a=k==='cube'?'squares':'triangles';
+      return Object.assign({sub:'shape',prompt:`All the faces of a <b>${k}</b> are the same shape. What shape are they?`,vis:poly(k,{}),hint:`Look at the front face. The others match it.`,
+        explain:`Look at one face, then check the others.<br>A ${k} has ${D[k].fs}.<br>Answer: <b>${a}</b>.`+poly(k,{hl:{faces:'all'},size:140})},H.fixedOpts(['squares','triangles','circles','rectangles'],['squares','triangles','circles','rectangles'].indexOf(a)));}
+    if(v==='base'){const k=H.pick(['square pyramid','triangular pyramid','cone','cylinder']);const a=k==='square pyramid'?'square':k==='triangular pyramid'?'triangle':'circle';const L=['square','triangle','circle','rectangle'];
+      return Object.assign({sub:'shape',prompt:`What shape is the <b>flat bottom face</b> of this ${k}?`,vis:pic(k,{}),hint:`Imagine standing it on paper and tracing around the bottom.`,
+        explain:`If you trace around the bottom of ${art(k)} ${k}, you get ${art(a)} ${a}.<br>${k==='square pyramid'?'Its other 4 faces are triangles.':k==='triangular pyramid'?'All 4 of its faces are triangles.':'The rest of it is a curved surface.'}<br>Answer: <b>${a}</b>.`},H.fixedOpts(L,L.indexOf(a)));}
+    if(v==='tpr'){const q=H.pick(['tri','rect']);const a=q==='tri'?2:3;
+      return Object.assign({sub:'shape',prompt:`A triangular prism has 5 faces. How many of them are <b>${q==='tri'?'triangles':'rectangles'}</b>?`,vis:poly('triangular prism',{}),hint:`The two ends are one shape. The faces joining them are another shape.`,
+        explain:`The 2 ends (front and back) are triangles.<br>The 3 faces joining the ends are rectangles: 2 + 3 = 5 faces.<br>Answer: <b>${a}</b>.`+poly('triangular prism',{hl:{faces:'all'},size:140})},H.num(a));}
+    if(v==='spy'){const q=H.pick(['tri','sq']);const a=q==='tri'?4:1;
+      return Object.assign({sub:'shape',prompt:`A square pyramid has 5 faces. How many of them are <b>${q==='tri'?'triangles':'squares'}</b>?`,vis:poly('square pyramid',{}),hint:`Look at the bottom, then at the sides that meet at the top.`,
+        explain:`The bottom (base) is 1 square.<br>The 4 sides are triangles that meet at the top: 1 + 4 = 5 faces.<br>Answer: <b>${a}</b>.`},H.num(a));}
+    return Object.assign({sub:'shape',prompt:`What shape are the 2 flat faces of a <b>cylinder</b>?`,vis:curved('cylinder',{}),hint:`Look at the top of a tin can.`,
+      explain:`A cylinder has 2 flat faces, one at each end, and 1 curved surface.<br>Each flat face is a circle.<br>Answer: <b>circles</b>.`+curved('cylinder',{hl:'flat',size:140})},H.fixedOpts(['squares','triangles','circles','rectangles'],2));}
+
+  function gCompare(H,l){for(let t=0;t<60;t++){const p=H.pick(['f','e','v']);const [a,b]=H.shuffle(POLY.slice()).slice(0,2);const va=D[a][p],vb=D[b][p];
+      if(l>=2&&va!==vb){const hi=va>vb?a:b,lo=va>vb?b:a;const dd=Math.abs(va-vb);
+        return Object.assign({sub:'compare',prompt:`How many more <b>${W[p]}</b> does ${art(hi)} ${hi} have than ${art(lo)} ${lo}?`,vis:rowF([hi,lo],{size:130}),hint:`Count the ${W[p]} on each, then take away.`,
+          explain:`${Cap(hi)}: ${countSteps(hi,p)}.<br>${Cap(lo)}: ${countSteps(lo,p)}.<br>${D[hi][p]} − ${D[lo][p]} = <b>${dd}</b> more.`},H.num(dd));}
+      if(l<2&&va===vb&&!H.chance(0.3))continue;
+      const L=[Cap(a),Cap(b),'They have the same number'];const ans=va>vb?0:va<vb?1:2;
+      return Object.assign({sub:'compare',prompt:`Which has more <b>${W[p]}</b>: ${art(a)} ${a} or ${art(b)} ${b}?`,vis:rowF([a,b],{size:130}),hint:`Count the ${W[p]} on each one, then compare.`,
+        explain:`${Cap(a)}: ${countSteps(a,p)}.<br>${Cap(b)}: ${countSteps(b,p)}.<br>${ans===2?`Both have ${va}, so <b>they have the same number</b>.`:`${Math.max(va,vb)} is more than ${Math.min(va,vb)}, so the <b>${ans===0?a:b}</b> has more.`}`},H.fixedOpts(L,ans));}
+    throw new Error('compare: none');}
+
+  return {id:'fev',title:'Faces, Edges & Vertices',icon:'🧊',dedupByText:true,code:'MA1-3DS-01 → MA2-3DS-01',
+    blurb:'Counting the faces, edges and vertices of 3D objects, flat and curved surfaces, and the shapes of faces.',
+    subs:l=>l>=1?['count','which','name','curved','shape','compare']:['count','which','name','curved','shape'],
+    gen(H,l,sub){if(sub==='count')return gCount(H,l);if(sub==='which')return gWhich(H,l);if(sub==='name')return gName(H,l);if(sub==='curved')return gCurved(H,l);if(sub==='shape')return gShape(H,l);return gCompare(H,l);},
+    example(H){
+      const cube=poly('cube',{size:230,hl:{face:0,edge:[2,6],vert:1,text:[{v:0,dx:30,dy:-45,s:'face',col:'#854d0e'},{v:2,dx:42,dy:-8,s:'edge',col:HE},{v:1,dx:10,dy:22,s:'vertex',col:HV}]}});
+      const tbl=`<table class="tbl" style="margin:8px auto;border-collapse:collapse;font-size:.95rem"><tr><th style="padding:3px 8px">Object</th><th style="padding:3px 8px">Faces (flat)</th><th style="padding:3px 8px">Curved surfaces</th><th style="padding:3px 8px">Edges</th><th style="padding:3px 8px">Vertices</th></tr>`+
+        ALL.map(k=>`<tr><td style="padding:3px 8px">${k}</td><td style="text-align:center">${D[k].f}</td><td style="text-align:center">${D[k].c}</td><td style="text-align:center">${D[k].e}</td><td style="text-align:center">${D[k].v}${k==='cone'?' (apex)':''}</td></tr>`).join('')+`</table>`;
+      return {html:`<p>3D objects are made of surfaces. On this cube:</p><div style="text-align:center">${cube}</div>
+<p>🟨 A <b>face</b> is a flat surface. 🟧 An <b>edge</b> is where two faces meet. 🔴 A <b>vertex</b> is a corner point where edges meet (more than one = <b>vertices</b>). Dashed lines are hidden edges at the back.</p>
+<p><b>Count in parts so you don't miss any.</b> Cube: faces = top 1 + bottom 1 + 4 sides = <b>6</b>. Edges = 4 on top + 4 on the bottom + 4 going up = <b>12</b>. Vertices = 4 on top + 4 on the bottom = <b>8</b>.</p>
+${rowF(['cube','rectangular prism','triangular prism','square pyramid','triangular pyramid'],{size:120})}
+<p><b>Curved surfaces:</b> a curved surface is not counted as a face. A <b>cylinder</b> has 2 flat circle faces, 1 curved surface, 2 edges and 0 vertices. A <b>cone</b> has 1 flat circle face, 1 curved surface, 1 edge and 1 vertex (the pointy apex). A <b>sphere</b> has just 1 curved surface: no faces, edges or vertices.</p>
+${rowF(['cylinder','cone','sphere'],{size:120})}${tbl}`};}};
+})());
+
+/* Order matters: the FIRST active entry becomes the "From school today" section, so the newest topic goes first.
+   Every entry dated this week still gets extra weight in the mix and in Friday's week review. */
+DAILY_FOCUS.push({date:'2026-10-29', topicId:'fev', title:'Faces, edges and vertices', note:'Practised at school', until:'2026-10-30'});
 DAILY_FOCUS.push({date:'2026-10-28', topicId:'sorting', title:'Sorting: colour, shape and 3D objects', note:'Practised at school', until:'2026-10-30'});

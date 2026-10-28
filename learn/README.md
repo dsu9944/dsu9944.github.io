@@ -9,14 +9,15 @@ The lesson is the same all day and changes the next day. Monday to Thursday is t
 
 ## "From school today" (focus.js)
 
-Each child's folder has a `daily/focus.js` file that starts out empty. To make the lesson open with a short section of about 5 minutes on what was taught at school, add a line like this to the file:
+Each child's folder has a `daily/focus.js` file that starts out empty. To make the lesson focus on what was taught at school, add a line like this to the file:
 
 ```js
 DAILY_FOCUS.push({date:'2026-10-22', topicId:'percent', title:'Percentages', note:'Did 10%, 25%, 50% of amounts', until:'2026-10-24'});
 ```
 
-- The section runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. It starts with a worked example, then gives guided practice with the hints showing.
-- For the rest of that week, the topic gets extra weight in the mixed practice and in the Friday review.
+- The focus runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. On those days the school topic makes up most of the lesson (about 17 of 27 questions): a "From school today" section with a worked example and 6 questions (hints showing on the first 2), then 6 of the 8 mixed-practice questions, 3 of the 4 Fix-it questions and 2 of the 3 Challenge questions. The warm-up drops to 3 questions and the current path topic to 3, which is still enough for mastery tracking.
+- If two entries are active on the same day, the one listed first in the file is the school focus.
+- On Friday (the week review), every school topic dated that week makes up 13 of the 18 review questions and gets a place in the "Toughest of the week" section.
 - `topicId` must be one of the IDs listed below or a module you added (see the next section). The page ignores an unknown ID.
 - Delete the line when you no longer need it. The file can be edited in any text editor, and no rebuild is needed.
 
