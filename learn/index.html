@@ -53,6 +53,10 @@ h2{color:#7c3aed;text-align:center;font-size:1.9rem;margin:10px 0 18px}
 .today .tw span.on{background:#dcfce7;border-color:#86efac}.today .tw span.now{border-color:#f59e0b}
 .today .go{margin-left:auto;background:#f59e0b;color:#fff;font-weight:bold;border-radius:999px;padding:10px 18px;white-space:nowrap}
 @media (max-width:560px){.today{flex-wrap:wrap}.today .go{margin-left:0}}
+#todayCard.two{display:grid;gap:0 18px;grid-template-columns:1fr}
+@media (min-width:900px){#todayCard.two{grid-template-columns:1.4fr 1fr}#todayCard.two .today{height:calc(100% - 18px);box-sizing:border-box}}
+.today.eng{background:linear-gradient(120deg,#f5f3ff,#ecfeff);border-color:#7c3aed;box-shadow:0 8px 22px rgba(124,58,237,.22)}
+.today.eng .tt{color:#6d28d9}.today.eng .go{background:#7c3aed}
 footer{text-align:center;font-size:.85rem;color:#6b7280;padding:10px 0 24px}
 </style>
 </head>
@@ -134,12 +138,21 @@ function todayCard(id){
   const st=done?'✅ Done for today! Great work.':going?'▶️ Keep going where you left off':review?'🏆 Week Review day':'🔀 A fresh mix of your topics';
   return `<a class="today" href="${id}/daily/index.html?player=${id}" data-today="${id}"><span class="ti">${review?'🏆':'📚'}</span><span><div class="tt">Today's Lesson (15 min)</div><div class="ts">${d.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long'})} · ${st}</div><div class="tw">${week}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
 }
+/* Alexia's 5-minute English revision (its own progress key, separate from the maths Daily Lesson) */
+function englishCard(id){
+  if(id!=='alexia')return '';
+  const d=new Date(),pad=n=>String(n).padStart(2,'0'),today=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,wd=d.getDay(),review=wd===5||wd===6||wd===0;
+  let s=null;try{s=JSON.parse(ls.get(`kidsHub.p.${id}.english`)||'null');}catch(e){}
+  const days=(s&&s.days)||{},run=s&&s.run,done=days[today]&&days[today].done,going=run&&run.date===today&&!run.finished;
+  const st=done?'✅ Done for today!':going?'▶️ Keep going where you left off':review?'🏆 Week review':'✏️ Words, grammar and reading';
+  return `<a class="today eng" href="${id}/english/index.html?player=${id}" data-english="${id}"><span class="ti">📖</span><span><div class="tt">English Revision (5 min)</div><div class="ts">${st}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
+}
 function openKid(id){
   ls.set(CKEY,id);const p=P[id];
   $('#kidAvatar').innerHTML=avatarHTML(p);
   $('#kidHello').textContent=`Hi ${p.name}! 👋`;
   document.title=`${p.name}'s Learning Games`;
-  $('#todayCard').innerHTML=todayCard(id);
+  {const ec=englishCard(id);$('#todayCard').innerHTML=todayCard(id)+ec;$('#todayCard').classList.toggle('two',!!ec);}
   $('#games').innerHTML=GAMES[id].map(g=>{const s=gameStats(id,g);
     return `<a class="game${s&&s.complete?' done':''}" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
       <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${s&&s.complete&&!s.allDone&&g.core?'<span class="badge new">⚡ New challenge levels</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');

@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#7c3aed">
+<title>Alexia's English Revision</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%96%3C/text%3E%3C/svg%3E">
+<style>
+:root{--ink:#1f2937;--gold:#f59e0b;--green:#16a34a;--green2:#22c55e;--red:#e11d48}
+body.alexia{--main:#7c3aed;--main2:#8b5cf6;--soft:#ede9fe;--soft2:#faf5ff;--line:#ddd6fe;--shadow:#5b21b6;--bar:linear-gradient(90deg,#7c3aed,#ec4899);--bg:linear-gradient(160deg,#fdf2ff,#e0f2fe)}
+body.ethan{--main:#2563eb;--main2:#3b82f6;--soft:#dbeafe;--soft2:#eff6ff;--line:#bfdbfe;--shadow:#1e40af;--bar:linear-gradient(90deg,#2563eb,#16a34a);--bg:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;font-size:18px}
+button{font-family:inherit;font-size:1rem;cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:48px;touch-action:manipulation}
+button:focus-visible,a:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bar);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.pill{background:rgba(255,255,255,.22);border-radius:999px;padding:6px 12px;font-weight:bold;white-space:nowrap}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
+@media (max-width:560px){.topbar{gap:6px;padding:8px 10px}.topbar .lbl{display:none}.topbar .pill{padding:4px 8px}.topbar h1{font-size:1rem;min-width:0}}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(0,0,0,.08);margin-bottom:16px}
+.hero{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hero .big{font-size:3.2rem}
+.hero h2{margin:0 0 4px;font-size:1.6rem;color:var(--main)}
+.btn{background:var(--main);color:#fff;font-weight:bold;box-shadow:0 4px 0 var(--shadow)}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--shadow)}
+.btn.orange{background:#ff8a3d;box-shadow:0 4px 0 #c2410c}.btn.green{background:var(--green);box-shadow:0 4px 0 #166534}
+.btn.ghost{background:var(--soft);color:var(--main);box-shadow:0 4px 0 var(--line)}
+.btn.small{min-height:38px;padding:6px 12px;font-size:.9rem}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.huge{font-size:1.4rem;padding:16px 30px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.tag{display:inline-block;background:var(--soft);color:var(--main);border-radius:999px;padding:3px 12px;font-size:.9rem;font-weight:bold}
+.tag.new{background:#fef3c7;color:#92400e}.tag.ok{background:#dcfce7;color:#166534}.tag.school{background:#ffedd5;color:#9a3412}
+.secs{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:12px 0}
+.sec{background:var(--soft2);border:3px solid var(--line);border-radius:16px;padding:10px;font-size:.95rem;font-family:inherit;color:inherit;text-align:left;display:flex;flex-direction:column;gap:3px;cursor:pointer;min-height:48px;box-shadow:0 3px 0 var(--line);transition:transform .08s,border-color .15s,box-shadow .15s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.sec:hover{border-color:var(--main);transform:translateY(-2px);box-shadow:0 5px 0 var(--line)}
+.sec:active{transform:translateY(2px);box-shadow:0 1px 0 var(--line)}
+.sec:focus-visible{outline:4px solid var(--main);outline-offset:2px}
+.sec.full{background:#ecfdf5;border-color:#86efac}
+.sec .secst{font-weight:800}
+.sec .secgo{font-size:.8rem;font-weight:800;color:var(--main);margin-top:2px}
+.sec b{display:block;color:var(--main);font-size:1.05rem}
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;text-align:center}
+.wd{background:#f8fafc;border:3px solid #e5e7eb;border-radius:14px;padding:6px 2px;font-size:.85rem}
+.wd .dn{font-weight:bold}.wd .st{font-size:1.5rem;line-height:1.4}
+.wd.done{background:#dcfce7;border-color:#86efac}.wd.today{border-color:var(--main);box-shadow:0 0 0 3px var(--line)}.wd.fri{background:#fef9c3}
+.wd.done.fri{background:#bbf7d0}
+.focus{background:#fff7ed;border:3px solid #fb923c;border-radius:18px;padding:12px 14px;margin-bottom:16px}
+details summary{cursor:pointer;font-weight:bold;color:var(--main);min-height:40px;display:flex;align-items:center}
+.path{list-style:none;padding:0;margin:8px 0;display:flex;flex-direction:column;gap:6px}
+.path li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:#f8fafc;border-radius:12px;padding:6px 10px;font-size:.92rem}
+.path li.cur{background:#fef3c7;border:2px solid #f59e0b}.path li.done{background:#f0fdf4}
+.path .code{color:#6b7280;font-size:.8rem}
+.small{font-size:.88rem;color:#4b5563}
+/* play */
+.playhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.playhead .secname{font-weight:bold;color:var(--main);font-size:1.15rem;flex:1}
+.bars{display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;align-items:center;margin-bottom:12px;font-size:.9rem;font-weight:bold}
+.pbar{height:16px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+.pbar>div{height:100%;background:var(--main2);border-radius:999px;transition:width .3s}
+.pbar.time>div{background:linear-gradient(90deg,#22c55e,#facc15)}
+.pbar.time.over>div{background:#fb923c}
+.timesup{background:#fff7ed;border:3px solid #fb923c;border-radius:14px;padding:8px 12px;margin-bottom:10px;text-align:center;font-weight:bold}
+.prompt{font-size:1.3rem;line-height:1.6;margin-bottom:12px;text-align:center}
+.stage{display:flex;flex-direction:column;align-items:center;gap:12px;min-height:80px}
+.vis{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
+svg{display:block;max-width:100%}
+svg.bar{width:100%;max-width:640px;height:auto}
+svg.nl{width:100%;max-width:760px;height:auto}
+svg.pizza{width:min(42vw,200px);height:auto}
+svg.graph{height:auto;width:100%}
+svg.shape{height:auto;width:auto;max-width:100%}
+svg.jl{width:100%;height:auto}
+.gtitle{font-weight:bold;text-align:center;color:#374151}
+.gwrap{max-width:420px;width:100%}
+.controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+.hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.1rem}
+.hint .guided{display:block;font-size:.85rem;color:#92400e;font-weight:bold}
+.hint .h1{display:inline-block;text-align:left;vertical-align:top}
+.hint .more{margin-top:8px}
+.hint .more .btn{font-size:.95rem;padding:6px 14px}
+.hint .hint2{margin-top:10px;padding-top:8px;border-top:2px dotted #fbbf24;text-align:left;display:inline-block}
+.feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.1rem;animation:pop .25s ease-out}
+.feedback.good{background:#dcfce7;border:3px solid var(--green2)}
+.feedback.bad{background:#fff1f2;border:3px solid #fda4af}
+.fbtitle{font-size:1.45rem;font-weight:bold;margin-bottom:6px}
+.expl{margin:10px auto;max-width:720px;line-height:1.7;display:flex;flex-direction:column;align-items:center;gap:6px}
+.tellbox{background:#eff6ff;border:3px solid #60a5fa;border-radius:16px;padding:10px 12px;margin:10px auto;max-width:640px}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.opts{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;width:100%;max-width:680px}
+.opt{background:#fff;border:4px solid var(--line);font-size:1.6rem;padding:12px 6px;min-height:84px;color:var(--ink)}
+.opt:hover{border-color:var(--main2)}
+.opt.right{background:#dcfce7;border-color:var(--green2)}.opt.wrong{background:#ffe4e6;border-color:var(--red)}
+.opts.txt .opt{font-size:1.15rem;min-height:64px}
+.opts.opts3{grid-template-columns:repeat(3,1fr);max-width:600px}
+.opts.opts3 .opt small{display:block;font-size:.85rem;color:#4b5563;font-weight:normal}
+.opts.pics{grid-template-columns:repeat(3,1fr)}.opts.pics .opt{padding:10px}
+@media (max-width:560px){.opts{grid-template-columns:repeat(2,1fr)}.opts.pics{grid-template-columns:1fr}.opt{font-size:1.3rem}}
+.entryrow{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;font-size:2.2rem;font-weight:bold}
+.entryrow small{font-size:1rem;color:#6b7280}
+.op{font-size:2.2rem;font-weight:bold}
+.ebox{display:inline-block;min-width:1.6em;min-height:1.15em;border:3px dashed var(--main2);border-radius:10px;color:var(--main);background:var(--soft2);text-align:center;cursor:pointer;line-height:1.1;margin:2px 0;padding:0 .15em}
+.ebox.active{border-style:solid;border-color:var(--main);background:var(--soft);box-shadow:0 0 0 4px var(--line)}
+.ebox.okb{border-color:var(--green);color:var(--green)}.ebox.badb{border-color:var(--red);color:var(--red)}
+.keypad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:420px;width:100%}
+.keypad button{background:var(--soft);color:var(--main);font-size:1.5rem;font-weight:bold;min-height:56px;box-shadow:0 3px 0 var(--line)}
+.keypad button.wide{grid-column:span 2;font-size:1.05rem}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1.05;margin:0 .15em;font-weight:bold}
+.frac .num{border-bottom:3px solid currentColor;padding:0 .2em}.frac .den{padding:0 .2em}
+.frac.big{font-size:1.5em}.frac.huge,.mixed.huge{font-size:1.15em}
+.mixed{display:inline-flex;align-items:center;font-weight:bold}.mixed .wn{font-size:1.25em;margin-right:.08em}
+.dec{font-weight:bold;white-space:nowrap}.dec.big{font-size:1.4em}.dec.huge{font-size:2.6em}
+.bigq{font-size:2rem;font-weight:bold;text-align:center;margin:6px 0}
+.cmp{display:flex;align-items:center;justify-content:center;gap:28px;flex-wrap:wrap;font-size:1.6rem}
+.cmp .qm{font-size:2.2rem;font-weight:bold;color:var(--main2);border:4px dashed var(--line);border-radius:50%;width:66px;height:66px;display:flex;align-items:center;justify-content:center}
+.story{display:block;font-size:1.2rem;line-height:1.6;background:var(--soft2);border-radius:18px;padding:12px 16px;max-width:720px;margin:0 auto;text-align:left}
+.grids{display:flex;gap:22px;justify-content:center;flex-wrap:wrap}
+table.pv{border-collapse:collapse;margin:8px auto;font-size:1.3rem}
+table.pv th{font-size:.8rem;color:#6b7280;padding:2px 10px;font-weight:normal}
+table.pv td{border:3px solid var(--line);min-width:48px;text-align:center;font-weight:bold;padding:4px 8px;background:var(--soft2)}
+table.pv td.pt{border:none;background:none;min-width:10px}
+table.dtab{border-collapse:collapse;margin:6px auto;font-size:1.15rem}
+table.dtab th,table.dtab td{border:2px solid #cbd5e1;padding:6px 14px;text-align:center}
+table.dtab th{background:var(--soft)}
+.colsum{font-size:1.3rem;font-weight:bold;border-collapse:collapse;margin:6px auto}.colsum td{padding:2px 8px;text-align:right}.colsum tr.tot td{border-top:3px solid #1f2937}
+.groups{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.plate{background:#fef3c7;border:3px solid #f59e0b;border-radius:50%;min-width:84px;min-height:84px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;padding:8px;font-size:1.3rem;max-width:120px}
+.pict{display:flex;flex-direction:column;gap:6px;font-size:1.6rem;background:#f8fafc;border-radius:14px;padding:10px 14px}
+.pict .lab{display:inline-block;width:130px;font-size:1rem;font-weight:bold}.pict .key{font-size:1rem}
+.compass{font-size:1.5rem;font-weight:bold;text-align:center;line-height:1.5;background:#f8fafc;border-radius:50%;width:120px;height:120px;display:flex;align-items:center;justify-content:center}
+.tentry b{margin:0 .1em}
+.example{background:#f0fdf4;border:3px solid #86efac;border-radius:18px;padding:12px 16px;max-width:760px;margin:0 auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.example h3{margin:0;color:#166534}
+/* results */
+.results{text-align:center}
+.results .stars{font-size:3.4rem;color:var(--gold);letter-spacing:6px}
+.results h2{color:var(--main);font-size:1.8rem;margin:8px 0}
+table.sum{border-collapse:collapse;margin:10px auto;font-size:1rem;min-width:min(100%,460px)}
+table.sum th,table.sum td{border-bottom:2px solid #e5e7eb;padding:6px 10px;text-align:left}
+.acc{display:inline-block;height:12px;border-radius:6px;background:var(--green2);vertical-align:middle}
+.msg{border-radius:14px;padding:8px 12px;margin:8px auto;max-width:640px}
+.msg.up{background:#ecfdf5;color:#065f46}.msg.next{background:#fef3c7;color:#92400e}
+.confetti{position:fixed;top:-20px;width:12px;height:18px;z-index:50;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.say{background:var(--soft);color:var(--main);min-height:40px;padding:4px 12px;border-radius:999px;font-size:1rem;vertical-align:middle;margin-left:6px}
+#prompt.bigp{font-size:2.2rem;font-weight:bold}
+a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 18px;border-radius:16px;min-height:48px}
+.tag.redo{background:#fff7ed;color:#c2410c;border:2px solid #fdba74}
+.redonote{margin:6px 0;font-weight:700;color:#9a3412}
+.fixedline{display:inline-block;background:#ecfdf5;color:#065f46;border-radius:12px;padding:8px 14px;font-weight:700;margin:4px 0}
+.rv{text-align:left}.rvhead{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:6px}.rvhead b{color:var(--main);font-size:1.1rem}
+.rvprompt{justify-content:flex-start}.rvans{display:flex;flex-direction:column;gap:6px;margin:10px 0}
+.chip{border-radius:12px;padding:8px 12px;font-weight:700;line-height:1.5}.chip.bad{background:#fef2f2;color:#991b1b;border:2px solid #fecaca}.chip.ok{background:#ecfdf5;color:#065f46;border:2px solid #a7f3d0}
+.chip svg{max-height:110px;width:auto;vertical-align:middle}.rvst{font-weight:700;color:#9a3412}
+.rvexp{background:var(--soft2);border:3px solid var(--line);border-radius:14px;padding:10px 14px;margin:8px 0}.rvexp ol.steps{margin:6px 0 4px;padding-left:22px}.rvexp li{margin:3px 0}
+.rvtry{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start}.rvplay{flex-basis:100%}.rvmini{border:3px dashed var(--line);border-radius:14px;padding:10px;margin-top:6px}
+.rvctl{gap:10px;align-items:center;flex-wrap:wrap}.rvctl select{font:inherit;font-size:1rem;padding:8px 10px;border-radius:12px;border:3px solid var(--line);background:#fff;min-height:44px;max-width:100%}
+.seg{display:flex;gap:6px}.rvnav{justify-content:space-between;align-items:center;margin:8px 0 20px}.rvnone{text-align:center;font-size:1.1rem}
+.rvfb{margin-top:8px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.rvprompt{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rvvar{background:#fff;border-radius:10px;padding:6px 10px;margin:4px 0;font-weight:600}
+.rvvar .story,.chip .story{display:inline;background:none;padding:0;margin:0;font-size:inherit}.rvmini{text-align:center}.rvmini .keypad{margin:8px auto}.rvmini .opts{margin:8px auto}
+.seg .btn:not(.ghost){color:#fff}
+
+/* ===== English revision extras ===== */
+.opts.sent{grid-template-columns:1fr;max-width:640px}
+.opts.sent .opt{font-size:1.1rem;text-align:left;justify-content:flex-start;min-height:56px;padding:12px 16px;line-height:1.35}
+.opts.txt .opt{font-size:1.2rem}
+.esent{font-size:1.35rem;line-height:1.5;background:#faf5ff;border:2px solid #ddd6fe;border-radius:14px;padding:10px 16px;margin:6px auto;max-width:640px;text-align:center}
+.esent b{color:#6d28d9}
+.passage{font-size:1.1rem;line-height:1.55;background:#fffbeb;border:2px solid #fcd34d;border-radius:14px;padding:12px 18px;max-width:640px;margin:0 auto;text-align:left}
+.passage h4{margin:0 0 6px;text-align:center}
+.gap{display:inline-block;min-width:3.2em;border-bottom:3px solid #7c3aed;margin:0 4px;height:1.1em;vertical-align:baseline}
+.pmark{font-size:1.9rem;font-weight:800;line-height:1}
+.tiles{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0}
+.tiles span{display:inline-flex;align-items:center;justify-content:center;width:42px;height:46px;background:#fef3c7;border:2px solid #f59e0b;border-radius:8px;font-weight:800;font-size:1.4rem;color:#78350f;box-shadow:0 2px 0 #d97706}
+.tiles span.gapt{background:#ede9fe;border-color:#7c3aed;color:#7c3aed}
+.tiles i{width:16px}
+.emo{font-size:3rem;line-height:1.1;text-align:center}
+.cipher{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:1.6rem;font-weight:800;letter-spacing:.18em;background:#111827;color:#a7f3d0;border-radius:10px;padding:8px 16px;margin:4px auto}
+.cipher.sm{font-size:1rem;padding:2px 8px;letter-spacing:.1em}
+.wsx{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
+.wsc{background:#fff;border:2px solid #bbf7d0;border-radius:14px;padding:8px 10px;text-align:center}
+.wsc p{margin:4px 0}.wsc .tiles span{width:30px;height:34px;font-size:1.05rem}
+.wsc .esent{font-size:1rem;padding:6px 8px}
+.wsc.wide{width:100%;box-sizing:border-box}
+.azs{display:flex;flex-wrap:wrap;gap:2px;justify-content:center}.azs span{font-size:.8rem;font-weight:700;background:#dcfce7;border-radius:4px;padding:1px 4px}
+.extable{border-collapse:collapse;margin:4px auto}.extable td,.extable th{border:1px solid #d1d5db;padding:4px 8px}
+@media (max-width:560px){.opts.sent{grid-template-columns:1fr}.wsx{grid-template-columns:1fr}.tiles span{width:34px;height:38px;font-size:1.15rem}.esent{font-size:1.15rem}}
+
+</style>
+</head>
+<body class="alexia">
+<header class="topbar">
+  <h1 id="homeLink" title="Today's lesson">📖 <span id="titleName">Alexia</span>'s English Revision</h1>
+  <span class="pill" id="ptsPill" title="Points">⭐ 0</span>
+  <span class="pill" id="streakPill" title="Days in a row">🔥 0</span>
+  <button class="iconbtn" id="soundBtn" aria-label="Sound on or off">🔊</button>
+  <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
+  <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥<span class="lbl"> Switch</span></a>
+</header>
+<main>
+<section id="home"><div id="homeBody"></div></section>
+<section id="play" class="hidden">
+  <div class="playhead"><button class="btn ghost" id="quitBtn">⏸️ Pause</button><div class="secname" id="secName"></div></div>
+  <div class="bars"><span>✏️ Questions</span><div class="pbar" id="progBar"><div style="width:0"></div></div><span id="progTxt"></span>
+    <span>⏱️ Time</span><div class="pbar time" id="timeBar"><div style="width:0"></div></div><span id="timeTxt"></span></div>
+  <div class="timesup hidden" id="timesUp">⏰ 5 minutes are up! Great effort. You can finish the last questions, or pause and come back later.</div>
+  <div class="card">
+    <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
+    <div class="vis" id="qvis"></div>
+    <div class="stage" id="stage"></div>
+    <div class="controls" id="controls"><button class="btn ghost" id="hintBtn">💡 Hint</button><button class="btn green" id="checkBtn">Check ✓</button></div>
+    <div class="hint hidden" id="hintBox"></div>
+    <div class="feedback hidden" id="feedback"></div>
+  </div>
+</section>
+<section id="results" class="hidden"><div class="card results" id="resultsCard"></div></section>
+<section id="review" class="hidden"><div id="reviewBody"></div></section>
+</main>
+<!-- "From school today" entries and extra topic modules live in focus.js (see README.md). -->
+<script src="focus.js"></script>
+<script>
+(function(){
+'use strict';
+/* ===== shared helpers and pictures (copied/adapted from the existing games) ===== */
+const OR='#ff8a3d',BL='#3b82f6',GRN='#15803d',RED='#e11d48',PU='#8b5cf6',YEL='#facc15';
+const PAL=['#3b82f6','#f97316','#22c55e','#ec4899','#8b5cf6','#facc15','#14b8a6'];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const range=n=>[...Array(n).keys()];
+const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
+const lcm=(a,b)=>a/gcd(a,b)*b;
+const F=(n,d,cls='')=>`<span class="frac ${cls}"><span class="num">${n}</span><span class="den">${d}</span></span>`;
+const M=(w,n,d,cls='')=>`<span class="mixed ${cls}"><span class="wn">${w}</span>${F(n,d)}</span>`;
+/* decimals as whole numbers of hundredths (Decimal Zoom) */
+const plc=v=>v%100===0?0:v%10===0?1:2;
+const D=(v,pl)=>{const w=Math.floor(v/100),r=v%100;if(pl==null)pl=plc(v);if(pl===0)return String(w);if(pl===1)return w+'.'+Math.floor(r/10);return w+'.'+String(r).padStart(2,'0');};
+/* thousandths */
+const D3=(vt,pl)=>{const w=Math.floor(vt/1000),r=vt%1000;if(pl==null)pl=r===0?0:r%100===0?1:r%10===0?2:3;if(pl===0)return String(w);return w+'.'+String(r).padStart(3,'0').slice(0,pl);};
+const money=c=>'$'+Math.floor(c/100)+'.'+String(c%100).padStart(2,'0');
+const DEC=(s,cls='big')=>`<span class="dec ${cls}">${s}</span>`;
+
+function barSVG({parts=10,fills=[],w=600,h=60,labels=null}){
+  const pw=w/parts;let s=`<svg class="bar" viewBox="-6 -8 ${w+12} ${h+16}" aria-label="bar cut into ${parts} parts">`;
+  for(let i=0;i<parts;i++){s+=`<rect x="${i*pw}" y="0" width="${pw}" height="${h}" fill="${fills[i]||'#ffffff'}" stroke="#374151" stroke-width="2"/>`;
+    if(labels&&labels[i]!=null)s+=`<text x="${i*pw+pw/2}" y="${h/2+8}" text-anchor="middle" font-size="22" font-weight="bold" fill="#1f2937">${labels[i]}</text>`;}
+  return s+`<rect x="0" y="0" width="${w}" height="${h}" fill="none" stroke="#1f2937" stroke-width="4"/></svg>`;
+}
+const fillN=(n,col=OR)=>range(n).map(()=>col);
+function grid100(v,{size=200,col=OR}={}){
+  const c=size/10;let s=`<svg class="g100" viewBox="-3 -3 ${size+6} ${size+6}" width="${size}" aria-label="hundred grid with ${v} squares shaded">`;
+  for(let i=0;i<100;i++){const x=Math.floor(i/10)*c,y=(i%10)*c;s+=`<rect x="${x}" y="${y}" width="${c}" height="${c}" fill="${i<v?col:'#fff'}" stroke="#9ca3af" stroke-width="1"/>`;}
+  for(let k=1;k<10;k++)s+=`<line x1="${k*c}" y1="0" x2="${k*c}" y2="${size}" stroke="#374151" stroke-width="2"/>`;
+  return s+`<rect x="0" y="0" width="${size}" height="${size}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+function pizzaSVG({parts,shaded=0,r=90}){
+  const c=r+10,T=2*Math.PI/parts,P=a=>[c+r*Math.cos(a),c+r*Math.sin(a)];
+  let s=`<svg class="pizza" viewBox="0 0 ${2*c} ${2*c}" aria-label="pizza cut into ${parts} slices">`;
+  s+=`<circle cx="${c}" cy="${c}" r="${r+8}" fill="#d9954a"/>`;
+  if(parts===1)return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="${shaded?'#ffb703':'#fff3d6'}" stroke="#8a4b16" stroke-width="2.5"/></svg>`;
+  for(let i=0;i<parts;i++){const a0=-Math.PI/2+i*T,a1=a0+T,[x0,y0]=P(a0),[x1,y1]=P(a1);
+    s+=`<path d="M${c},${c} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${T>Math.PI?1:0} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${i<shaded?'#ffb703':'#fff3d6'}" stroke="#8a4b16" stroke-width="2.5"/>`;}
+  return s+'</svg>';
+}
+function fracSVG(x,y,n,d,color='#1f2937',size=16){const hw=d>=100?16:11;
+  return `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${n}</text><line x1="${x-hw}" y1="${y+5}" x2="${x+hw}" y2="${y+5}" stroke="${color}" stroke-width="2.5"/><text x="${x}" y="${y+22}" text-anchor="middle" font-size="${size}" font-weight="bold" fill="${color}">${d}</text>`;}
+/* number line (from Decimal Zoom). values in "unit" sub-units; lines:[{lo,hi,step,lab,labs,marks,highlight,tag}] */
+function dl({lines,w=680,gap=124,top=64,unit=100,fmt=D}){
+  const m=40,Lw=w-2*m,H=top+gap*(lines.length-1)+72;const Xf=ln=>v=>m+(v-ln.lo)/(ln.hi-ln.lo)*Lw;
+  let s=`<svg class="nl" viewBox="0 0 ${w} ${H}" aria-label="number line">`;
+  lines.forEach((ln,j)=>{const y=top+j*gap,X=Xf(ln),st=ln.step,px=X(ln.lo+st)-X(ln.lo);
+    s+=`<line x1="${X(ln.lo)}" y1="${y}" x2="${X(ln.hi)}" y2="${y}" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;
+    if(ln.tag)s+=`<text x="${X(ln.lo)-30}" y="${y-30}" font-size="15" font-weight="bold" fill="#6b7280">${ln.tag}</text>`;
+    for(let v=ln.lo;v<=ln.hi+1e-9;v+=st){const x=X(v),whole=v%unit===0,hh=whole?17:10;
+      s+=`<line x1="${x}" y1="${y-hh}" x2="${x}" y2="${y+hh}" stroke="#1f2937" stroke-width="${whole?3.5:2.5}"/>`;
+      const hl=ln.highlight===v;let lab=whole||ln.lab==='all'||(ln.lab==='ends'&&(v===ln.lo||v===ln.hi))||(ln.labs&&ln.labs.includes(v))||hl;
+      if(ln.lab==='all'&&px<26&&!whole&&!hl&&(v/st)%2!==0)lab=false;
+      if(lab){const col=hl?GRN:'#1f2937';if(ln.fr&&!whole)s+=fracSVG(x,y+33,ln.fr(v)[0],ln.fr(v)[1],col);else s+=`<text x="${x}" y="${y+40}" text-anchor="middle" font-size="${whole?22:(px<34?15:18)}" font-weight="bold" fill="${col}">${fmt(v)}</text>`;}
+      if(hl)s+=`<circle cx="${x}" cy="${y}" r="12" fill="#22c55e" stroke="#fff" stroke-width="3"/>`;}
+    (ln.marks||[]).forEach(mk=>{const x=X(mk.v),c=mk.color||OR,ry=y-24-(mk.row||0)*21;
+      if(mk.label!=null){if(mk.row)s+=`<line x1="${x}" y1="${y-10}" x2="${x}" y2="${ry+4}" stroke="${c}" stroke-width="1.5"/>`;
+        s+=`<text x="${x}" y="${ry}" text-anchor="middle" font-size="16" font-weight="bold" fill="${c}" stroke="#fff" stroke-width="4" paint-order="stroke">${mk.label}</text>`;}
+      s+=`<circle cx="${x}" cy="${y}" r="10" fill="${c}" stroke="#fff" stroke-width="3"/>`;});});
+  return s+'</svg>';
+}
+/* column graph (from Data Dash). items:[{icon,name,n,col}] */
+function colSVG(items,{max=10,hl=[],nums=false,title='',scale=1,ylabel=''}={}){
+  const u=26,L=48,T=16,cw=64,gp=24,k=items.length,W=L+k*(cw+gp)+gp/2,base=T+max*u,Hh=base+48,hv=n=>n/scale;
+  let s=`<svg class="graph" viewBox="0 0 ${W} ${Hh}" style="max-width:${Math.round(W*1.15)}px" aria-label="column graph">`;
+  for(let v=0;v<=max;v++){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/>`;
+    s+=`<text x="${L-6}" y="${y+5}" text-anchor="end" font-size="15" fill="#374151">${v*scale}</text>`;}
+  s+=`<line x1="${L}" y1="${T-4}" x2="${L}" y2="${base}" stroke="#1f2937" stroke-width="3"/>`;
+  items.forEach((it,i)=>{const x=L+gp/2+i*(cw+gp)+4,h=hv(it.n);
+    if(h>0)s+=`<rect x="${x}" y="${base-h*u}" width="${cw}" height="${h*u}" rx="4" fill="${it.col}" stroke="${hl.includes(i)?'#111':'rgba(0,0,0,.3)'}" stroke-width="${hl.includes(i)?4:2}"/>`;
+    if(nums||hl.includes(i))s+=`<text x="${x+cw/2}" y="${base-h*u-6}" text-anchor="middle" font-size="19" font-weight="bold" fill="#111">${it.n}</text>`;
+    s+=`<text x="${x+cw/2}" y="${base+32}" text-anchor="middle" font-size="28">${it.icon}</text>`;});
+  return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';
+}
+/* pie chart (from Data Dash): slices [{q,col}] out of den */
+function pieSVG(slices,{r=90,den=4,labels=null}={}){
+  const c=r+10,W=2*c;let a=-Math.PI/2,s=`<svg class="graph" viewBox="0 0 ${W} ${W}" style="max-width:${Math.round(W*1.3)}px" aria-label="pie chart">`;
+  const pt=(ang,rr)=>[c+rr*Math.cos(ang),c+rr*Math.sin(ang)];
+  slices.forEach((sl,i)=>{const da=sl.q/den*2*Math.PI,b=a+da;
+    if(sl.q>=den)s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;
+    else if(sl.q>0){const [x1,y1]=pt(a,r),[x2,y2]=pt(b,r);s+=`<path d="M${c},${c} L${x1},${y1} A${r},${r} 0 ${da>Math.PI?1:0} 1 ${x2},${y2} Z" fill="${sl.col}" stroke="#fff" stroke-width="3"/>`;}
+    if(labels&&labels[i]){const [lx,ly]=pt(a+da/2,r*0.6);s+=`<text x="${lx}" y="${ly+6}" text-anchor="middle" font-size="${r*0.17}" font-weight="bold" fill="#111" stroke="#fff" stroke-width="4" paint-order="stroke">${labels[i]}</text>`;}
+    a=b;});
+  return s+`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/></svg>`;
+}
+/* jump number line (from Number Facts Sprint) */
+function jumpSVG(start,steps){
+  const pts=[start];steps.forEach(s=>pts.push(pts[pts.length-1]+s));
+  const back=steps.length&&steps.every(s=>s<0),n=steps.length,gap=150,W=80+n*gap,xs=pts.map((_,i)=>back?W-40-i*gap:40+i*gap);
+  let s=`<svg class="jl" viewBox="0 0 ${W} 120" style="max-width:${W*1.3}px" aria-label="number line">`;
+  s+=`<line x1="10" y1="88" x2="${W-10}" y2="88" stroke="#1f2937" stroke-width="3"/>`;
+  steps.forEach((st,i)=>{const x1=xs[i],x2=xs[i+1],mx=(x1+x2)/2;
+    s+=`<path d="M${x1},84 Q${mx},20 ${x2},84" fill="none" stroke="${st<0?RED:BL}" stroke-width="4"/>`;
+    s+=`<text x="${mx}" y="38" text-anchor="middle" font-size="22" font-weight="bold" fill="${st<0?RED:BL}">${st<0?'−':'+'}${Math.abs(st)}</text>`;});
+  pts.forEach((p,i)=>{s+=`<line x1="${xs[i]}" y1="80" x2="${xs[i]}" y2="96" stroke="#1f2937" stroke-width="3"/><text x="${xs[i]}" y="116" text-anchor="middle" font-size="20" font-weight="bold" fill="${i===pts.length-1?'#16a34a':'#1f2937'}">${p}</text>`;});
+  return s+'</svg>';
+}
+function addJumps(a,b){const up=Math.ceil((a+1)/10)*10-a;return b>up&&a%10!==0?[up,b-up]:[b];}
+function subJumps(a,b){const dn=a%10;return dn>0&&b>dn?[-dn,-(b-dn)]:[-b];}
+/* ---- new pictures for the daily lessons ---- */
+function clockSVG(h,m,{size=200}={}){const c=100,r=90;let s=`<svg class="clock" viewBox="0 0 200 200" width="${size}" aria-label="clock showing ${h}:${String(m).padStart(2,'0')}">`;
+  s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="#fff" stroke="#1f2937" stroke-width="6"/>`;
+  for(let i=0;i<60;i++){const a=i*Math.PI/30,big=i%5===0,r1=big?r-12:r-6;s+=`<line x1="${c+r1*Math.sin(a)}" y1="${c-r1*Math.cos(a)}" x2="${c+(r-2)*Math.sin(a)}" y2="${c-(r-2)*Math.cos(a)}" stroke="#1f2937" stroke-width="${big?3:1.2}"/>`;}
+  for(let i=1;i<=12;i++){const a=i*Math.PI/6;s+=`<text x="${c+(r-27)*Math.sin(a)}" y="${c-(r-27)*Math.cos(a)+7}" text-anchor="middle" font-size="19" font-weight="bold" fill="#1f2937">${i}</text>`;}
+  const ha=((h%12)+m/60)*Math.PI/6,ma=m*Math.PI/30;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+48*Math.sin(ha)}" y2="${c-48*Math.cos(ha)}" stroke="#2563eb" stroke-width="8" stroke-linecap="round"/>`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+72*Math.sin(ma)}" y2="${c-72*Math.cos(ma)}" stroke="#e11d48" stroke-width="5" stroke-linecap="round"/>`;
+  return s+`<circle cx="${c}" cy="${c}" r="6" fill="#1f2937"/></svg>`;}
+/* rectangle on a square grid; cell=size of one unit; labels:true shows side lengths; shade:true fills */
+function rectSVG(w,h,{grid=true,labels=false,unit='',col='#bfdbfe',cut=null}={}){
+  const cs=Math.min(34,Math.floor(300/Math.max(w,h))),W=w*cs+100,H=h*cs+60,x0=70,y0=20;
+  let s=`<svg class="shape" viewBox="0 0 ${W} ${H}" width="${Math.round(W*1.2)}" aria-label="rectangle ${w} by ${h}">`;
+  for(let i=0;i<w;i++)for(let j=0;j<h;j++){const cutOut=cut&&i>=w-cut[0]&&j<cut[1];if(cutOut)continue;s+=`<rect x="${x0+i*cs}" y="${y0+j*cs}" width="${cs}" height="${cs}" fill="${col}" stroke="${grid?'#64748b':col}" stroke-width="${grid?1:0}"/>`;}
+  if(cut){const pts=[[0,0],[w-cut[0],0],[w-cut[0],cut[1]],[w,cut[1]],[w,h],[0,h]];s+=`<polygon points="${pts.map(p=>`${x0+p[0]*cs},${y0+p[1]*cs}`).join(' ')}" fill="none" stroke="#1f2937" stroke-width="4"/>`;}
+  else s+=`<rect x="${x0}" y="${y0}" width="${w*cs}" height="${h*cs}" fill="none" stroke="#1f2937" stroke-width="4"/>`;
+  if(labels){const L=typeof labels==='object'?labels:{};s+=`<text x="${x0+w*cs/2}" y="${y0+h*cs+30}" text-anchor="middle" font-size="18" font-weight="bold">${L.w!=null?L.w:w+' '+unit}</text>`;
+    s+=`<text x="${x0-8}" y="${y0+h*cs/2+6}" text-anchor="end" font-size="18" font-weight="bold">${L.h!=null?L.h:h+(unit?' '+unit:'')}</text>`;}
+  return s+'</svg>';}
+function angleSVG(deg,{label=null,arc=true,size=240,rot=0}={}){const c=120,r=95;const a0=-rot*Math.PI/180,a1=-(rot+deg)*Math.PI/180;
+  let s=`<svg class="shape" viewBox="0 0 240 240" width="${size}" aria-label="angle">`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+r*Math.cos(a0)}" y2="${c+r*Math.sin(a0)}" stroke="#1f2937" stroke-width="5" stroke-linecap="round"/>`;
+  s+=`<line x1="${c}" y1="${c}" x2="${c+r*Math.cos(a1)}" y2="${c+r*Math.sin(a1)}" stroke="#1f2937" stroke-width="5" stroke-linecap="round"/>`;
+  if(arc){if(deg===90){const q=22,p=(a,l)=>[c+l*Math.cos(a),c+l*Math.sin(a)];const A=p(a0,q),B=p(a1,q),C=[A[0]+B[0]-c,A[1]+B[1]-c];s+=`<polyline points="${A} ${C} ${B}" fill="none" stroke="${RED}" stroke-width="3"/>`;}
+    else{const ar=34,[x1,y1]=[c+ar*Math.cos(a0),c+ar*Math.sin(a0)],[x2,y2]=[c+ar*Math.cos(a1),c+ar*Math.sin(a1)];s+=`<path d="M${x1},${y1} A${ar},${ar} 0 ${deg>180?1:0} 0 ${x2},${y2}" fill="none" stroke="${RED}" stroke-width="3"/>`;}}
+  if(label!=null){const am=-(rot+deg/2)*Math.PI/180;s+=`<text x="${c+58*Math.cos(am)}" y="${c+58*Math.sin(am)+6}" text-anchor="middle" font-size="20" font-weight="bold" fill="${RED}">${label}</text>`;}
+  return s+`<circle cx="${c}" cy="${c}" r="4" fill="#1f2937"/></svg>`;}
+/* straight line split into two angles */
+function straightSVG(a,{la,lb}={}){const c=150,r=110,ar=-a*Math.PI/180;let s=`<svg class="shape" viewBox="0 0 300 160" width="300" aria-label="angles on a straight line">`;
+  s+=`<line x1="${c-r}" y1="${c-20}" x2="${c+r}" y2="${c-20}" stroke="#1f2937" stroke-width="5"/>`;const cy=c-20;
+  s+=`<line x1="${c}" y1="${cy}" x2="${c+r*Math.cos(ar)}" y2="${cy+r*Math.sin(ar)}" stroke="#1f2937" stroke-width="5"/>`;
+  const m1=ar/2,m2=(ar-Math.PI)/2;s+=`<text x="${c+52*Math.cos(m1)}" y="${cy+52*Math.sin(m1)+6}" text-anchor="middle" font-size="19" font-weight="bold" fill="${BL}">${la}</text><text x="${c+52*Math.cos(m2)}" y="${cy+52*Math.sin(m2)+6}" text-anchor="middle" font-size="19" font-weight="bold" fill="${RED}">${lb}</text>`;
+  return s+'</svg>';}
+/* spinner with coloured sectors [{col,name}] equal size */
+function spinnerSVG(cols,{r=90}={}){const n=cols.length,c=r+10;let s=`<svg class="graph" viewBox="0 0 ${2*c} ${2*c}" style="max-width:${2*c*1.2}px" aria-label="spinner with ${n} equal parts">`;
+  cols.forEach((col,i)=>{const a0=-Math.PI/2+i*2*Math.PI/n,a1=a0+2*Math.PI/n;s+=`<path d="M${c},${c} L${c+r*Math.cos(a0)},${c+r*Math.sin(a0)} A${r},${r} 0 ${n===1?1:0} 1 ${c+r*Math.cos(a1)},${c+r*Math.sin(a1)} Z" fill="${col}" stroke="#fff" stroke-width="3"/>`;});
+  s+=`<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="#1f2937" stroke-width="3"/><line x1="${c}" y1="${c}" x2="${c+r*0.3}" y2="${c-r*0.65}" stroke="#111" stroke-width="5" stroke-linecap="round"/><circle cx="${c}" cy="${c}" r="7" fill="#111"/>`;
+  return s+'</svg>';}
+/* bag of marbles: counts [{col,n}] */
+function bagSVG(groups){const all=[];groups.forEach(g=>{for(let i=0;i<g.n;i++)all.push(g.col);});const per=6,rows=Math.ceil(all.length/per),W=per*34+40,H=rows*34+50;
+  let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.2}px" aria-label="bag of ${all.length} marbles">`;
+  s+=`<path d="M10,30 Q${W/2},6 ${W-10},30 L${W-20},${H-6} Q${W/2},${H+4} 20,${H-6} Z" fill="#fef3c7" stroke="#92400e" stroke-width="3"/>`;
+  all.forEach((col,i)=>{s+=`<circle cx="${37+(i%per)*34}" cy="${46+Math.floor(i/per)*34}" r="14" fill="${col}" stroke="rgba(0,0,0,.3)" stroke-width="2"/>`;});
+  return s+'</svg>';}
+/* dot array rows x cols */
+function arraySVG(r,c,{col=BL,ring=0}={}){const g=30,W=c*g+20,H=r*g+20;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${Math.min(560,W*1.4)}px" aria-label="array of ${r} rows of ${c}">`;
+  for(let i=0;i<r;i++)for(let j=0;j<c;j++)s+=`<circle cx="${25+j*g}" cy="${25+i*g}" r="11" fill="${col}"/>`;
+  if(ring)for(let i=0;i<r;i++)s+=`<rect x="8" y="${9+i*g}" width="${W-16}" height="${g-2}" rx="14" fill="none" stroke="${RED}" stroke-width="2"/>`;
+  return s+'</svg>';}
+/* equal groups: g plates with k items each */
+function groupsSVG(g,k,{icon='🍪'}={}){let h='<div class="groups">';for(let i=0;i<g;i++)h+=`<div class="plate">${icon.repeat(k)}</div>`;return h+'</div>';}
+/* coins & notes: list of cents values */
+const COIN={5:['5c','#cbd5e1',22],10:['10c','#cbd5e1',26],20:['20c','#cbd5e1',30],50:['50c','#cbd5e1',33],100:['$1','#fbbf24',27],200:['$2','#fbbf24',24]};
+const NOTE={500:['$5','#f9a8d4'],1000:['$10','#93c5fd'],2000:['$20','#fca5a5'],5000:['$50','#fde68a']};
+function moneySVG(list){let x=10;const parts=[];list.forEach(v=>{if(NOTE[v]){parts.push(`<rect x="${x}" y="14" width="110" height="60" rx="6" fill="${NOTE[v][1]}" stroke="#374151" stroke-width="2"/><text x="${x+55}" y="52" text-anchor="middle" font-size="22" font-weight="bold">${NOTE[v][0]}</text>`);x+=120;}
+  else{const [l,col,r]=COIN[v];parts.push(`<circle cx="${x+r}" cy="44" r="${r}" fill="${col}" stroke="#374151" stroke-width="2"/><text x="${x+r}" y="50" text-anchor="middle" font-size="${r>26?17:15}" font-weight="bold">${l}</text>`);x+=2*r+10;}});
+  return `<svg class="graph" viewBox="0 0 ${x+4} 88" style="max-width:${Math.min(700,(x+4)*1.2)}px" aria-label="money">${parts.join('')}</svg>`;}
+/* MAB blocks: hundreds flats, tens longs, ones */
+function mabSVG(h,t,o){let x=6;let s='';const u=7;for(let i=0;i<h;i++){s+=`<rect x="${x}" y="6" width="${10*u}" height="${10*u}" fill="#fde68a" stroke="#92400e" stroke-width="2"/>`;for(let k=1;k<10;k++)s+=`<line x1="${x+k*u}" y1="6" x2="${x+k*u}" y2="${6+10*u}" stroke="#d97706" stroke-width=".7"/><line x1="${x}" y1="${6+k*u}" x2="${x+10*u}" y2="${6+k*u}" stroke="#d97706" stroke-width=".7"/>`;x+=10*u+8;}
+  for(let i=0;i<t;i++){s+=`<rect x="${x}" y="6" width="${u+2}" height="${10*u}" fill="#93c5fd" stroke="#1e40af" stroke-width="2"/>`;x+=u+8;}
+  for(let i=0;i<o;i++){s+=`<rect x="${x}" y="${6+9*u-2}" width="${u+3}" height="${u+3}" fill="#86efac" stroke="#166534" stroke-width="2"/>`;x+=u+7;}
+  return `<svg class="graph" viewBox="0 0 ${x+6} ${10*u+14}" style="max-width:${Math.min(700,(x+6)*1.6)}px" aria-label="base ten blocks">${s}</svg>`;}
+/* 2D shapes */
+function polySVG(n,{col='#a7f3d0',size=160}={}){const c=80,r=64;const pts=range(n).map(i=>{const a=-Math.PI/2+i*2*Math.PI/n+(n===4?Math.PI/4:0);return `${c+r*Math.cos(a)},${c+r*Math.sin(a)}`;}).join(' ');
+  return `<svg class="shape" viewBox="0 0 160 160" width="${size}" aria-label="shape with ${n} sides"><polygon points="${pts}" fill="${col}" stroke="#1f2937" stroke-width="4"/></svg>`;}
+/* 3D solids, simple drawings */
+function solidSVG(k,{size=170}={}){const st='stroke="#1f2937" stroke-width="3"',dash='stroke="#1f2937" stroke-width="2" stroke-dasharray="5 4" fill="none"';let b='';
+  if(k==='cube'||k==='rectangular prism'){const w=k==='cube'?80:120,h=80,d=36;b=`<polygon points="30,60 ${30+w},60 ${30+w},${60+h} 30,${60+h}" fill="#bfdbfe" ${st}/><polygon points="30,60 ${30+d},${60-d} ${30+w+d},${60-d} ${30+w},60" fill="#dbeafe" ${st}/><polygon points="${30+w},60 ${30+w+d},${60-d} ${30+w+d},${60+h-d} ${30+w},${60+h}" fill="#93c5fd" ${st}/>`;}
+  else if(k==='square pyramid')b=`<polygon points="30,130 120,130 85,20" fill="#fde68a" ${st}/><polygon points="120,130 150,105 85,20" fill="#fcd34d" ${st}/><line x1="30" y1="130" x2="60" y2="105" ${dash}/><line x1="60" y1="105" x2="150" y2="105" ${dash}/><line x1="60" y1="105" x2="85" y2="20" ${dash}/>`;
+  else if(k==='triangular prism')b=`<polygon points="20,130 70,40 120,130" fill="#fbcfe8" ${st}/><polygon points="70,40 140,20 170,105 120,130" fill="#f9a8d4" ${st}/><line x1="20" y1="130" x2="90" y2="110" ${dash}/><line x1="90" y1="110" x2="170" y2="105" ${dash}/><line x1="90" y1="110" x2="140" y2="20" ${dash}/>`;
+  else if(k==='triangular pyramid')b=`<polygon points="25,130 135,130 85,20" fill="#ddd6fe" ${st}/><polygon points="135,130 160,95 85,20" fill="#c4b5fd" ${st}/><line x1="25" y1="130" x2="160" y2="95" ${dash}/>`;
+  else if(k==='cylinder')b=`<rect x="40" y="35" width="100" height="95" fill="#a7f3d0" stroke="none"/><line x1="40" y1="35" x2="40" y2="130" ${st}/><line x1="140" y1="35" x2="140" y2="130" ${st}/><ellipse cx="90" cy="130" rx="50" ry="14" fill="#a7f3d0" ${st}/><ellipse cx="90" cy="35" rx="50" ry="14" fill="#d1fae5" ${st}/>`;
+  else if(k==='cone')b=`<polygon points="40,130 90,20 140,130" fill="#fed7aa" stroke="none"/><line x1="40" y1="130" x2="90" y2="20" ${st}/><line x1="140" y1="130" x2="90" y2="20" ${st}/><ellipse cx="90" cy="130" rx="50" ry="14" fill="#fdba74" ${st}/>`;
+  else if(k==='sphere')b=`<circle cx="90" cy="80" r="60" fill="#fecaca" ${st}/><ellipse cx="90" cy="80" rx="60" ry="16" ${dash}/>`;
+  else if(k==='pentagonal prism')b=`<polygon points="20,95 45,60 80,72 80,118 35,125" fill="#bbf7d0" ${st}/><polygon points="45,60 115,30 150,42 80,72" fill="#dcfce7" ${st}/><polygon points="80,72 150,42 150,88 80,118" fill="#86efac" ${st}/>`;
+  return `<svg class="shape" viewBox="0 0 180 150" width="${size}" aria-label="${k}">${b}</svg>`;}
+/* nets: cube (cross), square pyramid, triangular prism, rectangular prism, cylinder */
+function netSVG(k){const u=40;let s='',W=260,H=200;const sq=(x,y,c='#bfdbfe',w=u,h=u)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}" stroke="#1f2937" stroke-width="2.5"/>`;
+  if(k==='cube'){W=4*u+10;H=3*u+10;s=sq(5+u,5)+[0,1,2,3].map(i=>sq(5+i*u,5+u)).join('')+sq(5+u,5+2*u);}
+  else if(k==='rectangular prism'){W=2*u+2*60+10;H=60+2*u+10+u;s=sq(5+u,5,'#bfdbfe',60,u)+sq(5,5+u,'#93c5fd',u,60)+sq(5+u,5+u,'#bfdbfe',60,60)+sq(5+u+60,5+u,'#93c5fd',u,60)+sq(5+2*u+60,5+u,'#bfdbfe',60,60)+sq(5+u,5+u+60,'#bfdbfe',60,u);}
+  else if(k==='square pyramid'){W=3*u+10+40;H=W;const x=5+u+20,y=5+u+20;s=sq(x,y,'#fde68a')+`<polygon points="${x},${y} ${x+u},${y} ${x+u/2},${y-u}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x},${y+u} ${x+u},${y+u} ${x+u/2},${y+2*u}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x},${y} ${x},${y+u} ${x-u},${y+u/2}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/><polygon points="${x+u},${y} ${x+u},${y+u} ${x+2*u},${y+u/2}" fill="#fcd34d" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='triangular prism'){W=3*u+10+2*35;H=u+2*35+10;const y=40;s=[0,1,2].map(i=>sq(40+i*u,y,'#f9a8d4')).join('')+`<polygon points="40,${y} 40,${y+u} 5,${y+u/2}" fill="#fbcfe8" stroke="#1f2937" stroke-width="2.5"/><polygon points="${40+3*u},${y} ${40+3*u},${y+u} ${75+3*u},${y+u/2}" fill="#fbcfe8" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='cylinder'){W=200;H=200;s=`<circle cx="100" cy="28" r="23" fill="#d1fae5" stroke="#1f2937" stroke-width="2.5"/>${sq(28,52,'#a7f3d0',144,90)}<circle cx="100" cy="166" r="23" fill="#d1fae5" stroke="#1f2937" stroke-width="2.5"/>`;}
+  else if(k==='triangular pyramid'){W=180;H=160;s=`<polygon points="10,150 170,150 90,10" fill="#ddd6fe" stroke="#1f2937" stroke-width="2.5"/><polyline points="50,80 130,80 90,150 50,80" fill="none" stroke="#1f2937" stroke-width="2.5"/>`;}
+  return `<svg class="shape" viewBox="0 0 ${W} ${H}" width="${Math.round(W*1.2)}" aria-label="net">${s}</svg>`;}
+/* ruler with an object (length in cm, starting at 0 or offset) */
+function rulerSVG(len,{start=0,max=15,col=OR,item='pencil'}={}){const u=40,W=max*u+40;let s=`<svg class="graph" viewBox="0 0 ${W} 120" style="max-width:${Math.min(720,W)}px" aria-label="ruler">`;
+  s+=`<rect x="${20+start*u}" y="18" width="${len*u}" height="26" rx="10" fill="${col}" stroke="#1f2937" stroke-width="2"/><text x="${20+start*u+len*u/2}" y="37" text-anchor="middle" font-size="15" font-weight="bold">${item}</text>`;
+  s+=`<rect x="10" y="56" width="${W-20}" height="56" fill="#fef9c3" stroke="#a16207" stroke-width="2"/>`;
+  for(let i=0;i<=max;i++){const x=20+i*u;s+=`<line x1="${x}" y1="56" x2="${x}" y2="80" stroke="#1f2937" stroke-width="2"/><text x="${x}" y="102" text-anchor="middle" font-size="16">${i}</text>`;if(i<max)s+=`<line x1="${x+u/2}" y1="56" x2="${x+u/2}" y2="68" stroke="#1f2937" stroke-width="1.5"/>`;}
+  return s+`<text x="${W-24}" y="102" text-anchor="end" font-size="12">cm</text></svg>`;}
+/* grid map with emoji places: places [{x,y,icon}] cols A.. rows 1.. */
+function mapSVG(cols,rows,places){const u=56,W=cols*u+40,H=rows*u+40;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.3}px" aria-label="grid map">`;
+  for(let i=0;i<cols;i++){s+=`<text x="${40+i*u+u/2}" y="${H-10}" text-anchor="middle" font-size="18" font-weight="bold">${'ABCDEFG'[i]}</text>`;}
+  for(let j=0;j<rows;j++){s+=`<text x="20" y="${10+(rows-1-j)*u+u/2+6}" text-anchor="middle" font-size="18" font-weight="bold">${j+1}</text>`;}
+  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)s+=`<rect x="${40+i*u}" y="${10+j*u}" width="${u}" height="${u}" fill="#ecfdf5" stroke="#94a3b8" stroke-width="1.5"/>`;
+  places.forEach(p=>{s+=`<text x="${40+p.x*u+u/2}" y="${10+(rows-1-p.y)*u+u/2+12}" text-anchor="middle" font-size="32">${p.icon}</text>`;});
+  return s+'</svg>';}
+/* tally marks for n */
+function tallySVG(n){const g=Math.floor(n/5),r=n%5;let x=8,s='';for(let i=0;i<g;i++){for(let k=0;k<4;k++)s+=`<line x1="${x+k*10}" y1="6" x2="${x+k*10}" y2="46" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;s+=`<line x1="${x-6}" y1="40" x2="${x+36}" y2="12" stroke="${RED}" stroke-width="4" stroke-linecap="round"/>`;x+=58;}
+  for(let k=0;k<r;k++)s+=`<line x1="${x+k*10}" y1="6" x2="${x+k*10}" y2="46" stroke="#1f2937" stroke-width="4" stroke-linecap="round"/>`;x+=r*10+8;
+  return `<svg class="graph" viewBox="0 0 ${Math.max(x,40)} 52" style="max-width:${Math.max(x,40)*1.4}px;height:auto" aria-label="${n} tally marks">${s}</svg>`;}
+/* line graph: pts [{lab,v}] */
+function lineSVG(pts,{max=40,step=5,title=''}={}){const L=46,T=14,u=6,W=L+pts.length*70+20,base=T+max*u,H=base+40;let s=`<svg class="graph" viewBox="0 0 ${W} ${H}" style="max-width:${W*1.2}px" aria-label="line graph">`;
+  for(let v=0;v<=max;v+=step){const y=base-v*u;s+=`<line x1="${L}" y1="${y}" x2="${W-10}" y2="${y}" stroke="${v?'#e5e7eb':'#1f2937'}" stroke-width="${v?1.5:3}"/><text x="${L-6}" y="${y+5}" text-anchor="end" font-size="14">${v}</text>`;}
+  const P=pts.map((p,i)=>[L+40+i*70,base-p.v*u]);s+=`<polyline points="${P.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${BL}" stroke-width="4"/>`;
+  P.forEach((p,i)=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="${BL}"/><text x="${p[0]}" y="${base+26}" text-anchor="middle" font-size="15" font-weight="bold">${pts[i].lab}</text>`;});
+  return (title?`<div class="gtitle">${esc(title)}</div>`:'')+s+'</svg>';}
+/* simple table */
+const tableHTML=(head,rows)=>`<table class="dtab"><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+
+/* ===== seeded random + question builders (used by every topic module) ===== */
+let RNG=Math.random;
+const rnd=(a,b)=>a+Math.floor(RNG()*(b-a+1));
+const pick=a=>a[Math.floor(RNG()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const chance=p=>RNG()<p;
+function hashStr(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return (h>>>0);}
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+/* multiple choice: correct + distractors -> {kind,choices,answer} (unique, shuffled, max n) */
+function opts(correct,distract,{n=4,cls=''}={}){const seen=new Set([String(correct)]);const list=[correct];
+  for(const d of distract){if(list.length>=n)break;const k=String(d);if(!seen.has(k)){seen.add(k);list.push(d);}}
+  const sh=shuffle(list.slice());return {kind:'choice',choices:sh,answer:sh.indexOf(correct),cls};}
+/* fixed-order choices (e.g. likely/unlikely scale) */
+const fixedOpts=(list,correctIdx,cls='txt')=>({kind:'choice',choices:list,answer:correctIdx,cls});
+const numDistract=(a,spread=[1,-1,2,-2,10,-10],min=0)=>spread.map(s=>a+s).filter(x=>x>=min&&x!==a);
+/* typed answers: layout uses [[id]] placeholders for answer boxes */
+const num=(ans,{pre='',post='',len}={})=>({kind:'entry',fields:[{id:'a',len:len||Math.max(2,String(ans).length+1)}],layout:`${pre}[[a]]${post}`,answer:{a:String(ans)}});
+const decE=(ans,{pre='',post=''}={})=>({kind:'entry',dot:true,fields:[{id:'a',len:7}],layout:`${pre}[[a]]${post}`,answer:{a:String(ans)}});
+const fracE=(n,d,{den=false}={})=>({kind:'entry',fields:den?[{id:'n',len:3}]:[{id:'n',len:3},{id:'d',len:3}],layout:`<span class="frac huge"><span class="num">[[n]]</span><span class="den">${den?d:'[[d]]'}</span></span>`,answer:den?{n:String(n)}:{n:String(n),d:String(d)}});
+const mixedE=(w,n,d,{den=false}={})=>({kind:'entry',fields:[{id:'w',len:2},{id:'n',len:3}].concat(den?[]:[{id:'d',len:3}]),layout:`<span class="mixed huge"><span class="wn">[[w]]</span><span class="frac"><span class="num">[[n]]</span><span class="den">${den?d:'[[d]]'}</span></span></span>`,answer:den?{w:String(w),n:String(n)}:{w:String(w),n:String(n),d:String(d)}});
+const timeE=(h,m)=>({kind:'entry',fields:[{id:'h',len:2},{id:'m',len:2}],layout:`<span class="tentry">[[h]]<b>:</b>[[m]]</span>`,answer:{h:String(h),m:String(m).padStart(2,'0')}});
+const qrE=(q,r)=>({kind:'entry',fields:[{id:'q',len:3},{id:'r',len:2}],layout:`[[q]] <small>remainder</small> [[r]]`,answer:{q:String(q),r:String(r)}});
+const two=(a,b,{la='',lb='',mid=' '}={})=>({kind:'entry',fields:[{id:'a',len:String(a).length+1},{id:'b',len:String(b).length+1}],layout:`${la}[[a]]${mid}${lb}[[b]]`,answer:{a:String(a),b:String(b)}});
+/* a value check for fraction answers that accepts any equivalent fraction */
+const fracCheck=(n,d)=>v=>+v.d>0&&(+v.n)*d===n*(+v.d);
+const mixedCheck=(w,n,d)=>v=>{const dd=v.d!=null?+v.d:d;return dd>0&&((+v.w)*dd+(+v.n))*d===(w*d+n)*dd&&(+v.n)<dd;};
+const big=h=>`<div class="bigq">${h}</div>`;
+const plural=(n,w,p)=>`${n} ${n===1?w:(p||w+'s')}`;
+
+/* hint helpers: steps('a','b') numbers each line; fw(d) names the pieces (fw(4) = quarters) */
+const steps=(...a)=>a.filter(Boolean).map((s,i)=>`<b>Step ${i+1}:</b> ${s}`).join('<br>');
+const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevenths',8:'eighths',9:'ninths',10:'tenths',11:'elevenths',12:'twelfths',15:'fifteenths',16:'sixteenths',18:'eighteenths',20:'twentieths',24:'twenty-fourths',100:'hundredths',1000:'thousandths'})[d]||d+'ths';
+
+/* ===== Alexia's English revision topics (NSW English K–10 Syllabus 2022, Stage 2 → Stage 3) =====
+   Every item is multiple choice from curated, age-appropriate lists, so each answer is checkable and unambiguous.
+   Levels: 1 = Year 4, 2 = harder Year 4, 3 = Year 5, 4 = Year 5 stretch (engine lvl 0..3). */
+const EN=(function(){
+  const J=a=>a.join('<br>');
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const sent=s=>`<div class="esent">${s}</div>`;
+  const M=(o,meta)=>Object.assign(o,{meta});
+
+  /* ---------------- quick words (warm-up): spelling, synonyms, antonyms ---------------- */
+  const SPELL=[ /* [correct, 3 misspellings that are not real words], level */
+    ['because',['becuase','becaus','beacuse'],0,'Big Elephants Can Always Understand Small Elephants: b-e-c-a-u-s-e.'],
+    ['beautiful',['beautifull','beutiful','beatiful'],0,'Say it in parts: b-e-a-u / ti / ful. -ful has only one l.'],
+    ['friend',['freind','frend','friennd'],0,'A friend is there to the end: fri-END.'],
+    ['different',['diffrent','diferent','differant'],0,'Say all three parts: dif-fer-ent.'],
+    ['believe',['beleive','belive','beleve'],0,'Never believe a LIE: be-LIE-ve.'],
+    ['library',['libary','librery','liberry'],0,'Say both r sounds: li-BRAR-y.'],
+    ['island',['iland','ilend','islend'],0,'An island IS LAND: is-land (the s is silent).'],
+    ['answer',['anser','awnser','answere'],0,'There is a silent w: ans-w-er.'],
+    ['question',['qestion','questoin','quesion'],0,'q is always followed by u: qu-es-tion.'],
+    ['height',['hieght','hight','heigth'],0,'h + eight: h-EIGHT.'],
+    ['guard',['gaurd','guad','gard'],0,'g-u-a-r-d: the u comes straight after the g.'],
+    ['tomorrow',['tommorow','tomorow','tommorrow'],0,'One m, two r’s: to-mor-row.'],
+    ['disappear',['dissapear','disapear','dissappear'],0,'dis + appear: one s, two p’s.'],
+    ['February',['Febuary','Februery','Febrary'],1,'Say the first r: Feb-RU-ary.'],
+    ['separate',['seperate','seperete','separete'],1,'There is A RAT in sep-A-RAT-e.'],
+    ['necessary',['neccessary','necesary','neccesary'],1,'One Collar, two Sleeves: one c, double s.'],
+    ['surprise',['suprise','surprice','serprise'],1,'sur + prise: don’t forget the first r.'],
+    ['probably',['probly','probabley','probaly'],1,'probable → probably: pro-bab-ly.'],
+    ['knowledge',['knowlege','nolledge','knowladge'],1,'know + ledge: the word know is inside it.'],
+    ['neighbour',['nieghbour','neihbour','naybour'],1,'neigh (like a horse) + bour.'],
+    ['weird',['wierd','weerd','wiered'],1,'weird breaks the “i before e” rule: w-e-i-r-d.'],
+    ['rhythm',['rythm','rhythym','rythem'],2,'Rhythm Helps Your Two Hips Move.'],
+    ['accommodation',['accomodation','acommodation','accommadation'],2,'It has room for two c’s and two m’s.'],
+    ['embarrass',['embarass','embarras','embaress'],2,'Two r’s and two s’s: I go Really Red and Smile Shyly.'],
+    ['government',['goverment','govenment','guvernment'],2,'govern + ment: the n from govern stays.'],
+  ];
+  const SYN=[ /* [word, synonym, non-synonym distractors], level */
+    ['enormous','huge',['tiny','quiet','early'],0],['begin','start',['finish','borrow','hide'],0],['quick','fast',['slow','heavy','brave'],0],
+    ['shout','yell',['whisper','sit','listen'],0],['happy','cheerful',['gloomy','angry','sleepy'],0],['difficult','hard',['easy','early','empty'],0],
+    ['silent','quiet',['noisy','sunny','rapid'],0],['tired','exhausted',['lively','honest','hungry'],0],['damp','moist',['dry','bright','loud'],0],
+    ['choose','select',['refuse','forget','carry'],0],['brave','courageous',['fearful','lazy','sticky'],1],['ancient','very old',['brand new','very cold','very fast'],1],
+    ['furious','very angry',['very calm','very sleepy','very lucky'],1],['generous','giving',['selfish','curious','timid'],1],
+    ['reluctant','unwilling',['eager','ancient','hungry'],2],['fragile','easily broken',['very strong','very heavy','brightly coloured'],2],
+    ['peculiar','strange',['ordinary','gentle','famous'],2],['vast','very large',['very small','very old','very wet'],2],
+  ];
+  const ANT=[ /* [word, antonym, non-antonym distractors], level */
+    ['ancient','modern',['old','huge','gentle'],0],['generous','selfish',['kind','giving','tall'],0],['victory','defeat',['win','prize','team'],0],
+    ['shallow','deep',['wide','thin','wet'],0],['entrance','exit',['door','gate','hall'],0],['noisy','silent',['loud','busy','bright'],0],
+    ['rough','smooth',['bumpy','hard','sharp'],0],['asleep','awake',['tired','resting','dreaming'],0],['arrive','depart',['reach','come','enter'],1],
+    ['expand','shrink',['grow','stretch','open'],1],['include','exclude',['contain','add','join'],1],['temporary','permanent',['brief','short','quick'],2],
+    ['maximum','minimum',['most','largest','highest'],2],['ascend','descend',['climb','rise','soar'],2],
+  ];
+  const quick={id:'quick',title:'Quick Words',icon:'⚡',warm:true,dedupByText:true,code:'EN2-SPELL-01 · EN2-VOCAB-01',
+    blurb:'Spelling tricky words, synonyms (same meaning) and antonyms (opposites).',
+    subs:l=>['spell','spell','syn','ant'],
+    gen(H,l,sub){
+      if(sub==='spell'){const [w,bad,,tip]=H.pick(SPELL.filter(x=>x[2]<=l));
+        return M(Object.assign({sub,prompt:'Which word is spelt correctly?',vis:'',hint:'Sound each word out slowly, part by part.',
+          explain:J(['Look at each word slowly, one part at a time.',`<b>${w}</b> is the correct spelling.`,`Tip: ${tip}`])},H.opts(w,bad,{cls:'txt'})),{type:'spell',w});}
+      const L=sub==='ant'?ANT:SYN;const [w,a,d]=H.pick(L.filter(x=>x[3]<=l));const what=sub==='ant'?'the opposite of':'the same as';
+      return M(Object.assign({sub,prompt:`Which word means <b>${what}</b> “${w}”?`,vis:'',hint:sub==='ant'?'An antonym is a word with the opposite meaning.':'A synonym is a word with the same (or nearly the same) meaning.',
+        explain:J([sub==='ant'?`An <b>antonym</b> means the opposite.`:`A <b>synonym</b> means the same, or nearly the same.`,`“${w}” → <b>${a}</b>.`,`Check: try it in a sentence. ${sub==='ant'?'The meanings should be opposites.':'The sentence should still mean the same thing.'}`])},H.opts(a,d,{cls:'txt'})),{type:sub,w});
+    },
+    example(){return {html:`<p>⚡ Quick Words: spelling, synonyms (same meaning: big → large) and antonyms (opposites: big → small).</p>`};}};
+
+  /* ---------------- word classes ---------------- */
+  const WC_DEF={noun:'a <b>noun</b> names a person, place, thing or idea',verb:'a <b>verb</b> is a doing or being word',adjective:'an <b>adjective</b> describes a noun',
+    adverb:'an <b>adverb</b> tells how, when or where something happens (it often ends in -ly)',pronoun:'a <b>pronoun</b> takes the place of a noun (I, she, they, we, it)',
+    preposition:'a <b>preposition</b> shows where or when something is (on, under, in, after)',conjunction:'a <b>conjunction</b> joins words or ideas (and, but, because, so)'};
+  const TAG=[ /* sentence with {word}, class, level */
+    ['The {enormous} whale swam past the boat.','adjective',0],['Mia {whispered} the secret to her friend.','verb',0],['The children ran {quickly} to the bus.','adverb',0],
+    ['My grandmother lives in {Brisbane}.','noun',0],['{They} built a sandcastle at the beach.','pronoun',0],['The {curious} kitten sniffed the flowers.','adjective',0],
+    ['Dad {cooked} pancakes for breakfast.','verb',0],['The {library} was full of new books.','noun',0],['The owl hooted {softly} in the night.','adverb',0],
+    ['Our team {won} the netball final.','verb',0],['A {gentle} breeze blew through the trees.','adjective',0],['{We} walked to school together.','pronoun',0],
+    ['The old bridge creaked {loudly}.','adverb',0],['The old {bridge} creaked loudly.','noun',0],['Everyone {laughed} at the funny clown.','verb',0],
+    ['She {carefully} carried the full glass.','adverb',1],['The {happiness} on her face was easy to see.','noun',1],['Sam lent {her} his umbrella.','pronoun',1],
+    ['The cat hid {under} the bed.','preposition',2],['I wanted to play outside, {but} it was raining.','conjunction',2],['We ate lunch {because} we were hungry.','conjunction',2],
+    ['The book is {on} the shelf.','preposition',2],['The koala slept {in} the tree.','preposition',2],['Kai {and} Lily played chess.','conjunction',2],['We played {after} school.','preposition',2],
+  ];
+  const WC_WORDS={noun:['elephant','kitchen','happiness','umbrella','teacher','mountain','bicycle','friendship','castle','library'],
+    verb:['swam','ate','threw','flew','drank','sang','wrote','brought','caught','giggled'],
+    adjective:['enormous','fluffy','ancient','delicious','curious','gigantic','slippery','noisy','peaceful','colourful'],
+    adverb:['quickly','quietly','carefully','suddenly','happily','loudly','gently','slowly','eagerly','cheerfully']};
+  const WSENT=[ /* sentences with 4 tagged words; we only ask about a class that appears exactly once */
+    ['The playful puppy chased the red ball.',{playful:'adjective',puppy:'noun',chased:'verb',red:'adjective'}],
+    ['Grandpa slowly climbed the steep stairs.',{Grandpa:'noun',slowly:'adverb',climbed:'verb',steep:'adjective'}],
+    ['Two noisy cockatoos landed on our fence.',{noisy:'adjective',cockatoos:'noun',landed:'verb',on:'preposition'}],
+    ['She quietly opened the creaky door.',{She:'pronoun',quietly:'adverb',opened:'verb',creaky:'adjective'}],
+    ['The hungry wombat dug a deep burrow.',{hungry:'adjective',wombat:'noun',dug:'verb',deep:'adjective'}],
+    ['We happily shared our delicious lunch.',{We:'pronoun',happily:'adverb',shared:'verb',delicious:'adjective'}],
+    ['The brave firefighter rescued a frightened cat.',{brave:'adjective',firefighter:'noun',rescued:'verb',frightened:'adjective'}],
+    ['Lightning flashed brightly across the dark sky.',{Lightning:'noun',flashed:'verb',brightly:'adverb',dark:'adjective'}],
+    ['The tiny ant carried a huge crumb.',{tiny:'adjective',ant:'noun',carried:'verb',huge:'adjective'}],
+    ['They sang loudly at the concert.',{They:'pronoun',sang:'verb',loudly:'adverb',concert:'noun'}],
+  ];
+  const art=w=>/^[aeiou]/.test(w)?'an':'a';
+  const wordclass={id:'wordclass',title:'Word Classes',icon:'🧩',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
+    blurb:'Nouns, verbs, adjectives, adverbs, pronouns, prepositions and conjunctions: what job each word does in a sentence.',
+    subs:l=>l>=1?['tagged','tagged','pick','which']:['tagged','tagged','pick'],
+    gen(H,l,sub){
+      if(sub==='pick'){const cls=H.pick(Object.keys(WC_WORDS));const ans=H.pick(WC_WORDS[cls]);const d=Object.keys(WC_WORDS).filter(c=>c!==cls).map(c=>H.pick(WC_WORDS[c]));
+        return M(Object.assign({sub,prompt:`Which of these words is ${art(cls)} <b>${cls}</b>?`,vis:'',hint:`Remember: ${WC_DEF[cls]}.`,
+          explain:J([`Remember: ${WC_DEF[cls]}.`,`<b>${ans}</b> is ${art(cls)} ${cls}.`,`The others: ${d.map(w=>`${w} (${Object.keys(WC_WORDS).find(c=>WC_WORDS[c].includes(w))})`).join(', ')}.`])},H.opts(ans,d,{cls:'txt'})),{type:'wcpick',cls});}
+      if(sub==='which'){for(let t=0;t<40;t++){const [s,w]=H.pick(WSENT);const cnt={};Object.values(w).forEach(c=>cnt[c]=(cnt[c]||0)+1);const ok=Object.keys(cnt).filter(c=>cnt[c]===1);if(!ok.length)continue;
+          const cls=H.pick(ok),ans=Object.keys(w).find(k=>w[k]===cls);const d=Object.keys(w).filter(k=>k!==ans);
+          return M(Object.assign({sub,prompt:`Which word in this sentence is ${art(cls)} <b>${cls}</b>?`,vis:sent(s),hint:`Remember: ${WC_DEF[cls]}.`,
+            explain:J([`Remember: ${WC_DEF[cls]}.`,`In “${s}”, <b>${ans}</b> is the ${cls}.`,`The others: ${d.map(k=>`${k} (${w[k]})`).join(', ')}.`])},H.opts(ans,d,{cls:'txt'})),{type:'wcwhich',cls,tags:w});}
+        throw new Error('which');}
+      const [s,cls]=H.pick(TAG.filter(x=>x[2]<=l));const word=s.match(/\{(.+?)\}/)[1];const shown=s.replace(/\{(.+?)\}/,'<u><b>$1</b></u>');
+      const base=['noun','verb','adjective','adverb'];const pool=l>=2?base.concat(['pronoun','preposition','conjunction']):base.concat(['pronoun']);
+      const d=H.shuffle(pool.filter(c=>c!==cls)).sort((a,b)=>base.includes(b)-base.includes(a));
+      return M(Object.assign({sub:'tagged',prompt:'What word class is the <u>underlined</u> word?',vis:sent(shown),hint:'Ask: what job is this word doing in the sentence?',
+        explain:J([`The underlined word is <b>${word}</b>.`,`Remember: ${WC_DEF[cls]}.`,`So <b>${word}</b> is ${art(cls)} <b>${cls}</b> here.`])},H.opts(cls,d,{cls:'txt'})),{type:'tagged'});
+    },
+    example(){return {html:`<h3>🧩 Word classes</h3><p>Every word in a sentence has a job.</p>${sent('The <b style="color:#7c3aed">curious</b> <b style="color:#2563eb">kitten</b> <b style="color:#16a34a">sniffed</b> the flowers <b style="color:#ea580c">slowly</b>.')}
+<p><b style="color:#2563eb">Noun</b> = person, place, thing or idea (kitten). <b style="color:#16a34a">Verb</b> = doing or being word (sniffed). <b style="color:#7c3aed">Adjective</b> = describes a noun (curious). <b style="color:#ea580c">Adverb</b> = how, when or where (slowly).</p>
+<p>Also: <b>pronouns</b> replace nouns (she, they), <b>prepositions</b> show position (on, under), <b>conjunctions</b> join ideas (and, but, because).</p><p>💡 Ask: <i>what job is this word doing here?</i></p>`};}};
+
+  /* ---------------- sentence types ---------------- */
+  const ST=[['The sun rises in the east.','statement'],['Koalas sleep for most of the day.','statement'],['My brother is nine years old.','statement'],['Our class went to the museum.','statement'],
+    ['Where did you put my hat?','question'],['How many legs does a spider have?','question'],['Are you coming to the park?','question'],['Why is the sky blue?','question'],
+    ['Please close the door.','command'],['Put your books on the desk.','command'],['Wash your hands before lunch.','command'],['Turn left at the corner.','command'],
+    ['What a beautiful sunset!','exclamation'],['How tall you have grown!','exclamation'],['What a mess this room is!','exclamation'],['How exciting that was!','exclamation']];
+  const ST_DEF={statement:'a <b>statement</b> tells you something and ends with a full stop',question:'a <b>question</b> asks something and ends with a question mark',
+    command:'a <b>command</b> tells someone to do something (it often starts with a verb)',exclamation:'an <b>exclamation</b> shows strong feeling (What a … ! / How … !) and ends with an exclamation mark'};
+  const COMP=['I wanted to swim, but the pool was closed.','It started to rain, so we went inside.','Mum made pasta and Dad baked bread.','You can have an apple or you can have a pear.'];
+  const SIMP=['The red kite flew high above the hill.','After lunch, we played cricket.','My cousin from Perth loves surfing.','The tired dog slept by the fire.','Our school has a big vegetable garden.'];
+  const sentences={id:'sentences',title:'Sentence Types',icon:'💬',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
+    blurb:'Statements, questions, commands and exclamations, and simple vs compound sentences.',
+    subs:l=>l>=2?['type','type','needq','compound']:['type','type','needq'],
+    gen(H,l,sub){
+      if(sub==='needq'){const qn=H.pick(ST.filter(x=>x[1]==='question'))[0];const d=H.shuffle(ST.filter(x=>x[1]==='statement'||x[1]==='command').map(x=>x[0])).slice(0,3);
+        const strip=s=>s.replace(/[.?!]$/,'');
+        return M(Object.assign({sub,prompt:'Which sentence needs a <b>question mark</b> at the end?',vis:'',hint:'Which one is asking something? Questions often start with who, what, where, when, why, how, are, can or does.',
+          explain:J(['A question asks something, so it ends with a question mark (?).',`“${strip(qn)}” is asking something → <b>${qn}</b>`,'The others tell us something or tell us to do something, so they end with a full stop.'])},H.opts(strip(qn),d.map(strip),{cls:'sent'})),{type:'needq'});}
+      if(sub==='compound'){const c=H.pick(COMP);const d=H.shuffle(SIMP.slice()).slice(0,3);
+        return M(Object.assign({sub,prompt:'Which is a <b>compound sentence</b> (two main ideas joined by <i>and</i>, <i>but</i>, <i>or</i> or <i>so</i>)?',vis:'',hint:'Look for two ideas that could each be a sentence on their own, joined by and, but, or, so.',
+          explain:J(['A compound sentence joins two main clauses (each could stand alone) with and, but, or, so.',`<b>${c}</b>`,'The other sentences have only one main idea (one verb group), so they are simple sentences.'])},H.opts(c,d,{cls:'sent'})),{type:'compound'});}
+      const [s,t]=H.pick(ST);const types=['statement','question','command','exclamation'];
+      return M(Object.assign({sub:'type',prompt:'What type of sentence is this?',vis:sent(s),hint:'Is it telling, asking, ordering or showing strong feeling?',
+        explain:J([`Remember: ${ST_DEF[t]}.`,`“${s}” → <b>${t}</b>.`])},H.fixedOpts(types.map(cap),types.indexOf(t),'txt')),{type:'stype'});
+    },
+    example(){return {html:`<h3>💬 Four kinds of sentences</h3><p><b>Statement</b> tells: <i>Koalas sleep a lot.</i><br><b>Question</b> asks: <i>Where is my hat?</i><br><b>Command</b> tells someone to do something: <i>Close the door.</i><br><b>Exclamation</b> shows strong feeling: <i>What a beautiful sunset!</i></p>`};}};
+
+  /* ---------------- apostrophes ---------------- */
+  const CON=[['do not',"don't",["do'nt",'dont',"d'ont"],'o'],['cannot',"can't",["ca'nt",'cant',"can'nt"],'no'],['I am',"I'm",['Im',"I'am","Ia'm"],'a'],
+    ['they are',"they're",['their','there',"theyr'e"],'a'],['it is',"it's",['its',"i'ts","it'is"],'i'],['we will',"we'll",['well',"we'ill","w'ell"],'wi'],
+    ['should not',"shouldn't",["should'nt","shoudn't",'shouldnt'],'o'],['you have',"you've",["youv'e","you'have",'youve'],'ha'],
+    ['let us',"let's",['lets',"le'ts","let'us"],'u'],['they have',"they've",["theyv'e","they'ave",'theyve'],'ha'],['will not',"won't",["willn't","wo'nt",'wont'],null],
+    ['would have',"would've",['would of','woulda',"wouldv'e"],'ha'],['she is',"she's",['shes',"sh'es","she'is"],'i']];
+  const OWN=[ /* owner singular, plural, thing singular, thing plural, irregular */
+    ['dog','dogs','bone','bones'],['cat','cats','bowl','bowls'],['girl','girls','bike','bikes'],['teacher','teachers','desk','desks'],['bird','birds','nest','nests'],['horse','horses','saddle','saddles'],
+    ['child','children','toy','toys',1],['man','men','hat','hats',1],['woman','women','bag','bags',1],['mouse','mice','tail','tails',1]];
+  const ITS=[['The dog wagged ___ tail.',0],['___ going to rain today.',1],['The tree lost all of ___ leaves.',0],['I think ___ time for lunch.',1],['___ been a long day.',1],
+    ['The bird built ___ nest in the gum tree.',0],['The school changed ___ uniform.',0],['Do you know if ___ open on Sunday?',1],['The car has a scratch on ___ door.',0],['Hurry up, ___ nearly three o’clock!',1]];
+  const A=s=>s.replace(/'/g,'’');
+  const apostrophe={id:'apostrophe',title:'Apostrophes',icon:'✏️',dedupByText:true,code:'EN2-CWT-01 · EN2-SPELL-01 → EN3',
+    blurb:'Apostrophes for contractions (missing letters) and for ownership (the dog’s bone, the dogs’ bones), and its vs it’s.',
+    subs:l=>['contract','own','own','its'],
+    gen(H,l,sub){
+      if(sub==='contract'){const [f,c,d,miss]=H.pick(CON.filter((x,i)=>l>=2||x[0]!=='would have'));
+        return M(Object.assign({sub,prompt:`What is the short form (contraction) of “<b>${f}</b>”?`,vis:'',hint:'The apostrophe goes exactly where the letters were taken out.',
+          explain:J([`In a contraction, the apostrophe ( ’ ) shows where letters are missing.`,miss?`${f} → take out “${miss}” → <b>${A(c)}</b>`:`will not is a special one: it becomes <b>${A(c)}</b>.`,c==="would've"?'Never write “would of”: it is would’ve (would have).':`The apostrophe sits where the missing letter${miss&&miss.length>1?'s were':' was'}.`])},H.opts(A(c),d.map(A),{cls:'txt'})),{type:'contract',f});}
+      if(sub==='its'){const [s,isIt]=H.pick(ITS);const start=s.startsWith('___');const ch=[start?'Its':'its',start?'It’s':'it’s'];
+        return M(Object.assign({sub,prompt:`Which word fills the gap?`,vis:sent(s.replace('___','<span class="gap">____</span>')),hint:'Try saying “it is” or “it has” in the gap. If it makes sense, use it’s.',
+          explain:J(['<b>it’s</b> = it is / it has. <b>its</b> = belonging to it (no apostrophe, like his and hers).',`Try “it is” in the gap: ${isIt?'it makes sense':'it does not make sense'}.`,`So: <b>${s.replace('___',ch[isIt])}</b>`])},H.fixedOpts(ch,isIt,'txt')),{type:'its'});}
+      const pool=OWN.filter(x=>l>=1||!x[4]);const [o1,oP,t1,tP,irr]=H.pick(pool);const many=irr?true:H.chance(0.5);
+      const n=many?(irr?'the':H.pick(['two','three','some'])):'one';
+      const right=many?(oP.endsWith('s')?`the ${oP}’ ${tP}`:`the ${oP}’s ${tP}`):`the ${o1}’s ${t1}`;
+      const th=many?tP:t1;const d=many?(oP.endsWith('s')?[`the ${o1}’s ${th}`,`the ${oP}’s ${th}`,`the ${oP} ${th}`,`the ${o1}’ ${th}`]:[`the ${oP}s’ ${th}`,`the ${oP}’ ${th}`,`the ${oP}s ${th}`,`the ${o1}’s ${th}`]):[`the ${oP}’ ${th}`,`the ${o1}s ${th}`,`the ${o1}s’s ${th}`];
+      const who=many?`${n} ${oP}`:`one ${o1}`;
+      return M(Object.assign({sub:'own',prompt:`The ${th} belong${many?'':'s'} to <b>${who}</b>. Which is correct?`,vis:'',hint:'Write the owner first (one or many?), then add the apostrophe.',
+        explain:J(['To show ownership, write the owner, then add an apostrophe.',many?(oP.endsWith('s')?`Many owners: ${oP} already ends in s, so just add ’ after it → <b>${right}</b>`:`${cap(oP)} is a plural that does not end in s, so add ’s → <b>${right}</b>`):`One owner: ${o1} + ’s → <b>${right}</b>`])},H.opts(right,d,{cls:'txt'})),{type:'own',many,irr:!!irr});
+    },
+    example(){return {html:`<h3>✏️ Two jobs for an apostrophe</h3><p><b>1. Missing letters:</b> do not → don’t, it is → it’s, they are → they’re.</p><p><b>2. Belonging:</b> one dog → the <b>dog’s</b> bone. Many dogs → the <b>dogs’</b> bones. Plurals without s → the <b>children’s</b> toys.</p><p>⚠️ <b>its</b> (belonging to it) has no apostrophe. <b>it’s</b> always means it is / it has.</p>`};}};
+
+  /* ---------------- homophones ---------------- */
+  const HOM=[['The children left ___ bags at the door.','their',['their','there',"they're"]],['Put the box over ___, please.','there',['their','there',"they're"]],['___ coming to my party on Saturday.',"they're",['their','there',"they're"]],
+    ['I would like ___ apples.','two',['to','too','two']],['We walked ___ the shops.','to',['to','too','two']],['This soup is ___ hot to eat.','too',['to','too','two']],
+    ['Is this ___ jumper?','your',['your',"you're"]],['___ going to love this book!',"you're",['your',"you're"]],['Can you ___ the birds singing?','hear',['hear','here']],['Come over ___ and sit down.','here',['hear','here']],
+    ['We swam in the ___ at Bondi.','sea',['sea','see']],['I ___ the answer to that question.','knew',['knew','new']],['I got a ___ pair of shoes.','new',['knew','new']],
+    ['Please ___ your name at the top.','write',['write','right']],['Turn ___ at the lights.','right',['write','right']],['A ___ cast a spell in the story.','witch',['which','witch']],['___ hat is yours?','which',['which','witch']],
+    ['Can I have a ___ of cake?','piece',['piece','peace']],['A brown ___ caught a fish in the river.','bear',['bear','bare']],['Mum used ___ to bake bread.','flour',['flour','flower']],
+    ['We ate the ___ pizza!','whole',['whole','hole']],['The ___ was sunny all week.','weather',['weather','whether']],['Dad pressed the ___ to stop the car.','brake',['brake','break']],
+    ['My friend ___ the race.','won',['won','one']],['I have ___ sister.','one',['won','one']],['Our dog has a long fluffy ___.','tail',['tail','tale']],['The fairy ___ had a happy ending.','tale',['tail','tale']],
+    ['We are not ___ to run in the hall.','allowed',['allowed','aloud'],2],['Read the poem ___ to the class.','aloud',['allowed','aloud'],2],['The ___ spoke at our school assembly.','principal',['principal','principle'],2],
+    ['I don’t know ___ to laugh or cry.','whether',['weather','whether'],2]];
+  const HP_Y=[['pear','pair'],['night','knight'],['sail','sale'],['meat','meet'],['flour','flower'],['son','sun'],['road','rode'],['mail','male'],['blue','blew'],['eight','ate'],['week','weak'],['plain','plane'],['stair','stare']];
+  const HP_N=[['quiet','quite'],['desert','dessert'],['loose','lose'],['were','where'],['than','then'],['through','though'],['angel','angle'],['breath','breathe'],['chose','choose'],['cloth','clothe']];
+  const homophones={id:'homophones',title:'Homophones',icon:'👂',dedupByText:true,code:'EN2-SPELL-01 · EN2-VOCAB-01 → EN3',
+    blurb:'Words that sound the same but are spelt differently and mean different things: their/there/they’re, to/too/two, your/you’re …',
+    subs:l=>['fill','fill','pair'],
+    gen(H,l,sub){
+      if(sub==='pair'){const y=H.pick(HP_Y);const d=H.shuffle(HP_N.slice()).slice(0,3).map(p=>p.join(' / '));
+        return M(Object.assign({sub,prompt:'Which pair are <b>homophones</b> (they sound the same but have different spellings and meanings)?',vis:'',hint:'Say each pair out loud. Do they sound exactly the same?',
+          explain:J(['Homophones sound exactly the same but are spelt differently and mean different things.',`<b>${y.join(' / ')}</b> sound the same.`,'The other pairs look alike, but they sound different when you say them.'])},H.opts(y.join(' / '),d,{cls:'txt'})),{type:'hpair'});}
+      const [s,a,set]=H.pick(HOM.filter(x=>(x[3]||0)<=l));const start=s.startsWith('___');const f=w=>A(start?cap(w):w);
+      return M(Object.assign({sub:'fill',prompt:'Which word fills the gap?',vis:sent(s.replace('___','<span class="gap">____</span>')),hint:set.includes("they're")?'they’re = they are. there = a place. their = belongs to them.':set.includes("you're")?'you’re = you are. your = belongs to you.':'Think about what the sentence means.',
+        explain:J([`The choices sound the same: ${set.map(A).join(', ')}.`,HMEAN[a]||'',`So: <b>${A(s.replace('___',start?cap(a):a))}</b>`].filter(Boolean))},H.opts(f(a),set.filter(w=>w!==a).map(f),{n:set.length,cls:'txt'})),{type:'hfill',a,set});
+    },
+    example(){return {html:`<h3>👂 Homophones</h3><p>Homophones <b>sound the same</b> but are <b>spelt differently</b> and <b>mean different things</b>.</p><p><b>their</b> (belongs to them) · <b>there</b> (a place) · <b>they’re</b> (they are)<br><b>to</b> (towards) · <b>too</b> (also / too much) · <b>two</b> (2)</p><p>💡 Try swapping in the long form: if “they are” fits, write they’re.</p>`};}};
+  const HMEAN={their:'<i>their</i> = belonging to them.',there:'<i>there</i> = in that place.',"they're":'<i>they’re</i> = they are.',two:'<i>two</i> = the number 2.',to:'<i>to</i> = towards (or part of a verb, like to eat).',too:'<i>too</i> = also, or more than enough.',
+    your:'<i>your</i> = belonging to you.',"you're":'<i>you’re</i> = you are.',hear:'<i>hear</i> = with your ears (hEAR).',here:'<i>here</i> = this place.',sea:'<i>sea</i> = the ocean.',knew:'<i>knew</i> = past tense of know.',new:'<i>new</i> = not old.',
+    write:'<i>write</i> = put words on paper.',right:'<i>right</i> = the direction (or correct).',witch:'<i>witch</i> = a person in stories who casts spells.',which:'<i>which</i> = asks about a choice.',piece:'<i>piece</i> = a part of something (a piece of pie).',
+    bear:'<i>bear</i> = the animal.',flour:'<i>flour</i> = powder for baking.',whole:'<i>whole</i> = all of it.',weather:'<i>weather</i> = sun, rain, wind.',whether:'<i>whether</i> = if (one choice or another).',brake:'<i>brake</i> = what stops a car or bike.',
+    won:'<i>won</i> = past tense of win.',one:'<i>one</i> = the number 1.',tail:'<i>tail</i> = at the back of an animal.',tale:'<i>tale</i> = a story.',allowed:'<i>allowed</i> = permitted.',aloud:'<i>aloud</i> = out loud.',principal:'<i>principal</i> = the head of a school.'};
+
+  /* ---------------- prefixes and suffixes ---------------- */
+  const PRE=[['re','again',['rebuild','reread','rewrite','refill'],0],['un','not',['unhappy','unkind','unsafe','untidy'],0,'neg'],['pre','before',['preview','preheat','prepay','preschool'],0],
+    ['mis','wrongly',['misspell','misplace','misbehave','misread'],0],['dis','the opposite of',['disagree','dishonest','disobey','disappear'],0,'neg'],['sub','under',['submarine','subway','subheading'],1],
+    ['tri','three',['triangle','tricycle','tripod'],0],['bi','two',['bicycle','biplane','binoculars'],1],['inter','between',['international','interstate','interschool'],2],['auto','self',['autograph','autobiography'],2],['multi','many',['multicoloured','multimedia'],2]];
+  const OPP=[['happy','un'],['kind','un'],['tidy','un'],['fair','un'],['lock','un'],['comfortable','un'],['honest','dis'],['obey','dis'],['agree','dis'],['appear','dis'],
+    ['possible','im'],['polite','im'],['perfect','im'],['complete','in'],['correct','in'],['visible','in'],['legal','il',2],['logical','il',2],['regular','ir',2],['responsible','ir',2]];
+  const SUF=[['run','ing','running',['runing','runeing','runnning'],'Short vowel + one consonant: double the last letter (run → runn + ing).'],
+    ['swim','ing','swimming',['swiming','swimeing','swimmming'],'Short vowel + one consonant: double the m.'],['hop','ed','hopped',['hoped','hopt','hoppd'],'Short vowel + one consonant: double the p. (hoped is a different word, from hope!)'],
+    ['make','ing','making',['makeing','makking','makinng'],'Drop the silent e before adding -ing.'],['ride','ing','riding',['rideing','ridding','rideng'],'Drop the silent e before adding -ing.'],
+    ['smile','ed','smiled',['smileed','smilled','smild'],'The word already ends in e, so just add d.'],['cry','ed','cried',['cryed','cryd','creid'],'Consonant + y: change y to i, then add -ed.'],
+    ['carry','ed','carried',['carryed','caried','carrid'],'Consonant + y: change y to i, then add -ed.'],['baby','s','babies',['babys','babyes','babiess'],'Consonant + y: change y to i and add -es.'],
+    ['happy','ness','happiness',['happyness','hapiness','happinness'],'Consonant + y: change y to i, then add -ness.'],['beauty','ful','beautiful',['beautyful','beautifull','beutiful'],'Change y to i, and -ful has only one l.'],
+    ['hope','ful','hopeful',['hopefull','hopful','hoppeful'],'The suffix starts with a consonant, so keep the e. -ful has one l.'],['big','est','biggest',['bigest','biggist','bigggest'],'Short vowel + one consonant: double the g.'],
+    ['shop','ing','shopping',['shoping','shopeing','shoppinng'],'Short vowel + one consonant: double the p.'],
+    ['begin','ing','beginning',['begining','beginnig','beggining'],'The stress is on the end (be-GIN), so double the n.',2],['argue','ment','argument',['arguement','argumant','argumint'],'A rule-breaker: argue drops its e → argument.',2],
+    ['easy','ly','easily',['easyly','easilly','eazily'],'Consonant + y: change y to i, then add -ly.',2],['forget','ful','forgetful',['forgetfull','forgettful','forgetfol'],'-ful has only one l.',2]];
+  const SMEAN=[['fearless','without fear',['full of fear','able to fear','fear again']],['careful','full of care',['without care','care again','before care']],
+    ['teacher','a person who teaches',['without teaching','teaching again','able to teach']],['readable','able to be read',['read again','without reading','full of reading']],
+    ['helpless','without help',['full of help','able to help','a person who helps']],['colourful','full of colour',['without colour','colour again','not coloured']],
+    ['washable','able to be washed',['washed before','without washing','full of washing']],['painter','a person who paints',['able to be painted','without paint','paint again']],
+    ['kindness','the state of being kind',['without kindness','not kind','a kind person']],['thankful','full of thanks',['without thanks','able to thank','thank again']]];
+  const affixes={id:'affixes',title:'Prefixes & Suffixes',icon:'🧱',dedupByText:true,code:'EN2-SPELL-01 → EN3-SPELL-01',
+    blurb:'Word parts: prefixes at the start (un-, dis-, re-, pre-) and suffixes at the end (-ing, -ed, -ful, -less), and their spelling rules.',
+    subs:l=>l>=1?['prefix','opp','suffix','smean']:['prefix','opp','suffix'],
+    gen(H,l,sub){
+      if(sub==='prefix'){const p=H.pick(PRE.filter(x=>x[3]<=l));const w=H.pick(p[2]);const d=H.shuffle(PRE.filter(x=>x[0]!==p[0]&&!(p[4]&&x[4]===p[4])).map(x=>x[1]));
+        return M(Object.assign({sub,prompt:`In the word <b>${w}</b>, what does the prefix <b>${p[0]}-</b> mean?`,vis:'',hint:'Cover the prefix. What is the base word? How does the prefix change it?',
+          explain:J([`${w} = <b>${p[0]}</b> + ${w.slice(p[0].length)}.`,`The prefix ${p[0]}- means “<b>${p[1]}</b>”.`,`More: ${p[2].filter(x=>x!==w).join(', ')}.`])},H.opts(p[1],d,{cls:'txt'})),{type:'prefix'});}
+      if(sub==='opp'){const [w,p]=H.pick(OPP.filter(x=>(x[2]||0)<=l));const set=l>=2?['un','dis','im','in','il','ir']:['un','dis','im','in'];const d=H.shuffle(set.filter(x=>x!==p));
+        return M(Object.assign({sub,prompt:`Which prefix makes the <b>opposite</b> of “${w}”?`,vis:'',hint:'Say each one with the word. Which is a real word?',
+          explain:J([`${p}- + ${w} = <b>${p}${w}</b>.`,p==='im'?'im- is used before words starting with m or p.':p==='il'?'il- is used before words starting with l.':p==='ir'?'ir- is used before words starting with r.':'Say them aloud: only one makes a real word.'])},H.opts(p+'-',d.map(x=>x+'-'),{cls:'txt'})),{type:'opp',w,p});}
+      if(sub==='smean'){const [w,a,d]=H.pick(SMEAN);
+        return M(Object.assign({sub,prompt:`What does <b>${w}</b> mean?`,vis:'',hint:'Find the base word, then think about what the suffix adds.',
+          explain:J(['-less = without. -ful = full of. -er = a person who. -able = able to be. -ness = the state of being.',`${w} → <b>${a}</b>.`])},H.opts(a,d,{cls:'sent'})),{type:'smean'});}
+      const [b,s,a,d,rule]=H.pick(SUF.filter(x=>(x[5]||0)<=l));
+      return M(Object.assign({sub:'suffix',prompt:`Add <b>-${s}</b> to <b>${b}</b>. Which spelling is correct?`,vis:'',hint:'Look at the end of the base word: silent e? consonant + y? short vowel + one consonant?',
+        explain:J([rule,`${b} + ${s} = <b>${a}</b>.`])},H.opts(a,d,{cls:'txt'})),{type:'suffix'});
+    },
+    example(){return {html:`<h3>🧱 Word parts</h3><p>A <b>prefix</b> goes at the start and changes the meaning: <b>un</b>happy (not happy), <b>re</b>read (read again), <b>pre</b>view (see before).</p><p>A <b>suffix</b> goes at the end: hope<b>ful</b>, fear<b>less</b>, teach<b>er</b>.</p><p>Spelling rules: run → ru<b>nn</b>ing (double), make → mak<b>ing</b> (drop e), cry → cr<b>ied</b> (y → i).</p>`};}};
+
+  /* ---------------- direct speech ---------------- */
+  const SAYS=[['Mia','said',"Let's go to the beach"],['Dad','said','Dinner is ready'],['Ava','whispered','The baby is asleep'],['Leo','replied','I finished my homework'],
+    ['Grandma','said','The scones are in the oven'],['Zara','explained','My dog is called Biscuit'],['Coach','said','Everyone did a great job today'],['Mr Chen','said','Open your books to page ten']];
+  const ASKS=[['Sam','asked','Can I come too'],['Mum','asked','Where are your shoes'],['Ella','asked','What time does the movie start'],['Noah','asked','Have you seen my hat'],['Ms Patel','asked','Who knows the answer']];
+  const SPLIT=[['“When the bell rings,” said Mr Lee, “please line up quietly.”','Mr Lee','When the bell rings, please line up quietly.',['said Mr Lee','When the bell rings','please line up quietly']],
+    ['“If it stops raining,” said Gran, “we can go to the park.”','Gran','If it stops raining, we can go to the park.',['said Gran','we can go to the park','If it stops raining, said Gran']],
+    ['“I think,” whispered Ruby, “that someone is behind the door.”','Ruby','I think that someone is behind the door.',['whispered Ruby','I think','that someone is behind the door']]];
+  const lc=w=>w.charAt(0).toLowerCase()+w.slice(1);
+  function speechForms(H,l){const isQ=H.chance(0.4);const [p,v,w0]=H.pick(isQ?ASKS:SAYS);const w=A(w0);const first=l>=1&&H.chance(0.5);let right,bad;
+    if(!first){if(isQ){right=`“${w}?” ${v} ${p}.`;bad=[`“${w}?,” ${v} ${p}.`,`“${w},” ${v} ${p}.`,`“${w}?” ${cap(v)} ${p}.`,`“${w}”? ${v} ${p}.`];}
+      else{right=`“${w},” ${v} ${p}.`;bad=[`“${w}.” ${v} ${p}.`,`“${w}”, ${v} ${p}.`,`${w},” ${v} ${p}.`,`“${w},” ${cap(v)} ${p}.`];if(lc(w)!==w&&!/^I\b/.test(w))bad.push(`“${lc(w)},” ${v} ${p}.`);}}
+    else{if(isQ){right=`${p} ${v}, “${w}?”`;bad=[`${p} ${v}, “${w}.”`,`${p} ${v} “${w}?”`,`${p} ${v}, “${w}”?`,`${p} ${v}, ${w}?”`];}
+      else{right=`${p} ${v}, “${w}.”`;bad=[`${p} ${v} “${w}.”`,`${p} ${v}, “${w}”.`,`${p} ${v}, ${w}.”`];if(lc(w)!==w&&!/^I\b/.test(w))bad.push(`${p} ${v}, “${lc(w)}.”`);}}
+    return {isQ,first,right,bad,p,v,w};}
+  const speech={id:'speech',title:'Direct Speech',icon:'🗨️',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
+    blurb:'Punctuating what people say: quotation marks around the spoken words, a capital letter to start, and the comma, question mark or full stop inside the closing mark.',
+    subs:l=>l>=2?['correct','correct','gap','spoken']:['correct','correct','gap'],
+    gen(H,l,sub){
+      if(sub==='spoken'){const [s,who,a,d]=H.pick(SPLIT);
+        return M(Object.assign({sub,prompt:`Which shows <b>all</b> the words ${who} actually said?`,vis:sent(s),hint:'Only the words inside the quotation marks are spoken. There are two parts!',
+          explain:J(['The spoken words are inside the quotation marks “ ”.',`Here the speech is split in two parts around “${s.match(/” ([^“]+), “/)[1]}”.`,`Put the two parts together: <b>${a}</b>`])},H.opts(a,d,{cls:'sent'})),{type:'spoken'});}
+      if(sub==='gap'){const isQ=H.chance(0.5);const [p,v,w0]=H.pick(isQ?ASKS:SAYS);const w=A(w0);const ch=isQ?['?',',','.',';']:[',','.',';',':'];
+        return M(Object.assign({sub,prompt:'Which punctuation mark goes in the gap?',vis:sent(`“${w}<span class="gap">__</span>” ${v} ${p}.`),hint:isQ?'Is the person asking something?':'The sentence keeps going after the speech (… said …).',
+          explain:J([isQ?`${p} is asking a question, so the spoken words end with a question mark, inside the closing quotation mark.`:'The speech is a statement and the sentence carries on with who said it, so use a comma (not a full stop) inside the closing quotation mark.',`<b>“${w}${isQ?'?':','}” ${v} ${p}.</b>`])},H.opts(`<span class="pmark">${ch[0]}</span>`,ch.slice(1).map(c=>`<span class="pmark">${c}</span>`),{cls:'txt'})),{type:'gap',isQ});}
+      const f=speechForms(H,l);const d=H.shuffle(f.bad.slice()).slice(0,3);
+      return M(Object.assign({sub:'correct',prompt:'Which sentence is punctuated <b>correctly</b>?',vis:'',hint:'Check: quotation marks around the spoken words, a capital to start them, and the punctuation inside the closing mark.',
+        explain:J(['Put quotation marks “ ” around the exact words spoken, and start them with a capital letter.',f.first?`When the speaker comes first, put a comma before the opening mark: ${f.p} ${f.v}, “…`:f.isQ?'A question keeps its question mark inside the closing mark, and “asked” stays lower case.':'If the speech comes first, end it with a comma (not a full stop) inside the closing mark.',`<b>${f.right}</b>`,'(Single quotation marks ‘ ’ follow the same rules.)'])},H.opts(f.right,d,{cls:'sent'})),{type:'speech',right:f.right});
+    },
+    example(){return {html:`<h3>🗨️ Punctuating speech</h3>${sent('“Dinner is ready,” said Dad.')}${sent('Sam asked, “Can I come too?”')}<p>✅ Quotation marks go around the <b>exact words spoken</b>.<br>✅ Spoken words start with a <b>capital letter</b>.<br>✅ The comma, question mark or full stop goes <b>inside</b> the closing mark.<br>✅ If the speaker comes first, put a comma before the speech.</p>`};}};
+
+  /* ---------------- figurative language ---------------- */
+  const FIG=[['Her hands were as cold as ice.','simile'],['He ran like the wind.','simile'],['The baby slept like a log.','simile'],['The lake was as smooth as glass.','simile'],['Our dog is as gentle as a lamb.','simile'],['The stars sparkled like diamonds.','simile'],
+    ['The classroom was a zoo.','metaphor'],['My brother is a couch potato.','metaphor'],['The snow was a white blanket over the town.','metaphor'],['Her smile was sunshine.','metaphor'],['The moon was a silver coin in the sky.','metaphor'],['Time is a thief.','metaphor',2],
+    ['The kitchen floor was cold.','neither'],['Our dog likes to sleep on the rug.','neither'],['The lake was calm this morning.','neither'],['My brother is taller than me.','neither'],['I like chocolate ice-cream.','neither',1],['We like to swim in summer.','neither',1]];
+  const FMEAN=[['The classroom was a zoo.','The classroom was very noisy and busy.',['There were animals in the classroom.','The class went on a trip to the zoo.','The classroom was empty and quiet.']],
+    ['He ran like the wind.','He ran very fast.',['He ran when it was windy.','He ran very slowly.','He was blown over by the wind.']],
+    ['The baby slept like a log.','The baby slept very deeply.',['The baby slept on a log.','The baby kept waking up.','The baby was made of wood.']],
+    ['My brother is a couch potato.','My brother spends a lot of time sitting around.',['My brother is very good at cooking potatoes.','My brother is a vegetable.','My brother loves going for runs.']],
+    ['Her smile was sunshine.','Her smile was warm and happy.',['Her smile was hot.','She smiled at the sun.','Her smile was sad.']],
+    ['The lake was as smooth as glass.','The water was very still and flat.',['The lake was made of glass.','The lake had big waves.','The lake was full of broken glass.']],
+    ['The snow was a white blanket over the town.','Snow covered the whole town.',['Someone put a blanket on the town.','The town was warm.','Only a little snow fell.']],
+    ['Time is a thief.','Time seems to slip away too quickly.',['Someone stole a clock.','Time stands still.','Thieves are always on time.'],2]];
+  const FSIM=[['as quiet as a','mouse',['lion','drum','thunderstorm']],['as busy as a','bee',['sloth','rock','pillow']],['as light as a','feather',['brick','elephant','anchor']],
+    ['as cold as','ice',['fire','toast','an oven']],['as brave as a','lion',['mouse','worm','jelly']],['as slow as a','snail',['cheetah','rocket','racing car']],['as sly as a','fox',['cow','sheep','koala']],
+    ['as tall as a','giraffe',['ant','mouse','pebble']],['as hard as','nails',['jelly','a pillow','butter']],['as fit as a','fiddle',['spoon','cushion','puddle'],2]];
+  const figurative={id:'figurative',title:'Similes & Metaphors',icon:'🎨',dedupByText:true,code:'EN2-UARL-01 · EN2-VOCAB-01 → EN3',
+    blurb:'Figurative language: similes compare using like or as; metaphors say something IS something else.',
+    subs:l=>['kind','kind','meaning','complete'],
+    gen(H,l,sub){
+      if(sub==='meaning'){const [s,a,d]=H.pick(FMEAN.filter(x=>(x[3]||0)<=l));
+        return M(Object.assign({sub,prompt:'What does this sentence really mean?',vis:sent(s),hint:'It is not meant literally. What picture is the writer trying to give you?',
+          explain:J(['Figurative language is not meant word for word: it paints a picture.',`“${s}” → <b>${a}</b>`])},H.opts(a,d,{cls:'sent'})),{type:'fmean'});}
+      if(sub==='complete'){const [f,a,d]=H.pick(FSIM.filter(x=>(x[3]||0)<=l));
+        return M(Object.assign({sub,prompt:'Complete the simile.',vis:sent(`${cap(f)} <span class="gap">____</span>`),hint:'Which thing is famous for being like that?',
+          explain:J(['A simile compares two things using like or as.',`<b>${cap(f)} ${a}</b>`])},H.opts(a,d,{cls:'txt'})),{type:'fsim'});}
+      const [s,k]=H.pick(FIG.filter(x=>(x[2]||0)<=l));const L=['Simile','Metaphor','Neither (it means just what it says)'];
+      return M(Object.assign({sub:'kind',prompt:'Is this a simile, a metaphor or neither?',vis:sent(s),hint:'Simile: compares using like or as. Metaphor: says one thing IS another. Neither: it means exactly what it says.',
+        explain:J(['A <b>simile</b> compares two different things using <i>like</i> or <i>as</i>. A <b>metaphor</b> says one thing <i>is</i> another.',k==='simile'?`“${s}” compares using ${/like/.test(s)?'like':'as … as'} → <b>simile</b>.`:k==='metaphor'?`“${s}” says one thing is another (not really true) → <b>metaphor</b>.`:`“${s}” means exactly what it says${/like/.test(s)?' (here “like” means enjoy)':''} → <b>neither</b>.`])},H.fixedOpts(L,['simile','metaphor','neither'].indexOf(k),'opts3')),{type:'fkind'});
+    },
+    example(){return {html:`<h3>🎨 Similes and metaphors</h3><p>A <b>simile</b> compares using <b>like</b> or <b>as</b>: <i>He ran <b>like</b> the wind.</i> <i>As quiet <b>as</b> a mouse.</i></p><p>A <b>metaphor</b> says something <b>is</b> something else: <i>The classroom <b>was</b> a zoo.</i> (It was very noisy.)</p><p>Neither: <i>The floor was cold.</i> means just what it says.</p>`};}};
+
+  /* ---------------- reading comprehension (original short texts) ---------------- */
+  const P=[
+    {t:'The Lighthouse Cat',x:'Every evening, Pip the cat climbed the 112 steps of the old lighthouse. At the top, she curled up beside the great lamp and watched the fishing boats come home. The keeper, Mr Ross, always saved her a sardine from his supper. One stormy night the lamp flickered and went out. Pip yowled until Mr Ross woke up and rushed upstairs to relight it, just as the last boat came around the rocks.',
+     q:[['literal','How many steps did Pip climb?','112',['100','12','121']],['infer','Why was Pip’s yowling important?','It woke Mr Ross so he could relight the lamp for the boat.',['She wanted her sardine.','She was scared of the storm.','She wanted the boats to go away.']],
+        ['vocab','In this story, what does “flickered” mean?','shone unsteadily, on and off',['grew much brighter','made a loud noise','was painted a new colour']]]},
+    {t:'The Platypus',x:'The platypus is one of only a few mammals in the world that lay eggs. It lives in rivers and creeks in eastern Australia. When it dives, it closes its eyes and ears. It finds food using its sensitive bill, which can feel tiny electric signals made by moving shrimps and worms. Male platypuses have a sharp spur on each back leg that contains venom.',
+     q:[['literal','Where does the platypus live?','In rivers and creeks in eastern Australia',['In the ocean near Perth','In dry deserts','High in snowy trees']],['infer','Why does the platypus need its sensitive bill?','Its eyes and ears are closed underwater, so it uses its bill to find food.',['It uses its bill to lay eggs.','It uses its bill to scare away birds.','Its bill keeps it warm in winter.']],
+        ['vocab','In this text, “venom” means …','poison',['fur','eggs','food']]]},
+    {t:'The Lucky Hat',x:'Ruby searched everywhere for her lucky hat. It wasn’t in her bedroom, the laundry or the car. “The match starts in ten minutes!” called Dad. Ruby trudged outside, feeling miserable. Then she spotted Rufus, the puppy, lying in his basket under the tree. He was chewing something blue and floppy. Ruby laughed. “Found it!” she said. “But it isn’t very lucky for my hat.”',
+     q:[['literal','Where was the hat?','With Rufus, in his basket under the tree',['In Ruby’s bedroom','In the car','In the laundry']],['infer','How did Ruby feel before she found the hat?','unhappy',['excited','proud','sleepy']],
+        ['infer','Why did Ruby say it wasn’t very lucky for her hat?','Because the puppy had been chewing it.',['Because her team lost the match.','Because the hat was too small.','Because Dad didn’t like the hat.']],['vocab','“Trudged” means …','walked slowly and heavily',['ran quickly','skipped happily','crawled on her knees']]]},
+    {t:'Our School Garden',x:'Year 4 planted a vegetable garden beside the hall. First, they dug compost into the soil. Next, they planted rows of lettuce, carrots and snow peas. Then they put up a small fence to keep the bush turkeys out. After six weeks, the class picked enough lettuce to make salad for the whole school canteen.',
+     q:[['literal','What did the class do first?','dug compost into the soil',['planted snow peas','put up a fence','picked lettuce']],['literal','How long was it until they picked the lettuce?','six weeks',['six days','two weeks','six months']],
+        ['infer','Why did they put up a fence?','To stop bush turkeys digging up or eating the plants',['To keep the children out of the hall','To make the garden look pretty','To hold up the carrots']],['vocab','“Compost” is …','rotted plant scraps that feed the soil',['a kind of fence','a garden tool','a type of carrot']]]},
+    {t:'A Letter to the Council',x:'Dear Councillors, Our local park needs a water bubbler. On hot days, children playing sport have nowhere to fill their bottles. Some families buy plastic bottles, which often end up as litter. A bubbler would keep everyone healthy and help the environment. Please add one before summer. Yours sincerely, Amelia (Year 4)',
+     q:[['literal','What does Amelia want the council to add?','a water bubbler',['a playground','a rubbish bin','a sports field']],['infer','Why does Amelia mention plastic bottles?','To show that a bubbler would help reduce litter',['Because she collects bottles','To ask for more plastic bottles','Because bottles are good for sport']],
+        ['infer','What is the main purpose of this letter?','to persuade the council to do something',['to tell a funny story','to explain how to play a sport','to describe the weather']]]},
+    {t:'The Secret Note',x:'Leo found a note tucked inside his library book. It said: TEEM TA EHT KAO TA NOON. At first it looked like nonsense. Then Leo read each word backwards and grinned. Only one word looked exactly the same both ways. Someone was sending him a puzzle!',
+     q:[['literal','Where did Leo find the note?','inside his library book',['under his pillow','in his school bag','on the classroom door']],['infer','What did the note really say?','MEET AT THE OAK AT NOON',['MEET THE TEAM AT NOON','EAT AT THE OAK SOON','MEET AT THE PARK AT NINE']],
+        ['infer','Which word looked the same forwards and backwards?','NOON',['TEEM','KAO','EHT']],['vocab','“Grinned” means …','smiled widely',['frowned','yawned','shouted']]]},
+    {t:'Uluru',lv:2,x:'Uluru is a huge sandstone rock in the Northern Territory. It is sacred to the Anangu, the Traditional Owners of the land, who have cared for it for tens of thousands of years. Uluru seems to change colour during the day, glowing bright red at sunset. Since 2019, visitors have not been allowed to climb it, out of respect for Anangu culture.',
+     q:[['literal','Who are the Traditional Owners of Uluru?','the Anangu',['the visitors','the council','the park rangers']],['infer','Why are visitors no longer allowed to climb Uluru?','Out of respect for Anangu culture',['Because the rock is too slippery','Because it is too hot at sunset','Because the rock is changing colour']],
+        ['vocab','In this text, “sacred” means …','very special and deeply respected',['very dangerous','very old and broken','very easy to climb']]]},
+  ];
+  const comprehension={id:'comprehension',title:'Reading Comprehension',icon:'📖',dedupByText:true,code:'EN2-RECOM-01 → EN3-RECOM-01',
+    blurb:'Reading short stories and information texts, then finding facts (literal), working things out (inference) and word meanings in context.',
+    subs:l=>['literal','infer','vocab'],
+    gen(H,l,sub){const ps=P.filter(p=>(p.lv||0)<=l);for(let t=0;t<40;t++){const p=H.pick(ps);const qs=p.q.filter(x=>x[0]===sub);if(!qs.length)continue;const [k,qq,a,d]=H.pick(qs);
+        return M(Object.assign({sub,prompt:qq,vis:`<div class="passage"><b>${p.t}</b><p>${p.x}</p></div>`,hint:k==='literal'?'The answer is written in the text. Find the sentence that tells you.':k==='vocab'?'Re-read the sentence with the word. Try each choice in its place.':'The answer is not written exactly. Use clues in the text.',
+          explain:J([k==='literal'?'This is a “right there” question: the answer is in the text.':k==='vocab'?'Use the words around it (context) to work out the meaning.':'This is a “think and search” question: put clues together.',`Answer: <b>${a}</b>.`])},H.opts(a,d,{cls:'sent'})),{type:'comp',k});}
+      throw new Error('comp');},
+    example(){return {html:`<h3>📖 Reading detective</h3><p><b>Literal</b> (right there): the answer is written in the text.<br><b>Inference</b> (think and search): use clues to work it out.<br><b>Vocabulary</b>: use the words around a word to work out what it means.</p><p>💡 Read the text first, then the question, then look back at the text.</p>`};}};
+
+  return {quick,wordclass,sentences,apostrophe,homophones,affixes,speech,figurative,comprehension};
+})();
+const TOPICS_EN=Object.values(EN);
+const CFG_EN={player:'alexia',name:'Alexia',theme:'alexia',year:'Year 4 → Year 5',warm:'quick',
+  path:['wordclass','sentences','apostrophe','homophones','affixes','speech','figurative','comprehension'],start:'wordclass',games:{}};
+
+const BUILTIN=TOPICS_EN,CFG=CFG_EN;
+/* ===== Daily Lesson engine (shared by both children) ===== */
+const $=s=>document.querySelector(s);
+const PLAYER=CFG.player,NAME=(()=>{try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(pr&&pr[PLAYER]&&pr[PLAYER].name)return String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||CFG.name;}catch(e){}return CFG.name;})();
+const STORE=`kidsHub.p.${PLAYER}.english`;
+const params=new URLSearchParams(location.search);
+const LESSON_MS=5*60*1000;
+/* ---------- topics: built-in + extra modules from focus.js ---------- */
+const TOPICS={};BUILTIN.forEach(t=>TOPICS[t.id]=t);
+const EXTRA=Array.isArray(window.DAILY_TOPICS_EXTRA)?window.DAILY_TOPICS_EXTRA:[];
+EXTRA.forEach(t=>{if(t&&t.id&&typeof t.gen==='function'&&!TOPICS[t.id])TOPICS[t.id]=Object.assign({icon:'🏫',code:'',blurb:'',subs:()=>[null]},t);});
+const PATH=CFG.path.filter(id=>TOPICS[id]);
+const FOCUS=(Array.isArray(window.DAILY_FOCUS)?window.DAILY_FOCUS:[]).filter(f=>f&&f.date&&TOPICS[f.topicId]);
+const H={rnd,pick,shuffle,chance,range,gcd,lcm,F,M,D,D3,money,DEC,big,plural,esc,opts,fixedOpts,num,decE,fracE,mixedE,timeE,qrE,two,fracCheck,mixedCheck,numDistract,
+  barSVG,fillN,grid100,pizzaSVG,dl,colSVG,pieSVG,jumpSVG,clockSVG,rectSVG,angleSVG,spinnerSVG,bagSVG,arraySVG,groupsSVG,moneySVG,mabSVG,polySVG,solidSVG,netSVG,rulerSVG,mapSVG,tallySVG,lineSVG,tableHTML,get NAME(){return NAME;},COLORS:{OR,BL,GRN,RED,PU,PAL}};
+/* ---------- dates ---------- */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseD=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,12);};
+const addDays=(s,n)=>{const d=parseD(s);d.setDate(d.getDate()+n);return ymd(d);};
+const TODAY=(params.get('date')&&/^\d{4}-\d{2}-\d{2}$/.test(params.get('date')))?params.get('date'):ymd(new Date());
+const dow=s=>parseD(s).getDay(); /* 0 Sun .. 6 Sat */
+const monday=s=>addDays(s,-((dow(s)+6)%7));
+const WEEK=range(7).map(i=>addDays(monday(TODAY),i));
+const daysBetween=(a,b)=>Math.round((parseD(b)-parseD(a))/864e5);
+const longDate=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const weekday=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long'});
+const isReviewDay=s=>[5,6,0].includes(dow(s));
+/* ---------- state ---------- */
+const defState=()=>({v:1,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
+function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));return s;}catch(e){return defState();}}
+let S=load();
+function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+if(S.cur==null||S.cur<0||S.cur>PATH.length){S.cur=Math.max(0,PATH.indexOf(CFG.start));}
+const T=id=>S.topics[id]||(S.topics[id]={n:0,c:0,lvl:1,les:[],mastered:false,last:null});
+/* existing games: read only, used as a starting guess of accuracy */
+const GAMEPRIOR={};Object.entries(CFG.games||{}).forEach(([g,tid])=>{try{const s=JSON.parse(localStorage.getItem(`kidsHub.p.${PLAYER}.${g}`)||'null');if(s&&s.answered>=5){GAMEPRIOR[tid]={acc:s.correct/s.answered,n:s.answered,mist:s.mistakes||s.mist||null};}}catch(e){}});
+function acc(id){const t=S.topics[id];if(t&&t.n>=3)return t.c/t.n;const g=GAMEPRIOR[id];if(g)return g.acc;return 0.75;}
+const curTopic=()=>S.cur<PATH.length?PATH[S.cur]:null;
+const doneTopics=()=>PATH.slice(0,S.cur);
+const status=id=>{const i=PATH.indexOf(id);return i<S.cur?'done':i===S.cur?'current':i===S.cur+1?'next':'later';};
+/* focus entries */
+const activeFocus=d=>FOCUS.filter(f=>f.date<=d&&d<=(f.until||f.date));
+const weekFocus=d=>FOCUS.filter(f=>f.date>=monday(d)&&f.date<=d).map(f=>f.topicId);
+/* ---------- weighted picking ---------- */
+function wpick(items,wfn){const ws=items.map(wfn),tot=ws.reduce((a,b)=>a+b,0);let r=RNG()*tot;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
+function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){const c=list.length>1?list.filter(x=>x!==last):list;const p=wpick(c,wfn);out.push(p);last=p;}return out;}
+/* ---------- lesson planning ---------- */
+/* ---------- lesson planning: English revision, about 5 minutes (10-12 questions) ----------
+   Normal day: 2 warm-up, 3 new-topic, 3 mixed, 1 fix-it, 1 challenge.
+   School-focus weekday: the school topic is about 2/3 of the lesson (8 of 12).
+   Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes; a school topic from this week is about 2/3. */
+function planLesson(date,variant=0){
+  RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
+  const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:Math.min(3,T(t).lvl+(o.up||0)),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
+  const focusToday=activeFocus(date),wf=weekFocus(date),cur=curTopic();
+  const pool=doneTopics().concat(cur&&T(cur).les.length?[cur]:[]).concat(wf.filter(x=>!PATH.includes(x)||PATH.indexOf(x)>S.cur)).filter((x,i,a)=>a.indexOf(x)===i);
+  const mixW=id=>{const t=S.topics[id];const since=t&&t.last?Math.min(6,daysBetween(t.last,date)):6;return 1+3*(1-acc(id))+since/2+(wf.includes(id)?3:0)+(id===cur?0.5:0);};
+  const mistakes=(pred,days)=>{const m={};S.log.filter(e=>!e.ok&&e.d<date&&daysBetween(e.d,date)<=days&&TOPICS[e.t]&&!TOPICS[e.t].warm&&pred(e)).forEach(e=>{const k=e.t+'|'+(e.s||'');m[k]=(m[k]||0)+1;});return m;};
+  const subOf=(m,t)=>{const ks=Object.keys(m).filter(k=>k.split('|')[0]===t&&k.split('|')[1]);return ks.length?wpick(ks,k=>m[k]).split('|')[1]:null;};
+  const newSec=n=>{if(!cur)return;if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<n;i++)add('new',cur,{guided:i<1&&T(cur).les.length===0});};
+  const review=isReviewDay(date);
+  let kind=review?'review':'mix';
+  if(!review&&focusToday.length){
+    const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0,fm=mistakes(e=>e.t===f,14);
+    if(fresh||date===fe.date)add('school',f,{kind:'example'});
+    for(let i=0;i<4;i++)add('school',f,{guided:fresh&&i<2,sub:i>=2?subOf(fm,f):null});
+    newSec(3);
+    const opl=pool.filter(x=>x!==f),other=opl.length?wpick(opl,mixW):(cur||CFG.warm);
+    add('mix',f);add('mix',other);add('mix',f);
+    add('fix',f,{sub:subOf(fm,f)});
+    add('challenge',f,{up:1});
+  }else if(!review){
+    for(let i=0;i<2;i++)add('warm',CFG.warm,{});
+    newSec(3);
+    const pl=pool.length?pool:(cur?[cur]:[CFG.warm]);
+    interleave(pl,cur?3:6,mixW).forEach(t=>add('mix',t));
+    const rm=mistakes(()=>true,14),rk=Object.keys(rm);
+    const fk=rk.length?wpick(rk,k=>rm[k]):(pl.slice().sort((a,b)=>acc(a)-acc(b))[0]+'|');
+    {const [t,s]=fk.split('|');add('fix',t,{sub:s||null});}
+    const ch=pool.concat(cur?[cur]:[]);add('challenge',ch.length?pick(ch):CFG.warm,{up:1});
+  }else{
+    const sf=wf.concat(focusToday.map(f=>f.topicId)).filter((x,i,a)=>a.indexOf(x)===i);
+    if(focusToday.length){const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0;
+      if(fresh||date===fe.date)add('school',f,{kind:'example'});
+      const fm=mistakes(e=>e.t===f,14);for(let i=0;i<5;i++)add('school',f,{guided:fresh&&i<2,sub:i>=3?subOf(fm,f):null});}
+    add('warm',CFG.warm,{});
+    const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<date&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
+    wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
+    let keys=Object.keys(wk);
+    if(new Set(keys.map(k=>k.split('|')[0])).size<3)pool.forEach(t=>{if(!keys.some(k=>k.startsWith(t+'|')))keys.push(t+'|');});
+    const w=k=>1+3*((wk[k]||{}).w||0)+((wk[k]||{}).focus?3:0)+((wk[k]||{}).n?1:0);
+    const tp=k=>k.split('|')[0],sb=k=>k.split('|')[1]||null;
+    const okeys=keys.filter(k=>!sf.includes(tp(k)));
+    if(!okeys.length&&cur){newSec(3);}
+    if(sf.length){
+      if(okeys.length){const fk=t=>{const ks=keys.filter(k=>tp(k)===t&&sb(k)&&wk[k]&&wk[k].w>0);return ks.length?wpick(ks,k=>wk[k].w):t+'|';};
+        const o2=interleave(okeys,2,w);const seq=[fk(sf[0]),o2[0],fk(sf[sf.length>1?1:0]),o2[1]];seq.forEach(k=>add('review',tp(k),{sub:sb(k)}));}
+    }else if(keys.length){let last=null;
+      for(let i=0;i<8;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:sb(k)});}
+    }
+    const tough=keys.filter(k=>(wk[k]||{}).w>0).sort((a,b)=>wk[b].w-wk[a].w);const tl=[];
+    if(sf.length){const k=tough.find(x=>sf.includes(tp(x)));tl.push(k||sf[0]+'|');}
+    tough.forEach(k=>{if(tl.length<2&&!tl.includes(k))tl.push(k);});
+    const fill=sf.length?sf:(keys.length?keys.map(tp):pool.length?pool:(cur?[cur]:[CFG.warm]));
+    while(tl.length<2)tl.push(fill[tl.length%fill.length]+'|');
+    tl.forEach(k=>{const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:sb(k),up:hasW?0:1});});
+  }
+  /* one "tell a grown-up" prompt on a non-warm question */
+  const cand=items.map((x,i)=>i).filter(i=>items[i].kind!=='example'&&!['warm','school'].includes(items[i].sec));
+  shuffle(cand).slice(0,1).forEach(i=>items[i].tell=true);
+  return {kind,items};
+}
+
+function WEEKOF(d){const m=monday(d);return range(7).map(i=>addDays(m,i));}
+/* ---------- question generation (deterministic per lesson + index) ---------- */
+window.DAILY_ERRORS=[];
+function makeQ(it,date,variant,idx,sigs){const top=TOPICS[it.t]||TOPICS[CFG.warm];
+  if(it.kind==='example'){let ex;try{RNG=mulberry32(hashStr(`${PLAYER}|${date}|ex|${it.t}`));ex=top.example?top.example(H):null;}catch(e){window.DAILY_ERRORS.push(String(e));}
+    return {example:true,html:ex&&ex.html?ex.html:`<p>${esc(top.blurb||'')}</p>`};}
+  for(let a=0;a<10;a++){RNG=mulberry32(hashStr(`${PLAYER}|${date}|${variant}|${idx}|${a}`));
+    try{const subs=top.subs?top.subs(it.lvl):[null];let sub=it.sub;if(sub&&!subs.includes(sub)&&!(top.subs&&top.subs(3).includes(sub)))sub=null;sub=sub||pick(subs);
+      const q=top.gen.call(top,H,it.lvl,sub);q.sub=q.sub||sub||'';const sig=it.t+'|'+q.prompt+'|'+(top.dedupByText&&q.kind==='choice'&&q.choices?String(q.choices[q.answer]):JSON.stringify(q.answer))+'|'+(q.vis||'').length;
+      if(sigs.has(sig)&&a<9)continue;sigs.add(sig);return q;}catch(e){window.DAILY_ERRORS.push(it.t+': '+e);}}
+  RNG=mulberry32(idx+7);const q=TOPICS[CFG.warm].gen(H,1,pick(TOPICS[CFG.warm].subs(1)));q.sub=q.sub||'';return q;}
+/* Questions are generated in original plan order (it.qi), so reordering sections never changes a question. */
+function buildAll(run){const src=run.all||run.items,sigs=new Set(),byQi={};
+  src.map((it,i)=>[it.qi!=null?it.qi:i,it]).sort((a,b)=>a[0]-b[0]).forEach(([qi,it])=>{byQi[qi]=makeQ(it,run.date,run.variant,qi,sigs);});
+  return run.items.map((it,i)=>byQi[it.qi!=null?it.qi:i]);}
+function initRun(R){R.items.forEach((it,i)=>{if(it.qi==null)it.qi=i;});initRedo(R);return R;}
+/* ---------- redo missed questions ----------
+   A missed question comes back 3-5 questions later (same question, answer options reshuffled).
+   Missed again: it comes back once more as a near-identical variant (same type, new numbers).
+   Anything still waiting is asked in a final "Try again" round. 3 tries at most, then the answer is shown.
+   Only first attempts count for score, stars, mastery and the Fix-it history. */
+const REDO_MAX=3,REDO_PTS=2;
+const redoGap=(k)=>3+hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|gap|${k.of}|${k.tries}`)%3;
+const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok&&!k.out);
+function pickRedo(dueOnly){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok||k.out)return;if(dueOnly&&k.at>RUN.asked)return;if(best<0||k.at<RUN.rq[best].at)best=i;});return best;}
+const qSig=(t,q)=>t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
+function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
+  if(k.tries>=2){/* near-identical variant: same topic, level and question type, different numbers */
+    const v=makeQ(Object.assign({},it,{sub:base.sub||it.sub}),RUN.date,RUN.variant,`${k.of}|redo${k.tries}`,new Set([qSig(it.t,base)]));
+    if(v&&!v.example&&(v.sub||'')===(base.sub||''))return v;}
+  /* the same question with the answer options in a new order */
+  if(base.kind!=='choice'||!base.choices||base.choices.length<2)return base;
+  RNG=mulberry32(hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|shuf|${k.of}|${k.tries}`));
+  const ids=base.choices.map((c,i)=>i);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(0);
+  return Object.assign({},base,{choices:p.map(i=>base.choices[i]),answer:p.indexOf(base.answer)});}
+function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
+/* ---------- audio / speech (same as the games) ---------- */
+let actx=null;
+function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  const N={good:[660,880],bad:[330,247],tap:[600],win:[523,659,784,1047]}[kind]||[];const t=actx.currentTime,vol=kind==='tap'?0.05:0.14;
+  N.forEach((f,i)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='sine';o.frequency.value=f;const s=t+i*0.12;
+    g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(vol,s+0.02);g.gain.exponentialRampToValueAtTime(0.0001,s+0.2);o.connect(g);g.connect(actx.destination);o.start(s);o.stop(s+0.22);});}catch(e){}}
+function say(text){try{if(!('speechSynthesis' in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='en-AU';u.rate=0.9;
+  const v=speechSynthesis.getVoices().find(v=>/en[-_]AU/i.test(v.lang));if(v)u.voice=v;speechSynthesis.speak(u);}catch(e){}}
+const DW={2:['half','halves'],3:['third','thirds'],4:['quarter','quarters'],5:['fifth','fifths'],8:['eighth','eighths'],10:['tenth','tenths'],100:['hundredth','hundredths'],1000:['thousandth','thousandths']};
+function spoken(el){const c=el.cloneNode(true);c.querySelectorAll('.say,svg').forEach(x=>x.remove());
+  c.querySelectorAll('.mixed .wn').forEach(w=>w.textContent=w.textContent+' and ');
+  c.querySelectorAll('.frac').forEach(f=>{const n=(f.querySelector('.num')||{}).textContent||'',d=(f.querySelector('.den')||{}).textContent||'';const w=DW[+d];
+    f.replaceWith(' '+(w&&/^\d+$/.test(n.trim())?`${n.trim()} ${+n===1?w[0]:w[1]}`:`${n.trim()||'something'} over ${d.trim()||'something'}`)+' ');});
+  return c.textContent.replace(/\$(\d+)\.(\d\d)/g,(m,a,b)=>`${a} dollars ${+b} cents`).replace(/(\d+)\.(\d+)/g,(m,a,b)=>`${a} point ${b.split('').join(' ')}`)
+    .replace(/×/g,' times ').replace(/÷/g,' divided by ').replace(/−/g,' minus ').replace(/cm²/g,' square centimetres').replace(/°C/g,' degrees').replace(/°/g,' degrees').replace(/\s+/g,' ').trim();}
+/* ---------- UI helpers ---------- */
+const SECN={school:['🏫','From school today'],warm:['⚡','Warm-up'],new:['🆕','New topic'],mix:['🔀','Mixed practice'],fix:['🔧','Fix-it'],challenge:['🏔️','Challenge finish'],review:['🔁','Week review'],tough:['💪','Toughest of the week']};
+function show(id){['home','play','results','review'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+const starsFor=p=>p>=0.95?3:p>=0.8?2:p>=0.6?1:0;
+function dayStreak(){let n=0,d=TODAY;if(!(S.days[d]&&S.days[d].done))d=addDays(d,-1);
+  for(let i=0;i<60;i++){const w=dow(d);if(S.days[d]&&S.days[d].done)n++;else if(w!==0&&w!==6)break;d=addDays(d,-1);}return n;}
+function topbar(){$('#ptsPill').textContent='⭐ '+S.points;$('#streakPill').textContent='🔥 '+dayStreak();$('#streakPill').title='Days in a row';$('#soundBtn').textContent=S.sound?'🔊':'🔇';}
+function weekHTML(){const L=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  return `<div class="week">${WEEK.map((d,i)=>{const r=S.days[d];return `<div class="wd${r&&r.done?' done':''}${d===TODAY?' today':''}${i===4?' fri':''}" data-day="${d}"><div class="dn">${L[i]}</div><div class="st">${r&&r.done?(r.kind==='review'?'🏆':'✅'):d<TODAY&&i<5?'·':i===4?'🔁':'○'}</div><div>${r&&r.done?'★'.repeat(r.stars||0)||'–':''}</div></div>`;}).join('')}</div>`;}
+/* ---------- home ---------- */
+let RUN=null,QS=null,q=null,tick=null;
+function home(){RUN=null;q=null;clearInterval(tick);
+  document.title=`${NAME}'s English Revision`;$('#titleName').textContent=NAME;
+  const review=isReviewDay(TODAY),done=S.days[TODAY]&&S.days[TODAY].done,inprog=S.run&&S.run.date===TODAY&&!S.run.finished;
+  const tr=S.run&&S.run.date===TODAY?initRun(S.run):null;
+  const plan=inprog?S.run:planLesson(TODAY,0);const counts={};plan.items.forEach(it=>{if(it.kind!=='example')counts[it.sec]=(counts[it.sec]||0)+1;});
+  const nq=Object.values(counts).reduce((a,b)=>a+b,0);const cur=curTopic(),ct=cur?T(cur):null,af=activeFocus(TODAY);
+  const sIt=plan.items.find(x=>x.sec==='school'),schoolTitle=af.length?(af[0].title||TOPICS[af[0].topicId].title):sIt&&TOPICS[sIt.t]?TOPICS[sIt.t].title:'From school';
+  const kindLabel=review?(dow(TODAY)===5?'🏆 Week Review':'🏆 Week Review (catch-up)'):'🔀 Daily Mix';
+  $('#homeBody').innerHTML=`
+  <div class="card hero"><div class="big">${review?'🏆':'📚'}</div><div style="flex:1;min-width:220px">
+    <h2 id="hello">Hi ${NAME}! 👋</h2><div style="font-size:1.25rem" id="todayDate"><b>${weekday(TODAY)}</b>, ${longDate(TODAY).replace(weekday(TODAY)+' ','').replace(/^,\s*/,'')}</div>
+    <div class="row" style="margin-top:6px"><span class="tag" id="kindTag">${kindLabel}</span><span class="tag">⏱️ about 5 minutes · ${nq} questions</span>${done?'<span class="tag ok">✅ Done today!</span>':''}</div></div></div>
+  ${af.length?`<div class="focus" id="focusBox">🏫 <b>From school today: ${esc(af[0].title||TOPICS[af[0].topicId].title)}</b>${af[0].note?`<div class="small">${esc(af[0].note)}</div>`:''}</div>`:''}
+  <div class="card"><b>Today's lesson</b><div class="secs" id="secTiles">${Object.keys(SECN).filter(k=>counts[k]).map(k=>{const pr=tr?secProgress(tr,k):{n:counts[k],d:0},full=pr.n&&pr.d>=pr.n,doneAll=done&&!inprog;
+      const st=full?'✅ done':pr.d?`${pr.d}/${pr.n} done`:`${pr.n} question${pr.n>1?'s':''}`,act=doneAll||full?'Tap to practise again':pr.d?'Tap to carry on here':inprog||tr?'Tap to go here':'Tap to start here';
+      return `<button type="button" class="sec${full?' full':''}" data-sec="${k}" aria-label="${SECN[k][1]}: ${st}. ${act}"><b>${SECN[k][0]} ${SECN[k][1]}</b><span class="secst">${st}</span>${k==='new'&&cur?`<span class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</span>`:''}${k==='school'?`<span class="small">${esc(schoolTitle)}</span>`:''}<span class="secgo">${act} ➜</span></button>`;}).join('')}</div>
+    <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
+    ${done||tr?`<div class="row" style="margin-top:12px;justify-content:center"><button class="btn orange" id="revBtn">👨‍👦 Review mistakes together (${revCount(TODAY)})</button></div>`:''}
+    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (try again round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
+  <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
+  ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
+     <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
+  ${adultHTML()}`;
+  {const rb=$('#revBtn');if(rb)rb.onclick=()=>openReview(TODAY,'home');}
+  document.querySelectorAll('#secTiles [data-sec]').forEach(b=>b.onclick=()=>{sfx('tap');goSection(b.dataset.sec);});
+  const sb=$('#startBtn');if(sb)sb.onclick=()=>startLesson(false);const ab=$('#againBtn');if(ab)ab.onclick=()=>startLesson(true);
+  bindAdult();topbar();show('home');
+}
+function adultHTML(){
+  return `<div class="card"><details id="adult"><summary>👨‍👩‍👧 For grown-ups: topic path &amp; settings</summary>
+  <p class="small">The path follows the NSW English K–10 Syllabus (2022) (vocabulary, spelling, grammar, punctuation and reading), ${esc(CFG.year)}. A topic counts as mastered at 80%+ over 2 lessons (at least 3 questions each lesson), then the next topic appears as the "New topic" section. Mastered topics go into the mixed review. Each topic starts one step harder than ${esc(CFG.year.split(' ')[0]+' '+CFG.year.split(' ')[1])} level and steps up after a 90%+ lesson.</p>
+  <ol class="path" id="pathList">${PATH.map((id,i)=>{const st=status(id),t=S.topics[id],a=t&&t.n?Math.round(100*t.c/t.n)+'%':'–';
+    return `<li class="${st==='done'?'done':st==='current'?'cur':''}" data-topic="${id}"><span>${st==='done'?'✅':st==='current'?'⭐':st==='next'?'⏭️':'🔒'}</span><b>${TOPICS[id].icon} ${esc(TOPICS[id].title)}</b><span class="code">${esc(TOPICS[id].code)}</span><span class="small">${st==='done'?'done':st==='current'?'current':st==='next'?'next':''} · accuracy ${a} · level ${(t?t.lvl:1)+1}/4</span></li>`;}).join('')}</ol>
+  <div class="row"><button class="btn ghost small" id="backBtn" ${S.cur<=0?'disabled':''}>⏪ Go back a topic</button><button class="btn ghost small" id="skipBtn" ${S.cur>=PATH.length?'disabled':''}>⏩ Skip ahead a topic</button></div>
+  <p class="small">${FOCUS.length?`School focus entries: ${FOCUS.map(f=>`${esc(f.date)}${f.until?'–'+esc(f.until):''} ${esc(f.title||f.topicId)}`).join('; ')}.`:'No "From school today" entries right now.'} Lessons are fixed for each day; today is ${esc(TODAY)}.</p>
+  <div class="row"><button class="btn ghost small" id="pastRev">👨‍👦 Review mistakes (past days)</button><button class="btn ghost small" id="resetDaily">Reset English revision progress</button></div></details></div>`;}
+function bindAdult(){$('#pastRev').onclick=()=>openReview(TODAY,'home');const bb=$('#backBtn'),sk=$('#skipBtn');
+  if(bb)bb.onclick=()=>{if(S.cur>0){S.cur--;const t=T(PATH[S.cur]);t.mastered=false;t.les=[];resetRunIfUnstarted();save();home();$('#adult').open=true;}};
+  if(sk)sk.onclick=()=>{if(S.cur<PATH.length){T(PATH[S.cur]).skipped=true;S.cur++;resetRunIfUnstarted();save();home();$('#adult').open=true;}};
+  $('#resetDaily').onclick=()=>{if(confirm(`Reset ${NAME}'s English revision progress? (Maths lessons and the games keep their own progress.)`)){const snd=S.sound;S=defState();S.sound=snd;S.cur=Math.max(0,PATH.indexOf(CFG.start));save();home();}};}
+function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
+/* ---------- play ---------- */
+/* ---------- section tiles: jump to a section, or practise it again ---------- */
+function firstOpen(R){return R.i+(R.awaitNext&&R.rd==null?1:0);} /* first position not yet answered */
+function secProgress(R,k){const n=R.items.filter(it=>it.sec===k&&it.kind!=='example').length,d=R.res.filter(r=>r.sec===k).length;return {n,d:Math.min(d,n)};}
+function todaysRun(){return S.run&&S.run.date===TODAY?initRun(S.run):null;}
+function goSection(k){
+  const done=S.days[TODAY]&&S.days[TODAY].done,cur=todaysRun(),inprog=cur&&!cur.finished;
+  if(!inprog&&done)return practiseSection(k,null);
+  RUN=inprog?cur:(S.run=newRun(0,false,planLesson(TODAY,0)));
+  const st=firstOpen(RUN),rest=RUN.items.slice(st),mine=rest.filter(it=>it.sec===k);
+  if(!mine.some(it=>it.kind!=='example'))return practiseSection(k,RUN); /* section already finished: extra practice */
+  /* move this section's unanswered items (worked example first, as planned) to the front of what is left */
+  RUN.items=RUN.items.slice(0,st).concat(mine,rest.filter(it=>it.sec!==k));
+  RUN.i=st;RUN.rd=null;RUN.awaitNext=false;save();
+  QS=buildAll(RUN);show('play');startTimer();next(true,true);}
+/* extra practice of one section: never changes the day's score, mastery, topic stats or Fix-it history */
+function practiseSection(k,src){
+  let all,variant;
+  if(src){all=src.items.slice().sort((a,b)=>a.qi-b.qi);variant=src.variant;} /* the same questions again */
+  else{S.pn=(S.pn||0)+1;variant=1000+S.pn;const p=planLesson(TODAY,variant);p.items.forEach((it,i)=>it.qi=i);all=p.items;} /* today is done: a fresh set */
+  const items=all.filter(it=>it.sec===k).map(it=>Object.assign({},it,{tell:false}));
+  if(!items.some(it=>it.kind!=='example'))return home();
+  RUN={date:TODAY,variant,practice:k,kind:'practice',all,items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};
+  save();QS=buildAll(RUN);show('play');startTimer();next(true);}
+function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res.filter(r=>r.ok).length,sn=SECN[R.practice]||['',''];R.finished=true;save();
+  $('#resultsCard').innerHTML=`<div class="stars">💪</div><h2>Extra practice done, ${NAME}!</h2>
+   <p style="font-size:1.3rem" id="practiceScore">${sn[0]} ${sn[1]}: <b>${c} out of ${n}</b> · +${R.pts} points</p>
+   ${R.rq.length?`<p class="fixedline">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed</p>`:''}
+   <p class="small">Extra practice doesn't change today's lesson score.</p>
+   <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" href="../../index.html">🏠 My games</a></div>`;
+  show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
+function startLesson(extra){
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);}
+  else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
+    RUN=S.run=newRun(variant,extra,p);save();}
+  QS=buildAll(RUN);show('play');startTimer();next(!RUN.awaitNext);}
+function newRun(variant,extra,p){p.items.forEach((it,i)=>it.qi=i);return {date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};}
+function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
+function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
+  $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
+  $('#timesUp').classList.toggle('hidden',!!left);}
+const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
+function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔁 ${pr}`:'');$('#progTxt').title=pr?`${pr} to try again`:'';$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
+function next(resume,noRedo){
+  if(!resume){if(RUN.rd!=null)RUN.rd=null;else RUN.i++;}
+  RUN.awaitNext=false;
+  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length,prev=RUN.items[RUN.i-1];
+    /* a missed question is due again (never straight after a worked example), or the final Try again round */
+    const k=!mainLeft?pickRedo(false):(noRedo||(prev&&prev.kind==='example'))?-1:pickRedo(true);
+    if(k>=0)RUN.rd=k;else if(!mainLeft)return finish();}
+  save();
+  const rk=RUN.rd!=null?RUN.rq[RUN.rd]:null,it=rk?RUN.items[rk.of]:RUN.items[RUN.i];
+  q=Object.assign({},rk?redoQ(rk):QS[RUN.i],{it,done:false,usedHint:false,f:{},redo:rk});
+  const sn0=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔁 Redo · try ${rk.tries+1} of ${REDO_MAX}${rk.tries>=2?' · new numbers':''}</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
+  $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
+  progUI();topbar();
+  if(q.example){$('#prompt').classList.remove('bigp');$('#prompt').innerHTML=`👀 Worked example: ${esc(tname)}`;$('#qvis').innerHTML='';
+    $('#stage').innerHTML=`<div class="example"><h3>Let's look at one together first</h3>${q.html}<button class="btn green" id="gotIt">Got it! Let's try some ➜</button></div>`;
+    $('#controls').classList.add('hidden');$('#gotIt').onclick=()=>{sfx('tap');RUN.i++;save();next(true);};return;}
+  $('#prompt').innerHTML=q.prompt;$('#prompt').classList.toggle('bigp',!/</.test(q.prompt)&&q.prompt.length<24);$('#qvis').innerHTML=q.vis||'';
+  if(q.kind==='choice'){$('#stage').innerHTML=`<div class="opts ${q.cls||''}">${q.choices.map((c,i)=>`<button class="opt" data-opt="${i}">${c}</button>`).join('')}</div>`;}
+  else{q.active=q.fields[0].id;q.fields.forEach(f=>q.f[f.id]='');
+    const lay=(q.layoutPre||'')+q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<span class="ebox" data-field="${id}" id="f_${id}" role="button" aria-label="answer box">&nbsp;</span>`);
+    $('#stage').innerHTML=`<div class="entryrow">${lay}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(n=>`<button data-key="${n}">${n}</button>`).join('')}${q.dot?'<button data-key=".">.</button>':''}<button data-key="del" class="wide">⌫ Delete</button>${q.fields.length>1?'<button data-key="next" class="wide">Next box ➜</button>':''}</div>`;refresh();}
+  if(it.guided&&!rk){showHint(true);}
+  updCheck();
+}
+function refresh(){if(!q||!q.fields)return;q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.innerHTML=q.f[f.id]||'&nbsp;';e.classList.toggle('active',!q.done&&f.id===q.active);}});updCheck();}
+function key(k){if(!q||q.done||!q.fields)return;const A=q.active,i=q.fields.findIndex(f=>f.id===A),fl=q.fields[i];
+  if(k==='next')q.active=q.fields[(i+1)%q.fields.length].id;
+  else if(k==='del'){if(!q.f[A]&&i>0){q.active=q.fields[i-1].id;}else q.f[A]=q.f[A].slice(0,-1);}
+  else if(k==='.'){if(q.dot&&!q.f[A].includes('.'))q.f[A]+=(q.f[A]?'.':'0.');}
+  else if(q.f[A].length<fl.len)q.f[A]+=k;
+  sfx('tap');refresh();}
+function updCheck(){const c=$('#checkBtn');if(!q||q.example)return;c.classList.toggle('hidden',q.kind==='choice'||q.done);c.disabled=!(q.fields&&q.fields.every(f=>q.f[f.id]!==''));}
+const same=(a,b)=>{a=String(a).trim();b=String(b).trim();if(/^-?\d*\.?\d+$/.test(a)&&/^-?\d*\.?\d+$/.test(b))return Math.abs(+a- +b)<1e-9;return a===b;};
+function gradeEntry(){if(q.check)return !!q.check(q.f);return q.fields.every(f=>same(q.f[f.id],q.answer[f.id]));}
+function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;else q.guidedHint=true;$('#hintBox').innerHTML=(guided?'<span class="guided">🧭 Guided practice: here is a tip to get you started</span>':'')+'💡 <span class="h1">'+(q.hint||'Have a careful look at the picture.')+'</span>'+(q.hint2?'<div class="more"><button class="btn ghost" id="moreHint">🔎 '+(CFG.moreLabel||'Show me more help')+'</button></div>':'');
+  const mb=$('#moreHint');if(mb)mb.onclick=()=>{if(!q||q.done)return;if(!q.guidedHint)q.usedHint=true;mb.parentNode.outerHTML='<div class="hint2">🔎 '+q.hint2+'</div>';sfx('tap');};$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
+function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN.asked=(RUN.asked||0)+1;RUN.awaitNext=true;
+  let pts=0,fbNote='';
+  if(rk){/* a redo: never changes score, mastery or history; a fix earns a small bonus */
+    if(ok){rk.ok=true;RUN.fixed++;pts=REDO_PTS;RUN.pts+=pts;S.points+=pts;sfx('good');}
+    else{rk.tries++;if(rk.tries>=REDO_MAX){rk.out=true;fbNote=`<div class="redonote">That was the last try for this one. Look at how it works, then let's move on.</div>`;}
+      else{rk.at=RUN.asked+redoGap(rk);fbNote=`<div class="redonote">🔁 You'll get one more go soon, with new numbers.</div>`;}sfx('bad');}
+  }else{RUN.doneIdx=RUN.i;
+  if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
+  RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint,qi:it.qi});
+  if(!RUN.practice){const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;
+  S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);}
+  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};k.at=RUN.asked+redoGap(k);RUN.rq.push(k);fbNote=`<div class="redonote">🔁 We'll come back to this one in a few questions.</div>`;}
+  }
+  save();
+  if(q.kind==='choice')document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answer)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
+  else{q.fields.forEach(f=>{const e=document.getElementById('f_'+f.id);if(e){e.classList.remove('active');e.classList.add(ok?'okb':'badb');}});const kp=document.querySelector('.keypad');if(kp)kp.remove();}
+  const PRAISE=[`Great work, ${NAME}!`,`Brilliant, ${NAME}!`,'Spot on!','Fantastic!',`Awesome thinking, ${NAME}!`,'Nailed it!','Super job!'];
+  const correct=q.kind==='choice'?q.choices[q.answer]:q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(q.answer[id]||'')}</b>`);
+  if(!RUN.practice)revRecord(q,it,rk,ok,correct);
+  const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
+  const mainDone=rk?RUN.i>=RUN.items.length:RUN.i>=RUN.items.length-1,pend=pendingRedos().length;
+  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔁 Next try ➜':'🔁 Try again round ➜'):'See my results ⭐'):'Next question ➜';
+  fb.innerHTML=(ok?(rk?`<div class="fbtitle">🔧 Fixed it!</div><div>+${pts} points</div>`:`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`):`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+fbNote+
+    `<div class="expl">${q.explain||''}</div>`+(it.tell&&!rk?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
+    `<button class="btn" id="nextBtn">${nextLbl}</button>`;
+  $('#controls').classList.add('hidden');$('#hintBox').classList.add('hidden');
+  const tb=$('#toldBtn');if(tb)tb.onclick=()=>{RUN.told++;S.told++;RUN.pts+=5;S.points+=5;save();topbar();tb.disabled=true;tb.textContent='👍 Great explaining!';sfx('good');};
+  $('#nextBtn').onclick=()=>{save();next();};progUI();topbar();
+  setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+/* ---------- finish ---------- */
+function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false);RUN.awaitNext=false;return next(true);}
+  if(RUN.practice)return finishPractice();
+  clearInterval(tick);const R=RUN,res=R.res,n=res.length,c=res.filter(r=>r.ok).length,p=n?c/n:0,st=starsFor(p);
+  /* per-topic lesson accuracy, mastery and levels */
+  const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
+  const msgs=[];const cur=curTopic();
+  Object.entries(by).forEach(([id,o])=>{if(o.n<3||!TOPICS[id]||TOPICS[id].warm)return;const t=T(id);t.les.push([o.n,o.c,TODAY]);if(t.les.length>12)t.les=t.les.slice(-12);
+    const a=o.c/o.n;if(a>=0.9&&o.n>=3&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
+  let mastered=null;
+  if(cur){const t=T(cur),L=t.les.slice(-2);if(L.length>=2){const nn=L[0][0]+L[1][0],cc=L[0][1]+L[1][1];if(cc/nn>=0.8){t.mastered=true;S.cur++;mastered=cur;}}}
+  const prevDay=S.days[TODAY];
+  if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told,missed:R.rq.length,fixed:R.fixed};}
+  else{prevDay.extra=(prevDay.extra||0)+1;prevDay.stars=Math.max(prevDay.stars||0,st);}
+  R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());save();
+  const nxt=curTopic();
+  if(mastered)msgs.unshift(`<div class="msg up">🎓 <b>You mastered ${TOPICS[mastered].icon} ${esc(TOPICS[mastered].title)}!</b> It joins your mixed review.</div>`+(nxt?`<div class="msg next">🆕 Next lesson starts a new topic: <b>${TOPICS[nxt].icon} ${esc(TOPICS[nxt].title)}</b></div>`:''));
+  const secRows=Object.keys(SECN).filter(k=>res.some(r=>r.sec===k)).map(k=>{const rr=res.filter(r=>r.sec===k);return `<tr><td>${SECN[k][0]} ${SECN[k][1]}</td><td>${rr.filter(r=>r.ok).length} / ${rr.length}</td></tr>`;}).join('');
+  const msg=p>=0.95?`Amazing, ${NAME}! 🏅`:p>=0.8?`Great work, ${NAME}!`:p>=0.6?`Well done, ${NAME}!`:`Good effort, ${NAME}! Tomorrow's Fix-it will help. 💪`;
+  $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
+   <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>
+   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed${R.fixed<R.rq.length?` (the answer was shown for the other ${R.rq.length-R.fixed})`:'. Brilliant!'}<span class="small"> · score and stars count first tries</span></p>`:''}${msgs.join('')}
+   ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
+   ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
+   <div style="margin:10px 0">${weekHTML()}</div>
+   <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
+  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;const rv=$('#rRev');if(rv)rv.onclick=()=>openReview(TODAY,'results');}
+function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.filter(e=>e.d>=wk[0]&&e.d<=TODAY&&TOPICS[e.t]&&!TOPICS[e.t].warm);
+  const daysDone=MT.filter(d=>S.days[d]&&S.days[d].done).length;
+  const by={};L.forEach(e=>{const o=by[e.t]||(by[e.t]={n:0,c:0,en:0,ec:0,tn:0,tc:0});o.n++;if(e.ok)o.c++;if(e.d<TODAY){o.en++;if(e.ok)o.ec++;}else{o.tn++;if(e.ok)o.tc++;}});
+  const rows=Object.entries(by).sort((a,b)=>a[1].c/a[1].n-b[1].c/b[1].n);
+  const improved=rows.filter(([id,o])=>o.en>=2&&o.tn>=2&&o.tc/o.tn>o.ec/o.en+0.05).map(([id])=>TOPICS[id].icon+' '+esc(TOPICS[id].title));
+  const practise=rows.filter(([id,o])=>o.c/o.n<0.8).slice(0,3).map(([id])=>TOPICS[id].icon+' '+esc(TOPICS[id].title));
+  return `<div class="card" id="weekSummary" style="text-align:left;box-shadow:none;border:3px solid var(--line)"><h3 style="margin:0 0 6px;color:var(--main)">📋 My week</h3>
+   <p><b>Days completed (Mon–Thu):</b> ${daysDone} / 4 ${MT.map(d=>S.days[d]&&S.days[d].done?'✅':'⬜').join(' ')}</p>
+   <table class="sum"><tr><th>Topic</th><th>Accuracy this week</th></tr>${rows.map(([id,o])=>{const a=Math.round(100*o.c/o.n);return `<tr><td>${TOPICS[id].icon} ${esc(TOPICS[id].title)}</td><td><span class="acc" style="width:${Math.max(4,a)}px;background:${a>=80?'#22c55e':a>=60?'#facc15':'#fb923c'}"></span> ${a}% <span class="small">(${o.c}/${o.n})</span></td></tr>`;}).join('')}</table>
+   <p><b>🌟 Improved:</b> ${improved.length?improved.join(', '):rows.length?'Steady all week. Keep it up!':'–'}</p>
+   <p><b>🎯 Practise next:</b> ${practise.length?practise.join(', '):'Everything is 80% or better. Ready for new challenges!'}</p>${curTopic()?`<p><b>🧭 Next week's topic:</b> ${TOPICS[curTopic()].icon} ${esc(TOPICS[curTopic()].title)}</p>`:''}</div>`;}
+function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9','#ff8a3d'];
+  for(let i=0;i<50;i++){const d=document.createElement('div');d.className='confetti';d.style.left=Math.random()*100+'vw';d.style.background=cols[i%cols.length];d.style.animationDuration=(1.8+Math.random()*2)+'s';document.body.appendChild(d);setTimeout(()=>d.remove(),5000);}}
+/* ---------- review mistakes together (grown-up + child) ----------
+   Every question answered wrong at the FIRST attempt is kept for 14 days in S.rev[date]:
+   the question (prompt, picture, options/boxes, answer, explanation), the child's first answer,
+   and each later redo attempt. Extra-practice runs are not recorded. */
+const REV_DAYS=14,REV_MAX=60;
+const givenHTML=q=>q.kind==='choice'?(q.chosen!=null?q.choices[q.chosen]:'–'):q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc((q.f&&q.f[id])||'')||'–'}</b>`);
+function revPayload(q){const o={};['prompt','vis','kind','choices','answer','cls','layout','layoutPre','fields','dot','hint','hint2','explain','sub'].forEach(k=>{if(q[k]!==undefined)o[k]=q[k];});
+  if(o.vis&&o.vis.length>40000)o.vis='';return JSON.parse(JSON.stringify(o));}
+function revPrune(){if(!S.rev)S.rev={};const lim=addDays(TODAY,-(REV_DAYS-1));Object.keys(S.rev).forEach(d=>{if(d<lim)delete S.rev[d];});}
+function revRecord(q,it,rk,ok,correct){try{revPrune();const L=S.rev[RUN.date]||(S.rev[RUN.date]=[]);const id=`${RUN.variant}|${it.qi}`;
+  if(!rk){if(!ok&&L.length<REV_MAX)L.push({id,v:RUN.variant,qi:it.qi,it:{t:it.t,lvl:it.lvl,sub:it.sub||null,sec:it.sec,up:it.up||0},kind:RUN.kind,q:revPayload(q),a:givenHTML(q),c:correct,tries:[],fixed:false,out:false});}
+  else{const e=L.find(x=>x.id===id);if(!e)return;const nn=q.prompt!==e.q.prompt||JSON.stringify(q.answer)!==JSON.stringify(e.q.answer);
+    e.tries.push({a:givenHTML(q),ok,c:correct,p:nn?q.prompt:null,x:nn?q.explain:null});if(ok)e.fixed=true;if(rk.out)e.out=true;}}catch(err){window.DAILY_ERRORS.push('rev '+err);}}
+/* a lesson saved before this feature: rebuild its questions (same seed) from the saved run; the answers given were not stored */
+function revLegacy(){const R=S.run;if(!R||R.date!==TODAY||!R.res||!R.res.some(r=>!r.ok))return [];
+  if((S.rev&&S.rev[TODAY]||[]).some(e=>e.v===R.variant))return [];
+  initRun(R);let qs;try{qs=buildAll(R);}catch(e){return [];}
+  const pos=R.items.map((it,i)=>i).filter(i=>R.items[i].kind!=='example');const out=[];
+  R.res.forEach((r,j)=>{if(r.ok)return;const i=r.qi!=null?R.items.findIndex(x=>x.qi===r.qi):pos[j];if(i==null||i<0||!qs[i])return;const it=R.items[i],qq=qs[i];
+    const k=(R.rq||[]).find(x=>x.of===i);const c=qq.kind==='choice'?qq.choices[qq.answer]:qq.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc(qq.answer[id]||'')}</b>`);
+    out.push({id:`${R.variant}|${it.qi}`,v:R.variant,qi:it.qi,it:{t:it.t,lvl:it.lvl,sub:it.sub||null,sec:it.sec,up:it.up||0},kind:R.kind,q:revPayload(qq),a:null,c,tries:[],fixed:!!(k&&k.ok),out:!!(k&&k.out),legacy:true,ntries:k?k.tries-1+(k.ok?1:0):0,d:TODAY});});
+  return out;}
+function revList(sel){const ds=sel==='week'?WEEK:[sel];let L=[];ds.forEach(d=>{L=L.concat((S.rev&&S.rev[d]||[]).filter(e=>e&&e.q&&e.it).map(e=>Object.assign({d},e)));if(d===TODAY)L=L.concat(revLegacy());});return L;}
+const revCount=d=>revList(d).length;
+let RV={sel:TODAY,mode:'list',i:0,from:'home'};
+function revSteps(ex){if(!ex)return '';const parts=String(ex).split(/<br\s*\/?>|(?<=[.!?])\s+(?=[A-Z])/).map(x=>x.trim()).filter(Boolean);
+  return parts.length>1?`<ol class="steps">${parts.map(p=>`<li>${p}</li>`).join('')}</ol>`:`<div>${parts[0]||''}</div>`;}
+function revItem(e,n,N){const T0=TOPICS[e.it.t],sn=SECN[e.it.sec]||['',''],pend=!e.fixed&&!e.out&&e.d===TODAY&&S.run&&S.run.date===TODAY&&!S.run.finished;
+  const tries=e.tries.map((t,j)=>`<div class="chip ${t.ok?'ok':'bad'}">${t.ok?'✅':'❌'} Try ${j+2}${t.p?` <span class="small">· same type, new numbers:</span><div class="rvvar">${t.p}</div>`:''}${t.p?'Answer: ':': '}${t.a}${!t.ok&&t.p?` <span class="small">(correct: ${t.c})</span>`:''}</div>`).join('');
+  const st=e.fixed?'🔧 Fixed it on a later try!':e.out?'The answer was shown after 3 tries.':pend?'⏳ Still waiting in the Try again round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
+  return `<article class="card rv" data-rv="${n}" aria-label="Mistake ${n+1} of ${N}">
+   <div class="rvhead"><b>Mistake ${n+1} of ${N}</b><span class="tag">${sn[0]} ${sn[1]}</span><span class="tag">${T0?T0.icon+' '+esc(T0.title):''}</span>${RV.sel==='week'?`<span class="small">${weekday(e.d)}</span>`:''}</div>
+   <div class="prompt rvprompt"><span class="rvp">${e.q.prompt}</span><button class="say rvsay" aria-label="Read the question aloud">🔈</button></div>
+   ${e.q.vis?`<div class="vis">${e.q.vis}</div>`:''}
+   <div class="rvans"><div class="chip bad">❌ ${esc(NAME)}'s first answer: ${e.a!=null?e.a:'<i>not recorded (this lesson started before the review screen was added)</i>'}</div>${tries}
+    <div class="rvst">${st}</div><div class="chip ok">✅ Correct answer: ${e.c}</div></div>
+   <div class="rvexp"><b>👣 Step by step</b>${revSteps(e.q.explain)}${e.q.hint?`<div class="small">💡 Tip: ${e.q.hint}</div>`:''}${e.q.hint2?`<div class="small">🔎 More help: ${e.q.hint2}</div>`:''}</div>
+   <div class="rvtry"><button class="btn green" data-try="${n}">🔁 Try it again</button><button class="btn ghost" data-sayexp="${n}">🔈 Read the steps</button><div class="rvplay" id="rvplay${n}"></div></div></article>`;}
+function openReview(sel,from){RV={sel:sel||TODAY,mode:RV.mode||'list',i:0,from:from||'home'};renderReview();show('review');}
+function renderReview(){const L=revList(RV.sel),N=L.length;if(RV.i>=N)RV.i=Math.max(0,N-1);
+  const days=Object.keys(S.rev||{}).concat(WEEK.filter(d=>d<=TODAY)).filter((d,i,a)=>a.indexOf(d)===i).sort().reverse();
+  const lab=d=>`${d===TODAY?'Today':weekday(d)} ${parseD(d).getDate()} ${parseD(d).toLocaleDateString('en-AU',{month:'short'})}${(S.days[d]&&S.days[d].kind==='review')||(revList(d)[0]||{}).kind==='review'?' · 🏆 Week review':''} (${revCount(d)})`;
+  const opts=days.map(d=>`<option value="${d}"${RV.sel===d?' selected':''}>${lab(d)}</option>`).join('')+`<option value="week"${RV.sel==='week'?' selected':''}>📆 This whole week (${revCount('week')})</option>`;
+  const body=!N?`<div class="card rvnone">🎉 <b>No mistakes to look at${RV.sel==='week'?' this week':RV.sel===TODAY?' today':' on this day'}.</b><div class="small">${RV.sel===TODAY&&!(S.days[TODAY]&&S.days[TODAY].done)&&!(S.run&&S.run.date===TODAY)?'Today\'s lesson hasn\'t been started yet.':'Questions answered wrong the first time show up here, with the answer and the steps.'} Choose another day above to look back.</div></div>`:
+   RV.mode==='one'?revItem(L[RV.i],RV.i,N)+`<div class="row rvnav"><button class="btn ghost" id="rvPrev" ${RV.i<=0?'disabled':''}>◀ Previous</button><span><b>${RV.i+1}</b> of ${N}</span><button class="btn" id="rvNext" ${RV.i>=N-1?'disabled':''}>Next mistake ▶</button></div>`:L.map((e,n)=>revItem(e,n,N)).join('');
+  $('#reviewBody').innerHTML=`<div class="card rvtop"><div class="row" style="justify-content:space-between;align-items:center"><h2 style="margin:0;color:var(--main)">👨‍👦 Review mistakes together</h2><button class="btn ghost" id="rvBack">⬅ Back</button></div>
+    <p class="small">Look at each question together: what ${esc(NAME)} answered, the correct answer and the steps. Tap <b>Try it again</b> to have another go (no score change).</p>
+    <div class="row rvctl"><label for="rvDay"><b>Day:</b></label><select id="rvDay">${opts}</select>
+     <div class="seg" role="group" aria-label="View"><button class="btn small ${RV.mode==='list'?'':'ghost'}" id="rvList" aria-pressed="${RV.mode==='list'}">📋 List</button><button class="btn small ${RV.mode==='one'?'':'ghost'}" id="rvOne" aria-pressed="${RV.mode==='one'}">👉 One at a time</button></div></div></div>${body}`;
+  $('#rvBack').onclick=()=>{if(RV.from==='results'){show('results');}else home();};
+  $('#rvDay').onchange=e=>{RV.sel=e.target.value;RV.i=0;renderReview();};
+  $('#rvList').onclick=()=>{RV.mode='list';renderReview();};$('#rvOne').onclick=()=>{RV.mode='one';renderReview();};
+  const pv=$('#rvPrev'),nx=$('#rvNext');if(pv)pv.onclick=()=>{RV.i--;renderReview();window.scrollTo(0,0);};if(nx)nx.onclick=()=>{RV.i++;renderReview();window.scrollTo(0,0);};
+  document.querySelectorAll('#reviewBody .rvsay').forEach(b=>b.onclick=()=>say(spoken(b.parentNode.querySelector('.rvp'))+'. '+(b.closest('.rv').querySelector('.vis')?spoken(b.closest('.rv').querySelector('.vis')):'')));
+  document.querySelectorAll('#reviewBody [data-sayexp]').forEach(b=>b.onclick=()=>say(spoken(b.closest('.rv').querySelector('.rvexp'))));
+  document.querySelectorAll('#reviewBody [data-try]').forEach(b=>b.onclick=()=>revTry(L[+b.dataset.try],+b.dataset.try));}
+/* "Try it again": a small stand-alone question player inside the card (options reshuffled, no points, no score change) */
+function revTry(e,n){const box=document.getElementById('rvplay'+n);if(!box)return;let Q=Object.assign({},e.q);
+  try{const it=Object.assign({},e.it);const g=makeQ(it,e.d,e.v,e.qi,new Set());if(g&&g.prompt===e.q.prompt&&JSON.stringify(g.answer)===JSON.stringify(e.q.answer)&&g.check)Q.check=g.check;}catch(err){}
+  const f={};let active=null,done=false;
+  const draw=()=>{if(Q.kind==='choice'){const ids=Q.choices.map((c,i)=>i),p=shuffle(ids.slice());if(p.length>1&&p.join()===ids.join())p.push(p.shift());
+      box.innerHTML=`<div class="rvmini"><div class="small"><b>Your turn!</b> Pick an answer.</div><div class="opts ${Q.cls||''}">${p.map(i=>`<button class="opt" data-ro="${i}">${Q.choices[i]}</button>`).join('')}</div><div class="rvfb" aria-live="polite"></div></div>`;
+      box.querySelectorAll('[data-ro]').forEach(b=>b.onclick=()=>{if(done)return;done=true;const i=+b.dataset.ro,ok=i===Q.answer;
+        box.querySelectorAll('[data-ro]').forEach(x=>{if(+x.dataset.ro===Q.answer)x.classList.add('right');else if(x===b)x.classList.add('wrong');});fbk(ok);});}
+    else{Q.fields.forEach(x=>f[x.id]='');active=Q.fields[0].id;
+      const lay=(Q.layoutPre||'')+Q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<span class="ebox" data-rf="${id}" role="button" tabindex="0" aria-label="answer box">&nbsp;</span>`);
+      box.innerHTML=`<div class="rvmini"><div class="small"><b>Your turn!</b> Type the answer, then Check.</div><div class="entryrow">${lay}</div><div class="keypad">${[1,2,3,4,5,6,7,8,9,0].map(k=>`<button data-rk="${k}">${k}</button>`).join('')}${Q.dot?'<button data-rk=".">.</button>':''}<button data-rk="del" class="wide">⌫ Delete</button>${Q.fields.length>1?'<button data-rk="next" class="wide">Next box ➜</button>':''}</div><div class="row" style="justify-content:center"><button class="btn green" data-rcheck>Check ✓</button></div><div class="rvfb" aria-live="polite"></div></div>`;
+      const ref=()=>{Q.fields.forEach(x=>{const el=box.querySelector(`[data-rf="${x.id}"]`);if(el){el.innerHTML=f[x.id]||'&nbsp;';el.classList.toggle('active',!done&&x.id===active);}});};ref();
+      box.querySelectorAll('[data-rf]').forEach(el=>el.onclick=()=>{active=el.dataset.rf;ref();});
+      box.querySelectorAll('[data-rk]').forEach(b=>b.onclick=()=>{if(done)return;const k=b.dataset.rk,i=Q.fields.findIndex(x=>x.id===active),fl=Q.fields[i];
+        if(k==='next')active=Q.fields[(i+1)%Q.fields.length].id;else if(k==='del')f[active]=f[active].slice(0,-1);else if(k==='.'){if(Q.dot&&!f[active].includes('.'))f[active]+=f[active]?'.':'0.';}else if(f[active].length<fl.len)f[active]+=k;sfx('tap');ref();});
+      box.querySelector('[data-rcheck]').onclick=()=>{if(done||!Q.fields.every(x=>f[x.id]!==''))return;done=true;const ok=Q.check?!!Q.check(f):Q.fields.every(x=>same(f[x.id],Q.answer[x.id]));
+        Q.fields.forEach(x=>{const el=box.querySelector(`[data-rf="${x.id}"]`);if(el){el.classList.remove('active');el.classList.add(ok?'okb':'badb');}});box.querySelector('.keypad').remove();fbk(ok);};}};
+  const fbk=ok=>{sfx(ok?'good':'bad');box.querySelector('.rvfb').innerHTML=(ok?`<div class="chip ok">🎉 Yes! That's it.</div>`:`<div class="chip bad">🤔 Not yet. The answer is ${e.c}. Look at the steps together.</div>`)+`<button class="btn ghost small" data-again>🔁 Try once more</button>`;
+    box.querySelector('[data-again]').onclick=()=>{done=false;draw();};};
+  draw();box.scrollIntoView({behavior:'smooth',block:'nearest'});}
+/* ---------- events ---------- */
+$('#homeLink').onclick=()=>{if(RUN&&!RUN.finished)save();home();};
+$('#quitBtn').onclick=()=>{save();home();};
+$('#soundBtn').onclick=()=>{S.sound=!S.sound;save();topbar();};
+$('#sayBtn').onclick=()=>say(spoken($('#prompt'))+'. '+spoken($('#qvis')));
+$('#hintBtn').onclick=()=>showHint(false);
+$('#checkBtn').onclick=()=>{if(!q||q.done||q.kind==='choice')return;answer(gradeEntry());};
+$('#stage').addEventListener('click',e=>{if(!q||q.done)return;const o=e.target.closest('[data-opt]');if(o&&q.kind==='choice'){q.chosen=+o.dataset.opt;answer(q.chosen===q.answer);return;}
+  const k=e.target.closest('[data-key]');if(k){key(k.dataset.key);return;}const f=e.target.closest('[data-field]');if(f){q.active=f.dataset.field;refresh();}});
+document.addEventListener('keydown',e=>{if(!q)return;if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
+  if(q.fields&&!q.done){if(/^[0-9]$/.test(e.key))key(e.key);else if(e.key==='.')key('.');else if(e.key==='Backspace')key('del');else if(e.key==='Tab'||e.key===':'||e.key==='/'){e.preventDefault();key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
+window.addEventListener('pagehide',()=>{if(RUN)save();});
+window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
+  correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
+  wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
+  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
+home();
+
+})();
+</script>
+</body>
+</html>

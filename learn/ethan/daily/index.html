@@ -81,6 +81,10 @@ svg.jl{width:100%;height:auto}
 .controls{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
 .hint{margin-top:12px;background:#fffbeb;border:3px dashed #fbbf24;border-radius:16px;padding:12px;text-align:center;font-size:1.1rem}
 .hint .guided{display:block;font-size:.85rem;color:#92400e;font-weight:bold}
+.hint .h1{display:inline-block;text-align:left;vertical-align:top}
+.hint .more{margin-top:8px}
+.hint .more .btn{font-size:.95rem;padding:6px 14px}
+.hint .hint2{margin-top:10px;padding-top:8px;border-top:2px dotted #fbbf24;text-align:left;display:inline-block}
 .feedback{margin-top:14px;border-radius:20px;padding:14px;text-align:center;font-size:1.1rem;animation:pop .25s ease-out}
 .feedback.good{background:#dcfce7;border:3px solid var(--green2)}
 .feedback.bad{background:#fff1f2;border:3px solid #fda4af}
@@ -435,6 +439,10 @@ const mixedCheck=(w,n,d)=>v=>{const dd=v.d!=null?+v.d:d;return dd>0&&((+v.w)*dd+
 const big=h=>`<div class="bigq">${h}</div>`;
 const plural=(n,w,p)=>`${n} ${n===1?w:(p||w+'s')}`;
 
+/* hint helpers: steps('a','b') numbers each line; fw(d) names the pieces (fw(4) = quarters) */
+const steps=(...a)=>a.filter(Boolean).map((s,i)=>`<b>Step ${i+1}:</b> ${s}`).join('<br>');
+const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevenths',8:'eighths',9:'ninths',10:'tenths',11:'elevenths',12:'twelfths',15:'fifteenths',16:'sixteenths',18:'eighteenths',20:'twentieths',24:'twenty-fourths',100:'hundredths',1000:'thousandths'})[d]||d+'ths';
+
 /* ===== Ethan's topic modules (Stage 1 into Stage 2) =====
    lvl 0 = Year 2 level, 1 = harder Year 2, 2 = Year 3, 3 = Year 3 stretch. */
 function barUneq(widths,shaded=0){const W=widths.reduce((a,b)=>a+b,0);let x=0,s=`<svg class="bar" viewBox="-4 -4 ${W*60+8} 68" aria-label="bar">`;
@@ -444,139 +452,139 @@ const TOPICS_E=[
 {id:'quick',title:'Quick Facts',icon:'⚡',code:'MA1-CSQ-01',warm:true,blurb:'Facts to 20, doubles, make 10 and 100.',
  subs:l=>l>=2?['add','sub','double','bond100']:['add','sub','double','bond'],
  gen(H,l,sub){
-  if(sub==='add'){const a=rnd(3,l>=1?12:9),b=rnd(3,9);return Object.assign({prompt:`${a} + ${b} = ?`,hint:`Make 10 first: ${a} + ${Math.max(0,10-a)} = 10.`,explain:`${a} + ${b} = <b>${a+b}</b>`},num(a+b));}
-  if(sub==='sub'){const b=rnd(3,9),c=rnd(3,l>=1?12:9),a=b+c;return Object.assign({prompt:`${a} − ${b} = ?`,hint:`Think addition: ${b} + ? = ${a}.`,explain:`${b} + ${c} = ${a}, so ${a} − ${b} = <b>${c}</b>`},num(c));}
-  if(sub==='double'){const a=l>=2?rnd(11,49):rnd(3,l>=1?25:10);return Object.assign({prompt:`Double ${a} = ?`,hint:`Double the tens, then double the ones.`,explain:`${a} + ${a} = <b>${2*a}</b>`},num(2*a));}
-  if(sub==='bond'){const a=rnd(1,9);return Object.assign({prompt:`${a} + ? = 10`,hint:`Count on from ${a} to 10.`,explain:`${a} + ${10-a} = 10. Answer: <b>${10-a}</b>`},num(10-a));}
-  const a=rnd(1,19)*5;return Object.assign({prompt:`${a} + ? = 100`,hint:`Jump to the next ten, then to 100.`,explain:`${a} + ${100-a} = 100. Answer: <b>${100-a}</b>`},num(100-a));},
+  if(sub==='add'){const a=rnd(3,l>=1?12:9),b=rnd(3,9);return Object.assign({prompt:`${a} + ${b} = ?`,hint:a<10&&10-a<b?`Make 10 first: ${a} + ${10-a} = 10. Then add the ${b-(10-a)} left over.`:a===10?`10 and ${b} make a teen number. Say it out loud.`:a>10?`${a} is 10 and ${a-10}. Add ${a-10} + ${b}, then add 10.`:`Start at ${a} and count on ${b}.`,hint2:`Hold ${a} in your head. Count on ${b} more on your fingers.`,explain:`${a} + ${b} = <b>${a+b}</b>`},num(a+b));}
+  if(sub==='sub'){const b=rnd(3,9),c=rnd(3,l>=1?12:9),a=b+c;return Object.assign({prompt:`${a} − ${b} = ?`,hint:`Think addition: ${b} + ? = ${a}.`,hint2:`Count up from ${b} to ${a}. Count your jumps.`,explain:`${b} + ${c} = ${a}, so ${a} − ${b} = <b>${c}</b>`},num(c));}
+  if(sub==='double'){const a=l>=2?rnd(11,49):rnd(3,l>=1?25:10);return Object.assign({prompt:`Double ${a} = ?`,hint:a<10?`Double ${a} means ${a} + ${a}.`:a%10===0?`Double ${a/10}, then put a 0 on the end.`:`Double the tens (${a-a%10}), then double the ones (${a%10}). Add them.`,hint2:a<10?`Start at ${a} and count on ${a} more.`:a%10===0?`${a} + ${a}: add the tens.`:`Double ${a-a%10} is ${2*(a-a%10)}. Now add double ${a%10}.`,explain:`${a} + ${a} = <b>${2*a}</b>`},num(2*a));}
+  if(sub==='bond'){const a=rnd(1,9);return Object.assign({prompt:`${a} + ? = 10`,hint:`Count on from ${a} to 10. Count your jumps.`,hint2:`Show 10 fingers. Fold down ${a}. How many are still up?`,explain:`${a} + ${10-a} = 10. Answer: <b>${10-a}</b>`},num(10-a));}
+  const a=rnd(1,19)*5;return Object.assign({prompt:`${a} + ? = 100`,hint:`Jump to the next ten, then jump by tens to 100.`,hint2:a===95?'Count on in ones from 95 to 100.':a%10?`${a} + 5 = ${a+5}. Now how many tens to 100?`:`Count by tens from ${a} to 100.`,explain:`${a} + ${100-a} = 100. Answer: <b>${100-a}</b>`},num(100-a));},
  example(){return {html:`${big('8 + 7 = ?')}${jumpSVG(8,[2,5])}<p>Make 10 first: 8 + 2 = 10. Then 10 + 5 = <b>15</b>.</p>`};}},
 
 {id:'facts',title:'Adding & Subtracting',icon:'🧩',code:'MA1-CSQ-01 → MA2-AR-01',game:'numberfacts',blurb:'Jump strategies with 2- and 3-digit numbers.',
  subs:l=>['add','sub','missing','word'],
  gen(H,l,sub){const pair=()=>l===0?[rnd(21,89),rnd(3,9)]:l===1?[rnd(21,79),rnd(11,29)]:l===2?[rnd(120,780),rnd(21,99)]:[rnd(210,690),rnd(110,299)];
   if(sub==='add'){const [a,b]=pair();const j=b<10?addJumps(a,b):[b-b%10,b%10].filter(Boolean);
-    return Object.assign({sub,prompt:`${a} + ${b} = ?`,hint:b<10?`Jump to the next ten first.`:`Add the ${b>=100?'hundreds, then the tens':'tens'} first, then the ones.`,explain:(a+b<1000&&j.length<=3?jumpSVG(a,j):'')+`${a} + ${b} = <b>${a+b}</b>`},num(a+b));}
+    return Object.assign({sub,prompt:`${a} + ${b} = ?`,hint:b<10?(a%10&&10-a%10<b?`Jump to ${a-a%10+10} first. That uses ${10-a%10}. Then add ${b-(10-a%10)} more.`:`Start at ${a} and count on ${b}.`):b>=100?`Add ${b-b%100} first, then ${b%100-b%10}, then ${b%10}.`:b%10?`Add the tens: ${a} + ${b-b%10} = ${a+b-b%10}. Then add ${b%10}.`:`Count on in tens from ${a}: ${b/10} jumps of 10.`,hint2:b<10?`Draw a number line. Jump to the ten, then jump the rest.`:`Draw a number line from ${a}. Do the big jumps first.`,explain:(a+b<1000&&j.length<=3?jumpSVG(a,j):'')+`${a} + ${b} = <b>${a+b}</b>`},num(a+b));}
   if(sub==='sub'){let [a,b]=pair();if(b>a)[a,b]=[b,a];const j=b<10?subJumps(a,b):[-(b-b%10),-(b%10)].filter(Boolean);
-    return Object.assign({sub,prompt:`${a} − ${b} = ?`,hint:b<10?`Jump back to the ten first.`:`Take away the tens first, then the ones.`,explain:(j.length<=3?jumpSVG(a,j):'')+`${a} − ${b} = <b>${a-b}</b>`},num(a-b));}
-  if(sub==='missing'){const [a,b]=pair();return Object.assign({sub,prompt:`${a} + ? = ${a+b}`,hint:`Count on from ${a} to ${a+b}, or work out ${a+b} − ${a}.`,explain:`${a+b} − ${a} = <b>${b}</b>`},num(b));}
+    return Object.assign({sub,prompt:`${a} − ${b} = ?`,hint:b<10?(a%10&&a%10<b?`Jump back ${a%10} to ${a-a%10}. Then jump back ${b-a%10} more.`:`Count back ${b} from ${a}.`):b>=100?`Take away ${b-b%100} first, then ${b%100-b%10}, then ${b%10}.`:b%10?`Take away the tens: ${a} − ${b-b%10} = ${a-(b-b%10)}. Then take away ${b%10}.`:`Count back in tens from ${a}: ${b/10} jumps of 10.`,hint2:`Or count up from ${b} to ${a}. Add your jumps.`,explain:(j.length<=3?jumpSVG(a,j):'')+`${a} − ${b} = <b>${a-b}</b>`},num(a-b));}
+  if(sub==='missing'){const [a,b]=pair();return Object.assign({sub,prompt:`${a} + ? = ${a+b}`,hint:`Count on from ${a} to ${a+b}. Or work out ${a+b} − ${a}.`,hint2:`Jump from ${a} to the next ten, then on to ${a+b}. Add the jumps.`,explain:`${a+b} − ${a} = <b>${b}</b>`},num(b));}
   const [a,b]=pair();const add=chance(0.5);
-  return Object.assign({sub:'word',prompt:`<span class="story">${add?`🧱 ${NAME} built a tower with ${a} blocks, then added ${b} more. How many blocks now?`:`🃏 ${NAME} had ${a+b} footy cards and gave away ${b}. How many are left?`}</span>`,hint:add?'Add the two numbers.':'Take away the cards he gave away.',explain:add?`${a} + ${b} = <b>${a+b}</b>`:`${a+b} − ${b} = <b>${a}</b>`},num(add?a+b:a));},
+  return Object.assign({sub:'word',prompt:`<span class="story">${add?`🧱 ${NAME} built a tower with ${a} blocks, then added ${b} more. How many blocks now?`:`🃏 ${NAME} had ${a+b} footy cards and gave away ${b}. How many are left?`}</span>`,hint:add?`Add them: ${a} + ${b}.`:`Take away: ${a+b} − ${b}.`,hint2:add?`Add the tens first, then the ones.`:`Count back the tens first, then the ones.`,explain:add?`${a} + ${b} = <b>${a+b}</b>`:`${a+b} − ${b} = <b>${a}</b>`},num(add?a+b:a));},
  example(){return {html:`${big('47 + 25 = ?')}${jumpSVG(47,[20,5])}<p>Jump the tens first: 47 + 20 = 67. Then the ones: 67 + 5 = <b>72</b>.</p>`};}},
 
 {id:'placeval',title:'Place Value',icon:'🔢',code:'MA1-RWN-01/02 → MA2-RN-01',blurb:'Hundreds, tens and ones, then thousands.',
  subs:l=>['mab','value','expand','more'],
  gen(H,l,sub){const N=()=>l===0?rnd(102,499):l===1?rnd(105,999):l===2?rnd(1020,9899):rnd(10200,98999);
-  if(sub==='mab'){const h=rnd(1,l>=1?6:4),t=rnd(0,9),o=rnd(1,9),n=h*100+t*10+o;return Object.assign({sub,prompt:'What number do the blocks show?',vis:mabSVG(h,t,o),hint:'Flats are hundreds, longs are tens, little cubes are ones.',explain:`${h} hundreds, ${t} tens and ${o} ones = <b>${n}</b>.`},num(n));}
+  if(sub==='mab'){const h=rnd(1,l>=1?6:4),t=rnd(0,9),o=rnd(1,9),n=h*100+t*10+o;return Object.assign({sub,prompt:'What number do the blocks show?',vis:mabSVG(h,t,o),hint:'Flats are 100, longs are 10, little cubes are 1. Count each kind.',hint2:'Count flats by 100s, then longs by 10s, then cubes by 1s.',explain:`${h} hundreds, ${t} tens and ${o} ones = <b>${n}</b>.`},num(n));}
   if(sub==='value'){let n,s,i;for(let k=0;k<40;k++){n=N();s=String(n);i=rnd(0,s.length-2);if(s[i]!=='0'&&s.split('').filter(c=>c===s[i]).length===1)break;}const pw=Math.pow(10,s.length-1-i),dg=+s[i];
-    const ds=[1,10,100,1000,10000].filter(p=>p!==pw&&p<=10*pw).map(p=>dg*p);return Object.assign({sub,prompt:`What is the value of the <b>${dg}</b> in <b>${n}</b>?`,hint:'Ones, tens, hundreds, thousands: count places from the right.',explain:`The ${dg} is in the ${['ones','tens','hundreds','thousands','ten thousands'][s.length-1-i]} place, so it is worth <b>${dg*pw}</b>.`},opts(dg*pw,ds));}
+    const ds=[1,10,100,1000,10000].filter(p=>p!==pw&&p<=10*pw).map(p=>dg*p);return Object.assign({sub,prompt:`What is the value of the <b>${dg}</b> in <b>${n}</b>?`,hint:`Find the ${dg}. Count places from the right: ones, tens, hundreds, thousands.`,hint2:`Write ${dg}, then a 0 for every digit after it.`,explain:`The ${dg} is in the ${['ones','tens','hundreds','thousands','ten thousands'][s.length-1-i]} place, so it is worth <b>${dg*pw}</b>.`},opts(dg*pw,ds));}
   if(sub==='expand'){const n=N(),s=String(n),parts=s.split('').map((c,i)=>+c*Math.pow(10,s.length-1-i)).filter(Boolean);
-    if(l>=1&&n<1000&&chance(0.5)){const h=Math.floor(n/100),t=Math.floor(n/10)%10,o=n%10;if(h>=1)return Object.assign({sub,prompt:`${h-1} hundreds, ${t+10} tens and ${o} ones = ?`,hint:'10 tens make 1 hundred.',explain:`${t+10} tens = 1 hundred and ${t} tens. So it's ${h} hundreds, ${t} tens and ${o} ones = <b>${n}</b>.`},num(n));}
-    return Object.assign({sub,prompt:`${parts.join(' + ')} = ?`,hint:'Put each part in its place.',explain:`${parts.join(' + ')} = <b>${n}</b>`},num(n));}
-  const n=N(),k=pick(l>=2?[10,100,1000]:[10,100]),up=chance(0.5);return Object.assign({sub,prompt:`What is ${k} ${up?'more':'less'} than <b>${n}</b>?`,hint:`Only the ${k===10?'tens':k===100?'hundreds':'thousands'} digit changes (unless it goes past 9!).`,explain:`${n} ${up?'+':'−'} ${k} = <b>${up?n+k:n-k}</b>`},num(up?n+k:n-k));},
+    if(l>=1&&n<1000&&chance(0.5)){const h=Math.floor(n/100),t=Math.floor(n/10)%10,o=n%10;if(h>=1)return Object.assign({sub,prompt:`${h-1} hundreds, ${t+10} tens and ${o} ones = ?`,hint:`10 tens make 1 hundred. So ${t+10} tens = 1 hundred and ${t} tens.`,hint2:`Add that hundred to the ${h-1} hundreds. Then write the number.`,explain:`${t+10} tens = 1 hundred and ${t} tens. So it's ${h} hundreds, ${t} tens and ${o} ones = <b>${n}</b>.`},num(n));}
+    return Object.assign({sub,prompt:`${parts.join(' + ')} = ?`,hint:`Each part fills one place. Start with ${parts[0]}.`,hint2:'Write a 0 in any place that has no part.',explain:`${parts.join(' + ')} = <b>${n}</b>`},num(n));}
+  const n=N(),k=pick(l>=2?[10,100,1000]:[10,100]),up=chance(0.5);return Object.assign({sub,prompt:`What is ${k} ${up?'more':'less'} than <b>${n}</b>?`,hint:`Only the ${k===10?'tens':k===100?'hundreds':'thousands'} digit changes. Make it 1 ${up?'more':'less'}.`,hint2:`If that digit is ${up?'9, it goes to 0 and the next digit goes up':'0, it goes to 9 and the next digit goes down'}.`,explain:`${n} ${up?'+':'−'} ${k} = <b>${up?n+k:n-k}</b>`},num(up?n+k:n-k));},
  example(){return {html:`${mabSVG(2,4,7)}<p>2 hundreds, 4 tens and 7 ones make <b>247</b>. The 2 is worth 200, the 4 is worth 40 and the 7 is worth 7.</p>`};}},
 
 {id:'data',title:'Data & Graphs',icon:'📊',code:'MA1-DATA-01/02 → MA2-DATA-01/02',game:'data',blurb:'Tallies, picture graphs and column graphs with scales.',
  subs:l=>l>=1?['tally','col','pict']:['tally','col','col'],
  gen(H,l,sub){const its=shuffle([['🍎','apples'],['🍌','bananas'],['🍇','grapes'],['🍓','strawberries']]).map((x,i)=>({icon:x[0],name:x[1],col:PAL[i]}));
-  if(sub==='tally'){const n=rnd(l>=1?11:6,l>=1?29:17);return Object.assign({sub,prompt:'How many tally marks?',vis:`<div class="gwrap">${tallySVG(n)}</div>`,hint:'Each bundle with a line across is 5. Count by 5s, then add the rest.',explain:`${Math.floor(n/5)} fives = ${Math.floor(n/5)*5}, plus ${n%5} = <b>${n}</b>.`},num(n));}
+  if(sub==='tally'){const n=rnd(l>=1?11:6,l>=1?29:17);return Object.assign({sub,prompt:'How many tally marks?',vis:`<div class="gwrap">${tallySVG(n)}</div>`,hint:'Each bundle with a line across is 5. Count by 5s, then the single marks.',hint2:'Touch each bundle and count by fives. Then count on 1 for each loose mark.',explain:`${Math.floor(n/5)} fives = ${Math.floor(n/5)*5}, plus ${n%5} = <b>${n}</b>.`},num(n));}
   if(sub==='col'){const sc=l===0?1:2;its.forEach(x=>x.n=sc*rnd(1,9));const vis=colSVG(its,{max:10,scale:sc});const [a,b]=shuffle(range(4)).slice(0,2);if(its[a].n===its[b].n)its[a].n=its[a].n>sc?its[a].n-sc:its[a].n+sc;
-    if(chance(0.5))return Object.assign({sub,prompt:`How many children chose ${its[a].icon}?`,vis:colSVG(its,{max:10,scale:sc}),hint:sc>1?'The numbers go up in 2s.':'Look across from the top of the column.',explain:`<b>${its[a].n}</b> children chose ${its[a].icon}.`+colSVG(its,{max:10,scale:sc,hl:[a]})},num(its[a].n));
-    const hi=its[a].n>its[b].n?a:b,lo=hi===a?b:a;return Object.assign({sub,prompt:`How many more chose ${its[hi].icon} than ${its[lo].icon}?`,vis:colSVG(its,{max:10,scale:sc}),hint:'Read both columns and find the difference.',explain:`${its[hi].n} − ${its[lo].n} = <b>${its[hi].n-its[lo].n}</b>`+colSVG(its,{max:10,scale:sc,hl:[a,b]})},num(its[hi].n-its[lo].n));}
+    if(chance(0.5))return Object.assign({sub,prompt:`How many children chose ${its[a].icon}?`,vis:colSVG(its,{max:10,scale:sc}),hint:sc>1?'The numbers go up in 2s. Look across from the top of the column.':`Look across from the top of the ${its[a].icon} column.`,hint2:sc>1?'If the top is between two numbers, it is the number in the middle.':'Slide your finger straight across to the numbers.',explain:`<b>${its[a].n}</b> children chose ${its[a].icon}.`+colSVG(its,{max:10,scale:sc,hl:[a]})},num(its[a].n));
+    const hi=its[a].n>its[b].n?a:b,lo=hi===a?b:a;return Object.assign({sub,prompt:`How many more chose ${its[hi].icon} than ${its[lo].icon}?`,vis:colSVG(its,{max:10,scale:sc}),hint:'Read both columns. Then take the smaller from the bigger.',hint2:`Or count up from the shorter column to the taller one${sc>1?' in 2s':''}.`,explain:`${its[hi].n} − ${its[lo].n} = <b>${its[hi].n-its[lo].n}</b>`+colSVG(its,{max:10,scale:sc,hl:[a,b]})},num(its[hi].n-its[lo].n));}
   const key=l>=2?pick([2,5]):2;its.slice(0,3).forEach(x=>x.n=key*rnd(1,6));const a=rnd(0,2);
   const vis=`<div class="pict">${its.slice(0,3).map(x=>`<div><span class="lab">${x.name}</span>${x.icon.repeat(x.n/key)}</div>`).join('')}<div class="key">Key: each picture = <b>${key}</b> children</div></div>`;
-  return Object.assign({sub:'pict',prompt:`How many children chose ${its[a].name}?`,vis,hint:`Each picture stands for ${key}. Count by ${key}s.`,explain:`${its[a].n/key} pictures × ${key} = <b>${its[a].n}</b>`},num(its[a].n));},
+  return Object.assign({sub:'pict',prompt:`How many children chose ${its[a].name}?`,vis,hint:`Each picture is ${key}. Count by ${key}s along the ${its[a].name} row.`,hint2:`Count the pictures first. Then count by ${key}s that many times.`,explain:`${its[a].n/key} pictures × ${key} = <b>${its[a].n}</b>`},num(its[a].n));},
  example(){return {html:`${tallySVG(13)}<p>Count the bundles of 5: 5, 10. Then the single marks: 11, 12, 13. That's <b>13</b>.</p>`};}},
 
 {id:'muldiv',title:'Multiplication & Division',icon:'✖️',code:'MA1-FG-01 → MA2-MR-01',blurb:'Equal groups, arrays, sharing, then 2, 5, 10, 3 and 4 times tables.',
  subs:l=>l>=1?['groups','array','tables','share','missing']:['groups','array','tables','share'],
  gen(H,l,sub){const T=l===0?[2,5,10]:l===1?[2,3,4,5,10]:[2,3,4,5,6,10];const k=pick(T),g=rnd(2,l>=2?10:6);
-  if(sub==='groups'){const ic=pick(['🍪','⚽','🐟','🍓']);const kk=Math.min(k,6);return Object.assign({sub,prompt:`There are ${g} plates with ${kk} ${ic} on each. How many altogether?`,vis:groupsSVG(g,kk,{icon:ic}),hint:`Count by ${kk}s: ${range(Math.min(g,3)).map(i=>kk*(i+1)).join(', ')}, …`,explain:`${g} groups of ${kk} = ${g} × ${kk} = <b>${g*kk}</b>`},num(g*kk));}
-  if(sub==='array'){const r=rnd(2,l>=2?8:5),c=pick(T.filter(x=>x<=10));return Object.assign({sub,prompt:`How many dots are in this array?`,vis:arraySVG(r,c),hint:`${r} rows of ${c}. Count by ${c}s.`,explain:`${r} rows × ${c} = <b>${r*c}</b>`+arraySVG(r,c,{ring:1})},num(r*c));}
-  if(sub==='tables'){const a=rnd(1,l>=2?12:10);return Object.assign({sub,prompt:`${a} × ${k} = ?`,hint:`Count by ${k}s ${a} times.`,explain:`${range(a).map(i=>k*(i+1)).join(', ')} → <b>${a*k}</b>`},num(a*k));}
-  if(sub==='share'){const each=rnd(2,l>=2?10:5),n=g*each;return Object.assign({sub,prompt:`Share ${n} 🍓 equally between ${g} friends. How many does each get?`,hint:`Give one to each friend at a time, or think: ${g} × ? = ${n}.`,explain:`${n} ÷ ${g} = <b>${each}</b>`+groupsSVG(g,Math.min(each,10),{icon:'🍓'})},num(each));}
-  const a=rnd(2,10);return Object.assign({sub:'missing',prompt:`? × ${k} = ${a*k}`,hint:`How many ${k}s make ${a*k}?`,explain:`${a} × ${k} = ${a*k}. Answer: <b>${a}</b>`},num(a));},
+  if(sub==='groups'){const ic=pick(['🍪','⚽','🐟','🍓']);const kk=Math.min(k,6);return Object.assign({sub,prompt:`There are ${g} plates with ${kk} ${ic} on each. How many altogether?`,vis:groupsSVG(g,kk,{icon:ic}),hint:`Count by ${kk}s, once for each plate.`,hint2:`Touch each plate as you count by ${kk}s. Stop at the last plate.`,explain:`${g} groups of ${kk} = ${g} × ${kk} = <b>${g*kk}</b>`},num(g*kk));}
+  if(sub==='array'){const r=rnd(2,l>=2?8:5),c=pick(T.filter(x=>x<=10));return Object.assign({sub,prompt:`How many dots are in this array?`,vis:arraySVG(r,c),hint:`${r} rows of ${c}. Count by ${c}s, once for each row.`,hint2:`Touch each row as you count by ${c}s.`,explain:`${r} rows × ${c} = <b>${r*c}</b>`+arraySVG(r,c,{ring:1})},num(r*c));}
+  if(sub==='tables'){const a=rnd(1,l>=2?12:10);return Object.assign({sub,prompt:`${a} × ${k} = ?`,hint:`Count by ${k}s, ${a} time${a>1?'s':''}.`,hint2:`Hold up a finger for each ${k} you say. Stop at ${a} finger${a>1?'s':''}.`,explain:`${range(a).map(i=>k*(i+1)).join(', ')} → <b>${a*k}</b>`},num(a*k));}
+  if(sub==='share'){const each=rnd(2,l>=2?10:5),n=g*each;return Object.assign({sub,prompt:`Share ${n} 🍓 equally between ${g} friends. How many does each get?`,hint:`Think: ${g} × ? = ${n}.`,hint2:`Or deal them out: one to each friend, again and again, until none are left.`,explain:`${n} ÷ ${g} = <b>${each}</b>`+groupsSVG(g,Math.min(each,10),{icon:'🍓'})},num(each));}
+  const a=rnd(2,10);return Object.assign({sub:'missing',prompt:`? × ${k} = ${a*k}`,hint:`How many ${k}s make ${a*k}?`,hint2:`Count by ${k}s up to ${a*k}. Count how many jumps.`,explain:`${a} × ${k} = ${a*k}. Answer: <b>${a}</b>`},num(a));},
  example(){return {html:`${arraySVG(3,5)}<p>3 rows with 5 in each row. Count by 5s: 5, 10, <b>15</b>. We write it as <b>3 × 5 = 15</b>. Sharing goes the other way: 15 shared into 3 rows is 5 each (15 ÷ 3 = 5).</p>`};}},
 
 {id:'fractions',title:'Halves, Quarters & Eighths',icon:'🍕',code:'MA1-GM-03 → MA2-PF-01',blurb:'Equal parts, naming fractions and finding half or a quarter of a number.',
  subs:l=>l>=1?['name','of','equal','compare']:['name','of','equal'],
  gen(H,l,sub){const d=pick(l===0?[2,4]:[2,4,8]);
   if(sub==='name'){const n=l===0?1:rnd(1,d-1);const vis=chance(0.5)?pizzaSVG({parts:d,shaded:n,r:80}):barSVG({parts:d,fills:fillN(n),w:480});
-    if(l===0)return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`Count the equal parts: ${d}.`,explain:`1 out of ${d} equal parts is <b>one ${FNAME[d][0]}</b> (${F(1,d)}).`},fixedOpts(['one half','one quarter','one eighth'],[2,4,8].indexOf(d)));
-    return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`The bottom number is how many equal parts (${d}). The top is how many are shaded.`,explain:`${n} out of ${d} equal parts = <b>${F(n,d)}</b>.`},fracE(n,d));}
+    if(l===0)return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`Count the equal parts: ${d}. One is shaded.`,hint2:'2 parts: halves. 4 parts: quarters. 8 parts: eighths.',explain:`1 out of ${d} equal parts is <b>one ${FNAME[d][0]}</b> (${F(1,d)}).`},fixedOpts(['one half','one quarter','one eighth'],[2,4,8].indexOf(d)));
+    return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`Bottom number: all the equal parts (${d}). Top number: the shaded parts.`,hint2:'Count the shaded parts one by one.',explain:`${n} out of ${d} equal parts = <b>${F(n,d)}</b>.`},fracE(n,d));}
   if(sub==='of'){const dd=pick(l===0?[2,4]:[2,4,8]),k=rnd(2,l>=2?12:6),n=l>=2&&dd>2?rnd(1,dd-1):1;const Q=dd*k;
-    return Object.assign({sub,prompt:`What is ${n===1?(dd===2?'half':'one '+FNAME[dd][0]):`${n} ${FNAME[dd][1]}`} of ${Q}?`,vis:barSVG({parts:dd,w:480}),hint:`Split ${Q} into ${dd} equal parts.`,explain:`${Q} ÷ ${dd} = ${k}${n>1?`, and ${n} parts = ${n*k}`:''}. Answer: <b>${n*k}</b>`+barSVG({parts:dd,fills:fillN(n),labels:range(dd).map(()=>k),w:480})},num(n*k));}
+    return Object.assign({sub,prompt:`What is ${n===1?(dd===2?'half':'one '+FNAME[dd][0]):`${n} ${FNAME[dd][1]}`} of ${Q}?`,vis:barSVG({parts:dd,w:480}),hint:n>1?`Split ${Q} into ${dd} equal parts. Then take ${n} parts.`:`Split ${Q} into ${dd} equal parts. One part is the answer.`,hint2:dd===2?`Halve ${Q}: two equal groups.`:dd===4?`A quarter: halve ${Q}, then halve again.`:`An eighth: halve ${Q} three times.`,explain:`${Q} ÷ ${dd} = ${k}${n>1?`, and ${n} parts = ${n*k}`:''}. Answer: <b>${n*k}</b>`+barSVG({parts:dd,fills:fillN(n),labels:range(dd).map(()=>k),w:480})},num(n*k));}
   if(sub==='equal'){const dd=pick([2,4]);const good=barSVG({parts:dd,fills:fillN(1),w:300});const bad1=barUneq(dd===2?[1.4,0.6]:[1.2,0.6,1.4,0.8],1),bad2=barUneq(dd===2?[0.5,1.5]:[0.5,1,1.5,1],1);
-    return Object.assign({sub,prompt:`Which one shows <b>one ${FNAME[dd][0]}</b> shaded?`,hint:'The parts must all be the same size.',explain:`Only the bar with ${dd} <b>equal</b> parts shows ${F(1,dd)}.`},opts(good,[bad1,bad2],{cls:'pics'}));}
-  const a=pick([2,4,8]);let b;do{b=pick([2,4,8]);}while(b===a);return Object.assign({sub:'compare',prompt:`Which is bigger: ${F(1,a,'big')} or ${F(1,b,'big')}?`,vis:barSVG({parts:a,fills:fillN(1),w:420})+barSVG({parts:b,fills:fillN(1,BL),w:420}),hint:'More pieces means each piece is smaller.',explain:`${F(1,Math.min(a,b))} is bigger. Cutting into more pieces makes each piece smaller.`},fixedOpts([F(1,a,'big'),F(1,b,'big')],a<b?0:1,'opts3'));},
+    return Object.assign({sub,prompt:`Which one shows <b>one ${FNAME[dd][0]}</b> shaded?`,hint:'Find the bar where every part is the same size.',hint2:'Check each bar. Are any parts bigger or smaller?',explain:`Only the bar with ${dd} <b>equal</b> parts shows ${F(1,dd)}.`},opts(good,[bad1,bad2],{cls:'pics'}));}
+  const a=pick([2,4,8]);let b;do{b=pick([2,4,8]);}while(b===a);return Object.assign({sub:'compare',prompt:`Which is bigger: ${F(1,a,'big')} or ${F(1,b,'big')}?`,vis:barSVG({parts:a,fills:fillN(1),w:420})+barSVG({parts:b,fills:fillN(1,BL),w:420}),hint:'More pieces means each piece is smaller.',hint2:'Look at the bars. Which shaded piece is longer?',explain:`${F(1,Math.min(a,b))} is bigger. Cutting into more pieces makes each piece smaller.`},fixedOpts([F(1,a,'big'),F(1,b,'big')],a<b?0:1,'opts3'));},
  example(){return {html:`<div class="row" style="justify-content:center">${pizzaSVG({parts:4,shaded:1,r:70})}</div><p>The pizza is cut into <b>4 equal</b> slices. One slice is <b>one quarter</b> (${F(1,4)}). Half of 12 is 6, and a quarter of 12 is 3 (12 ÷ 4).</p>`};}},
 
 {id:'money',title:'Money',icon:'🪙',code:'MA1-RWN-02 → MA2-AR-01',blurb:'Count coins and notes, totals and change.',
  subs:l=>['count','change','cost'],
  gen(H,l,sub){
   if(sub==='count'){const C=l===0?[5,10,20,50]:l===1?[10,20,50,100,200]:[50,100,200,500,1000];const list=range(rnd(3,l>=1?6:5)).map(()=>pick(C)).sort((a,b)=>b-a);const t=list.reduce((a,b)=>a+b,0);
-    const ans=t<100&&l===0?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'});return Object.assign({sub,prompt:'How much money is there?',vis:moneySVG(list),hint:'Start with the biggest one and count on.',explain:`${list.map(v=>v>=100?money(v).replace('.00',''):v+'c').join(' + ')} = <b>${t<100&&l===0?t+'c':money(t)}</b>`},ans);}
-  if(sub==='change'){if(l===0){const p=rnd(1,19)*5;return Object.assign({sub,prompt:`<span class="story">🍦 An ice block costs <b>${p}c</b>. ${NAME} pays with <b>$1</b>. How much change?</span>`,hint:'$1 = 100c. Count up from '+p+'c to 100c.',explain:`100c − ${p}c = <b>${100-p}c</b>`},num(100-p,{post:'c'}));}
-    const p=l===1?rnd(11,45)*10:rnd(105,950),note=p<500?500:1000;return Object.assign({sub,prompt:`<span class="story">🧸 A toy costs <b>${money(p)}</b>. ${NAME} pays with a <b>${money(note).replace('.00','')}</b> note. How much change?</span>`,hint:`Count up from ${money(p)} to ${money(note)}.`,explain:`${money(note)} − ${money(p)} = <b>${money(note-p)}</b>`},decE(money(note-p).slice(1),{pre:'$'}));}
+    const ans=t<100&&l===0?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'});return Object.assign({sub,prompt:'How much money is there?',vis:moneySVG(list),hint:'Start with the biggest one and count on.',hint2:`Start at ${list[0]>=100?money(list[0]).replace('.00',''):list[0]+'c'}. Add the next one, then the next.`,explain:`${list.map(v=>v>=100?money(v).replace('.00',''):v+'c').join(' + ')} = <b>${t<100&&l===0?t+'c':money(t)}</b>`},ans);}
+  if(sub==='change'){if(l===0){const p=rnd(1,19)*5;return Object.assign({sub,prompt:`<span class="story">🍦 An ice block costs <b>${p}c</b>. ${NAME} pays with <b>$1</b>. How much change?</span>`,hint:`$1 = 100c. Count up from ${p}c to 100c.`,hint2:p%10?`Jump to ${p+5}c first. Then count by 10s to 100c.`:`Count by 10s from ${p}c to 100c.`,explain:`100c − ${p}c = <b>${100-p}c</b>`},num(100-p,{post:'c'}));}
+    const p=l===1?rnd(11,45)*10:rnd(105,950),note=p<500?500:1000;return Object.assign({sub,prompt:`<span class="story">🧸 A toy costs <b>${money(p)}</b>. ${NAME} pays with a <b>${money(note).replace('.00','')}</b> note. How much change?</span>`,hint:p+100-p%100>=note?`Count up from ${money(p)} to ${money(note)} in 10c jumps.`:p%100?`Count up to the next dollar, ${money(p+100-p%100)}. Then up to ${money(note)}.`:`Count up in dollars from ${money(p)} to ${money(note)}.`,hint2:p+100-p%100>=note?`Jump to the next 10c, then count by 10s to ${money(note)}.`:p%100?`${money(p)} to ${money(p+100-p%100)} is ${100-p%100}c. Then add the dollars.`:`Work out ${note/100} − ${p/100} dollars.`,explain:`${money(note)} − ${money(p)} = <b>${money(note-p)}</b>`},decE(money(note-p).slice(1),{pre:'$'}));}
   const a=l===0?rnd(1,9)*5:rnd(5,40)*10,b=l===0?rnd(1,9)*5:rnd(5,40)*10;const t=a+b;
-  return Object.assign({sub,prompt:`<span class="story">🍎 An apple costs <b>${a<100?a+'c':money(a)}</b> and a juice costs <b>${b<100?b+'c':money(b)}</b>. How much for both?</span>`,hint:'Add the two prices.',explain:`${a<100?a+'c':money(a)} + ${b<100?b+'c':money(b)} = <b>${t<100?t+'c':money(t)}</b>`},t<100?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'}));},
+  return Object.assign({sub,prompt:`<span class="story">🍎 An apple costs <b>${a<100?a+'c':money(a)}</b> and a juice costs <b>${b<100?b+'c':money(b)}</b>. How much for both?</span>`,hint:`Add the two prices: ${a<100?a+'c':money(a)} + ${b<100?b+'c':money(b)}.`,hint2:'Work in cents. 100c = $1.',explain:`${a<100?a+'c':money(a)} + ${b<100?b+'c':money(b)} = <b>${t<100?t+'c':money(t)}</b>`},t<100?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'}));},
  example(){return {html:`${moneySVG([50,20,20,5])}<p>Start with the biggest coin: 50c, then count on 20c, 20c and 5c: 50 → 70 → 90 → <b>95c</b>.</p>`};}},
 
 {id:'time',title:'Telling Time',icon:'🕒',code:'MA1-NSM-02 → MA2-NSM-02',blurb:'Half past, quarter past and to, then 5-minute times.',
  subs:l=>l>=2?['read','read','later','digital','duration']:['read','later','digital'],
  gen(H,l,sub){const words=(h,m)=>m===0?`${h} o'clock`:m===30?`half past ${h}`:m===15?`quarter past ${h}`:m===45?`quarter to ${h%12+1}`:`${h}:${String(m).padStart(2,'0')}`;
   const M=l===0?[0,30]:l===1?[0,15,30,45]:range(12).map(i=>i*5);const h=rnd(1,12),m=pick(M);
-  if(sub==='read'){if(l>=2)return Object.assign({sub,prompt:'What time does the clock show?',vis:clockSVG(h,m),hint:'The short hand shows the hour. Count the long hand by 5s from the 12.',explain:`The minute hand is on ${m/5||12}, which is ${m} minutes. It is <b>${h}:${String(m).padStart(2,'0')}</b>.`},timeE(h,m));
-    const ds=[words(h,(m+30)%60),words(h%12+1,m),words(h,m===15?45:15),words(h%12+1,0)];return Object.assign({sub,prompt:'What time does the clock show?',vis:clockSVG(h,m),hint:'The long hand shows the minutes: 12 = o\'clock, 6 = half past, 3 = quarter past, 9 = quarter to.',explain:`It is <b>${words(h,m)}</b>.`},opts(words(h,m),ds,{cls:'txt'}));}
+  if(sub==='read'){if(l>=2)return Object.assign({sub,prompt:'What time does the clock show?',vis:clockSVG(h,m),hint:'Short hand: the hour. Count the long hand by 5s from the 12.',hint2:'Use the last number the short hand passed. Each number is 5 minutes.',explain:`The minute hand is on ${m/5||12}, which is ${m} minutes. It is <b>${h}:${String(m).padStart(2,'0')}</b>.`},timeE(h,m));
+    const ds=[words(h,(m+30)%60),words(h%12+1,m),words(h,m===15?45:15),words(h%12+1,0)];return Object.assign({sub,prompt:'What time does the clock show?',vis:clockSVG(h,m),hint:'Long hand: 12 = o\'clock, 6 = half past, 3 = quarter past, 9 = quarter to.',hint2:'Short hand: the hour it just passed. For quarter to, use the next hour.',explain:`It is <b>${words(h,m)}</b>.`},opts(words(h,m),ds,{cls:'txt'}));}
   if(sub==='later'){const add=pick(l===0?[30,60]:[15,30,60]);const t=h*60+m+add,H2=(Math.floor(t/60)-1)%12+1,M2=t%60;
-    return Object.assign({sub,prompt:`It is ${words(h,m)}. What time will it be in ${add===60?'1 hour':add+' minutes'}?`,vis:clockSVG(h,m,{size:150}),hint:add===60?'Just move the hour on by 1.':`${add} minutes is ${add===30?'half':'a quarter of'} an hour.`,explain:`${words(h,m)} + ${add===60?'1 hour':add+' min'} = <b>${words(H2,M2)}</b>`},opts(words(H2,M2),[words(h,m),words(H2%12+1,M2),words(H2,(M2+30)%60),words(h,(m+15)%60)],{cls:'txt'}));}
+    return Object.assign({sub,prompt:`It is ${words(h,m)}. What time will it be in ${add===60?'1 hour':add+' minutes'}?`,vis:clockSVG(h,m,{size:150}),hint:add===60?'Move the hour on by 1. The minutes stay the same.':add===30?'30 minutes is half an hour. Move the long hand half way round.':'15 minutes is a quarter hour. Move the long hand 3 numbers on.',hint2:'If the long hand goes past 12, the hour goes up by 1.',explain:`${words(h,m)} + ${add===60?'1 hour':add+' min'} = <b>${words(H2,M2)}</b>`},opts(words(H2,M2),[words(h,m),words(H2%12+1,M2),words(H2,(M2+30)%60),words(h,(m+15)%60)],{cls:'txt'}));}
   if(sub==='digital'){const d=`${h}:${String(m).padStart(2,'0')}`;const ds=[`${h}:${String((m+30)%60).padStart(2,'0')}`,`${m===0?12:Math.min(12,m/5)}:${String(h*5%60).padStart(2,'0')}`,`${h%12+1}:${String(m).padStart(2,'0')}`,`${h}:${String((m+15)%60).padStart(2,'0')}`];
-    return Object.assign({sub,prompt:'Which digital time matches the clock?',vis:clockSVG(h,m),hint:'Hours come first, then minutes. Half past = :30, quarter past = :15.',explain:`It shows <b>${d}</b> (${words(h,m)}).`},opts(d,ds,{cls:'txt'}));}
+    return Object.assign({sub,prompt:'Which digital time matches the clock?',vis:clockSVG(h,m),hint:'Hours first, then minutes. Half past = :30, quarter past = :15, quarter to = :45.',hint2:'Short hand for the hour. Count the long hand by 5s for minutes.',explain:`It shows <b>${d}</b> (${words(h,m)}).`},opts(d,ds,{cls:'txt'}));}
   const s=rnd(8,15)*60+rnd(0,11)*5,dur=rnd(2,12)*5,e=s+dur;const f=x=>`${(Math.floor(x/60)-1)%12+1}:${String(x%60).padStart(2,'0')}`;
-  return Object.assign({sub:'duration',prompt:`Lunch starts at <b>${f(s)}</b> and ends at <b>${f(e)}</b>. How many minutes is lunch?`,hint:'Count on in 5s.',explain:`From ${f(s)} to ${f(e)} is <b>${dur} minutes</b>.`},num(dur,{post:' min'}));},
+  return Object.assign({sub:'duration',prompt:`Lunch starts at <b>${f(s)}</b> and ends at <b>${f(e)}</b>. How many minutes is lunch?`,hint:`Count on in 5s from ${f(s)} to ${f(e)}.`,hint2:s%60+dur>=60?`Count to the o\'clock first, then on to ${f(e)}.`:'Count the 5s on your fingers. Each finger is 5 minutes.',explain:`From ${f(s)} to ${f(e)} is <b>${dur} minutes</b>.`},num(dur,{post:' min'}));},
  example(){return {html:`<div class="row" style="justify-content:center">${clockSVG(4,15,{size:160})}</div><p>The <b style="color:#2563eb">short hand</b> is just past 4. The <b style="color:#e11d48">long hand</b> is on the 3, which is 15 minutes. It is <b>quarter past 4</b> (4:15).</p>`};}},
 
 {id:'measure',title:'Length, Area & Mass',icon:'📏',code:'MA1-GM-02 · MA1-2DS-02 · MA1-NSM-01 → MA2',blurb:'Rulers, square units, kilograms and grams.',
  subs:l=>l>=1?['ruler','units','area','mass','convert']:['ruler','units','area','mass'],
  gen(H,l,sub){
-  if(sub==='ruler'){const len=rnd(3,l>=1?11:9),st=l>=1?rnd(1,3):0;return Object.assign({sub,prompt:`How long is the pencil?${st?' Careful, it doesn\'t start at 0!':''}`,vis:rulerSVG(len,{start:st,max:15}),hint:st?`Take away where it starts (${st}) from where it ends (${st+len}).`:'Read the number at the end of the pencil.',explain:`${st?`${st+len} − ${st} = `:''}<b>${len} cm</b>`},num(len,{post:' cm'}));}
+  if(sub==='ruler'){const len=rnd(3,l>=1?11:9),st=l>=1?rnd(1,3):0;return Object.assign({sub,prompt:`How long is the pencil?${st?' Careful, it doesn\'t start at 0!':''}`,vis:rulerSVG(len,{start:st,max:15}),hint:st?`It starts at ${st} and ends at ${st+len}. Work out ${st+len} − ${st}.`:'It starts at 0. Read the number at the tip.',hint2:'Or count the 1 cm spaces along the pencil.',explain:`${st?`${st+len} − ${st} = `:''}<b>${len} cm</b>`},num(len,{post:' cm'}));}
   if(sub==='units'){const Q=pick([['the length of a pencil','cm'],['the height of a door','m'],['the weight of an apple','g'],['the weight of a dog','kg'],['the length of a football field','m'],['the weight of a bag of potatoes','kg'],['the width of a book','cm'],['the weight of a feather','g']]);
-    return Object.assign({sub,prompt:`Which unit is best to measure <b>${Q[0]}</b>?`,hint:'cm and m measure length; g and kg measure mass. Small things use the small unit.',explain:`<b>${Q[1]}</b> is the best unit.`},fixedOpts(['cm','m','g','kg'],['cm','m','g','kg'].indexOf(Q[1]),'opts'));}
-  if(sub==='area'){const w=rnd(2,l>=1?7:5),h=rnd(2,l>=1?5:4);return Object.assign({sub,prompt:'How many squares cover this shape? (Its area in squares.)',vis:rectSVG(w,h,{col:'#fde68a'}),hint:`Count one row (${w}), then count the rows.`,explain:`${h} rows of ${w} = <b>${w*h}</b> squares.`},num(w*h));}
-  if(sub==='mass'){if(l>=2){const kg=rnd(1,5),g=pick([0,250,500,750]);return Object.assign({sub,prompt:`1 kg = 1000 g. How many grams is <b>${kg} kg${g?' '+g+' g':''}</b>?`,hint:'Each kilogram is 1000 grams.',explain:`${kg} × 1000 = ${kg*1000}${g?` + ${g}`:''} = <b>${kg*1000+g} g</b>`},num(kg*1000+g,{post:' g'}));}
-    const a=rnd(2,9);let b;do{b=rnd(2,9);}while(b===a);const A=pick(['🍎','🍊','🥭']),B=pick(['🧸','📘','🥫']);return Object.assign({sub,prompt:`${A} balances <b>${a}</b> blocks. ${B} balances <b>${b}</b> blocks. Which is heavier?`,hint:'More blocks means heavier.',explain:`${Math.max(a,b)} blocks is more than ${Math.min(a,b)}, so <b>${a>b?A:B}</b> is heavier.`},fixedOpts([A,B],a>b?0:1,'opts3'));}
-  const m=rnd(1,4),cm=rnd(1,99);return Object.assign({sub:'convert',prompt:`1 m = 100 cm. How many centimetres is <b>${m} m ${cm} cm</b>?`,hint:`${m} m = ${m*100} cm. Then add ${cm}.`,explain:`${m*100} + ${cm} = <b>${m*100+cm} cm</b>`},num(m*100+cm,{post:' cm'}));},
+    return Object.assign({sub,prompt:`Which unit is best to measure <b>${Q[0]}</b>?`,hint:'cm and m are for length. g and kg are for weight.',hint2:'Small or light things: cm or g. Big or heavy things: m or kg.',explain:`<b>${Q[1]}</b> is the best unit.`},fixedOpts(['cm','m','g','kg'],['cm','m','g','kg'].indexOf(Q[1]),'opts'));}
+  if(sub==='area'){const w=rnd(2,l>=1?7:5),h=rnd(2,l>=1?5:4);return Object.assign({sub,prompt:'How many squares cover this shape? (Its area in squares.)',vis:rectSVG(w,h,{col:'#fde68a'}),hint:`Count one row (${w}). Then count the rows (${h}).`,hint2:`Count by ${w}s, once for each row.`,explain:`${h} rows of ${w} = <b>${w*h}</b> squares.`},num(w*h));}
+  if(sub==='mass'){if(l>=2){const kg=rnd(1,5),g=pick([0,250,500,750]);return Object.assign({sub,prompt:`1 kg = 1000 g. How many grams is <b>${kg} kg${g?' '+g+' g':''}</b>?`,hint:g?`Each kg is 1000 g. Change ${kg} kg to grams, then add ${g} g.`:'Each kg is 1000 g.',hint2:g?`${kg} kg = ${kg*1000} g. Now add ${g}.`:`Write ${kg}, then three zeros.`,explain:`${kg} × 1000 = ${kg*1000}${g?` + ${g}`:''} = <b>${kg*1000+g} g</b>`},num(kg*1000+g,{post:' g'}));}
+    const a=rnd(2,9);let b;do{b=rnd(2,9);}while(b===a);const A=pick(['🍎','🍊','🥭']),B=pick(['🧸','📘','🥫']);return Object.assign({sub,prompt:`${A} balances <b>${a}</b> blocks. ${B} balances <b>${b}</b> blocks. Which is heavier?`,hint:`More blocks means heavier. Compare ${a} and ${b}.`,hint2:'Which number is bigger? That one is heavier.',explain:`${Math.max(a,b)} blocks is more than ${Math.min(a,b)}, so <b>${a>b?A:B}</b> is heavier.`},fixedOpts([A,B],a>b?0:1,'opts3'));}
+  const m=rnd(1,4),cm=rnd(1,99);return Object.assign({sub:'convert',prompt:`1 m = 100 cm. How many centimetres is <b>${m} m ${cm} cm</b>?`,hint:`${m} m = ${m*100} cm. Then add ${cm} cm.`,hint2:`${m*100} + ${cm}: the hundreds stay, the ${cm} fills the tens and ones.`,explain:`${m*100} + ${cm} = <b>${m*100+cm} cm</b>`},num(m*100+cm,{post:' cm'}));},
  example(){return {html:`${rulerSVG(6,{start:2,max:10})}<p>The pencil starts at 2 and ends at 8. Its length is 8 − 2 = <b>6 cm</b>. Always check where the object starts!</p>`};}},
 
 {id:'shapes',title:'Shapes, Objects & Maps',icon:'🔷',code:'MA1-2DS-01 · MA1-3DS-01 · MA1-GM-01 → MA2-GM-01',blurb:'2D shapes, 3D objects, grid maps and turns.',
  subs:l=>l>=1?['2d','3d','map','turn']:['2d','3d','map'],
  gen(H,l,sub){
   if(sub==='2d'){const n=pick([3,4,5,6,8]);const nm={3:'triangle',4:'quadrilateral',5:'pentagon',6:'hexagon',8:'octagon'};
-    if(chance(0.5))return Object.assign({sub,prompt:'What is the name of this shape?',vis:polySVG(n),hint:'Count the straight sides.',explain:`It has ${n} sides, so it is a <b>${nm[n]}</b>.`},opts(nm[n],shuffle(Object.values(nm).filter(x=>x!==nm[n])),{cls:'txt'}));
-    return Object.assign({sub,prompt:`How many ${chance(0.5)?'sides':'corners'} does a <b>${nm[n]}</b> have?`,vis:polySVG(n),hint:'Count them on the picture.',explain:`A ${nm[n]} has <b>${n}</b> sides and ${n} corners.`},num(n));}
+    if(chance(0.5))return Object.assign({sub,prompt:'What is the name of this shape?',vis:polySVG(n),hint:'Count the straight sides.',hint2:'3 triangle, 4 quadrilateral, 5 pentagon, 6 hexagon, 8 octagon.',explain:`It has ${n} sides, so it is a <b>${nm[n]}</b>.`},opts(nm[n],shuffle(Object.values(nm).filter(x=>x!==nm[n])),{cls:'txt'}));
+    const sc=chance(0.5)?'sides':'corners';return Object.assign({sub,prompt:`How many ${sc} does a <b>${nm[n]}</b> have?`,vis:polySVG(n),hint:`Count the ${sc} on the picture. Touch each one.`,hint2:'Start at the top and go round. Stop when you get back.',explain:`A ${nm[n]} has <b>${n}</b> sides and ${n} corners.`},num(n));}
   if(sub==='3d'){const S={'cube':6,'rectangular prism':6,'square pyramid':5,'cylinder':3,'cone':2,'sphere':1};const k=pick(Object.keys(S));
-    if(l>=2&&!['cylinder','cone','sphere'].includes(k))return Object.assign({sub,prompt:`How many flat faces does a <b>${k}</b> have?`,vis:solidSVG(k),hint:'Count the faces you can see, then the hidden ones.',explain:`A ${k} has <b>${S[k]}</b> faces.`},num(S[k]));
-    return Object.assign({sub,prompt:'What is this 3D object called?',vis:solidSVG(k),hint:'Does it roll? Does it have a point? Are all its faces squares?',explain:`It is a <b>${k}</b>.`},opts(k,shuffle(Object.keys(S).filter(x=>x!==k)),{cls:'txt'}));}
+    if(l>=2&&!['cylinder','cone','sphere'].includes(k))return Object.assign({sub,prompt:`How many flat faces does a <b>${k}</b> have?`,vis:solidSVG(k),hint:'Count the faces you can see, then the hidden ones.',hint2:'A face is a flat side. Remember the back and the bottom.',explain:`A ${k} has <b>${S[k]}</b> faces.`},num(S[k]));
+    return Object.assign({sub,prompt:'What is this 3D object called?',vis:solidSVG(k),hint:'Does it roll? Does it have a point? Are all its faces squares?',hint2:'Ball: sphere. Circle ends: cylinder. A point: cone or pyramid. All squares: cube.',explain:`It is a <b>${k}</b>.`},opts(k,shuffle(Object.keys(S).filter(x=>x!==k)),{cls:'txt'}));}
   if(sub==='map'){const icons=shuffle(['🌳','🏠','🏫','🛝','⛲','🐶']).slice(0,4);const cells=shuffle(range(16)).slice(0,4).map(c=>({x:c%4,y:Math.floor(c/4)}));const P=icons.map((ic,i)=>Object.assign({icon:ic},cells[i]));const t=rnd(0,3),ref=p=>'ABCD'[p.x]+(p.y+1);
-    if(chance(0.5))return Object.assign({sub,prompt:`What is at <b>${ref(P[t])}</b>?`,vis:mapSVG(4,4,P),hint:'Find the letter along the bottom, then go up to the number.',explain:`At ${ref(P[t])} there is <b>${P[t].icon}</b>.`},fixedOpts(icons,t,'opts'));
-    return Object.assign({sub,prompt:`Where is the ${P[t].icon}?`,vis:mapSVG(4,4,P),hint:'Letter first (along the bottom), then the number (up the side).',explain:`The ${P[t].icon} is at <b>${ref(P[t])}</b>.`},opts(ref(P[t]),[ 'ABCD'[(P[t].x+1)%4]+(P[t].y+1),'ABCD'[P[t].x]+((P[t].y+1)%4+1),'ABCD'[P[t].y%4]+(P[t].x+1),'ABCD'[(P[t].x+2)%4]+((P[t].y+2)%4+1)],{cls:'txt'}));}
+    if(chance(0.5))return Object.assign({sub,prompt:`What is at <b>${ref(P[t])}</b>?`,vis:mapSVG(4,4,P),hint:`Find ${ref(P[t])[0]} along the bottom. Go up to ${ref(P[t])[1]}.`,hint2:'One finger on the letter, one on the number. Slide them to meet.',explain:`At ${ref(P[t])} there is <b>${P[t].icon}</b>.`},fixedOpts(icons,t,'opts'));
+    return Object.assign({sub,prompt:`Where is the ${P[t].icon}?`,vis:mapSVG(4,4,P),hint:`Find the ${P[t].icon}. Read the letter below it, then the number beside it.`,hint2:`Letter first, then number, like ${ref(P[t])==='B3'?'C2':'B3'}.`,explain:`The ${P[t].icon} is at <b>${ref(P[t])}</b>.`},opts(ref(P[t]),[ 'ABCD'[(P[t].x+1)%4]+(P[t].y+1),'ABCD'[P[t].x]+((P[t].y+1)%4+1),'ABCD'[P[t].y%4]+(P[t].x+1),'ABCD'[(P[t].x+2)%4]+((P[t].y+2)%4+1)],{cls:'txt'}));}
   const D4=['north','east','south','west'];const f=rnd(0,3),q=pick(l>=2?[1,2,3]:[1,2]),cw=chance(0.5);const e=(f+(cw?q:-q)+8)%4;const turn={1:'a quarter turn',2:'a half turn',3:'three-quarter turn'}[q];
-  return Object.assign({sub:'turn',prompt:`${NAME} faces <b>${D4[f]}</b>. He makes ${turn} ${cw?'clockwise':'anticlockwise'}. Which way does he face now?`,vis:`<div class="compass">N<br>W ✛ E<br>S</div>`,hint:'Clockwise goes N → E → S → W. A quarter turn is one step.',explain:`${D4[f]} → ${q} step${q>1?'s':''} ${cw?'clockwise':'anticlockwise'} → <b>${D4[e]}</b>`},fixedOpts(D4,e,'txt'));},
+  return Object.assign({sub:'turn',prompt:`${NAME} faces <b>${D4[f]}</b>. He makes ${turn} ${cw?'clockwise':'anticlockwise'}. Which way does he face now?`,vis:`<div class="compass">N<br>W ✛ E<br>S</div>`,hint:'Clockwise goes N → E → S → W. A quarter turn is one step.',hint2:`Start at ${D4[f]}. Move ${q} step${q>1?'s':''} ${cw?'clockwise':'anticlockwise'}.`,explain:`${D4[f]} → ${q} step${q>1?'s':''} ${cw?'clockwise':'anticlockwise'} → <b>${D4[e]}</b>`},fixedOpts(D4,e,'txt'));},
  example(){return {html:`<div class="row" style="justify-content:center">${polySVG(6,{size:120})}${solidSVG('cylinder',{size:120})}</div><p>A <b>hexagon</b> is a flat (2D) shape with 6 sides and 6 corners. A <b>cylinder</b> is a 3D object: 2 flat circle faces and a curved surface, so it can roll.</p>`};}},
 
 {id:'chance',title:'Chance',icon:'🎲',code:'MA1-CHAN-01 → MA2-CHAN-01',blurb:'Certain, likely, unlikely, impossible.',
  subs:l=>['words','more','everyday'],
  gen(H,l,sub){const W=['impossible','unlikely','likely','certain'];
-  if(sub==='words'){const tot=8,k=rnd(0,3),r=[0,rnd(1,2),rnd(6,7),8][k];return Object.assign({sub,prompt:`${NAME} takes a marble without looking. How likely is <b>red</b>?`,vis:bagSVG([{col:'#ef4444',n:r},{col:'#3b82f6',n:tot-r}]),hint:`How many red marbles are there? ${r} out of ${tot}.`,explain:`${r} out of ${tot} are red, so red is <b>${W[k]}</b>.`},fixedOpts(W,k));}
+  if(sub==='words'){const tot=8,k=rnd(0,3),r=[0,rnd(1,2),rnd(6,7),8][k];return Object.assign({sub,prompt:`${NAME} takes a marble without looking. How likely is <b>red</b>?`,vis:bagSVG([{col:'#ef4444',n:r},{col:'#3b82f6',n:tot-r}]),hint:`Count the red marbles: ${r} out of ${tot}.`,hint2:'None: impossible. A few: unlikely. Most: likely. All: certain.',explain:`${r} out of ${tot} are red, so red is <b>${W[k]}</b>.`},fixedOpts(W,k));}
   if(sub==='more'){const cs=[['red','#ef4444'],['blue','#3b82f6'],['yellow','#facc15']];const n=[rnd(1,5),rnd(1,5),rnd(1,5)];if(new Set(n).size<3)n[0]=Math.max(...n)+1;const mx=n.indexOf(Math.max(...n));
     const sec=[];cs.forEach((c,i)=>{for(let j=0;j<n[i];j++)sec.push(c[1]);});
-    return Object.assign({sub,prompt:'Which colour is the spinner <b>most likely</b> to land on?',vis:spinnerSVG(shuffle(sec)),hint:'Count the parts of each colour.',explain:`${cs.map((c,i)=>`${c[0]}: ${n[i]}`).join(', ')}. <b>${cs[mx][0]}</b> has the most parts.`},fixedOpts(cs.map(c=>c[0]),mx,'opts3'));}
+    return Object.assign({sub,prompt:'Which colour is the spinner <b>most likely</b> to land on?',vis:spinnerSVG(shuffle(sec)),hint:'Count the parts of each colour.',hint2:'The colour with the most parts is most likely.',explain:`${cs.map((c,i)=>`${c[0]}: ${n[i]}`).join(', ')}. <b>${cs[mx][0]}</b> has the most parts.`},fixedOpts(cs.map(c=>c[0]),mx,'opts3'));}
   const E=pick([['The sun will rise tomorrow.',3],['A cat will drive a bus to school.',0],['It will rain somewhere in Australia this year.',3],['You will see a real dinosaur today.',0],['You will have a drink of water today.',2],['It will snow in Sydney tomorrow.',1],['You will eat breakfast tomorrow.',2],['You will meet the Prime Minister today.',1]]);
-  return Object.assign({sub:'everyday',prompt:`<b>${E[0]}</b> How likely is it?`,hint:'Could it happen? Will it always happen?',explain:`It is <b>${W[E[1]]}</b>.`},fixedOpts(W,E[1]));},
+  return Object.assign({sub:'everyday',prompt:`<b>${E[0]}</b> How likely is it?`,hint:'Could it ever happen? Will it always happen?',hint2:'Never: impossible. Rarely: unlikely. Often: likely. Always: certain.',explain:`It is <b>${W[E[1]]}</b>.`},fixedOpts(W,E[1]));},
  example(){return {html:`${bagSVG([{col:'#ef4444',n:6},{col:'#3b82f6',n:2}])}<p>6 red and 2 blue marbles. Red is <b>likely</b> (there are lots of them). Blue is <b>unlikely</b>. Green is <b>impossible</b> because there are none.</p>`};}},
 ];
 const CFG_E={player:'ethan',name:'Ethan',theme:'ethan',year:'Year 2 → Year 3',warm:'quick',
   path:['facts','placeval','data','muldiv','fractions','money','time','measure','shapes','chance'],start:'muldiv',
-  games:{numberfacts:'facts',data:'data'}};
+  games:{numberfacts:'facts',data:'data'},moreLabel:'More help'};
 
 const BUILTIN=TOPICS_E,CFG=CFG_E;
 /* ===== Daily Lesson engine (shared by both children) ===== */
@@ -628,6 +636,8 @@ function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){
 /* ---------- lesson planning ---------- */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
+  /* lesson sizes: the defaults are the original 25-30 question lesson (Ethan); CFG.sizes overrides them (Alexia: about 18) */
+  const Z=Object.assign({fSchool:6,fWarm:3,fNew:3,fMixF:6,fMixO:2,fMixONoCur:3,fFix:4,fCh:['f','pick','f'],nWarm:6,nNew:5,nMix:9,nMixNoCur:5,nFix:4,nCh:3,rWarmSf:3,rWarm:4,rT:18,rO:5,rT2:18,rTough:4},CFG.sizes||{});
   const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:Math.min(3,T(t).lvl+(o.up||0)),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
   const focusToday=activeFocus(date),wf=weekFocus(date),cur=curTopic();
   const pool=doneTopics().concat(cur&&T(cur).les.length?[cur]:[]).concat(wf.filter(x=>!PATH.includes(x)||PATH.indexOf(x)>S.cur)).filter((x,i,a)=>a.indexOf(x)===i);
@@ -636,38 +646,38 @@ function planLesson(date,variant=0){
   const review=isReviewDay(date);
   let kind=review?'review':'mix';
   if(!review&&focusToday.length){
-    /* school-focus day: the school topic is most of the lesson (about 17 of 27 questions), spread through the sections;
+    /* school-focus day: the school topic is most of the lesson (about 17 of 27 questions with the default sizes, 12 of 18 for Alexia), spread through the sections;
        a short warm-up and 3 questions on the current path topic keep mastery tracking going (3 is the per-lesson minimum). */
     const f=focusToday[0].topicId;
-    add('school',f,{kind:'example'});for(let i=0;i<6;i++)add('school',f,{guided:i<2});
-    for(let i=0;i<3;i++)add('warm',CFG.warm,{});
-    if(cur){if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<3;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
-    const opl=pl.filter(x=>x!==f);const others=opl.length?interleave(opl,2+(cur?0:3),mixW):[];
-    const nF=6,mixList=[];let oi=0;const nT=nF+others.length;for(let i=0;i<nT;i++){const wantO=others.length&&oi<others.length&&Math.floor((i+1)*others.length/nT)>oi;mixList.push(wantO?others[oi++]:f);}
+    add('school',f,{kind:'example'});for(let i=0;i<Z.fSchool;i++)add('school',f,{guided:i<2});
+    for(let i=0;i<Z.fWarm;i++)add('warm',CFG.warm,{});
+    if(cur){if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<Z.fNew;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
+    const opl=pl.filter(x=>x!==f);const others=opl.length?interleave(opl,Z.fMixO+(cur?0:Z.fMixONoCur),mixW):[];
+    const nF=Z.fMixF,mixList=[];let oi=0;const nT=nF+others.length;for(let i=0;i<nT;i++){const wantO=others.length&&oi<others.length&&Math.floor((i+1)*others.length/nT)>oi;mixList.push(wantO?others[oi++]:f);}
     mixList.forEach(t=>add('mix',t));
     const fm={};S.log.filter(e=>!e.ok&&e.t===f&&e.d<=date&&daysBetween(e.d,date)<=14).forEach(e=>{if(e.s)fm[e.s]=(fm[e.s]||0)+1;});
     const fks=Object.keys(fm);
     const recent={};S.log.filter(e=>!e.ok&&e.t!==f&&e.d<=date&&daysBetween(e.d,date)<=14&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');recent[k]=(recent[k]||0)+1;});
     const rk=Object.keys(recent);const weak=(opl.length?opl:pl).slice().sort((a,b)=>acc(a)-acc(b));
     const ok1=rk.length?wpick(rk,x=>recent[x]):weak[0]+'|';
-    add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});{const [t,s]=ok1.split('|');add('fix',t,{sub:s||null});}
-    add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});add('fix',f,{});
-    const ch=opl.concat(cur?[cur]:[]);add('challenge',f,{up:1});add('challenge',ch.length?pick(ch):f,{up:1});add('challenge',f,{up:1});
+    add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});if(Z.fFix>1){const [t,s]=ok1.split('|');add('fix',t,{sub:s||null});}
+    if(Z.fFix>2)add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});if(Z.fFix>3)add('fix',f,{});
+    const ch=opl.concat(cur?[cur]:[]);Z.fCh.forEach(c=>add('challenge',c==='pick'?(ch.length?pick(ch):f):f,{up:1}));
   }else if(!review){
     if(focusToday.length){const f=focusToday[0];add('school',f.topicId,{kind:'example'});for(let i=0;i<5;i++)add('school',f.topicId,{guided:i<2});}
-    for(let i=0;i<6;i++)add('warm',CFG.warm,{});
-    if(cur){add('new',cur,{kind:'example'});for(let i=0;i<5;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
-    const nMix=(focusToday.length?6:9)+(cur?0:5);interleave(pl,nMix,mixW).forEach(t=>add('mix',t));
+    for(let i=0;i<Z.nWarm;i++)add('warm',CFG.warm,{});
+    if(cur){add('new',cur,{kind:'example'});for(let i=0;i<Z.nNew;i++)add('new',cur,{guided:i<2&&T(cur).les.length===0});}
+    const nMix=(focusToday.length?6:Z.nMix)+(cur?0:Z.nMixNoCur);interleave(pl,nMix,mixW).forEach(t=>add('mix',t));
     /* fix-it: recent mistakes from the daily log, then weakest topics (daily + game history) */
     const recent={};S.log.filter(e=>!e.ok&&e.d<=date&&daysBetween(e.d,date)<=14&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');recent[k]=(recent[k]||0)+1;});
     const keys=Object.keys(recent);const fix=[];
-    const used={};for(let i=0;i<8&&fix.length<4&&keys.length;i++){const k=wpick(keys,x=>recent[x]);fix.push(k);used[k]=(used[k]||0)+1;if(used[k]>=Math.min(2,recent[k]))keys.splice(keys.indexOf(k),1);}
-    const weak=pl.slice().sort((a,b)=>acc(a)-acc(b));while(fix.length<4)fix.push(weak[fix.length%weak.length]+'|');
+    const used={};for(let i=0;i<8&&fix.length<Z.nFix&&keys.length;i++){const k=wpick(keys,x=>recent[x]);fix.push(k);used[k]=(used[k]||0)+1;if(used[k]>=Math.min(2,recent[k]))keys.splice(keys.indexOf(k),1);}
+    const weak=pl.slice().sort((a,b)=>acc(a)-acc(b));while(fix.length<Z.nFix)fix.push(weak[fix.length%weak.length]+'|');
     fix.forEach(k=>{const [t,s]=k.split('|');add('fix',t,{sub:s||null});});
-    const ch=pl.concat(cur?[cur]:[]);for(let i=0;i<3;i++)add('challenge',pick(ch),{up:1});
+    const ch=pl.concat(cur?[cur]:[]);for(let i=0;i<Z.nCh;i++)add('challenge',pick(ch),{up:1});
   }else{
     const sf=wf.concat(focusToday.map(f=>f.topicId)).filter((x,i,a)=>a.indexOf(x)===i);
-    for(let i=0;i<(sf.length?3:4);i++)add('warm',CFG.warm,{});
+    for(let i=0;i<(sf.length?Z.rWarmSf:Z.rWarm);i++)add('warm',CFG.warm,{});
     const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<=WEEKOF(date)[3]&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
     wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
     let keys=Object.keys(wk);if(new Set(keys.map(k=>k.split('|')[0])).size<3)pl.forEach(t=>{if(!keys.some(k=>k.startsWith(t+'|')))keys.push(t+'|');});
@@ -677,17 +687,17 @@ function planLesson(date,variant=0){
       /* week with school focus: 13 of the 18 review questions are this week's school topics (taken in turn, using
          their mistake subs when there are any), spread among 5 questions from the rest of the week */
       const okeys=keys.filter(k=>!sf.includes(tp(k)));const fsub=t=>{const ks=Object.keys(wk).filter(k=>tp(k)===t&&k.split('|')[1]&&wk[k].w>0);return ks.length&&chance(0.5)?wpick(ks,k=>wk[k].w).split('|')[1]:null;};
-      const nO=okeys.length?5:0,nT=18;let fi=0,oi=0;
+      const nO=okeys.length?Z.rO:0,nT=Z.rT;let fi=0,oi=0;
       for(let i=0;i<nT;i++){const wantO=nO&&oi<nO&&Math.floor((i+1)*nO/nT)>oi;
         if(wantO){const c=okeys.length>1?okeys.filter(k=>tp(k)!==last):okeys;const k=wpick(c,w);last=tp(k);oi++;add('review',tp(k),{sub:k.split('|')[1]||null});}
         else{const t=sf[fi++%sf.length];last=t;add('review',t,{sub:fsub(t)});}}
       const tough=keys.filter(k=>(wk[k]||{}).w>0).sort((a,b)=>wk[b].w-wk[a].w);const tl=[];
-      sf.forEach(t=>{const k=tough.find(x=>tp(x)===t);tl.push(k||t+'|');});tough.forEach(k=>{if(tl.length<4&&!tl.includes(k))tl.push(k);});while(tl.length<4)tl.push(sf[tl.length%sf.length]+'|');
-      tl.slice(0,4).forEach(k=>{const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});});
+      sf.forEach(t=>{const k=tough.find(x=>tp(x)===t);tl.push(k||t+'|');});tough.forEach(k=>{if(tl.length<Z.rTough&&!tl.includes(k))tl.push(k);});while(tl.length<Z.rTough)tl.push(sf[tl.length%sf.length]+'|');
+      tl.slice(0,Z.rTough).forEach(k=>{const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});});
     }else{
-    for(let i=0;i<18;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:k.split('|')[1]||null});}
-    const tough=keys.slice().sort((a,b)=>((wk[b]||{}).w||0)-((wk[a]||{}).w||0)).slice(0,4);
-    for(let i=0;i<4;i++){const k=tough[i%tough.length];const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});}
+    for(let i=0;i<Z.rT2;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:k.split('|')[1]||null});}
+    const tough=keys.slice().sort((a,b)=>((wk[b]||{}).w||0)-((wk[a]||{}).w||0)).slice(0,Z.rTough);
+    for(let i=0;i<Z.rTough;i++){const k=tough[i%tough.length];const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:k.split('|')[1]||null,up:hasW?0:1});}
     }
   }
   /* 1-2 "tell a grown-up" prompts on non-warm questions */
@@ -876,7 +886,8 @@ function key(k){if(!q||q.done||!q.fields)return;const A=q.active,i=q.fields.find
 function updCheck(){const c=$('#checkBtn');if(!q||q.example)return;c.classList.toggle('hidden',q.kind==='choice'||q.done);c.disabled=!(q.fields&&q.fields.every(f=>q.f[f.id]!==''));}
 const same=(a,b)=>{a=String(a).trim();b=String(b).trim();if(/^-?\d*\.?\d+$/.test(a)&&/^-?\d*\.?\d+$/.test(b))return Math.abs(+a- +b)<1e-9;return a===b;};
 function gradeEntry(){if(q.check)return !!q.check(q.f);return q.fields.every(f=>same(q.f[f.id],q.answer[f.id]));}
-function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;$('#hintBox').innerHTML=(guided?'<span class="guided">🧭 Guided practice: here is a tip to get you started</span>':'')+'💡 '+(q.hint||'Have a careful look at the picture.');$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
+function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;else q.guidedHint=true;$('#hintBox').innerHTML=(guided?'<span class="guided">🧭 Guided practice: here is a tip to get you started</span>':'')+'💡 <span class="h1">'+(q.hint||'Have a careful look at the picture.')+'</span>'+(q.hint2?'<div class="more"><button class="btn ghost" id="moreHint">🔎 '+(CFG.moreLabel||'Show me more help')+'</button></div>':'');
+  const mb=$('#moreHint');if(mb)mb.onclick=()=>{if(!q||q.done)return;if(!q.guidedHint)q.usedHint=true;mb.parentNode.outerHTML='<div class="hint2">🔎 '+q.hint2+'</div>';sfx('tap');};$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
 function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN.asked=(RUN.asked||0)+1;RUN.awaitNext=true;
   let pts=0,fbNote='';
   if(rk){/* a redo: never changes score, mastery or history; a fix earns a small bonus */
@@ -952,7 +963,7 @@ function confetti(){const cols=['#7c3aed','#ec4899','#f59e0b','#22c55e','#0ea5e9
    and each later redo attempt. Extra-practice runs are not recorded. */
 const REV_DAYS=14,REV_MAX=60;
 const givenHTML=q=>q.kind==='choice'?(q.chosen!=null?q.choices[q.chosen]:'–'):q.layout.replace(/\[\[(\w+)\]\]/g,(m,id)=>`<b>${esc((q.f&&q.f[id])||'')||'–'}</b>`);
-function revPayload(q){const o={};['prompt','vis','kind','choices','answer','cls','layout','layoutPre','fields','dot','hint','explain','sub'].forEach(k=>{if(q[k]!==undefined)o[k]=q[k];});
+function revPayload(q){const o={};['prompt','vis','kind','choices','answer','cls','layout','layoutPre','fields','dot','hint','hint2','explain','sub'].forEach(k=>{if(q[k]!==undefined)o[k]=q[k];});
   if(o.vis&&o.vis.length>40000)o.vis='';return JSON.parse(JSON.stringify(o));}
 function revPrune(){if(!S.rev)S.rev={};const lim=addDays(TODAY,-(REV_DAYS-1));Object.keys(S.rev).forEach(d=>{if(d<lim)delete S.rev[d];});}
 function revRecord(q,it,rk,ok,correct){try{revPrune();const L=S.rev[RUN.date]||(S.rev[RUN.date]=[]);const id=`${RUN.variant}|${it.qi}`;
@@ -982,7 +993,7 @@ function revItem(e,n,N){const T0=TOPICS[e.it.t],sn=SECN[e.it.sec]||['',''],pend=
    ${e.q.vis?`<div class="vis">${e.q.vis}</div>`:''}
    <div class="rvans"><div class="chip bad">❌ ${esc(NAME)}'s first answer: ${e.a!=null?e.a:'<i>not recorded (this lesson started before the review screen was added)</i>'}</div>${tries}
     <div class="rvst">${st}</div><div class="chip ok">✅ Correct answer: ${e.c}</div></div>
-   <div class="rvexp"><b>👣 Step by step</b>${revSteps(e.q.explain)}${e.q.hint?`<div class="small">💡 Tip: ${e.q.hint}</div>`:''}</div>
+   <div class="rvexp"><b>👣 Step by step</b>${revSteps(e.q.explain)}${e.q.hint?`<div class="small">💡 Tip: ${e.q.hint}</div>`:''}${e.q.hint2?`<div class="small">🔎 More help: ${e.q.hint2}</div>`:''}</div>
    <div class="rvtry"><button class="btn green" data-try="${n}">🔁 Try it again</button><button class="btn ghost" data-sayexp="${n}">🔈 Read the steps</button><div class="rvplay" id="rvplay${n}"></div></div></article>`;}
 function openReview(sel,from){RV={sel:sel||TODAY,mode:RV.mode||'list',i:0,from:from||'home'};renderReview();show('review');}
 function renderReview(){const L=revList(RV.sel),N=L.length;if(RV.i>=N)RV.i=Math.max(0,N-1);
