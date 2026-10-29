@@ -85,20 +85,20 @@ window.DAILY_TOPICS_EXTRA.push((function(){
       const others=items.filter((x,i)=>i!==pos)[0];
       const why=key==='col'?`${LET[pos]} is <b>${odd.col}</b>, but all the others are <b>${others.col}</b>`:key==='shape'?`${LET[pos]} is a ${SH[odd.shape].s} with ${sidesTxt(SH[odd.shape].n)}, but all the others are ${SH[others.shape].p}`:`${LET[pos]} is <b>${odd.size}</b>, but all the others are ${others.size}`;
       const kw=key==='col'?'colour':key==='shape'?'shape':'size';
-      return Object.assign({sub:'odd',prompt:`Which one is the <b>odd one out</b>?`,vis:row(items),hint:`Look at colour, then shape, then size. Which one is different from all the others?`,
+      return Object.assign({sub:'odd',prompt:`Which one is the <b>odd one out</b>?`,vis:row(items),hint:`Check one thing at a time: colour, then shape, then size.`,hint2:`Find the thing that only ONE shape has.`,
         explain:`Check one thing at a time: colour, shape, size.<br>It is sorted by <b>${kw}</b>: ${why}.<br>So the odd one out is <b>${LET[pos]}</b>.`+row(items,{ring:pos})},H.fixedOpts(LET.slice(0,n).split(''),pos,''));}
     throw new Error('odd: no set');}
 
   function gGroup(H,l){const by=H.pick(l>=1?['col','sides','sides']:['col','sides']);const ng=l>=2?3:H.pick([2,3]);
     if(by==='col'){const cs=H.shuffle(CN.slice()).slice(0,ng);const groups=cs.map(c=>({label:c[0].toUpperCase()+c.slice(1),items:[rItem(H,{col:c}),rItem(H,{col:c})]}));
       const gi=H.rnd(0,ng-1);let ex=rItem(H,{col:cs[gi]});
-      return Object.assign({sub:'group',prompt:`These shapes are sorted by <b>colour</b>. Which group does the new shape go in?`,vis:hoops(groups,{extra:ex}),hint:`Look at the colour word under the new shape.`,
+      return Object.assign({sub:'group',prompt:`These shapes are sorted by <b>colour</b>. Which group does the new shape go in?`,vis:hoops(groups,{extra:ex}),hint:`Look at the colour word under the new shape.`,hint2:`Find the group with that same colour.`,
         explain:`The new shape is a ${desc(ex)}.<br>The groups are sorted by colour, so shape and size do not matter.<br>It goes in the <b>${groups[gi].label}</b> group.`+hoops(groups.map((g,i)=>i===gi?{label:g.label,items:g.items.concat([ex])}:g),{hl:gi})},H.fixedOpts(groups.map(g=>g.label),gi));}
     const ns=H.shuffle([0,3,4,5,6]).slice(0,ng).sort((a,b)=>a-b);const byN=n=>SN.filter(s=>SH[s].n===n);
     const groups=ns.map(n=>({label:n===0?'No straight sides':n+' sides',items:[rItem(H,{shape:H.pick(byN(n))}),rItem(H,{shape:H.pick(byN(n))})]}));
     const gi=H.rnd(0,ng-1);const n=ns[gi];let shape=H.pick(byN(n));if(n===4)shape=groups[gi].items.some(i=>i.shape==='square')?'rectangle':'square';
     const ex=rItem(H,{shape});
-    return Object.assign({sub:'group',prompt:`These shapes are sorted by <b>number of sides</b>. Which group does the new shape go in?`,vis:hoops(groups,{extra:ex}),hint:`Count the straight sides of the new shape.`,
+    return Object.assign({sub:'group',prompt:`These shapes are sorted by <b>number of sides</b>. Which group does the new shape go in?`,vis:hoops(groups,{extra:ex}),hint:`Count the straight sides of the new shape.`,hint2:`Circles have no straight sides. Squares and rectangles both have 4.`,
       explain:`The new shape is a ${desc(ex)}. It has ${sidesTxt(n)}.<br>Colour and size do not matter for this sort.<br>It goes in the <b>${groups[gi].label}</b> group.`+(n===4?' Squares and rectangles both have 4 sides, so they go together.':'')+hoops(groups.map((g,i)=>i===gi?{label:g.label,items:g.items.concat([ex])}:g),{hl:gi})},H.fixedOpts(groups.map(g=>g.label),gi));}
 
   const HOW=['By colour','By size','By number of sides','2D shapes and 3D objects'];
@@ -107,7 +107,7 @@ window.DAILY_TOPICS_EXTRA.push((function(){
       if(rule==='dim'){const flat=[rItem(H),rItem(H),rItem(H)];const so=H.shuffle(['cube','sphere','cylinder','cone','square pyramid','rectangular prism']).slice(0,3).map(s=>({solid:s}));
         if(new Set(flat.map(i=>i.col)).size<2||new Set(flat.map(i=>SH[i.shape].n)).size<2||new Set(flat.map(i=>i.size)).size<2)continue;
         groups=H.shuffle([{label:'Group 1',items:flat},{label:'Group 2',items:so}]);groups.forEach((g,i)=>g.label='Group '+(i+1));
-        return Object.assign({sub:'how',prompt:`How were these sorted?`,vis:hoops(groups),hint:`Are the things in each group flat, or solid things you could pick up?`,
+        return Object.assign({sub:'how',prompt:`How were these sorted?`,vis:hoops(groups),hint:`Are the things in each group flat, or solid things you could pick up?`,hint2:`Is one group all flat pictures? Is the other all solid objects?`,
           explain:`One group has flat <b>2D shapes</b> (${flat.map(desc).join(', ')}).<br>The other group has solid <b>3D objects</b> (${so.map(s=>s.solid).join(', ')}).<br>Colours, sizes and sides are mixed, so the rule is <b>2D shapes and 3D objects</b>.`},H.fixedOpts(HOW,3));}
       const keyVals=rule==='col'?H.shuffle(CN.slice()).slice(0,ng):rule==='size'?['big','small']:H.shuffle([0,3,4,5,6]).slice(0,ng);
       groups=keyVals.map((v,i)=>({label:'Group '+(i+1),items:[0,1,2].map(()=>rule==='col'?rItem(H,{col:v}):rule==='size'?rItem(H,{size:v}):rItem(H,{shape:H.pick(SN.filter(s=>SH[s].n===v))}))}));
@@ -116,26 +116,26 @@ window.DAILY_TOPICS_EXTRA.push((function(){
       if(groups.some(g=>others.some(k=>new Set(g.items.map(it=>attr(it,k))).size<2)))continue;
       const idx=rule==='col'?0:rule==='size'?1:2;
       const lines=groups.map(g=>`${g.label}: all ${rule==='col'?'<b>'+g.items[0].col+'</b>':rule==='size'?g.items[0].size:sidesTxt(SH[g.items[0].shape].n)}`).join('<br>');
-      return Object.assign({sub:'how',prompt:`How were these sorted?`,vis:hoops(groups),hint:`Find what is the SAME inside each group. Check colour, size and number of sides.`,
+      return Object.assign({sub:'how',prompt:`How were these sorted?`,vis:hoops(groups),hint:`What is the SAME in each group: colour, size or sides?`,hint2:`If one group has mixed colours, it's not colour. Try size, then sides.`,
         explain:`Look for what is the same inside each group.<br>${lines}.<br>The other things are mixed, so they were sorted <b>${HOW[idx].toLowerCase()}</b>.`},H.fixedOpts(HOW,idx));}
     throw new Error('how: no set');}
 
   function gRoll(H,l){const v=H.pick(l>=1?['roll','noroll','noflat','grp','grp','both']:['roll','noroll','noflat','grp']);
     const show=list=>`<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">${list.map(k=>`<figure style="margin:0;text-align:center">${H.solidSVG(k,{size:110})}<figcaption style="font-size:.95rem">${k}</figcaption></figure>`).join('')}</div>`;
     if(v==='roll'){const r=H.pick(Object.keys(ROLL)),o=H.shuffle(FLATONLY.slice()).slice(0,3),all=H.shuffle([r].concat(o));
-      return Object.assign({sub:'roll',prompt:`Which object can <b>roll</b>?`,vis:show(all),hint:`Things with a curved surface can roll.`,explain:`The ${r} has a <b>curved surface</b>, so it can roll.<br>The ${o.join(', ')} only have flat faces, so they slide or stack but do not roll.<br>Answer: <b>${r}</b>.`},H.opts(r,o,{cls:'txt'}));}
+      return Object.assign({sub:'roll',prompt:`Which object can <b>roll</b>?`,vis:show(all),hint:`Things with a curved surface can roll.`,hint2:`Find the one that is round like a ball or a can.`,explain:`The ${r} has a <b>curved surface</b>, so it can roll.<br>The ${o.join(', ')} only have flat faces, so they slide or stack but do not roll.<br>Answer: <b>${r}</b>.`},H.opts(r,o,{cls:'txt'}));}
     if(v==='noroll'){const r=H.pick(FLATONLY),o=Object.keys(ROLL),all=H.shuffle([r].concat(o));
-      return Object.assign({sub:'roll',prompt:`Which object can <b>NOT</b> roll?`,vis:show(all),hint:`Look for the one with only flat faces and no curved surface.`,explain:`The ${o.join(', ')} all have a curved surface, so they can roll.<br>The ${r} has only <b>flat faces</b>, so it cannot roll. It can slide or stack.<br>Answer: <b>${r}</b>.`},H.opts(r,o,{cls:'txt'}));}
+      return Object.assign({sub:'roll',prompt:`Which object can <b>NOT</b> roll?`,vis:show(all),hint:`Find the one with only flat faces.`,hint2:`Flat faces slide. Curved surfaces roll.`,explain:`The ${o.join(', ')} all have a curved surface, so they can roll.<br>The ${r} has only <b>flat faces</b>, so it cannot roll. It can slide or stack.<br>Answer: <b>${r}</b>.`},H.opts(r,o,{cls:'txt'}));}
     if(v==='noflat'){const o=H.shuffle(['cube','cylinder','cone','rectangular prism','square pyramid']).slice(0,3),all=H.shuffle(['sphere'].concat(o));
-      return Object.assign({sub:'roll',prompt:`Which object has <b>no flat faces</b> at all?`,vis:show(all),hint:`Could it sit still on a flat face?`,explain:`The ${o.join(', ')} each have at least one flat face.<br>A sphere (like a ball) is curved all over, so it has no flat faces.<br>Answer: <b>sphere</b>.`},H.opts('sphere',o,{cls:'txt'}));}
+      return Object.assign({sub:'roll',prompt:`Which object has <b>no flat faces</b> at all?`,vis:show(all),hint:`Could it sit still on a flat face?`,hint2:`Find the one that is curved all over, with no flat side.`,explain:`The ${o.join(', ')} each have at least one flat face.<br>A sphere (like a ball) is curved all over, so it has no flat faces.<br>Answer: <b>sphere</b>.`},H.opts('sphere',o,{cls:'txt'}));}
     if(v==='both'){const o=['sphere','cube',H.pick(['rectangular prism','square pyramid'])],all=H.shuffle(['cylinder'].concat(o));
-      return Object.assign({sub:'roll',prompt:`Which object can <b>roll AND stack</b>?`,vis:show(all),hint:`It needs a curved side to roll and flat ends to stack.`,explain:`The sphere rolls, but nothing can stack on it. The ${o[1]} and the ${o[2]} have only flat faces, so they do not roll.<br>A cylinder (like a tin can) has a curved side to roll and two flat ends to stack.<br>Answer: <b>cylinder</b>.`},H.opts('cylinder',o,{cls:'txt'}));}
+      return Object.assign({sub:'roll',prompt:`Which object can <b>roll AND stack</b>?`,vis:show(all),hint:`It needs a curved side to roll and flat ends to stack.`,hint2:`Check each one: does it roll? Could you put another on top?`,explain:`The sphere rolls, but nothing can stack on it. The ${o[1]} and the ${o[2]} have only flat faces, so they do not roll.<br>A cylinder (like a tin can) has a curved side to roll and two flat ends to stack.<br>Answer: <b>cylinder</b>.`},H.opts('cylinder',o,{cls:'txt'}));}
     /* which group */
     const kind=H.pick(['roll','curve']);const L=kind==='roll'?['Can roll','Cannot roll']:['Has a curved surface','Only flat faces'];
     const k=H.pick(['sphere','cylinder','cone'].concat(FLATONLY));const gi=ROLL[k]?0:1;
     const ex0=H.shuffle(Object.keys(ROLL).filter(x=>x!==k)).slice(0,2),ex1=H.shuffle(FLATONLY.filter(x=>x!==k)).slice(0,2);
     const groups=[{label:L[0],items:ex0.map(s=>({solid:s}))},{label:L[1],items:ex1.map(s=>({solid:s}))}];
-    return Object.assign({sub:'roll',prompt:`Which group does the <b>${k}</b> go in?`,vis:hoops(groups,{extra:{solid:k}}),hint:kind==='roll'?`Would it roll if you pushed it on the floor?`:`Does it have any curved part?`,
+    return Object.assign({sub:'roll',prompt:`Which group does the <b>${k}</b> go in?`,vis:hoops(groups,{extra:{solid:k}}),hint:kind==='roll'?`Would it roll if you pushed it on the floor?`:`Does it have any curved part?`,hint2:kind==='roll'?`Curved surfaces roll. Only flat faces slide.`:`Look for any round, bendy part.`,
       explain:gi===0?`The ${k} has a <b>curved surface</b>${k==='sphere'?' all over':''}, so it can roll.<br>It goes in <b>${L[0]}</b>.`:`The ${k} has only <b>flat faces</b>, with no curved part, so it cannot roll (it slides or stacks).<br>It goes in <b>${L[1]}</b>.`},H.fixedOpts(L,gi));}
 
   function gCount(H,l){const n=H.rnd(l>=1?9:7,l>=1?12:9);
@@ -148,7 +148,7 @@ window.DAILY_TOPICS_EXTRA.push((function(){
       else if(mode==='and'){const it0=H.pick(items);const c=it0.col,k=SH[it0.shape].n||H.pick([3,4]);test=i=>i.col===c&&SH[i.shape].n===k;ask=`How many shapes are <b>${c} AND have ${k===0?'no straight sides':k+' sides'}</b>?`;rule=`shapes that are ${c} and have ${sidesTxt(k)}`;}
       else{const s=H.pick(['circle','triangle']);test=i=>i.shape!==s;ask=`How many shapes are <b>NOT ${SH[s].p}</b>?`;rule=`shapes that are not ${SH[s].p}`;}
       const a=items.filter(test).length;if(a<2||a>n-2)continue;
-      return Object.assign({sub:'count',prompt:ask,vis:pile(items),hint:`Point to each one that fits and count as you go. Tick them off so you don't count one twice.`,
+      return Object.assign({sub:'count',prompt:ask,vis:pile(items),hint:`Touch each one that fits and count. Tick it off as you go.`,hint2:`Only count ${rule}.`,
         explain:`Find ${rule}. They are ringed below.<br>Count them: ${Array.from({length:a},(x,i)=>i+1).join(', ')}.<br>Answer: <b>${a}</b>.`+pile(items,test)},H.num(a));}
     throw new Error('count: no set');}
 
@@ -164,16 +164,16 @@ window.DAILY_TOPICS_EXTRA.push((function(){
   function gVenn(H,l){const {A,B,c}=rules(H);const n=l>=2?9:7;const {items,cnt}=vennSet(H,A,B,c,n);const R=[`Only in "${A.label}"`,`Only in "${B.label}"`,'In the middle (both)','Outside (neither)'];
     const why=it=>`${A.q} ${A.test(it)?'Yes':'No'}: ${A.test(it)?A.yes:A.no}. ${B.q} ${B.test(it)?'Yes':'No'}: ${B.test(it)?B.yes:B.no}`;
     if(l>=2&&H.chance(0.5)){const q=H.pick([2,0,1]);const nm=q===2?`in the <b>middle</b> (${A.label} AND ${B.label})`:q===0?`${A.label} but <b>NOT</b> ${B.label}`:`${B.label} but <b>NOT</b> ${A.label}`;
-      return Object.assign({sub:'venn',prompt:`How many shapes are ${nm}?`,vis:venn(A,B,items),hint:`The middle part is inside BOTH circles. "Only" parts are inside one circle but not the other.`,
+      return Object.assign({sub:'venn',prompt:`How many shapes are ${nm}?`,vis:venn(A,B,items),hint:`The middle is inside BOTH circles. "Only" means one circle, not the middle.`,hint2:`Find that part first. Then count just the shapes in it.`,
         explain:`The left circle is "${A.label}" and the right circle is "${B.label}".<br>${q===2?'The middle is where the circles overlap: those shapes fit both rules':'Look in the part of that circle that is not in the overlap'}.<br>Count them: <b>${cnt[q]}</b>.`+venn(A,B,items)},H.num(cnt[q]));}
     let ex,g;for(let t=0;t<50;t++){ex=rItem(H,{col:H.chance(0.5)?c:H.pick(CN.slice(0,4))});g=region(A,B,ex);if(t>5||g!==3||H.chance(0.3))break;}
-    return Object.assign({sub:'venn',prompt:`This Venn diagram sorts by two rules. Where does the new shape go?`,vis:venn(A,B,items,{extra:ex}),hint:`Ask two questions: ${A.q} ${B.q}`,
+    return Object.assign({sub:'venn',prompt:`This Venn diagram sorts by two rules. Where does the new shape go?`,vis:venn(A,B,items,{extra:ex}),hint:`Ask two questions: ${A.q} ${B.q}`,hint2:`Yes to both: the middle. Yes to one: that circle only. No to both: outside.`,
       explain:`The new shape is a ${desc(ex)}.<br>${why(ex)}.<br>So it goes <b>${R[g].toLowerCase()}</b>.`},H.fixedOpts(R,g));}
 
   function gTwo(H,l){const {A,B,c}=rules(H);
     for(let t=0;t<100;t++){const want=H.shuffle([2,0,1,H.pick([0,1,3])]);const items=want.map(w=>{let it;for(let k=0;k<300;k++){it=rItem(H,{col:H.chance(0.5)?c:H.pick(CN.slice(0,4))});if(region(A,B,it)===w)break;}return it;});const both=items.map(it=>A.test(it)&&B.test(it));
       if(both.filter(Boolean).length!==1)continue;if(!items.some(it=>A.test(it)&&!B.test(it))||!items.some(it=>!A.test(it)&&B.test(it)))continue;const pos=both.indexOf(true);
-            return Object.assign({sub:'tworule',prompt:`Which shape is ${A.txt} <b>AND</b> ${B.label==='4 sides'?'has 4 sides':B.txt}?`,vis:row(items),hint:`Both rules must be true. Cross out any that break one rule.`,
+            return Object.assign({sub:'tworule',prompt:`Which shape is ${A.txt} <b>AND</b> ${B.label==='4 sides'?'has 4 sides':B.txt}?`,vis:row(items),hint:`Both rules must be true. Cross out any that break one rule.`,hint2:`Check the first rule. Then check the second rule on the ones left.`,
         explain:items.map((it,i)=>`${LET[i]} (${it.col} ${SH[it.shape].s}): ${A.test(it)?A.yes:A.no}, ${B.test(it)?B.yes:B.no}`).join('<br>')+`<br>Only <b>${LET[pos]}</b> fits both rules.`+row(items,{ring:pos})},H.fixedOpts(['A','B','C','D'],pos,''));}
     throw new Error('tworule: no set');}
 
@@ -263,14 +263,14 @@ window.DAILY_TOPICS_EXTRA.push((function(){
   const hlFor=(k,p)=>GEO[k]?(p==='f'?{faces:'all'}:p==='e'?{edges:'all'}:{verts:'all'}):(p==='f'?'flat':p==='e'?'edges':'apex');
 
   function gCount(H,l){const k=H.pick(l>=2?POLY:l>=1?POLY:['cube','square pyramid','triangular prism']);const p=H.pick(l>=1?['f','e','v','e','v']:['f','v']);const d=D[k];
-    const hint=p==='f'?'Faces are the flat surfaces. Count the ones you can see, then the hidden ones at the back and bottom.':p==='e'?'Edges are the lines where two faces meet. Count the solid lines and the dashed (hidden) lines.':'Vertices are the corners. Count the corners you can see, then the hidden ones where the dashed lines meet.';
-    return Object.assign({sub:'count',prompt:`How many <b>${W[p]}</b> does this ${k} have?`,vis:poly(k,{})+`<div class="small">Dashed lines are hidden edges at the back.</div>`,hint,
+    const hint=p==='f'?'Faces are the flat sides. Count the front ones, then the hidden back and bottom.':p==='e'?'Edges are where two faces meet. Count the solid lines, then the dashed ones.':'Vertices are corners. Count the ones you see, then where dashed lines meet.',hint2='Count in parts: the bottom, then the top, then the sides.';
+    return Object.assign({sub:'count',prompt:`How many <b>${W[p]}</b> does this ${k} have?`,vis:poly(k,{})+`<div class="small">Dashed lines are hidden edges at the back.</div>`,hint,hint2,
       explain:`${Cap(W[p])} are ${p==='f'?'the flat surfaces':p==='e'?'where two faces meet':'the corner points'}.<br>Count them in parts: ${countSteps(k,p)}.<br>A ${k} has <b>${d[p]}</b> ${W[p]}.`+poly(k,{hl:hlFor(k,p),labels:true})},H.num(d[p]));}
 
   function gWhich(H,l){for(let t=0;t<50;t++){const p=H.pick(['f','e','v']);const k=H.pick(POLY);const val=D[k][p];
       const others=H.shuffle(POLY.filter(x=>x!==k&&D[x][p]!==val));if(others.length<2)continue;const opt=others.slice(0,l>=1?3:2);if(l>=1&&p==='v'&&H.chance(0.4)&&!opt.includes('cone'))opt[opt.length-1]='cone';
       if(opt.some(x=>D[x][p]===val))continue;const list=H.shuffle([k].concat(opt));
-      return Object.assign({sub:'which',prompt:`Which object has exactly <b>${val} ${W[p]}</b>?`,vis:rowF(list,{size:120}),hint:`Count the ${W[p]} on each one. Dashed lines show hidden edges.`,
+      return Object.assign({sub:'which',prompt:`Which object has exactly <b>${val} ${W[p]}</b>?`,vis:rowF(list,{size:120}),hint:`Count the ${W[p]} on each one. Dashed lines show hidden edges.`,hint2:`Count one object. Is it ${val}? If not, try the next.`,
         explain:list.map(x=>`${Cap(x)}: ${D[x][p]} ${W[p]}${x==='cone'&&p==='v'?' (the apex)':''}`).join('<br>')+`<br>Only the <b>${k}</b> has ${val} ${W[p]}.`},H.opts(k,opt,{cls:'txt'}));}
     throw new Error('which: none');}
 
@@ -285,23 +285,23 @@ window.DAILY_TOPICS_EXTRA.push((function(){
   function gName(H,l){const k=H.pick(ALL);const ds=DESC[k];const s=l>=1?H.pick(ds):ds[0];
     let dis=H.shuffle(ALL.filter(x=>x!==k));if(k==='cube')dis=['rectangular prism'].concat(dis.filter(x=>x!=='rectangular prism'));if(k==='rectangular prism')dis=['cube'].concat(dis.filter(x=>x!=='cube'));
     const d=D[k];const facts=GEO[k]?`A ${k} has ${d.f} faces (${d.fs}), ${d.e} edges and ${d.v} vertices`:k==='sphere'?'A sphere has 1 curved surface and no flat faces, edges or vertices':k==='cone'?'A cone has 1 flat circle face, 1 curved surface, 1 edge and 1 vertex (the apex)':'A cylinder has 2 flat circle faces, 1 curved surface, 2 edges and 0 vertices';
-    return Object.assign({sub:'name',prompt:`What am I? <i>“${s}”</i>`,hint:`Picture each object and check every clue.`,
+    return Object.assign({sub:'name',prompt:`What am I? <i>“${s}”</i>`,hint:`Read one clue at a time. Cross out objects that don't fit.`,hint2:`Think: how many faces? Any curved part? Any point?`,
       explain:`Check each clue.<br>${facts}, so every clue fits.<br>It is like ${d.like}. Answer: <b>${k}</b>.`+rowF([k],{size:140})},H.opts(k,dis,{cls:'txt'}));}
 
   function gCurved(H,l){const v=H.pick(l>=1?['onlyflat','both','nflat','ncurved','edgecv','edgecv']:['onlyflat','both','nflat','ncurved']);
     if(v==='onlyflat'){const k=H.pick(POLY),o=H.shuffle(CURV.slice());const list=H.shuffle([k].concat(o));
-      return Object.assign({sub:'curved',prompt:`Which object has <b>only flat surfaces</b> (no curved surface)?`,vis:rowF(list,{size:120}),hint:`Could it roll? Things with a curved surface can roll.`,
+      return Object.assign({sub:'curved',prompt:`Which object has <b>only flat surfaces</b> (no curved surface)?`,vis:rowF(list,{size:120}),hint:`Things with a curved surface can roll. Find one that can't.`,hint2:`Look for the one with straight edges only.`,
         explain:`The ${o.join(', ')} each have a curved surface.<br>The ${k} has only flat faces (${D[k].fs}).<br>Answer: <b>${k}</b>.`},H.opts(k,o,{cls:'txt'}));}
     if(v==='both'){const k=H.pick(['cylinder','cone']),o=['sphere'].concat(H.shuffle(POLY.slice()).slice(0,2));const list=H.shuffle([k].concat(o));
-      return Object.assign({sub:'curved',prompt:`Which object has <b>both</b> flat faces <b>and</b> a curved surface?`,vis:rowF(list,{size:120}),hint:`Look for one flat part AND one curved part.`,
+      return Object.assign({sub:'curved',prompt:`Which object has <b>both</b> flat faces <b>and</b> a curved surface?`,vis:rowF(list,{size:120}),hint:`Look for one flat part AND one curved part.`,hint2:`A ball is only curved. A box is only flat.`,
         explain:`A sphere is only curved. The ${o.slice(1).join(' and the ')} only have flat faces.<br>The ${k} has ${k==='cylinder'?'2 flat circle faces':'1 flat circle face'} and 1 curved surface.<br>Answer: <b>${k}</b>.`},H.opts(k,o,{cls:'txt'}));}
-    if(v==='nflat'){const k=H.pick(CURV);return Object.assign({sub:'curved',prompt:`How many <b>flat faces</b> does a ${k} have?`,vis:curved(k,{}),hint:`Only count the flat parts, not the curved part.`,
+    if(v==='nflat'){const k=H.pick(CURV);return Object.assign({sub:'curved',prompt:`How many <b>flat faces</b> does a ${k} have?`,vis:curved(k,{}),hint:`Only count the flat parts, not the curved part.`,hint2:`Look at the ends. Each flat circle counts.`,
       explain:`${CONV}<br>${Cap(countSteps(k,'f'))}.<br>Answer: <b>${D[k].f}</b>.`+curved(k,{hl:'flat',size:140})},H.num(D[k].f));}
-    if(v==='ncurved'){const k=H.pick(CURV.concat(H.pick(POLY)));return Object.assign({sub:'curved',prompt:`How many <b>curved surfaces</b> does ${art(k)} ${k} have?`,vis:pic(k,{}),hint:`A curved surface is bendy, like the side of a can.`,
+    if(v==='ncurved'){const k=H.pick(CURV.concat(H.pick(POLY)));return Object.assign({sub:'curved',prompt:`How many <b>curved surfaces</b> does ${art(k)} ${k} have?`,vis:pic(k,{}),hint:`A curved surface is bendy, like the side of a can.`,hint2:`Flat faces don't count. Count only the bendy parts.`,
       explain:`${GEO[k]?`A ${k} has only flat faces (${D[k].fs})`:`The ${k} has one curved surface${k==='sphere'?' all the way round':' going round it'}`}.<br>Answer: <b>${D[k].c}</b>.`+pic(k,GEO[k]?{size:140}:{hl:'curved',size:140})},H.num(D[k].c));}
     /* edges / vertices of curved solids, with the convention stated */
     const k=H.pick(['cylinder','cone']),p=k==='cylinder'?H.pick(['e','v']):H.pick(['e','v']);
-    return Object.assign({sub:'curved',prompt:`How many <b>${W[p]}</b> does a ${k} have? <span class="small">(An edge is where two surfaces meet. A vertex is a corner or point.)</span>`,vis:curved(k,{}),hint:p==='e'?`Find where the flat circle meets the curved surface.`:`Is there a pointy corner anywhere?`,
+    return Object.assign({sub:'curved',prompt:`How many <b>${W[p]}</b> does a ${k} have? <span class="small">(An edge is where two surfaces meet. A vertex is a corner or point.)</span>`,vis:curved(k,{}),hint:p==='e'?`Find where the flat circle meets the curved surface.`:`Is there a pointy corner anywhere?`,hint2:p==='e'?`Each round rim where flat meets curved is an edge.`:`A sharp point counts. A round rim does not.`,
       explain:`${p==='e'?'An edge is where two surfaces meet.':'A vertex is a corner or a point.'}<br>${Cap(countSteps(k,p))}.<br>Answer: <b>${D[k][p]}</b>.`+curved(k,{hl:p==='e'?'edges':(k==='cone'?'apex':''),size:140})},H.num(D[k][p]));}
 
   function gShape(H,l){const v=H.pick(l>=1?['allsq','base','tpr','tpr','spy','cylf']:['allsq','base','tpr','cylf']);
@@ -312,17 +312,17 @@ window.DAILY_TOPICS_EXTRA.push((function(){
       return Object.assign({sub:'shape',prompt:`What shape is the <b>flat bottom face</b> of this ${k}?`,vis:pic(k,{}),hint:`Imagine standing it on paper and tracing around the bottom.`,
         explain:`If you trace around the bottom of ${art(k)} ${k}, you get ${art(a)} ${a}.<br>${k==='square pyramid'?'Its other 4 faces are triangles.':k==='triangular pyramid'?'All 4 of its faces are triangles.':'The rest of it is a curved surface.'}<br>Answer: <b>${a}</b>.`},H.fixedOpts(L,L.indexOf(a)));}
     if(v==='tpr'){const q=H.pick(['tri','rect']);const a=q==='tri'?2:3;
-      return Object.assign({sub:'shape',prompt:`A triangular prism has 5 faces. How many of them are <b>${q==='tri'?'triangles':'rectangles'}</b>?`,vis:poly('triangular prism',{}),hint:`The two ends are one shape. The faces joining them are another shape.`,
+      return Object.assign({sub:'shape',prompt:`A triangular prism has 5 faces. How many of them are <b>${q==='tri'?'triangles':'rectangles'}</b>?`,vis:poly('triangular prism',{}),hint:`The two ends match. The faces joining them are a different shape.`,hint2:`Count the end faces. Then count the joining faces.`,
         explain:`The 2 ends (front and back) are triangles.<br>The 3 faces joining the ends are rectangles: 2 + 3 = 5 faces.<br>Answer: <b>${a}</b>.`+poly('triangular prism',{hl:{faces:'all'},size:140})},H.num(a));}
     if(v==='spy'){const q=H.pick(['tri','sq']);const a=q==='tri'?4:1;
-      return Object.assign({sub:'shape',prompt:`A square pyramid has 5 faces. How many of them are <b>${q==='tri'?'triangles':'squares'}</b>?`,vis:poly('square pyramid',{}),hint:`Look at the bottom, then at the sides that meet at the top.`,
+      return Object.assign({sub:'shape',prompt:`A square pyramid has 5 faces. How many of them are <b>${q==='tri'?'triangles':'squares'}</b>?`,vis:poly('square pyramid',{}),hint:`Look at the bottom, then at the sides that meet at the top.`,hint2:`Count the bottom face. Then count the sides that meet at the point.`,
         explain:`The bottom (base) is 1 square.<br>The 4 sides are triangles that meet at the top: 1 + 4 = 5 faces.<br>Answer: <b>${a}</b>.`},H.num(a));}
     return Object.assign({sub:'shape',prompt:`What shape are the 2 flat faces of a <b>cylinder</b>?`,vis:curved('cylinder',{}),hint:`Look at the top of a tin can.`,
       explain:`A cylinder has 2 flat faces, one at each end, and 1 curved surface.<br>Each flat face is a circle.<br>Answer: <b>circles</b>.`+curved('cylinder',{hl:'flat',size:140})},H.fixedOpts(['squares','triangles','circles','rectangles'],2));}
 
   function gCompare(H,l){for(let t=0;t<60;t++){const p=H.pick(['f','e','v']);const [a,b]=H.shuffle(POLY.slice()).slice(0,2);const va=D[a][p],vb=D[b][p];
       if(l>=2&&va!==vb){const hi=va>vb?a:b,lo=va>vb?b:a;const dd=Math.abs(va-vb);
-        return Object.assign({sub:'compare',prompt:`How many more <b>${W[p]}</b> does ${art(hi)} ${hi} have than ${art(lo)} ${lo}?`,vis:rowF([hi,lo],{size:130}),hint:`Count the ${W[p]} on each, then take away.`,
+        return Object.assign({sub:'compare',prompt:`How many more <b>${W[p]}</b> does ${art(hi)} ${hi} have than ${art(lo)} ${lo}?`,vis:rowF([hi,lo],{size:130}),hint:`Count the ${W[p]} on each, then take away.`,hint2:`Take the smaller number from the bigger one.`,
           explain:`${Cap(hi)}: ${countSteps(hi,p)}.<br>${Cap(lo)}: ${countSteps(lo,p)}.<br>${D[hi][p]} − ${D[lo][p]} = <b>${dd}</b> more.`},H.num(dd));}
       if(l<2&&va===vb&&!H.chance(0.3))continue;
       const L=[Cap(a),Cap(b),'They have the same number'];const ans=va>vb?0:va<vb?1:2;

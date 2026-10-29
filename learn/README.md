@@ -5,6 +5,10 @@ Each child has a 15-minute lesson page that works offline (it also opens straigh
 - `alexia/daily/index.html` (Year 4, stretching to Year 5)
 - `ethan/daily/index.html` (Year 2, stretching to Year 3)
 
+**Lesson length:** Alexia's lesson is 18 questions every day (Mon–Thu Daily Mix: 3 warm-up, 4 new topic, 6 mixed, 3 Fix-it, 2 challenge; Friday/weekend review: 3 warm-up, 12 review, 3 toughest). Ethan's lesson is 25–30 questions. The sizes are set per child in `CFG.sizes` in `daily-src/topics-<child>.js`. Redo questions are extra and don't count toward the total.
+
+**Hints:** each question has a 💡 Hint that shows the first steps using the question's own numbers, and a second level behind a 🔎 button ("Show me more help" for Alexia, "More help" for Ethan) that walks through more of the method without giving the answer. Ethan's hints are kept to one or two short steps.
+
 The lesson is the same all day and changes the next day. Monday to Thursday is the **Daily Mix**. Friday is the **Week Review**, and Saturday/Sunday give a catch-up review. Progress is saved in the browser under `kidsHub.p.<child>.daily`. The pages only read the existing game keys and never change them.
 
 ## "From school today" (focus.js)
@@ -15,9 +19,9 @@ Each child's folder has a `daily/focus.js` file that starts out empty. To make t
 DAILY_FOCUS.push({date:'2026-10-22', topicId:'percent', title:'Percentages', note:'Did 10%, 25%, 50% of amounts', until:'2026-10-24'});
 ```
 
-- The focus runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. On those days the school topic makes up most of the lesson (about 17 of 27 questions): a "From school today" section with a worked example and 6 questions (hints showing on the first 2), then 6 of the 8 mixed-practice questions, 3 of the 4 Fix-it questions and 2 of the 3 Challenge questions. The warm-up drops to 3 questions and the current path topic to 3, which is still enough for mastery tracking.
+- The focus runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. On those days the school topic makes up most of the lesson (Ethan: about 17 of 27 questions; Alexia: 12 of 18). There is a "From school today" section with a worked example and 6 questions (hints showing on the first 2), then most of the mixed-practice, Fix-it and Challenge questions. The warm-up gets shorter (Ethan 3, Alexia 1) and the current path topic gets 3 questions, which is still enough for mastery tracking.
 - If two entries are active on the same day, the one listed first in the file is the school focus.
-- On Friday (the week review), every school topic dated that week makes up 13 of the 18 review questions and gets a place in the "Toughest of the week" section.
+- On Friday (the week review), every school topic dated that week makes up 13 of the 18 review questions (Alexia: 9 of 13) and gets a place in the "Toughest of the week" section.
 - `topicId` must be one of the IDs listed below or a module you added (see the next section). The page ignores an unknown ID.
 - Delete the line when you no longer need it. The file can be edited in any text editor, and no rebuild is needed.
 
@@ -46,7 +50,7 @@ DAILY_TOPICS_EXTRA.push({
 
 **Permanent way:** add the module object to `TOPICS_A` or `TOPICS_E` in `/workspace/kids-hub/daily-src/topics-alexia.js` or `topics-ethan.js`. To put it on the learning path, add its ID to the `path` in `CFG_A`/`CFG_E`. Then run `node build.js` in `daily-src/`, which regenerates both `daily/index.html` files and leaves `focus.js` alone.
 
-**Question format.** Every question needs `prompt` (HTML), `hint` and `explain`, and can also have `vis` (HTML/SVG picture). The answer is set up in one of two ways:
+**Question format.** Every question needs `prompt` (HTML), `hint` and `explain`, and can also have `vis` (HTML/SVG picture) and `hint2` (the second, 🔎 hint level). The answer is set up in one of two ways:
 
 - Multiple choice: `kind:'choice', choices:[...], answer:<index>`. The easy way is `H.opts(correct, [wrong...])` or `H.fixedOpts([...], correct)`.
 - Typed answer: `kind:'entry', fields:[{id,len}], layout:'… [[id]] …', answer:{id:value}`. The ready-made helpers are `H.num(n)` (whole number), `H.decE(x)` (decimal), `H.fracE(n,d)`, `H.mixedE(w,n,d)`, `H.timeE(h,m)` and `H.qrE(q,r)`. An optional `check(vals)` accepts other correct forms.
@@ -76,3 +80,25 @@ You can view the list or one mistake at a time. The day picker covers earlier da
 ## Testing
 
 Add `?date=YYYY-MM-DD` to the page address to see the lesson for another day, e.g. `ethan/daily/index.html?date=2026-10-23` for a Friday review.
+
+## Alexia's English Revision (5 minutes a day)
+`alexia/english/index.html` is a separate 5-minute English lesson for Alexia. It follows the NSW English K–10 Syllabus (2022), Stage 2 into Stage 3, and is pitched at Year 4 stretching into Year 5. It is opened from the purple "📖 English Revision (5 min)" card next to Today's Lesson on Alexia's hub page.
+
+- **Separate progress:** it is stored under `kidsHub.p.alexia.english`, so it never touches the maths Daily Lesson (`kidsHub.p.alexia.daily`) or the games.
+- **Same engine:** it uses the same lesson engine, with a 5-minute timer and about 10–12 multiple-choice questions. It keeps the redo of wrong answers, "Review mistakes together" (with read-aloud), the grown-ups panel, Friday week review and `?date=YYYY-MM-DD` for testing.
+- **Topic path** (each topic unlocks at 80%+ over 2 lessons):
+  1. Word classes
+  2. Sentence types
+  3. Apostrophes
+  4. Homophones
+  5. Prefixes and suffixes
+  6. Direct speech
+  7. Similes and metaphors
+  8. Reading comprehension
+
+  Every day has a quick-words warm-up (spelling, synonyms, antonyms).
+- **Normal day:** 2 warm-up questions, 3 on the new topic, 3 mixed, 1 fix-it and 1 challenge.
+- **School-focus day:** the school topic is about two-thirds of the lesson and opens with a worked example.
+- **Review day:** Friday is review day; Saturday and Sunday are catch-up review days. It covers this week's practice and mistakes, plus the week's school topic.
+- **From school:** add entries to `alexia/english/focus.js`, in the same format as the maths `focus.js`. The first entry is the Word Spy ch.4 letter games (anagrams, palindromes, pangrams, lipograms, secret codes) from 30 Oct to 1 Nov 2026.
+- **Source:** the page is built from `daily-src` with `node build-english.js`. That script patches a copy of the shared engine, so the maths pages are not affected.
