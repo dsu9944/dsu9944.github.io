@@ -140,12 +140,13 @@ function todayCard(id){
 }
 /* Alexia's 5-minute English revision (its own progress key, separate from the maths Daily Lesson) */
 function englishCard(id){
-  if(id!=='alexia')return '';
+  if(id!=='alexia'&&id!=='ethan')return '';
+  const E=id==='ethan'?{t:'English Practice (5 min)',sub:'✏️ Sounds, spelling and reading'}:{t:'English Revision (5 min)',sub:'✏️ Words, grammar and reading'};
   const d=new Date(),pad=n=>String(n).padStart(2,'0'),today=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,wd=d.getDay(),review=wd===5||wd===6||wd===0;
   let s=null;try{s=JSON.parse(ls.get(`kidsHub.p.${id}.english`)||'null');}catch(e){}
   const days=(s&&s.days)||{},run=s&&s.run,done=days[today]&&days[today].done,going=run&&run.date===today&&!run.finished;
-  const st=done?'✅ Done for today!':going?'▶️ Keep going where you left off':review?'🏆 Week review':'✏️ Words, grammar and reading';
-  return `<a class="today eng" href="${id}/english/index.html?player=${id}" data-english="${id}"><span class="ti">📖</span><span><div class="tt">English Revision (5 min)</div><div class="ts">${st}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
+  const st=done?'✅ Done for today!':going?'▶️ Keep going where you left off':review?'🏆 Week review':E.sub;
+  return `<a class="today eng" href="${id}/english/index.html?player=${id}" data-english="${id}"><span class="ti">📖</span><span><div class="tt">${E.t}</div><div class="ts">${st}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
 }
 function openKid(id){
   ls.set(CKEY,id);const p=P[id];
