@@ -15,21 +15,28 @@ window.DAILY_TOPICS_EXTRA.push((function(){
     ['The {fluffy:a} {dog:n} {slept:v} [under the table].',0],['A {tiny:a} {mouse:n} {ran:v} [behind the door].',0],['The {green:a} {frog:n} {jumped:v} [onto the log].',0],
     ['The {sleepy:a} {cat:n} {sat:v} [on the mat].',0],['A {little:a} {bird:n} {sang:v} [in the tree].',0],['The {happy:a} {girl:n} {ran:v} [up the hill].',0],
     ['My {big:a} {brother:n} {hid:v} [in the cupboard].',0],['The {red:a} {car:n} {stopped:v} [outside the shop].',0],
+    ['The {cold:a} {milk:n} {spilled:v} [on the floor].',0],['A {soft:a} {teddy:n} {sat:v} [beside the bed].',0],['The {fast:a} {bus:n} {raced:v} [along the road].',0],
     ['The {funny:a} {clown:n} {fell:v} [into the pool].',1],['A {grey:a} {possum:n} {climbed:v} [over the fence].',1],['The {shiny:a} {fish:n} {swam:v} [between the rocks].',1],
     ['The {noisy:a} {kids:n} {played:v} [next to the pool].',1],['A {hungry:a} {duck:n} {waddled:v} [across the road].',1],
+    ['The {clever:a} {fox:n} {hid:v} [behind the bush].',1],['A {bright:a} {star:n} {shone:v} [above the hills].',1],['The {muddy:a} {boots:n} {stood:v} [by the door].',1],
     ['The {excited:a} {children:n} {played:v} [on the oval].',2],['[Under the bridge], a {grumpy:a} {troll:n} {waited:v}.',2],
     ['[Behind the shed], the {brave:a} {puppy:n} {found:v} a {bone:n}.',2],['A {sleepy:a} {koala:n} {rested:v} [in the gum tree].',2],
-    ['The {enormous:a} {whale:n} {dived:v} [beneath the waves].',3],['[Through the dark forest], the {tired:a} {explorer:n} {walked:v}.',3]];
+    ['[Beside the creek], the {quiet:a} {frog:n} {croaked:v}.',2],['The {careful:a} {painter:n} {worked:v} [on the ladder].',2],
+    ['The {enormous:a} {whale:n} {dived:v} [beneath the waves].',3],['[Through the dark forest], the {tired:a} {explorer:n} {walked:v}.',3],
+    ['[Across the wide river], a {wooden:a} {bridge:n} {stood:v}.',3],['The {ancient:a} {castle:n} {loomed:v} [above the valley].',3]];
   const PREPS=['in','on','under','behind','over','onto','into','up','outside','between','next','across','beneath','through','by','to','at','beside'];
   const FILLW=/^(the|a|an|my)$/i;
-  const NOUNS=['table','garden','teacher','apple','bike','river','school','shoe','pencil','beach','chair','rabbit'];
-  const ADJS=['fluffy','tiny','shiny','happy','tall','noisy','muddy','brave','sticky','gigantic','soft','grumpy'];
-  const VERBS=['jumped','laughed','climbed','kicked','shouted','sang','painted','swam'];
+  const NOUNS=['table','garden','teacher','apple','bike','river','school','shoe','pencil','beach','chair','rabbit','rocket','castle','doctor','sandwich','ladder','tunnel'];
+  const ADJS=['fluffy','tiny','shiny','happy','tall','noisy','muddy','brave','sticky','gigantic','soft','grumpy','gentle','rusty','cosy','fierce','sparkly','ancient'];
+  const VERBS=['jumped','laughed','climbed','kicked','shouted','sang','painted','swam','whispered','galloped','sketched','paddled'];
   /* choose a preposition: [sentence with ___, answer, clue] */
   const PF=[['The cat is ___ the box.','in','inside it'],['The book is ___ the table.','on','on top of it'],['The ball rolled ___ the bed.','under','below it'],
     ['The dog hid ___ the tree.','behind','at the back of it'],['I sat ___ my friend.','next to','right beside them'],['The ball is ___ the two chairs.','between','in the middle of the two'],
     ['The plane flew ___ the house.','over','high above it'],['The fish swim ___ the water.','in','inside it'],['Put your cup ___ the shelf.','on','on top of it'],
-    ['The boat went ___ the bridge.','under','below it'],['The sun hid ___ a cloud.','behind','at the back of it'],['The bee flew ___ the flowers.','over','just above them']];
+    ['The boat went ___ the bridge.','under','below it'],['The sun hid ___ a cloud.','behind','at the back of it'],['The bee flew ___ the flowers.','over','just above them'],
+    ['The keys are ___ my bag.','in','inside it'],['Hang your coat ___ the hook.','on','on top of it'],['The mouse ran ___ the fridge.','under','below it'],
+    ['We waited ___ the gate.','beside','right next to it'],['The tunnel goes ___ the mountain.','through','from one side to the other'],['The bird nested ___ the roof.','under','below it'],
+    ['Stand ___ the two markers.','between','in the middle of the two'],['The kite flew ___ the trees.','above','higher than them']];
   const PFW=['in','on','under','behind','next to','between','over'];
   const col={n:'#2563eb',a:'#ca8a04',v:'#16a34a',p:'#db2777'};
   function sentQ(H,l){const {parse}=K();const s=H.pick(SENT.filter(x=>x[1]<=l));return Object.assign(parse(s[0]),{src:s[0]});}

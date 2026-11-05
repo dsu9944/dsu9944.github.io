@@ -209,7 +209,7 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
   <div class="playhead"><button class="btn ghost" id="quitBtn">⏸️ Pause</button><div class="secname" id="secName"></div></div>
   <div class="bars"><span>✏️ Questions</span><div class="pbar" id="progBar"><div style="width:0"></div></div><span id="progTxt"></span>
     <span>⏱️ Time</span><div class="pbar time" id="timeBar"><div style="width:0"></div></div><span id="timeTxt"></span></div>
-  <div class="timesup hidden" id="timesUp">⏰ 5 minutes are up! Great effort. You can finish the last questions, or pause and come back later.</div>
+  <div class="timesup hidden" id="timesUp">⏰ 10 minutes are up! Great effort. You can finish the last questions, or pause and come back later.</div>
   <div class="card">
     <div class="prompt"><span id="prompt"></span><button class="say" id="sayBtn" aria-label="Read the question aloud">🔈</button></div>
     <div class="vis" id="qvis"></div>
@@ -564,6 +564,14 @@ const EN=(function(){
     ['Lightning flashed brightly across the dark sky.',{Lightning:'noun',flashed:'verb',brightly:'adverb',dark:'adjective'}],
     ['The tiny ant carried a huge crumb.',{tiny:'adjective',ant:'noun',carried:'verb',huge:'adjective'}],
     ['They sang loudly at the concert.',{They:'pronoun',sang:'verb',loudly:'adverb',concert:'noun'}],
+    ['A gentle breeze drifted through the open window.',{gentle:'adjective',breeze:'noun',drifted:'verb',through:'preposition'}],
+    ['He carefully painted the wooden fence.',{He:'pronoun',carefully:'adverb',painted:'verb',wooden:'adjective'}],
+    ['The curious scientist examined a strange fossil.',{curious:'adjective',scientist:'noun',examined:'verb',strange:'adjective'}],
+    ['Rain fell steadily onto the tin roof.',{Rain:'noun',fell:'verb',steadily:'adverb',onto:'preposition'}],
+    ['Our class proudly presented a brilliant play.',{Our:'pronoun',proudly:'adverb',presented:'verb',brilliant:'adjective'}],
+    ['The rusty bike leaned against the brick wall.',{rusty:'adjective',bike:'noun',leaned:'verb',against:'preposition'}],
+    ['She suddenly spotted a golden coin.',{She:'pronoun',suddenly:'adverb',spotted:'verb',golden:'adjective'}],
+    ['The ancient lighthouse stood beside the rocky shore.',{ancient:'adjective',lighthouse:'noun',stood:'verb',beside:'preposition'}],
   ];
   const art=w=>/^[aeiou]/.test(w)?'an':'a';
   const wordclass={id:'wordclass',title:'Word Classes',icon:'🧩',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
@@ -595,8 +603,8 @@ const EN=(function(){
     ['What a beautiful sunset!','exclamation'],['How tall you have grown!','exclamation'],['What a mess this room is!','exclamation'],['How exciting that was!','exclamation']];
   const ST_DEF={statement:'a <b>statement</b> tells you something and ends with a full stop',question:'a <b>question</b> asks something and ends with a question mark',
     command:'a <b>command</b> tells someone to do something (it often starts with a verb)',exclamation:'an <b>exclamation</b> shows strong feeling (What a … ! / How … !) and ends with an exclamation mark'};
-  const COMP=['I wanted to swim, but the pool was closed.','It started to rain, so we went inside.','Mum made pasta and Dad baked bread.','You can have an apple or you can have a pear.'];
-  const SIMP=['The red kite flew high above the hill.','After lunch, we played cricket.','My cousin from Perth loves surfing.','The tired dog slept by the fire.','Our school has a big vegetable garden.'];
+  const COMP=['I wanted to swim, but the pool was closed.','It started to rain, so we went inside.','Mum made pasta and Dad baked bread.','You can have an apple or you can have a pear.','The bus was late, so we walked home.','Sam loves cricket, but Mia prefers netball.','We packed the tent and we packed the stove.','You can finish now or you can finish tomorrow.','The movie ended, so everyone clapped.','I called grandpa, but nobody answered.'];
+  const SIMP=['The red kite flew high above the hill.','After lunch, we played cricket.','My cousin from Perth loves surfing.','The tired dog slept by the fire.','Our school has a big vegetable garden.','The orange cat stretched on the warm windowsill.','Before sunrise, the baker lit the ovens.','My sister collects shiny shells.','The quiet library filled with soft whispers.','A rainbow arched over the wet oval.','During assembly, we sang the school song.'];
   const sentences={id:'sentences',title:'Sentence Types',icon:'💬',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
     blurb:'Statements, questions, commands and exclamations, and simple vs compound sentences.',
     subs:l=>l>=2?['type','type','needq','compound']:['type','type','needq'],
@@ -823,7 +831,7 @@ const $=s=>document.querySelector(s);
 const PLAYER=CFG.player,NAME=(()=>{try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(pr&&pr[PLAYER]&&pr[PLAYER].name)return String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||CFG.name;}catch(e){}return CFG.name;})();
 const STORE=`kidsHub.p.${PLAYER}.english`;
 const params=new URLSearchParams(location.search);
-const LESSON_MS=5*60*1000;
+const LESSON_MS=10*60*1000;
 /* ---------- topics: built-in + extra modules from focus.js ---------- */
 const TOPICS={};BUILTIN.forEach(t=>TOPICS[t.id]=t);
 const EXTRA=Array.isArray(window.DAILY_TOPICS_EXTRA)?window.DAILY_TOPICS_EXTRA:[];
@@ -865,9 +873,9 @@ const weekFocus=d=>FOCUS.filter(f=>f.date>=monday(d)&&f.date<=d).map(f=>f.topicI
 function wpick(items,wfn){const ws=items.map(wfn),tot=ws.reduce((a,b)=>a+b,0);let r=RNG()*tot;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
 function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){const c=list.length>1?list.filter(x=>x!==last):list;const p=wpick(c,wfn);out.push(p);last=p;}return out;}
 /* ---------- lesson planning ---------- */
-/* ---------- lesson planning: English revision, about 5 minutes (10-12 questions) ----------
-   Normal day: 2 warm-up, 3 new-topic, 3 mixed, 1 fix-it, 1 challenge.
-   School-focus weekday: the school topic is about 2/3 of the lesson (8 of 12).
+/* ---------- lesson planning: English revision, about 10 minutes (20-24 questions) ----------
+   Normal day: 3 warm-up, 6 new-topic, 7 mixed, 2 fix-it, 2 challenge (20).
+   School-focus weekday: the school topic is about 2/3 of the lesson (16 of 24).
    Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes; a school topic from this week is about 2/3. */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
@@ -883,27 +891,26 @@ function planLesson(date,variant=0){
   if(!review&&focusToday.length){
     const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0,fm=mistakes(e=>e.t===f,14);
     if(fresh||date===fe.date)add('school',f,{kind:'example'});
-    for(let i=0;i<4;i++)add('school',f,{guided:fresh&&i<2,sub:i>=2?subOf(fm,f):null});
-    newSec(3);
-    const opl=pool.filter(x=>x!==f),other=opl.length?wpick(opl,mixW):(cur||CFG.warm);
-    add('mix',f);add('mix',other);add('mix',f);
-    add('fix',f,{sub:subOf(fm,f)});
-    add('challenge',f,{up:1});
+    for(let i=0;i<8;i++)add('school',f,{guided:fresh&&i<2,sub:i>=4?subOf(fm,f):null});
+    newSec(6);
+    const opl=pool.filter(x=>x!==f),other=()=>opl.length?wpick(opl,mixW):(cur||CFG.warm);
+    add('mix',f);add('mix',other());add('mix',f);add('mix',f);add('mix',other());add('mix',f);
+    add('fix',f,{sub:subOf(fm,f)});add('fix',f,{sub:subOf(fm,f)});
+    add('challenge',f,{up:1});add('challenge',f,{up:1});
   }else if(!review){
-    for(let i=0;i<2;i++)add('warm',CFG.warm,{});
-    newSec(3);
+    for(let i=0;i<3;i++)add('warm',CFG.warm,{});
+    newSec(6);
     const pl=pool.length?pool:(cur?[cur]:[CFG.warm]);
-    interleave(pl,cur?3:6,mixW).forEach(t=>add('mix',t));
+    interleave(pl,7,mixW).forEach(t=>add('mix',t));
     const rm=mistakes(()=>true,14),rk=Object.keys(rm);
-    const fk=rk.length?wpick(rk,k=>rm[k]):(pl.slice().sort((a,b)=>acc(a)-acc(b))[0]+'|');
-    {const [t,s]=fk.split('|');add('fix',t,{sub:s||null});}
-    const ch=pool.concat(cur?[cur]:[]);add('challenge',ch.length?pick(ch):CFG.warm,{up:1});
+    for(let i=0;i<2;i++){const fk=rk.length?wpick(rk,k=>rm[k]):(pl.slice().sort((a,b)=>acc(a)-acc(b))[0]+'|');const [t,s]=fk.split('|');add('fix',t,{sub:s||null});}
+    const ch=pool.concat(cur?[cur]:[]);for(let i=0;i<2;i++)add('challenge',ch.length?pick(ch):CFG.warm,{up:1});
   }else{
     const sf=wf.concat(focusToday.map(f=>f.topicId)).filter((x,i,a)=>a.indexOf(x)===i);
     if(focusToday.length){const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0;
       if(fresh||date===fe.date)add('school',f,{kind:'example'});
-      const fm=mistakes(e=>e.t===f,14);for(let i=0;i<5;i++)add('school',f,{guided:fresh&&i<2,sub:i>=3?subOf(fm,f):null});}
-    add('warm',CFG.warm,{});
+      const fm=mistakes(e=>e.t===f,14);for(let i=0;i<8;i++)add('school',f,{guided:fresh&&i<2,sub:i>=4?subOf(fm,f):null});}
+    add('warm',CFG.warm,{});if(!focusToday.length)add('warm',CFG.warm,{});
     const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<date&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
     wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
     let keys=Object.keys(wk);
@@ -911,18 +918,24 @@ function planLesson(date,variant=0){
     const w=k=>1+3*((wk[k]||{}).w||0)+((wk[k]||{}).focus?3:0)+((wk[k]||{}).n?1:0);
     const tp=k=>k.split('|')[0],sb=k=>k.split('|')[1]||null;
     const okeys=keys.filter(k=>!sf.includes(tp(k)));
-    if(!okeys.length&&cur){newSec(3);}
+    if(!keys.length&&cur){newSec(6);for(let i=0;i<6;i++)add('review',cur,{});}
+    else if(!okeys.length&&cur&&!sf.length){newSec(6);}
     if(sf.length){
-      if(okeys.length){const fk=t=>{const ks=keys.filter(k=>tp(k)===t&&sb(k)&&wk[k]&&wk[k].w>0);return ks.length?wpick(ks,k=>wk[k].w):t+'|';};
-        const o2=interleave(okeys,2,w);const seq=[fk(sf[0]),o2[0],fk(sf[sf.length>1?1:0]),o2[1]];seq.forEach(k=>add('review',tp(k),{sub:sb(k)}));}
+      const fk=t=>{const ks=keys.filter(k=>tp(k)===t&&sb(k)&&wk[k]&&wk[k].w>0);return ks.length?wpick(ks,k=>wk[k].w):t+'|';};
+      const nf=focusToday.length?6:14;const nO=okeys.length?Math.min(4,Math.max(2,Math.floor(nf/3.5))):0,nF=nf-nO;
+      const o2=okeys.length?interleave(okeys,nO,w):[];
+      const fs=[];for(let i=0;i<nF;i++){const t=sf[i%sf.length];fs.push(i%2===0&&i<nF*0.5?fk(t):t+'|');}
+      const seq=[];for(let i=0;fs.length||o2.length;i++){if(i%2===1&&o2.length)seq.push(o2.shift());else seq.push(fs.length?fs.shift():o2.shift());}
+      seq.forEach(k=>add('review',tp(k),{sub:sb(k)}));
     }else if(keys.length){let last=null;
-      for(let i=0;i<8;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:sb(k)});}
+      for(let i=0;i<14;i++){const c=keys.length>1?keys.filter(k=>tp(k)!==last||keys.every(x=>tp(x)===last)):keys;const k=wpick(c,w);last=tp(k);add('review',tp(k),{sub:sb(k)});}
     }
     const tough=keys.filter(k=>(wk[k]||{}).w>0).sort((a,b)=>wk[b].w-wk[a].w);const tl=[];
-    if(sf.length){const k=tough.find(x=>sf.includes(tp(x)));tl.push(k||sf[0]+'|');}
-    tough.forEach(k=>{if(tl.length<2&&!tl.includes(k))tl.push(k);});
+    const nTough=focusToday.length?3:4;
+    if(sf.length){const k=tough.find(x=>sf.includes(tp(x)));tl.push(k||sf[0]+'|');tl.push(sf[0]+'|');}
+    tough.forEach(k=>{if(tl.length<nTough&&!tl.includes(k))tl.push(k);});
     const fill=sf.length?sf:(keys.length?keys.map(tp):pool.length?pool:(cur?[cur]:[CFG.warm]));
-    while(tl.length<2)tl.push(fill[tl.length%fill.length]+'|');
+    while(tl.length<nTough)tl.push(fill[tl.length%fill.length]+'|');
     tl.forEach(k=>{const hasW=(wk[k]||{}).w>0;add('tough',tp(k),{sub:sb(k),up:hasW?0:1});});
   }
   /* one "tell a grown-up" prompt on a non-warm question */
@@ -1004,7 +1017,7 @@ function home(){RUN=null;q=null;clearInterval(tick);
   $('#homeBody').innerHTML=`
   <div class="card hero"><div class="big">${review?'🏆':'📚'}</div><div style="flex:1;min-width:220px">
     <h2 id="hello">Hi ${NAME}! 👋</h2><div style="font-size:1.25rem" id="todayDate"><b>${weekday(TODAY)}</b>, ${longDate(TODAY).replace(weekday(TODAY)+' ','').replace(/^,\s*/,'')}</div>
-    <div class="row" style="margin-top:6px"><span class="tag" id="kindTag">${kindLabel}</span><span class="tag">⏱️ about 5 minutes · ${nq} questions</span>${done?'<span class="tag ok">✅ Done today!</span>':''}</div></div></div>
+    <div class="row" style="margin-top:6px"><span class="tag" id="kindTag">${kindLabel}</span><span class="tag">⏱️ about 10 minutes · ${nq} questions</span>${done?'<span class="tag ok">✅ Done today!</span>':''}</div></div></div>
   ${af.length?`<div class="focus" id="focusBox">🏫 <b>From school today: ${esc(af[0].title||TOPICS[af[0].topicId].title)}</b>${af[0].note?`<div class="small">${esc(af[0].note)}</div>`:''}</div>`:''}
   <div class="card"><b>Today's lesson</b><div class="secs" id="secTiles">${Object.keys(SECN).filter(k=>counts[k]).map(k=>{const pr=tr?secProgress(tr,k):{n:counts[k],d:0},full=pr.n&&pr.d>=pr.n,doneAll=done&&!inprog;
       const st=full?'✅ done':pr.d?`${pr.d}/${pr.n} done`:`${pr.n} question${pr.n>1?'s':''}`,act=doneAll||full?'Tap to practise again':pr.d?'Tap to carry on here':inprog||tr?'Tap to go here':'Tap to start here';
