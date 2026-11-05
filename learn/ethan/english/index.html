@@ -491,6 +491,7 @@ const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevent
 /* ===== Ethan's English practice topics (NSW English K–10 Syllabus 2022, Stage 1 → Stage 2) =====
    About 10 minutes a day. Mostly tap-the-answer, with some short typed spelling on a letter keypad.
    Engine levels 0..3 (a new topic starts at 1): 0-1 = Year 2, 2 = Year 2 stretch / early Year 3, 3 = Year 3.
+   Pitched a little further into Year 3 (pt47u): trickier sentences, irregulars, comparatives, possessives.
    Every question has: hint (short), hint2 ("More help"), explain (steps) and why (one line for the results list). */
 const ENK=(function(){
   const J=a=>a.join('<br>');
@@ -515,6 +516,10 @@ const ENK=(function(){
 window.ENKIT=ENK;
 const ENE=(function(){
   const {J,sent,emo,M,uniq,tiles,spellE,parse,CN}=ENK;
+  /* Bias toward the top of the allowed band; sometimes stretch one level (Year 3 peek). */
+  function poolLvl(arr,l,idx){const stretch=Math.min(3,l+(l>=1&&chance(0.4)?1:0));let ok=arr.filter(x=>x[idx]<=stretch);if(!ok.length)ok=arr.filter(x=>x[idx]<=l);
+    const floor=Math.max(0,stretch-1);const prefer=ok.filter(x=>x[idx]>=floor);return prefer.length?prefer:ok;}
+  const pickL=(arr,l,idx)=>pick(poolLvl(arr,l,idx));
 
   /* ---------------- warm-up: rhymes, syllables, ABC order ---------------- */
   const RHY=[['cat',['hat','mat','bat'],['dog','cup','sun','pen']],['dog',['log','frog','fog'],['cat','bed','sun','pig']],['sun',['fun','run','bun'],['sit','sea','sock','hat']],
@@ -577,11 +582,11 @@ const ENE=(function(){
     blurb:'Two letters, one sound (sh, ch, th, wh, ck, ng) and vowel teams (ai, ay, ee, ea, igh, ow, ou).',
     subs:l=>l>=1?['digraph','vowel','vowel','spell']:['digraph','vowel','vowel'],
     gen(H,l,sub){
-      if(sub==='digraph'){const [w,e,clue,p,pos,d]=pick(DIG.filter(x=>x[6]<=l));const at=pos==='start'?0:w.lastIndexOf(p);
+      if(sub==='digraph'){const [w,e,clue,p,pos,d]=pickL(DIG,l,6);const at=pos==='start'?0:w.lastIndexOf(p);
         return M(Object.assign({sub,prompt:'Which two letters finish the picture word?',vis:emo(e)+`<div class="small">${clue}</div>`+tiles(w,at,p.length),
           hint:'Say the picture word slowly. Which two letters make that sound?',hint2:`Listen carefully to the sound at the ${pos} of the word.`,
           explain:J([`Say it: ${w}.`,`The sound at the ${pos} is spelt <b>${p}</b>.`,`<b>${w}</b>`]),why:`“${w}” is spelt with ${p} at the ${pos}.`},opts(p,d,{cls:'txt'})),{type:'digraph',w});}
-      const [w,e,clue,p,d]=pick(VT.filter(x=>x[5]<=l));const at=w.indexOf(p),ex=famEx(w,p);
+      const [w,e,clue,p,d]=pickL(VT,l,5);const at=w.indexOf(p),ex=famEx(w,p);
       if(sub==='spell'){const q=spellE(p,{pre:`<span class="spw">${w.slice(0,at)}</span>`,post:`<span class="spw">${w.slice(at+p.length)}</span>`,extra:5});
         return M(Object.assign({sub,prompt:'Type the missing letters to spell the picture word.',vis:emo(e)+`<div class="small">${clue}</div>`,
           hint:'Say the word slowly. Listen to the long vowel sound in it.',hint2:`Think of “${ex}”. It has the same sound, spelt the same way.`,
@@ -610,7 +615,7 @@ const ENE=(function(){
   const sight={id:'sight',title:'Tricky Words',icon:'👀',dedupByText:true,code:'EN1-SPELL-01 · EN2-SPELL-01',
     blurb:'Spelling high-frequency words that do not sound the way they look (said, was, because).',
     subs:l=>['pick','pick','fill'],
-    gen(H,l,sub){const [w,bad,s,p]=pick(SW.filter(x=>x[4]<=l));const sen=s.replace('___','<span class="gap"></span>');
+    gen(H,l,sub){const [w,bad,s,p]=pickL(SW,l,4);const sen=s.replace('___','<span class="gap"></span>');
       if(sub==='fill'){const i=w.indexOf(p);const q=spellE(p,{pre:`<span class="spw">${w.slice(0,i)}</span>`,post:`<span class="spw">${w.slice(i+p.length)}</span>`,extra:5});
         return M(Object.assign({sub,prompt:'Type the missing letters to finish the word.',vis:sent(sen),
           hint:'Read the sentence. Say the missing word, then think how it looks.',hint2:`Type ${p.length} letter${p.length>1?'s':''}. This is a word you see in lots of books.`,
@@ -624,31 +629,45 @@ const ENE=(function(){
   const WC=[
     ['The {fluffy:a} {dog:n} {chased:v} a {red:a} {ball:n}.',0],['A {tiny:a} {frog:n} {jumped:v} into the {pond:n}.',0],['{Mum:n} {baked:v} a {yummy:a} {cake:n}.',0],
     ['The {big:a} {bus:n} {stopped:v} at the {school:n}.',0],['My {little:a} {sister:n} {sang:v} a {happy:a} {song:n}.',0],['The {hungry:a} {koala:n} {ate:v} some {leaves:n}.',0],
-    ['Dad {washed:v} the {muddy:a} {car:n}.',0],['The {cold:a} {wind:n} {blew:v} my {hat:n} away.',0],['A {brown:a} {horse:n} {ran:v} across the {field:n}.',0],
-    ['The {sleepy:a} {cat:n} {curled:v} up on the {mat:n}.',0],['{Sam:n} {kicked:v} the {soft:a} {ball:n}.',0],['Two {noisy:a} {birds:n} {sat:v} on the {fence:n}.',0],
+    ['Dad {washed:v} the {muddy:a} {car:n}.',1],['The {cold:a} {wind:n} {blew:v} my {hat:n} away.',1],['A {brown:a} {horse:n} {ran:v} across the {field:n}.',1],
+    ['The {sleepy:a} {cat:n} {curled:v} up on the {mat:n}.',1],['{Sam:n} {kicked:v} the {soft:a} {ball:n}.',1],['Two {noisy:a} {birds:n} {sat:v} on the {fence:n}.',1],
     ['The {kind:a} {teacher:n} {read:v} a {funny:a} {book:n}.',1],['We {built:v} a {tall:a} {tower:n} with {blocks:n}.',1],['The {shiny:a} {fish:n} {swam:v} past the {rock:n}.',1],
     ['The {enormous:a} {whale:n} {splashed:v} its {gigantic:a} {tail:n}.',2],['{Grandpa:n} {planted:v} {bright:a} {flowers:n} in the {garden:n}.',2],
-    ['A {gentle:a} {breeze:n} {rustled:v} the {dry:a} {grass:n}.',2],['The {grumpy:a} {pirate:n} {buried:v} his {golden:a} {treasure:n}.',3],
+    ['A {gentle:a} {breeze:n} {rustled:v} the {dry:a} {grass:n}.',2],['The {curious:a} {scientist:n} {examined:v} a {rare:a} {fossil:n}.',2],
+    ['The {grumpy:a} {pirate:n} {buried:v} his {golden:a} {treasure:n} under the {sand:n}.',3],
+    ['After the {fierce:a} {storm:n}, the {brave:a} {crew:n} {repaired:v} the {ship:n}.',3],
   ];
   const WCH={n:['A noun is a person, place or thing. Find the thing word.','Can you put “the” or “a” in front of it? Then it is a noun.'],
     v:['A verb is a doing word. What happens in the sentence?','Ask: what did someone or something do? That word is the verb.'],
     a:['An adjective is a describing word. It tells what something is like.','Find a thing word. Which word just before it describes it?']};
-  function classQ(H,l,sub,data,topicId){const src=pick(data.filter(x=>x[1]<=l))[0];const {toks,plain}=parse(src);
+  function classQ(H,l,sub,data,topicId){const src=pickL(data,l,1)[0];const {toks,plain}=parse(src);
     if(sub==='desc'){const pairs=toks.map((t,i)=>[t,toks[i+1]]).filter(([t,u])=>t.c==='a'&&u&&u.c==='n');if(!pairs.length)throw new Error('desc');const [a,n]=pick(pairs);
       const others=uniq(toks.filter(t=>t.c!=='a'&&t.c!=='p'&&t.w!==n.w&&t.w.length>1).map(t=>t.c?t.w:t.w.toLowerCase()));const d=shuffle(others).slice(0,3);
       return M(Object.assign({sub,prompt:`Which word <b>describes</b> the ${n.w}?`,vis:sent(plain),hint:`Find the word “${n.w}”. Look at the word just before it.`,hint2:'A describing word tells how something looks, feels or sounds.',
         explain:J([`What is the ${n.w} like? It is <b>${a.w}</b>.`,`“${a.w}” is an adjective: it describes the ${n.w}.`]),why:`“${a.w}” tells us what the ${n.w} is like.`},opts(a.w,d,{cls:'txt'})),{type:'desc',src});}
     const c=sub==='noun'?'n':sub==='verb'?'v':'a';const cand=toks.filter(t=>t.c===c);const a=pick(cand);
-    const others=uniq(toks.filter(t=>t.c&&t.c!=='p'&&t.c!==c).map(t=>t.w));const fill=uniq(toks.filter(t=>!t.c&&/^(the|a|an|on|in|at|into|with|across|past|some|my|its|his|up|away|two)$/i.test(t.w)).map(t=>t.w));
-    const d=shuffle(others).slice(0,3).concat(shuffle(fill)).slice(0,3);const N=CN[c];
+    const others=uniq(toks.filter(t=>t.c&&t.c!=='p'&&t.c!==c).map(t=>t.w));
+    const fill=uniq(toks.filter(t=>!t.c&&t.w.length>2&&!/^(the|a|an|my|his|her|its|our|their)$/i.test(t.w)).map(t=>t.w));
+    const d=shuffle(others.concat(l>=1?[]:fill)).slice(0,3);const N=CN[c];
     return M(Object.assign({sub,prompt:`Which word is ${c==='a'?'an':'a'} <b>${N}</b>?`,vis:sent(plain),hint:WCH[c][0],hint2:WCH[c][1],
       explain:J([c==='n'?'A noun names a person, place or thing.':c==='v'?'A verb is a doing word.':'An adjective describes a noun.',`<b>${a.w}</b> is ${c==='a'?'an':'a'} ${N}.`]),
       why:c==='n'?`“${a.w}” names a person, place or thing, so it is a noun.`:c==='v'?`“${a.w}” is what happens (a doing word), so it is a verb.`:`“${a.w}” describes a thing, so it is an adjective.`},opts(a.w,d,{cls:'txt'})),{type:c,src});}
-  const wordclass={id:'wordclass',title:'Nouns, Verbs and Adjectives',icon:'🏷️',dedupByText:true,code:'EN1-VOCAB-01 · EN1-CWT-01',
-    blurb:'Naming words (nouns), doing words (verbs) and describing words (adjectives).',
-    subs:l=>['noun','verb','adj','desc'],
-    gen(H,l,sub){return classQ(H,l,sub,WC,'wordclass');},
-    example(){return {html:`<h3>🏷️ Word jobs</h3>${sent('The <b style="color:#ca8a04">fluffy</b> <b style="color:#2563eb">dog</b> <b style="color:#16a34a">chased</b> a ball.')}<p><b style="color:#2563eb">Noun</b> = a person, place or thing (dog) · <b style="color:#16a34a">Verb</b> = a doing word (chased) · <b style="color:#ca8a04">Adjective</b> = a describing word (fluffy)</p>`};}};
+  const CMP=[['big','bigger','biggest',0],['small','smaller','smallest',0],['tall','taller','tallest',0],['fast','faster','fastest',1],
+    ['happy','happier','happiest',1],['funny','funnier','funniest',1],['hot','hotter','hottest',1],['sad','sadder','saddest',2],
+    ['good','better','best',2],['bad','worse','worst',2],['careful','more careful','most careful',3],['beautiful','more beautiful','most beautiful',3]];
+  const wordclass={id:'wordclass',title:'Nouns, Verbs and Adjectives',icon:'🏷️',dedupByText:true,code:'EN1-VOCAB-01 · EN1-CWT-01 → EN2-CWT-01',
+    blurb:'Nouns, verbs, adjectives, plus Year 3 stretch: comparative and superlative adjectives.',
+    subs:l=>l>=1?['noun','verb','adj','desc','comp','super']:['noun','verb','adj','desc'],
+    gen(H,l,sub){
+      if(sub==='comp'||sub==='super'){const [base,cmp,sup]=pickL(CMP,l,3);const a=sub==='comp'?cmp:sup;const ask=sub==='comp'?`Which word is the <b>comparative</b> of “${base}”?`:`Which word is the <b>superlative</b> of “${base}”?`;
+        const d=sub==='comp'?uniq([sup,base,base+'est',base+'er']).filter(x=>x!==a):uniq([cmp,base,base+'er',base+'est']).filter(x=>x!==a);
+        return M(Object.assign({sub,prompt:ask,vis:sent(`The word family of <b>${base}</b>`),
+          hint:sub==='comp'?'Comparative means more of the quality. Often ends with -er, or uses more.':'Superlative means the most. Often ends with -est, or uses most.',
+          hint2:sub==='comp'?`Compare two things: which form of “${base}” fits?`:`Compare three or more: which form of “${base}” is the top?`,
+          explain:J([sub==='comp'?`More ${base} → <b>${cmp}</b>.`:`The most ${base} → <b>${sup}</b>.`,`Base word: ${base}.`]),
+          why:sub==='comp'?`“${cmp}” means more ${base}.`:`“${sup}” means the most ${base}.`},opts(a,d,{cls:'txt'})),{type:sub});}
+      return classQ(H,l,sub,WC,'wordclass');},
+    example(){return {html:`<h3>🏷️ Word jobs</h3>${sent('The <b style="color:#ca8a04">fluffy</b> <b style="color:#2563eb">dog</b> <b style="color:#16a34a">chased</b> a ball.')}<p><b style="color:#2563eb">Noun</b> · <b style="color:#16a34a">Verb</b> · <b style="color:#ca8a04">Adjective</b></p><p>Compare: big → <b>bigger</b> → <b>biggest</b> · good → <b>better</b> → <b>best</b></p>`};}};
 
   /* ---------------- 4. capital letters, full stops, question marks ---------------- */
   const ENDQ=['Where is my lunch box','Can we go to the beach','What time is it','Do you like pizza','How many legs does a spider have','Who ate the last apple','Why is the sky blue','Are you coming to my party','Is it raining outside','When does school finish'];
@@ -695,7 +714,7 @@ const ENE=(function(){
   const compound={id:'compound',title:'Compound Words',icon:'🧩',dedupByText:true,code:'EN1-SPELL-01 · EN1-VOCAB-01',
     blurb:'Two small words join to make one new word: sun + flower = sunflower.',
     subs:l=>['join','which','split'],
-    gen(H,l,sub){const [a,b,e]=pick(CW.filter(x=>x[3]<=l)),w=a+b;
+    gen(H,l,sub){const [a,b,e]=pickL(CW,l,3),w=a+b;
       if(sub==='which'){const d=shuffle(NONC.slice()).slice(0,3);
         return M(Object.assign({sub,prompt:'Which one is a <b>compound word</b>?',vis:'',hint:'A compound word is two small words joined to make one word.',hint2:'Cover part of each word. Can you see two real words?',
           explain:J([`<b>${w}</b> = ${a} + ${b}.`,'The other words cannot be split into two real words.']),why:`“${w}” is made of two words: ${a} + ${b}.`},opts(w,d,{cls:'txt'})),{type:'which'});}
@@ -710,37 +729,41 @@ const ENE=(function(){
   /* ---------------- 6. plurals ---------------- */
   const PL=[['cat','s',0],['dog','s',0],['frog','s',0],['book','s',0],['tree','s',0],['hand','s',0],['apple','s',0],['shoe','s',1],['kite','s',1],
     ['fox','es',0],['box','es',0],['bus','es',0],['dish','es',0],['brush','es',0],['watch','es',1],['glass','es',1],['dress','es',1],['bench','es',1],['lunch','es',1],['beach','es',2],['wish','es',2],
-    ['baby','ies',2],['puppy','ies',2],['party','ies',3],['berry','ies',3],['lady','ies',3],['story','ies',3]];
-  const plOf=(w,k)=>k==='ies'?w.slice(0,-1)+'ies':w+k;
-  const plH2=(w,k)=>k==='ies'?'Does it end in a consonant then y? Change the y to i first.':'Words ending in s, x, sh, ch or ss add -es. Most words add -s.';
+    ['baby','ies',2],['puppy','ies',2],['party','ies',2],['berry','ies',2],['lady','ies',3],['story','ies',3],['city','ies',3],['pony','ies',3],
+    ['child','irr',2,'children'],['mouse','irr',2,'mice'],['tooth','irr',2,'teeth'],['foot','irr',3,'feet'],['goose','irr',3,'geese'],['man','irr',3,'men'],['woman','irr',3,'women'],['sheep','irr',3,'sheep']];
+  const plOf=(w,k,irr)=>k==='irr'?irr:k==='ies'?w.slice(0,-1)+'ies':w+k;
+  const plH2=(w,k)=>k==='irr'?'This plural changes the word. Picture how it looks in a book.':k==='ies'?'Does it end in a consonant then y? Change the y to i first.':'Words ending in s, x, sh, ch or ss add -es. Most words add -s.';
   const plurals={id:'plurals',title:'More Than One (-s, -es)',icon:'🍎',dedupByText:true,code:'EN1-SPELL-01 · EN2-SPELL-01',
-    blurb:'Plurals: one cat → two cats, one fox → two foxes (and a Year 3 stretch: baby → babies).',
+    blurb:'Plurals: -s/-es, baby → babies, and irregular Year 3 stretch (child → children, mouse → mice).',
     subs:l=>l>=1?['pick','pick','type']:['pick','pick'],
-    gen(H,l,sub){const [w,k]=pick(PL.filter(x=>x[2]<=l)),a=plOf(w,k);const why=k==='s'?`Most words just add -s: ${a}.`:k==='es'?`“${w}” ends in ${w.match(/(sh|ch|ss|s|x)$/)[1]}, so add -es: ${a}.`:`“${w}” ends in a consonant then y: change y to i and add -es.`;
-      const ex=J([k==='s'?'Most words add <b>-s</b>.':k==='es'?'Words ending in s, x, sh, ch or ss add <b>-es</b>. You can hear the extra beat.':'Consonant + y: change the <b>y</b> to <b>i</b>, then add <b>-es</b>.',`one ${w} → two <b>${a}</b>`]);
+    gen(H,l,sub){const row=pickL(PL,l,2);const w=row[0],k=row[1],irr=row[3];const a=plOf(w,k,irr);
+      const why=k==='s'?`Most words just add -s: ${a}.`:k==='es'?`“${w}” ends in ${w.match(/(sh|ch|ss|s|x)$/)[1]}, so add -es: ${a}.`:k==='irr'?`“${w}” is an irregular plural: one ${w} → two ${a}.`:`“${w}” ends in a consonant then y: change y to i and add -es.`;
+      const ex=J([k==='s'?'Most words add <b>-s</b>.':k==='es'?'Words ending in s, x, sh, ch or ss add <b>-es</b>. You can hear the extra beat.':k==='irr'?`“${w}” does not just add -s. Learn the new plural form.`:'Consonant + y: change the <b>y</b> to <b>i</b>, then add <b>-es</b>.',`one ${w} → two <b>${a}</b>`]);
       if(sub==='type'){const q=spellE(a,{extra:4});
-        return M(Object.assign({sub,prompt:`one ${w}, two …? Type the word.`,vis:sent(`one <b>${w}</b> → two <span class="gap"></span>`),hint:'Say it out loud. Do you hear an extra beat at the end?',hint2:plH2(w,k),explain:ex,why},q),{type:'ptype',k});}
-      const d=uniq([w+'s',w+'es',w.endsWith('y')?w+'s':w+'ss',w.endsWith('y')?w.slice(0,-1)+'es':w+'z']).filter(x=>x!==a);
-      return M(Object.assign({sub:'pick',prompt:`one ${w}, two …?`,vis:sent(`one <b>${w}</b> → two <span class="gap"></span>`),hint:'Say it out loud. Do you hear an extra beat at the end?',hint2:plH2(w,k),explain:ex,why},opts(a,d,{n:3,cls:'txt'})),{type:'ppick',k});},
-    example(){return {html:`<h3>🍎 More than one</h3><p>Most words add <b>-s</b>: cat → cat<b>s</b></p><p>Words ending in <b>s, x, sh, ch, ss</b> add <b>-es</b>: fox → fox<b>es</b>, dish → dish<b>es</b></p><p>💡 Say it: if you hear an extra beat (fox-es), it’s <b>-es</b>.</p>`};}};
+        return M(Object.assign({sub,prompt:`one ${w}, two …? Type the word.`,vis:sent(`one <b>${w}</b> → two <span class="gap"></span>`),hint:k==='irr'?'This one changes spelling. Say the plural you know from books.':'Say it out loud. Do you hear an extra beat at the end?',hint2:plH2(w,k),explain:ex,why},q),{type:'ptype',k});}
+      const d=k==='irr'?uniq([w+'s',w+'es',w+'ies',a===w?w+'s':w]).filter(x=>x!==a):uniq([w+'s',w+'es',w.endsWith('y')?w+'s':w+'ss',w.endsWith('y')?w.slice(0,-1)+'es':w+'z']).filter(x=>x!==a);
+      return M(Object.assign({sub:'pick',prompt:`one ${w}, two …?`,vis:sent(`one <b>${w}</b> → two <span class="gap"></span>`),hint:k==='irr'?'This one changes spelling. Say the plural you know from books.':'Say it out loud. Do you hear an extra beat at the end?',hint2:plH2(w,k),explain:ex,why},opts(a,d,{n:3,cls:'txt'})),{type:'ppick',k});},
+    example(){return {html:`<h3>🍎 More than one</h3><p>Most words add <b>-s</b>: cat → cat<b>s</b></p><p>Words ending in <b>s, x, sh, ch, ss</b> add <b>-es</b>: fox → fox<b>es</b></p><p>Some change: child → <b>children</b>, mouse → <b>mice</b></p>`};}};
 
   /* ---------------- 7. past tense -ed ---------------- */
   const PT=[['jump','r',0],['play','r',0],['help','r',0],['kick','r',0],['walk','r',0],['look','r',0],['cook','r',0],['paint','r',0],['pull','r',0],['push','r',0],['wash','r',1],['climb','r',1],['open','r',1],
     ['bake','e',1],['smile','e',1],['dance','e',2],['skate','e',2],['wave','e',2],['like','e',2],['clap','d',2],['stop','d',2],['skip','d',2],['drop','d',2],['hug','d',2],['grab','d',3],['plan','d',3],
-    ['cry','y',3],['carry','y',3],['tidy','y',3],['try','y',3]];
-  const pastOf=(v,k)=>k==='e'?v+'d':k==='d'?v+v.slice(-1)+'ed':k==='y'?v.slice(0,-1)+'ied':v+'ed';
-  const ptD=(v,k)=>k==='e'?[v+'ed',v+'t',v.slice(0,-1)+'t']:k==='d'?[v+'ed',v+'t',v+v.slice(-1)+'d']:k==='y'?[v+'ed',v+'d',v.slice(0,-1)+'yed']:[v+'t',v+'d',v+v.slice(-1)+'ed'];
-  const PTH2={r:'Most doing words just add -ed to the end. Nothing else changes.',e:'This word already ends in e. You only need one more letter.',d:'Short word, one vowel, one last consonant? Double that last letter first.',y:'Consonant then y? Change the y to i, then add the ending.'};
-  const PTW={r:v=>`Most doing words just add -ed: ${pastOf(v,'r')}.`,e:v=>`“${v}” already ends in e, so just add -d.`,d:v=>`Short word with one vowel: double the last letter, then add -ed.`,y:v=>`Consonant then y: change y to i, then add -ed.`};
+    ['cry','y',2],['carry','y',2],['tidy','y',3],['try','y',3],
+    ['go','irr',2,'went'],['see','irr',2,'saw'],['run','irr',2,'ran'],['eat','irr',2,'ate'],['come','irr',2,'came'],['give','irr',3,'gave'],['take','irr',3,'took'],['make','irr',3,'made'],['find','irr',3,'found'],['think','irr',3,'thought']];
+  const pastOf=(v,k,irr)=>k==='irr'?irr:k==='e'?v+'d':k==='d'?v+v.slice(-1)+'ed':k==='y'?v.slice(0,-1)+'ied':v+'ed';
+  const ptD=(v,k,a)=>k==='irr'?uniq([v+'ed',v+'d',v+'t',v+'n']).filter(x=>x!==a):k==='e'?[v+'ed',v+'t',v.slice(0,-1)+'t']:k==='d'?[v+'ed',v+'t',v+v.slice(-1)+'d']:k==='y'?[v+'ed',v+'d',v.slice(0,-1)+'yed']:[v+'t',v+'d',v+v.slice(-1)+'ed'];
+  const PTH2={r:'Most doing words just add -ed to the end. Nothing else changes.',e:'This word already ends in e. You only need one more letter.',d:'Short word, one vowel, one last consonant? Double that last letter first.',y:'Consonant then y? Change the y to i, then add the ending.',irr:'This yesterday word changes spelling. Picture the word you know from books.'};
+  const PTW={r:v=>`Most doing words just add -ed: ${pastOf(v,'r')}.`,e:v=>`“${v}” already ends in e, so just add -d.`,d:v=>`Short word with one vowel: double the last letter, then add -ed.`,y:v=>`Consonant then y: change y to i, then add -ed.`,irr:(v,a)=>`“${v}” is irregular: yesterday you say “${a}”.`};
   const past={id:'past',title:'Yesterday Words (-ed)',icon:'⏪',dedupByText:true,code:'EN1-SPELL-01 · EN2-SPELL-01',
-    blurb:'Past tense: jump → jumped, bake → baked, and a Year 3 stretch: hop → hopped, cry → cried.',
+    blurb:'Past tense: -ed patterns, plus irregular Year 3 stretch (go → went, see → saw, run → ran).',
     subs:l=>l>=1?['pick','pick','type']:['pick','pick'],
-    gen(H,l,sub){const [v,k]=pick(PT.filter(x=>x[2]<=l)),a=pastOf(v,k);const vis=sent(`Today I <b>${v}</b>. Yesterday I <span class="gap"></span>.`);
-      const ex=J(['Yesterday means it already happened, so we use the past tense.',k==='r'?'Add <b>-ed</b>.':k==='e'?'It ends in <b>e</b>, so just add <b>-d</b>.':k==='d'?'Double the last letter, then add <b>-ed</b>.':'Change <b>y</b> to <b>i</b>, then add <b>-ed</b>.',`${v} → <b>${a}</b>`]);
-      const hint='Yesterday means it already happened. Add the past tense ending to the word.';
-      if(sub==='type'){const q=spellE(a,{extra:3});return M(Object.assign({sub,prompt:'Type the yesterday word.',vis,hint,hint2:PTH2[k],explain:ex,why:PTW[k](v)},q),{type:'ttype',k});}
-      return M(Object.assign({sub:'pick',prompt:'Which word finishes the sentence?',vis,hint,hint2:PTH2[k],explain:ex,why:PTW[k](v)},opts(a,ptD(v,k),{cls:'txt'})),{type:'tpick',k});},
-    example(){return {html:`<h3>⏪ Yesterday words</h3><p>To show something already happened, add <b>-ed</b>:</p><p style="font-size:1.25rem">Today I jump. Yesterday I jump<b>ed</b>.</p><p>💡 Say the word and listen for the ending.</p>`};}};
+    gen(H,l,sub){const row=pickL(PT,l,2);const v=row[0],k=row[1],irr=row[3];const a=pastOf(v,k,irr);const vis=sent(`Today I <b>${v}</b>. Yesterday I <span class="gap"></span>.`);
+      const ex=J(['Yesterday means it already happened, so we use the past tense.',k==='r'?'Add <b>-ed</b>.':k==='e'?'It ends in <b>e</b>, so just add <b>-d</b>.':k==='d'?'Double the last letter, then add <b>-ed</b>.':k==='irr'?`“${v}” changes to a new word.`:'Change <b>y</b> to <b>i</b>, then add <b>-ed</b>.',`${v} → <b>${a}</b>`]);
+      const hint=k==='irr'?'Yesterday means it already happened. This word changes its spelling.':'Yesterday means it already happened. Add the past tense ending to the word.';
+      const why=typeof PTW[k]==='function'&&k==='irr'?PTW.irr(v,a):PTW[k](v);
+      if(sub==='type'){const q=spellE(a,{extra:3});return M(Object.assign({sub,prompt:'Type the yesterday word.',vis,hint,hint2:PTH2[k],explain:ex,why},q),{type:'ttype',k});}
+      return M(Object.assign({sub:'pick',prompt:'Which word finishes the sentence?',vis,hint,hint2:PTH2[k],explain:ex,why},opts(a,ptD(v,k,a),{cls:'txt'})),{type:'tpick',k});},
+    example(){return {html:`<h3>⏪ Yesterday words</h3><p>Many doing words add <b>-ed</b>: jump → jump<b>ed</b></p><p>Some change: go → <b>went</b>, see → <b>saw</b>, run → <b>ran</b></p>`};}};
 
   /* ---------------- 8. synonyms and antonyms ---------------- */
   const SYN=[['big','large',['tiny','slow','wet'],0],['small','little',['huge','loud','fast'],0],['happy','glad',['sad','cross','cold'],0],['fast','quick',['slow','soft','old'],0],
@@ -756,7 +779,7 @@ const ENE=(function(){
   const synant={id:'synant',title:'Same and Opposite',icon:'🔁',dedupByText:true,code:'EN1-VOCAB-01 · EN2-VOCAB-01',
     blurb:'Synonyms (same meaning: big → large) and antonyms (opposites: big → small).',
     subs:l=>['syn','ant'],
-    gen(H,l,sub){const L=sub==='ant'?ANT:SYN;const [w,a,d]=pick(L.filter(x=>x[3]<=l));
+    gen(H,l,sub){const L=sub==='ant'?ANT:SYN;const [w,a,d]=pickL(L,l,3);
       return M(Object.assign({sub,prompt:sub==='ant'?`Which word is the <b>opposite</b> of “${w}”?`:`Which word means the <b>same</b> as “${w}”?`,vis:'',
         hint:sub==='ant'?`An antonym means the opposite. Think of the other end, like ${['up','down'].includes(w)||['up','down'].includes(a)?'in and out':'up and down'}.`:'A synonym means the same, or nearly the same. Try it in a sentence.',
         hint2:sub==='ant'?'Put “not” in front of the word. Which choice means that?':'Swap each choice into a sentence. Does it still mean the same thing?',
@@ -775,7 +798,7 @@ const ENE=(function(){
   const conj={id:'conj',title:'Joining Words',icon:'🔗',dedupByText:true,code:'EN1-CWT-01 · EN2-CWT-01',
     blurb:'Joining ideas with and, but, because and so.',
     subs:l=>[null],
-    gen(H,l){const [s,a]=pick(CJ.filter(x=>x[2]<=l));
+    gen(H,l){const [s,a]=pickL(CJ,l,2);
       return M(Object.assign({sub:a,prompt:'Which joining word fits <b>best</b>?',vis:sent(s.replace('___','<span class="gap"></span>')),hint:'Read the sentence with each choice. Which one makes the most sense?',hint2:CJH[a],
         explain:J([CJW[a],s.replace('___','<b>'+a+'</b>')]),why:CJW[a]},opts(a,CJD[a],{cls:'txt'})),{type:'conj',a});},
     example(){return {html:`<h3>🔗 Joining words</h3><p><b>and</b> adds more · <b>but</b> shows a change · <b>because</b> gives a reason · <b>so</b> tells the result</p>${sent('It was cold, <b>so</b> I put on my coat.')}`};}};
@@ -790,7 +813,7 @@ const ENE=(function(){
   const affix={id:'affix',title:'Word Starts and Endings',icon:'🧱',dedupByText:true,code:'EN1-VOCAB-01 · EN2-SPELL-01',
     blurb:'Prefixes un- (not) and re- (again), suffixes -ful (full of) and -less (without).',
     subs:l=>['mean','mean','part'],
-    gen(H,l,sub){const [r,x,m]=pick(AF.filter(y=>y[3]<=l)),a=afW(r,x);
+    gen(H,l,sub){const [r,x,m]=pickL(AF,l,3),a=afW(r,x);
       if(sub==='part'){const others=AF.filter(y=>y[1]===x&&y[0]!==r).map(y=>afW(y[0],y[1]));const ex=pick(others);const lab={un:'un-',re:'re-',ful:'-ful',less:'-less'}[x];
         return M(Object.assign({sub,prompt:`In <b>${a}</b>, what does <b>${lab}</b> mean?`,vis:'',hint:`Think of another word with ${lab}, like “${ex}”. What does it do there?`,hint2:`Cover ${lab}. Read the root word “${r}”. How did the meaning change?`,
           explain:J([`${lab} means <b>${AFM[x]}</b>.`,`${a} = ${m}.`]),why:`${lab} means “${AFM[x]}”, so ${a} means ${m}.`},opts(AFM[x],Object.values(AFM).filter(v=>v!==AFM[x]),{cls:'txt'})),{type:'apart',x});}
@@ -804,10 +827,19 @@ const ENE=(function(){
     ['they are',"they're",'a',1],['she is',"she's",'i',1],['I will',"I'll",'wi',1],['was not',"wasn't",'o',1],['we will',"we'll",'wi',2],['I have',"I've",'ha',2],['could not',"couldn't",'o',2],['let us',"let's",'u',2],
     ['would not',"wouldn't",'o',3],['they will',"they'll",'wi',3],['you have',"you've",'ha',3],['he is',"he's",'i',3]];
   const ctBad=c=>{const i=c.indexOf("'"),s=c.replace("'",'');const L=[s];if(i>1)L.push(s.slice(0,i-1)+"'"+s.slice(i-1));if(i<s.length)L.push(s.slice(0,i+1)+"'"+s.slice(i+1));L.push(s.slice(0,i)+','+s.slice(i));return uniq(L).filter(x=>x!==c);};
+  const POSS=[['dog','bone',"the dog's bone",'one owner',1],['girl','hat',"the girl's hat",'one owner',1],['teacher','desk',"the teacher's desk",'one owner',2],
+    ['dogs','kennel',"the dogs' kennel",'more than one owner',2],['children','toys',"the children's toys",'special plural owner',3],
+    ['boy','bike',"the boy's bike",'one owner',1],['cats','bowl',"the cats' bowl",'more than one owner',3]];
   const contract={id:'contract',title:'Short Words (Apostrophes)',icon:'✂️',dedupByText:true,code:'EN1-CWT-01 · EN2-CWT-01',
-    blurb:'Contractions: do not → don’t. The apostrophe shows where letters were taken out.',
-    subs:l=>l>=1?['short','long','gone']:['short','long'],
-    gen(H,l,sub){const [lg,c,gone]=pick(CT.filter(x=>x[3]<=l));const ex=J([`${lg} → <b>${c}</b>`,`The apostrophe takes the place of the missing letter${gone.length>1?'s':''}: <b>${gone}</b>.`]);
+    blurb:'Contractions (don’t) and a Year 3 stretch: possessive apostrophes (the dog’s bone).',
+    subs:l=>l>=2?['short','long','gone','own']:l>=1?['short','long','gone']:['short','long'],
+    gen(H,l,sub){
+      if(sub==='own'){const [own,thing,right,clue]=pickL(POSS,l,4);
+        const wrongs=uniq([`the ${own}s ${thing}`,`the ${own} ${thing}`,own.endsWith('s')?`the ${own}'s ${thing}`:`the ${own}s' ${thing}`,`the ${own}' ${thing}`]).filter(x=>x!==right);
+        return M(Object.assign({sub,prompt:`Which shows that the ${thing} belongs to the ${own}? <span class="small">(${clue})</span>`,vis:'',
+          hint:'An apostrophe can show belonging. Think: one owner, or more than one?',hint2:clue==='one owner'?"One owner: add ’s to the owner’s name.":clue==='more than one owner'?"Plural owner that already ends in s: just add the apostrophe after s.":"Some plurals (children) add ’s even though they are plural.",
+          explain:J([`<b>${right}</b>`,`Clue: ${clue}.`]),why:`${right} shows belonging (${clue}).`},opts(right,wrongs,{cls:'txt'})),{type:'own'});}
+      const [lg,c,gone]=pickL(CT,l,3);const ex=J([`${lg} → <b>${c}</b>`,`The apostrophe takes the place of the missing letter${gone.length>1?'s':''}: <b>${gone}</b>.`]);
       if(sub==='long'){const d=shuffle(CT.filter(x=>x[0]!==lg&&x[1]!==c).map(x=>x[0])).slice(0,3);
         return M(Object.assign({sub,prompt:`<b>${c}</b> is short for …`,vis:'',hint:'Say the short word slowly. Which two words do you hear?',hint2:'The first part is usually a whole word you already know.',explain:ex,why:`“${c}” is the short way to say “${lg}”.`},opts(lg,d,{cls:'txt'})),{type:'clong'});}
       if(sub==='gone'){const d=['o','a','i','e','wi','ha','no','u'].filter(x=>x!==gone&&!gone.includes(x)&&!x.includes(gone));const dd=shuffle(d).slice(0,3);
@@ -901,6 +933,7 @@ function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){
 /* ---------- lesson planning: Ethan's English practice, about 10 minutes (18-20 questions) ----------
    Normal day: 2 warm-up, 6 new-topic, 6 mixed, 2 fix-it, 2 challenge (18).
    School-focus weekday: the school topic is about 2/3 (14 of 20): worked example + 8 school, 5 new-topic, then mix/fix/challenge on the school topic.
+   pt47u: later school/challenge items stretch a level and prefer multi-step Word detectives question types.
    Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes (20); a school topic from this week is about 2/3. */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
@@ -915,13 +948,16 @@ function planLesson(date,variant=0){
   let kind=review?'review':'mix';
   if(!review&&focusToday.length){
     const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0,fm=mistakes(e=>e.t===f,14);
+    /* Harder Word detectives stretch for later school items (multi-noun lists, mid-sentence prep). */
+    const hardSubs=f==='worddetect'?['prep','alln','group','count','alla','desc']:null;
     if(fresh||date===fe.date)add('school',f,{kind:'example'});
-    for(let i=0;i<8;i++)add('school',f,{guided:fresh&&i<2,sub:i>=4?subOf(fm,f):null});
+    for(let i=0;i<8;i++){const pin=i>=4?subOf(fm,f):null;const hs=(!pin&&hardSubs&&i>=3)?hardSubs[(i+variant)%hardSubs.length]:null;
+      add('school',f,{guided:fresh&&i<2,sub:pin||hs||null,up:i>=5?1:0});}
     if(cur&&cur!==f)newSec(5);else{add('warm',CFG.warm,{});const opl=pool.filter(x=>x!==f);interleave(opl.length?opl:[CFG.warm],3,mixW).forEach(t=>add('mix',t));}
     const opl=pool.filter(x=>x!==f);const other=opl.length?wpick(opl,mixW):null;
-    add('mix',f);if(other)add('mix',other);else add('warm',CFG.warm,{});add('mix',f);
+    add('mix',f,{up:1});if(other)add('mix',other);else add('warm',CFG.warm,{});add('mix',f);
     add('fix',f,{sub:subOf(fm,f)});add('fix',f,{sub:subOf(fm,f)});
-    add('challenge',f,{up:1});add('challenge',f,{up:1});
+    add('challenge',f,{up:1,sub:hardSubs?hardSubs[variant%hardSubs.length]:null});add('challenge',f,{up:1,sub:hardSubs?hardSubs[(variant+1)%hardSubs.length]:null});
   }else if(!review){
     for(let i=0;i<2;i++)add('warm',CFG.warm,{});
     newSec(6);
@@ -935,7 +971,9 @@ function planLesson(date,variant=0){
     let nf=14;
     if(focusToday.length){const fe=focusToday[0],f=fe.topicId,fresh=T(f).les.length===0;
       if(fresh||date===fe.date)add('school',f,{kind:'example'});
-      const fm=mistakes(e=>e.t===f,14);for(let i=0;i<8;i++)add('school',f,{guided:fresh&&i<2,sub:i>=4?subOf(fm,f):null});nf=6;}
+      const fm=mistakes(e=>e.t===f,14);const hardSubs=f==='worddetect'?['prep','alln','group','count','desc']:null;
+      for(let i=0;i<8;i++){const pin=i>=4?subOf(fm,f):null;const hs=(!pin&&hardSubs&&i>=3)?hardSubs[(i+variant)%hardSubs.length]:null;
+        add('school',f,{guided:fresh&&i<2,sub:pin||hs||null,up:i>=5?1:0});}nf=6;}
     add('warm',CFG.warm,{});if(!focusToday.length)add('warm',CFG.warm,{});
     const wk={};S.log.filter(e=>e.d>=WEEKOF(date)[0]&&e.d<date&&TOPICS[e.t]&&!TOPICS[e.t].warm).forEach(e=>{const k=e.t+'|'+(e.s||'');const o=wk[k]||(wk[k]={n:0,w:0});o.n++;if(!e.ok)o.w++;});
     wf.forEach(t=>{const k=t+'|';const o=wk[k]||(wk[k]={n:0,w:0});o.n+=2;o.focus=true;});
