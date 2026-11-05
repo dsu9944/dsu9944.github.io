@@ -141,7 +141,7 @@ function todayCard(id){
 /* Alexia's 5-minute English revision (its own progress key, separate from the maths Daily Lesson) */
 function englishCard(id){
   if(id!=='alexia'&&id!=='ethan')return '';
-  const E=id==='ethan'?{t:'English Practice (5 min)',sub:'✏️ Sounds, spelling and reading'}:{t:'English Revision (5 min)',sub:'✏️ Words, grammar and reading'};
+  const E=id==='ethan'?{t:'English Practice (10 min)',sub:'✏️ Sounds, spelling and reading'}:{t:'English Revision (10 min)',sub:'✏️ Words, grammar and reading'};
   const d=new Date(),pad=n=>String(n).padStart(2,'0'),today=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`,wd=d.getDay(),review=wd===5||wd===6||wd===0;
   let s=null;try{s=JSON.parse(ls.get(`kidsHub.p.${id}.english`)||'null');}catch(e){}
   const days=(s&&s.days)||{},run=s&&s.run,done=days[today]&&days[today].done,going=run&&run.date===today&&!run.finished;
