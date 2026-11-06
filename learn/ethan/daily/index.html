@@ -444,7 +444,7 @@ const steps=(...a)=>a.filter(Boolean).map((s,i)=>`<b>Step ${i+1}:</b> ${s}`).joi
 const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevenths',8:'eighths',9:'ninths',10:'tenths',11:'elevenths',12:'twelfths',15:'fifteenths',16:'sixteenths',18:'eighteenths',20:'twentieths',24:'twenty-fourths',100:'hundredths',1000:'thousandths'})[d]||d+'ths';
 
 /* ===== Ethan's topic modules (Stage 1 into Stage 2) =====
-   lvl 0 = Year 2 level, 1 = harder Year 2, 2 = Year 3, 3 = Year 3 stretch. */
+   lvl 0 = Year 2 level, 1 = harder Year 2, 2 = Year 3, 3 = Year 3 stretch (pt49u: stretch eased a little — smaller numbers / fewer steps). */
 function barUneq(widths,shaded=0){const W=widths.reduce((a,b)=>a+b,0);let x=0,s=`<svg class="bar" viewBox="-4 -4 ${W*60+8} 68" aria-label="bar">`;
   widths.forEach((w,i)=>{s+=`<rect x="${x}" y="0" width="${w*60}" height="60" fill="${i<shaded?OR:'#fff'}" stroke="#1f2937" stroke-width="3"/>`;x+=w*60;});return s+'</svg>';}
 const FNAME={2:['half','halves'],4:['quarter','quarters'],8:['eighth','eighths'],3:['third','thirds']};
@@ -461,7 +461,7 @@ const TOPICS_E=[
 
 {id:'facts',title:'Adding & Subtracting',icon:'🧩',code:'MA1-CSQ-01 → MA2-AR-01',game:'numberfacts',blurb:'Jump strategies with 2- and 3-digit numbers.',
  subs:l=>['add','sub','missing','word'],
- gen(H,l,sub){const pair=()=>l===0?[rnd(21,89),rnd(3,9)]:l===1?[rnd(21,79),rnd(11,29)]:l===2?[rnd(120,780),rnd(21,99)]:[rnd(210,690),rnd(110,299)];
+ gen(H,l,sub){const pair=()=>l===0?[rnd(21,89),rnd(3,9)]:l===1?[rnd(21,79),rnd(11,29)]:l===2?[rnd(120,780),rnd(21,99)]:[rnd(140,420),rnd(35,129)];
   if(sub==='add'){const [a,b]=pair();const j=b<10?addJumps(a,b):[b-b%10,b%10].filter(Boolean);
     return Object.assign({sub,prompt:`${a} + ${b} = ?`,hint:b<10?(a%10&&10-a%10<b?`Jump to ${a-a%10+10} first. That uses ${10-a%10}. Then add ${b-(10-a%10)} more.`:`Start at ${a} and count on ${b}.`):b>=100?`Add ${b-b%100} first, then ${b%100-b%10}, then ${b%10}.`:b%10?`Add the tens: ${a} + ${b-b%10} = ${a+b-b%10}. Then add ${b%10}.`:`Count on in tens from ${a}: ${b/10} jumps of 10.`,hint2:b<10?`Draw a number line. Jump to the ten, then jump the rest.`:`Draw a number line from ${a}. Do the big jumps first.`,explain:(a+b<1000&&j.length<=3?jumpSVG(a,j):'')+`${a} + ${b} = <b>${a+b}</b>`},num(a+b));}
   if(sub==='sub'){let [a,b]=pair();if(b>a)[a,b]=[b,a];const j=b<10?subJumps(a,b):[-(b-b%10),-(b%10)].filter(Boolean);
@@ -473,7 +473,7 @@ const TOPICS_E=[
 
 {id:'placeval',title:'Place Value',icon:'🔢',code:'MA1-RWN-01/02 → MA2-RN-01',blurb:'Hundreds, tens and ones, then thousands.',
  subs:l=>['mab','value','expand','more'],
- gen(H,l,sub){const N=()=>l===0?rnd(102,499):l===1?rnd(105,999):l===2?rnd(1020,9899):rnd(10200,98999);
+ gen(H,l,sub){const N=()=>l===0?rnd(102,499):l===1?rnd(105,999):l===2?rnd(1020,9899):rnd(2100,15999);
   if(sub==='mab'){const h=rnd(1,l>=1?6:4),t=rnd(0,9),o=rnd(1,9),n=h*100+t*10+o;return Object.assign({sub,prompt:'What number do the blocks show?',vis:mabSVG(h,t,o),hint:'Flats are 100, longs are 10, little cubes are 1. Count each kind.',hint2:'Count flats by 100s, then longs by 10s, then cubes by 1s.',explain:`${h} hundreds, ${t} tens and ${o} ones = <b>${n}</b>.`},num(n));}
   if(sub==='value'){let n,s,i;for(let k=0;k<40;k++){n=N();s=String(n);i=rnd(0,s.length-2);if(s[i]!=='0'&&s.split('').filter(c=>c===s[i]).length===1)break;}const pw=Math.pow(10,s.length-1-i),dg=+s[i];
     const ds=[1,10,100,1000,10000].filter(p=>p!==pw&&p<=10*pw).map(p=>dg*p);return Object.assign({sub,prompt:`What is the value of the <b>${dg}</b> in <b>${n}</b>?`,hint:`Find the ${dg}. Count places from the right: ones, tens, hundreds, thousands.`,hint2:`Write ${dg}, then a 0 for every digit after it.`,explain:`The ${dg} is in the ${['ones','tens','hundreds','thousands','ten thousands'][s.length-1-i]} place, so it is worth <b>${dg*pw}</b>.`},opts(dg*pw,ds));}
@@ -497,11 +497,11 @@ const TOPICS_E=[
 
 {id:'muldiv',title:'Multiplication & Division',icon:'✖️',code:'MA1-FG-01 → MA2-MR-01',blurb:'Equal groups, arrays, sharing, then 2, 5, 10, 3 and 4 times tables.',
  subs:l=>l>=1?['groups','array','tables','share','missing']:['groups','array','tables','share'],
- gen(H,l,sub){const T=l===0?[2,5,10]:l===1?[2,3,4,5,10]:[2,3,4,5,6,10];const k=pick(T),g=rnd(2,l>=2?10:6);
+ gen(H,l,sub){const T=l===0?[2,5,10]:l===1?[2,3,4,5,10]:[2,3,4,5,6,10];const k=pick(T),g=rnd(2,l===3?8:l>=2?10:6);
   if(sub==='groups'){const ic=pick(['🍪','⚽','🐟','🍓']);const kk=Math.min(k,6);return Object.assign({sub,prompt:`There are ${g} plates with ${kk} ${ic} on each. How many altogether?`,vis:groupsSVG(g,kk,{icon:ic}),hint:`Count by ${kk}s, once for each plate.`,hint2:`Touch each plate as you count by ${kk}s. Stop at the last plate.`,explain:`${g} groups of ${kk} = ${g} × ${kk} = <b>${g*kk}</b>`},num(g*kk));}
-  if(sub==='array'){const r=rnd(2,l>=2?8:5),c=pick(T.filter(x=>x<=10));return Object.assign({sub,prompt:`How many dots are in this array?`,vis:arraySVG(r,c),hint:`${r} rows of ${c}. Count by ${c}s, once for each row.`,hint2:`Touch each row as you count by ${c}s.`,explain:`${r} rows × ${c} = <b>${r*c}</b>`+arraySVG(r,c,{ring:1})},num(r*c));}
-  if(sub==='tables'){const a=rnd(1,l>=2?12:10);return Object.assign({sub,prompt:`${a} × ${k} = ?`,hint:`Count by ${k}s, ${a} time${a>1?'s':''}.`,hint2:`Hold up a finger for each ${k} you say. Stop at ${a} finger${a>1?'s':''}.`,explain:`${range(a).map(i=>k*(i+1)).join(', ')} → <b>${a*k}</b>`},num(a*k));}
-  if(sub==='share'){const each=rnd(2,l>=2?10:5),n=g*each;return Object.assign({sub,prompt:`Share ${n} 🍓 equally between ${g} friends. How many does each get?`,hint:`Think: ${g} × ? = ${n}.`,hint2:`Or deal them out: one to each friend, again and again, until none are left.`,explain:`${n} ÷ ${g} = <b>${each}</b>`+groupsSVG(g,Math.min(each,10),{icon:'🍓'})},num(each));}
+  if(sub==='array'){const r=rnd(2,l===3?6:l>=2?8:5),c=pick(T.filter(x=>x<=10));return Object.assign({sub,prompt:`How many dots are in this array?`,vis:arraySVG(r,c),hint:`${r} rows of ${c}. Count by ${c}s, once for each row.`,hint2:`Touch each row as you count by ${c}s.`,explain:`${r} rows × ${c} = <b>${r*c}</b>`+arraySVG(r,c,{ring:1})},num(r*c));}
+  if(sub==='tables'){const a=rnd(1,l===3?10:l>=2?12:10);return Object.assign({sub,prompt:`${a} × ${k} = ?`,hint:`Count by ${k}s, ${a} time${a>1?'s':''}.`,hint2:`Hold up a finger for each ${k} you say. Stop at ${a} finger${a>1?'s':''}.`,explain:`${range(a).map(i=>k*(i+1)).join(', ')} → <b>${a*k}</b>`},num(a*k));}
+  if(sub==='share'){const each=rnd(2,l===3?8:l>=2?10:5),n=g*each;return Object.assign({sub,prompt:`Share ${n} 🍓 equally between ${g} friends. How many does each get?`,hint:`Think: ${g} × ? = ${n}.`,hint2:`Or deal them out: one to each friend, again and again, until none are left.`,explain:`${n} ÷ ${g} = <b>${each}</b>`+groupsSVG(g,Math.min(each,10),{icon:'🍓'})},num(each));}
   const a=rnd(2,10);return Object.assign({sub:'missing',prompt:`? × ${k} = ${a*k}`,hint:`How many ${k}s make ${a*k}?`,hint2:`Count by ${k}s up to ${a*k}. Count how many jumps.`,explain:`${a} × ${k} = ${a*k}. Answer: <b>${a}</b>`},num(a));},
  example(){return {html:`${arraySVG(3,5)}<p>3 rows with 5 in each row. Count by 5s: 5, 10, <b>15</b>. We write it as <b>3 × 5 = 15</b>. Sharing goes the other way: 15 shared into 3 rows is 5 each (15 ÷ 3 = 5).</p>`};}},
 
@@ -511,7 +511,7 @@ const TOPICS_E=[
   if(sub==='name'){const n=l===0?1:rnd(1,d-1);const vis=chance(0.5)?pizzaSVG({parts:d,shaded:n,r:80}):barSVG({parts:d,fills:fillN(n),w:480});
     if(l===0)return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`Count the equal parts: ${d}. One is shaded.`,hint2:'2 parts: halves. 4 parts: quarters. 8 parts: eighths.',explain:`1 out of ${d} equal parts is <b>one ${FNAME[d][0]}</b> (${F(1,d)}).`},fixedOpts(['one half','one quarter','one eighth'],[2,4,8].indexOf(d)));
     return Object.assign({sub,prompt:'What fraction is shaded?',vis,hint:`Bottom number: all the equal parts (${d}). Top number: the shaded parts.`,hint2:'Count the shaded parts one by one.',explain:`${n} out of ${d} equal parts = <b>${F(n,d)}</b>.`},fracE(n,d));}
-  if(sub==='of'){const dd=pick(l===0?[2,4]:[2,4,8]),k=rnd(2,l>=2?12:6),n=l>=2&&dd>2?rnd(1,dd-1):1;const Q=dd*k;
+  if(sub==='of'){const dd=pick(l===0?[2,4]:[2,4,8]),k=rnd(2,l===3?8:l>=2?12:6),n=l>=2&&dd>2?rnd(1,dd-1):1;const Q=dd*k;
     return Object.assign({sub,prompt:`What is ${n===1?(dd===2?'half':'one '+FNAME[dd][0]):`${n} ${FNAME[dd][1]}`} of ${Q}?`,vis:barSVG({parts:dd,w:480}),hint:n>1?`Split ${Q} into ${dd} equal parts. Then take ${n} parts.`:`Split ${Q} into ${dd} equal parts. One part is the answer.`,hint2:dd===2?`Halve ${Q}: two equal groups.`:dd===4?`A quarter: halve ${Q}, then halve again.`:`An eighth: halve ${Q} three times.`,explain:`${Q} ÷ ${dd} = ${k}${n>1?`, and ${n} parts = ${n*k}`:''}. Answer: <b>${n*k}</b>`+barSVG({parts:dd,fills:fillN(n),labels:range(dd).map(()=>k),w:480})},num(n*k));}
   if(sub==='equal'){const dd=pick([2,4]);const good=barSVG({parts:dd,fills:fillN(1),w:300});const bad1=barUneq(dd===2?[1.4,0.6]:[1.2,0.6,1.4,0.8],1),bad2=barUneq(dd===2?[0.5,1.5]:[0.5,1,1.5,1],1);
     return Object.assign({sub,prompt:`Which one shows <b>one ${FNAME[dd][0]}</b> shaded?`,hint:'Find the bar where every part is the same size.',hint2:'Check each bar. Are any parts bigger or smaller?',explain:`Only the bar with ${dd} <b>equal</b> parts shows ${F(1,dd)}.`},opts(good,[bad1,bad2],{cls:'pics'}));}
@@ -521,10 +521,10 @@ const TOPICS_E=[
 {id:'money',title:'Money',icon:'🪙',code:'MA1-RWN-02 → MA2-AR-01',blurb:'Count coins and notes, totals and change.',
  subs:l=>['count','change','cost'],
  gen(H,l,sub){
-  if(sub==='count'){const C=l===0?[5,10,20,50]:l===1?[10,20,50,100,200]:[50,100,200,500,1000];const list=range(rnd(3,l>=1?6:5)).map(()=>pick(C)).sort((a,b)=>b-a);const t=list.reduce((a,b)=>a+b,0);
+  if(sub==='count'){const C=l===0?[5,10,20,50]:l===1?[10,20,50,100,200]:l===3?[50,100,200,500]:[50,100,200,500,1000];const list=range(rnd(3,l===3?5:l>=1?6:5)).map(()=>pick(C)).sort((a,b)=>b-a);const t=list.reduce((a,b)=>a+b,0);
     const ans=t<100&&l===0?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'});return Object.assign({sub,prompt:'How much money is there?',vis:moneySVG(list),hint:'Start with the biggest one and count on.',hint2:`Start at ${list[0]>=100?money(list[0]).replace('.00',''):list[0]+'c'}. Add the next one, then the next.`,explain:`${list.map(v=>v>=100?money(v).replace('.00',''):v+'c').join(' + ')} = <b>${t<100&&l===0?t+'c':money(t)}</b>`},ans);}
   if(sub==='change'){if(l===0){const p=rnd(1,19)*5;return Object.assign({sub,prompt:`<span class="story">🍦 An ice block costs <b>${p}c</b>. ${NAME} pays with <b>$1</b>. How much change?</span>`,hint:`$1 = 100c. Count up from ${p}c to 100c.`,hint2:p%10?`Jump to ${p+5}c first. Then count by 10s to 100c.`:`Count by 10s from ${p}c to 100c.`,explain:`100c − ${p}c = <b>${100-p}c</b>`},num(100-p,{post:'c'}));}
-    const p=l===1?rnd(11,45)*10:rnd(105,950),note=p<500?500:1000;return Object.assign({sub,prompt:`<span class="story">🧸 A toy costs <b>${money(p)}</b>. ${NAME} pays with a <b>${money(note).replace('.00','')}</b> note. How much change?</span>`,hint:p+100-p%100>=note?`Count up from ${money(p)} to ${money(note)} in 10c jumps.`:p%100?`Count up to the next dollar, ${money(p+100-p%100)}. Then up to ${money(note)}.`:`Count up in dollars from ${money(p)} to ${money(note)}.`,hint2:p+100-p%100>=note?`Jump to the next 10c, then count by 10s to ${money(note)}.`:p%100?`${money(p)} to ${money(p+100-p%100)} is ${100-p%100}c. Then add the dollars.`:`Work out ${note/100} − ${p/100} dollars.`,explain:`${money(note)} − ${money(p)} = <b>${money(note-p)}</b>`},decE(money(note-p).slice(1),{pre:'$'}));}
+    const p=l===1?rnd(11,45)*10:l===2?rnd(105,650):rnd(125,480),note=p<500?500:1000;return Object.assign({sub,prompt:`<span class="story">🧸 A toy costs <b>${money(p)}</b>. ${NAME} pays with a <b>${money(note).replace('.00','')}</b> note. How much change?</span>`,hint:p+100-p%100>=note?`Count up from ${money(p)} to ${money(note)} in 10c jumps.`:p%100?`Count up to the next dollar, ${money(p+100-p%100)}. Then up to ${money(note)}.`:`Count up in dollars from ${money(p)} to ${money(note)}.`,hint2:p+100-p%100>=note?`Jump to the next 10c, then count by 10s to ${money(note)}.`:p%100?`${money(p)} to ${money(p+100-p%100)} is ${100-p%100}c. Then add the dollars.`:`Work out ${note/100} − ${p/100} dollars.`,explain:`${money(note)} − ${money(p)} = <b>${money(note-p)}</b>`},decE(money(note-p).slice(1),{pre:'$'}));}
   const a=l===0?rnd(1,9)*5:rnd(5,40)*10,b=l===0?rnd(1,9)*5:rnd(5,40)*10;const t=a+b;
   return Object.assign({sub,prompt:`<span class="story">🍎 An apple costs <b>${a<100?a+'c':money(a)}</b> and a juice costs <b>${b<100?b+'c':money(b)}</b>. How much for both?</span>`,hint:`Add the two prices: ${a<100?a+'c':money(a)} + ${b<100?b+'c':money(b)}.`,hint2:'Work in cents. 100c = $1.',explain:`${a<100?a+'c':money(a)} + ${b<100?b+'c':money(b)} = <b>${t<100?t+'c':money(t)}</b>`},t<100?num(t,{post:'c'}):decE(money(t).slice(1),{pre:'$'}));},
  example(){return {html:`${moneySVG([50,20,20,5])}<p>Start with the biggest coin: 50c, then count on 20c, 20c and 5c: 50 → 70 → 90 → <b>95c</b>.</p>`};}},
@@ -615,10 +615,11 @@ const longDate=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long',day:'nume
 const weekday=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long'});
 const isReviewDay=s=>[5,6,0].includes(dow(s));
 /* ---------- state ---------- */
-const defState=()=>({v:1,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
+const defState=()=>({v:2,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
 function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));return s;}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+if(S.v==null||S.v<2){S.v=2;if(S.run&&!S.run.finished&&Array.isArray(S.run.rq))S.run.rq.forEach(k=>{if(k&&k.out&&!k.ok){k.out=false;}});}
 if(S.cur==null||S.cur<0||S.cur>PATH.length){S.cur=Math.max(0,PATH.indexOf(CFG.start));}
 const T=id=>S.topics[id]||(S.topics[id]={n:0,c:0,lvl:1,les:[],mastered:false,last:null});
 /* existing games: read only, used as a starting guess of accuracy */
@@ -721,15 +722,16 @@ function buildAll(run){const src=run.all||run.items,sigs=new Set(),byQi={};
   src.map((it,i)=>[it.qi!=null?it.qi:i,it]).sort((a,b)=>a[0]-b[0]).forEach(([qi,it])=>{byQi[qi]=makeQ(it,run.date,run.variant,qi,sigs);});
   return run.items.map((it,i)=>byQi[it.qi!=null?it.qi:i]);}
 function initRun(R){R.items.forEach((it,i)=>{if(it.qi==null)it.qi=i;});initRedo(R);return R;}
-/* ---------- redo missed questions ----------
-   A missed question comes back 3-5 questions later (same question, answer options reshuffled).
-   Missed again: it comes back once more as a near-identical variant (same type, new numbers).
-   Anything still waiting is asked in a final "Try again" round. 3 tries at most, then the answer is shown.
-   Only first attempts count for score, stars, mastery and the Fix-it history. */
-const REDO_MAX=3,REDO_PTS=2;
-const redoGap=(k)=>3+hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|gap|${k.of}|${k.tries}`)%3;
-const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok&&!k.out);
-function pickRedo(dueOnly){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok||k.out)return;if(dueOnly&&k.at>RUN.asked)return;if(best<0||k.at<RUN.rq[best].at)best=i;});return best;}
+/* ---------- Fix-up / mastery gate ----------
+   A wrong answer shows the hint and explanation, then goes to the BACK of today's queue.
+   Missed items wait for the Fix-up round after the main lesson (not interleaved mid-lesson).
+   In Fix-up, a miss goes to the back again — no give-up. The lesson only finishes when every
+   queued item is answered correctly. First attempts still count for score, stars, mastery
+   and the parent review / Fix-it history. */
+const REDO_PTS=2;
+const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok);
+function pickRedo(){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok)return;if(best<0||k.at<RUN.rq[best].at||(k.at===RUN.rq[best].at&&i<best))best=i;});return best;}
+function backOfQueue(k){const pending=(RUN.rq||[]).filter(x=>!x.ok&&x!==k);const mx=pending.reduce((m,x)=>Math.max(m,x.at||0),RUN.asked||0);k.at=mx+1;}
 const qSig=(t,q)=>t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
 function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
   if(k.tries>=2){/* near-identical variant: same topic, level and question type, different numbers */
@@ -740,7 +742,14 @@ function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
   RNG=mulberry32(hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|shuf|${k.of}|${k.tries}`));
   const ids=base.choices.map((c,i)=>i);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(0);
   return Object.assign({},base,{choices:p.map(i=>base.choices[i]),answer:p.indexOf(base.answer)});}
-function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
+function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;
+  /* migrate pre-mastery-gate runs: items marked "out" after 3 tries must still be fixed */
+  (R.rq||[]).forEach(k=>{if(k&&k.out&&!k.ok){k.out=false;if(k.at==null)k.at=(R.asked||0)+1;}});
+  /* rebuild Fix-up queue from first-try misses if rq was missing (older saves) */
+  if(!R.finished&&R.res&&R.res.length){const pos=R.items.map((it,i)=>i).filter(i=>R.items[i].kind!=='example');
+    R.res.forEach((r,j)=>{if(r.ok)return;const i=r.qi!=null?R.items.findIndex(x=>x.qi===r.qi):(pos[j]!=null?pos[j]:-1);if(i<0)return;
+      if(R.rq.some(k=>k.of===i))return;R.rq.push({of:i,tries:1,ok:false,out:false,at:(R.asked||0)+R.rq.length+1});});}
+}
 /* ---------- audio / speech (same as the games) ---------- */
 let actx=null;
 function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -785,7 +794,7 @@ function home(){RUN=null;q=null;clearInterval(tick);
       return `<button type="button" class="sec${full?' full':''}" data-sec="${k}" aria-label="${SECN[k][1]}: ${st}. ${act}"><b>${SECN[k][0]} ${SECN[k][1]}</b><span class="secst">${st}</span>${k==='new'&&cur?`<span class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</span>`:''}${k==='school'?`<span class="small">${esc(schoolTitle)}</span>`:''}<span class="secgo">${act} ➜</span></button>`;}).join('')}</div>
     <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
     ${done||tr?`<div class="row" style="margin-top:12px;justify-content:center"><button class="btn orange" id="revBtn">👨‍👦 Review mistakes together (${revCount(TODAY)})</button></div>`:''}
-    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (try again round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
+    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (fix-up round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
   <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
   ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
      <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
@@ -810,6 +819,13 @@ function bindAdult(){$('#pastRev').onclick=()=>openReview(TODAY,'home');const bb
 function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
 /* ---------- play ---------- */
 /* ---------- section tiles: jump to a section, or practise it again ---------- */
+/* Land on the first unfinished item (examples included). Used when resuming a saved run so section jumps / mid-feedback refresh cannot skip a question. */
+function syncRunCursor(R){if(!R||R.finished||R.practice)return;const answered=new Set((R.res||[]).map(r=>r.qi));
+  let idx=0;while(idx<R.items.length){const it=R.items[idx];
+    if(it.kind==='example'){const later=R.items.slice(idx+1).some((x,j)=>{if(x.kind==='example')return false;return answered.has(x.qi!=null?x.qi:idx+1+j);});
+      if(later||(R.doneIdx!=null&&R.doneIdx>idx)){idx++;continue;}break;}
+    const qi=it.qi!=null?it.qi:idx;if(answered.has(qi)){idx++;continue;}break;}
+  R.i=idx;R.awaitNext=false;if(R.i<R.items.length)R.rd=null;}
 function firstOpen(R){return R.i+(R.awaitNext&&R.rd==null?1:0);} /* first position not yet answered */
 function secProgress(R,k){const n=R.items.filter(it=>it.sec===k&&it.kind!=='example').length,d=R.res.filter(r=>r.sec===k).length;return {n,d:Math.min(d,n)};}
 function todaysRun(){return S.run&&S.run.date===TODAY?initRun(S.run):null;}
@@ -840,29 +856,29 @@ function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" href="../../index.html">🏠 My games</a></div>`;
   show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
 function startLesson(extra){
-  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);}
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);syncRunCursor(RUN);}
   else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
     RUN=S.run=newRun(variant,extra,p);save();}
-  QS=buildAll(RUN);show('play');startTimer();next(!RUN.awaitNext);}
+  QS=buildAll(RUN);show('play');startTimer();next(true);}
 function newRun(variant,extra,p){p.items.forEach((it,i)=>it.qi=i);return {date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};}
 function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
 function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
   $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
   $('#timesUp').classList.toggle('hidden',!!left);}
 const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
-function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔁 ${pr}`:'');$('#progTxt').title=pr?`${pr} to try again`:'';$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
+function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔧 ${pr} to fix`:'');$('#progTxt').title=pr?`${pr} still to fix`:'';$('#progBar').firstElementChild.style.width=(100*Math.min(1,d/n))+'%';}
 function next(resume,noRedo){
   if(!resume){if(RUN.rd!=null)RUN.rd=null;else RUN.i++;}
   RUN.awaitNext=false;
-  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length,prev=RUN.items[RUN.i-1];
-    /* a missed question is due again (never straight after a worked example), or the final Try again round */
-    const k=!mainLeft?pickRedo(false):(noRedo||(prev&&prev.kind==='example'))?-1:pickRedo(true);
+  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length;
+    /* Fix-up only after the main queue; missed items sit at the back until then */
+    const k=!mainLeft&&!noRedo?pickRedo():-1;
     if(k>=0)RUN.rd=k;else if(!mainLeft)return finish();}
   save();
   const rk=RUN.rd!=null?RUN.rq[RUN.rd]:null,it=rk?RUN.items[rk.of]:RUN.items[RUN.i];
   q=Object.assign({},rk?redoQ(rk):QS[RUN.i],{it,done:false,usedHint:false,f:{},redo:rk});
-  const sn0=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
-  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔁 Redo · try ${rk.tries+1} of ${REDO_MAX}${rk.tries>=2?' · new numbers':''}</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
+  const pr=pendingRedos().length;const sn0=rk&&RUN.i>=RUN.items.length?['🔧','Fix-up round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔧 Fix-up · try ${rk.tries+1}${rk.tries>=2?' · new numbers':''} · ${pr} to fix</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   progUI();topbar();
   if(q.example){$('#prompt').classList.remove('bigp');$('#prompt').innerHTML=`👀 Worked example: ${esc(tname)}`;$('#qvis').innerHTML='';
@@ -890,16 +906,15 @@ function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;else q
   const mb=$('#moreHint');if(mb)mb.onclick=()=>{if(!q||q.done)return;if(!q.guidedHint)q.usedHint=true;mb.parentNode.outerHTML='<div class="hint2">🔎 '+q.hint2+'</div>';sfx('tap');};$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
 function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN.asked=(RUN.asked||0)+1;RUN.awaitNext=true;
   let pts=0,fbNote='';
-  if(rk){/* a redo: never changes score, mastery or history; a fix earns a small bonus */
+  if(rk){/* Fix-up: never changes score, mastery or history; a fix earns a small bonus; miss → back of queue */
     if(ok){rk.ok=true;RUN.fixed++;pts=REDO_PTS;RUN.pts+=pts;S.points+=pts;sfx('good');}
-    else{rk.tries++;if(rk.tries>=REDO_MAX){rk.out=true;fbNote=`<div class="redonote">That was the last try for this one. Look at how it works, then let's move on.</div>`;}
-      else{rk.at=RUN.asked+redoGap(rk);fbNote=`<div class="redonote">🔁 You'll get one more go soon, with new numbers.</div>`;}sfx('bad');}
+    else{rk.tries++;backOfQueue(rk);const left=pendingRedos().length;fbNote=`<div class="redonote">🔁 Not yet — back of the Fix-up queue. <b>${left} to fix</b>.</div>`;sfx('bad');}
   }else{RUN.doneIdx=RUN.i;
   if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
   RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint,qi:it.qi});
   if(!RUN.practice){const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;
   S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);}
-  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};k.at=RUN.asked+redoGap(k);RUN.rq.push(k);fbNote=`<div class="redonote">🔁 We'll come back to this one in a few questions.</div>`;}
+  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};backOfQueue(k);RUN.rq.push(k);const left=pendingRedos().length;fbNote=`<div class="redonote">🔁 We'll put this at the end and fix it then. <b>${left} to fix</b>.</div>`;}
   }
   save();
   if(q.kind==='choice')document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answer)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
@@ -909,7 +924,7 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
   if(!RUN.practice)revRecord(q,it,rk,ok,correct);
   const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
   const mainDone=rk?RUN.i>=RUN.items.length:RUN.i>=RUN.items.length-1,pend=pendingRedos().length;
-  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔁 Next try ➜':'🔁 Try again round ➜'):'See my results ⭐'):'Next question ➜';
+  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔧 Next to fix ➜':'🔧 Fix-up round ➜'):'See my results ⭐'):'Next question ➜';
   fb.innerHTML=(ok?(rk?`<div class="fbtitle">🔧 Fixed it!</div><div>+${pts} points</div>`:`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`):`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+fbNote+
     `<div class="expl">${q.explain||''}</div>`+(it.tell&&!rk?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
     `<button class="btn" id="nextBtn">${nextLbl}</button>`;
@@ -938,7 +953,7 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   const msg=p>=0.95?`Amazing, ${NAME}! 🏅`:p>=0.8?`Great work, ${NAME}!`:p>=0.6?`Well done, ${NAME}!`:`Good effort, ${NAME}! Tomorrow's Fix-it will help. 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
    <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>
-   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed${R.fixed<R.rq.length?` (the answer was shown for the other ${R.rq.length-R.fixed})`:'. Brilliant!'}<span class="small"> · score and stars count first tries</span></p>`:''}${msgs.join('')}
+   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>all ${R.rq.length}</b> you missed — every question is right now!<span class="small"> · stars still count first tries</span></p>`:''}${msgs.join('')}
    ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
@@ -986,7 +1001,7 @@ function revSteps(ex){if(!ex)return '';const parts=String(ex).split(/<br\s*\/?>|
   return parts.length>1?`<ol class="steps">${parts.map(p=>`<li>${p}</li>`).join('')}</ol>`:`<div>${parts[0]||''}</div>`;}
 function revItem(e,n,N){const T0=TOPICS[e.it.t],sn=SECN[e.it.sec]||['',''],pend=!e.fixed&&!e.out&&e.d===TODAY&&S.run&&S.run.date===TODAY&&!S.run.finished;
   const tries=e.tries.map((t,j)=>`<div class="chip ${t.ok?'ok':'bad'}">${t.ok?'✅':'❌'} Try ${j+2}${t.p?` <span class="small">· same type, new numbers:</span><div class="rvvar">${t.p}</div>`:''}${t.p?'Answer: ':': '}${t.a}${!t.ok&&t.p?` <span class="small">(correct: ${t.c})</span>`:''}</div>`).join('');
-  const st=e.fixed?'🔧 Fixed it on a later try!':e.out?'The answer was shown after 3 tries.':pend?'⏳ Still waiting in the Try again round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
+  const nFix=1+(e.tries||[]).length;const st=e.fixed?`🔧 Fixed after ${nFix} tr${nFix===1?'y':'ies'}!`:pend?'⏳ Still in the Fix-up round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
   return `<article class="card rv" data-rv="${n}" aria-label="Mistake ${n+1} of ${N}">
    <div class="rvhead"><b>Mistake ${n+1} of ${N}</b><span class="tag">${sn[0]} ${sn[1]}</span><span class="tag">${T0?T0.icon+' '+esc(T0.title):''}</span>${RV.sel==='week'?`<span class="small">${weekday(e.d)}</span>`:''}</div>
    <div class="prompt rvprompt"><span class="rvp">${e.q.prompt}</span><button class="say rvsay" aria-label="Read the question aloud">🔈</button></div>

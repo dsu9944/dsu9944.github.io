@@ -782,10 +782,11 @@ const longDate=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long',day:'nume
 const weekday=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long'});
 const isReviewDay=s=>[5,6,0].includes(dow(s));
 /* ---------- state ---------- */
-const defState=()=>({v:1,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
+const defState=()=>({v:2,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
 function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));return s;}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
+if(S.v==null||S.v<2){S.v=2;if(S.run&&!S.run.finished&&Array.isArray(S.run.rq))S.run.rq.forEach(k=>{if(k&&k.out&&!k.ok){k.out=false;}});}
 if(S.cur==null||S.cur<0||S.cur>PATH.length){S.cur=Math.max(0,PATH.indexOf(CFG.start));}
 const T=id=>S.topics[id]||(S.topics[id]={n:0,c:0,lvl:1,les:[],mastered:false,last:null});
 /* existing games: read only, used as a starting guess of accuracy */
@@ -888,15 +889,16 @@ function buildAll(run){const src=run.all||run.items,sigs=new Set(),byQi={};
   src.map((it,i)=>[it.qi!=null?it.qi:i,it]).sort((a,b)=>a[0]-b[0]).forEach(([qi,it])=>{byQi[qi]=makeQ(it,run.date,run.variant,qi,sigs);});
   return run.items.map((it,i)=>byQi[it.qi!=null?it.qi:i]);}
 function initRun(R){R.items.forEach((it,i)=>{if(it.qi==null)it.qi=i;});initRedo(R);return R;}
-/* ---------- redo missed questions ----------
-   A missed question comes back 3-5 questions later (same question, answer options reshuffled).
-   Missed again: it comes back once more as a near-identical variant (same type, new numbers).
-   Anything still waiting is asked in a final "Try again" round. 3 tries at most, then the answer is shown.
-   Only first attempts count for score, stars, mastery and the Fix-it history. */
-const REDO_MAX=3,REDO_PTS=2;
-const redoGap=(k)=>3+hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|gap|${k.of}|${k.tries}`)%3;
-const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok&&!k.out);
-function pickRedo(dueOnly){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok||k.out)return;if(dueOnly&&k.at>RUN.asked)return;if(best<0||k.at<RUN.rq[best].at)best=i;});return best;}
+/* ---------- Fix-up / mastery gate ----------
+   A wrong answer shows the hint and explanation, then goes to the BACK of today's queue.
+   Missed items wait for the Fix-up round after the main lesson (not interleaved mid-lesson).
+   In Fix-up, a miss goes to the back again — no give-up. The lesson only finishes when every
+   queued item is answered correctly. First attempts still count for score, stars, mastery
+   and the parent review / Fix-it history. */
+const REDO_PTS=2;
+const pendingRedos=()=>(RUN&&RUN.rq?RUN.rq:[]).filter(k=>!k.ok);
+function pickRedo(){let best=-1;(RUN.rq||[]).forEach((k,i)=>{if(k.ok)return;if(best<0||k.at<RUN.rq[best].at||(k.at===RUN.rq[best].at&&i<best))best=i;});return best;}
+function backOfQueue(k){const pending=(RUN.rq||[]).filter(x=>!x.ok&&x!==k);const mx=pending.reduce((m,x)=>Math.max(m,x.at||0),RUN.asked||0);k.at=mx+1;}
 const qSig=(t,q)=>t+'|'+q.prompt+'|'+JSON.stringify(q.answer)+'|'+(q.vis||'').length;
 function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
   if(k.tries>=2){/* near-identical variant: same topic, level and question type, different numbers */
@@ -907,7 +909,14 @@ function redoQ(k){const base=QS[k.of],it=RUN.items[k.of];
   RNG=mulberry32(hashStr(`${PLAYER}|${RUN.date}|${RUN.variant}|shuf|${k.of}|${k.tries}`));
   const ids=base.choices.map((c,i)=>i);let p=ids;for(let j=0;j<12&&p.join()===ids.join();j++)p=shuffle(ids.slice());if(p.join()===ids.join())p=ids.slice(1).concat(0);
   return Object.assign({},base,{choices:p.map(i=>base.choices[i]),answer:p.indexOf(base.answer)});}
-function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;}
+function initRedo(R){if(!R.res)R.res=[];if(!R.rq)R.rq=[];if(R.rd===undefined)R.rd=null;if(R.asked==null)R.asked=R.res.length;if(R.fixed==null)R.fixed=0;if(R.awaitNext==null)R.awaitNext=R.doneIdx===R.i;
+  /* migrate pre-mastery-gate runs: items marked "out" after 3 tries must still be fixed */
+  (R.rq||[]).forEach(k=>{if(k&&k.out&&!k.ok){k.out=false;if(k.at==null)k.at=(R.asked||0)+1;}});
+  /* rebuild Fix-up queue from first-try misses if rq was missing (older saves) */
+  if(!R.finished&&R.res&&R.res.length){const pos=R.items.map((it,i)=>i).filter(i=>R.items[i].kind!=='example');
+    R.res.forEach((r,j)=>{if(r.ok)return;const i=r.qi!=null?R.items.findIndex(x=>x.qi===r.qi):(pos[j]!=null?pos[j]:-1);if(i<0)return;
+      if(R.rq.some(k=>k.of===i))return;R.rq.push({of:i,tries:1,ok:false,out:false,at:(R.asked||0)+R.rq.length+1});});}
+}
 /* ---------- audio / speech (same as the games) ---------- */
 let actx=null;
 function sfx(kind){if(!S.sound)return;try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();
@@ -952,7 +961,7 @@ function home(){RUN=null;q=null;clearInterval(tick);
       return `<button type="button" class="sec${full?' full':''}" data-sec="${k}" aria-label="${SECN[k][1]}: ${st}. ${act}"><b>${SECN[k][0]} ${SECN[k][1]}</b><span class="secst">${st}</span>${k==='new'&&cur?`<span class="small">${TOPICS[cur].icon} ${esc(TOPICS[cur].title)}</span>`:''}${k==='school'?`<span class="small">${esc(schoolTitle)}</span>`:''}<span class="secgo">${act} ➜</span></button>`;}).join('')}</div>
     <div class="small">${review?`Friday is review day: questions come from what you practised Monday to Thursday, with extra practice on the ones you found tricky. Then you'll see your week summary.`:`A warm-up, ${cur?'a new topic, ':''}a mix of everything you've learned, a Fix-it round for things you got wrong recently, and a challenge to finish.`} You can keep going if the timer runs out.</div>
     ${done||tr?`<div class="row" style="margin-top:12px;justify-content:center"><button class="btn orange" id="revBtn">👨‍👦 Review mistakes together (${revCount(TODAY)})</button></div>`:''}
-    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (try again round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
+    <div class="row" style="margin-top:12px;justify-content:center">${done?`<button class="btn ghost huge" id="againBtn">🔁 Do an extra lesson</button>`:`<button class="btn huge" id="startBtn">${inprog?(S.run.res.length>=S.run.items.filter(x=>x.kind!=='example').length?'▶️ Keep going (fix-up round)':`▶️ Keep going (question ${Math.min(S.run.res.length+1,S.run.items.filter(x=>x.kind!=='example').length)} of ${S.run.items.filter(x=>x.kind!=='example').length})`):'▶️ Start today\'s lesson'}</button>`}</div></div>
   <div class="card"><div class="row" style="justify-content:space-between"><b>📆 This week</b><span class="small">🔥 ${dayStreak()} day streak · best ${S.bestStreak}</span></div><div style="margin-top:8px">${weekHTML()}</div></div>
   ${cur?`<div class="card" id="nowCard"><b>🧭 Now learning:</b> ${TOPICS[cur].icon} ${esc(TOPICS[cur].title)} <span class="small">(${esc(TOPICS[cur].code)})</span>
      <div class="small" style="margin-top:4px">${ct.les.length?`Last lessons: ${ct.les.slice(-2).map(l=>Math.round(100*l[1]/l[0])+'%').join(', ')}. `:''}Score 80% or more in 2 lessons to unlock the next topic${PATH[S.cur+1]?`: <b>${TOPICS[PATH[S.cur+1]].icon} ${esc(TOPICS[PATH[S.cur+1]].title)}</b>`:''}.</div></div>`:`<div class="card">🏁 You've finished every topic on your path! Daily lessons now mix and review everything.</div>`}
@@ -977,6 +986,13 @@ function bindAdult(){$('#pastRev').onclick=()=>openReview(TODAY,'home');const bb
 function resetRunIfUnstarted(){if(S.run&&!S.run.finished&&S.run.res.length===0)S.run=null;}
 /* ---------- play ---------- */
 /* ---------- section tiles: jump to a section, or practise it again ---------- */
+/* Land on the first unfinished item (examples included). Used when resuming a saved run so section jumps / mid-feedback refresh cannot skip a question. */
+function syncRunCursor(R){if(!R||R.finished||R.practice)return;const answered=new Set((R.res||[]).map(r=>r.qi));
+  let idx=0;while(idx<R.items.length){const it=R.items[idx];
+    if(it.kind==='example'){const later=R.items.slice(idx+1).some((x,j)=>{if(x.kind==='example')return false;return answered.has(x.qi!=null?x.qi:idx+1+j);});
+      if(later||(R.doneIdx!=null&&R.doneIdx>idx)){idx++;continue;}break;}
+    const qi=it.qi!=null?it.qi:idx;if(answered.has(qi)){idx++;continue;}break;}
+  R.i=idx;R.awaitNext=false;if(R.i<R.items.length)R.rd=null;}
 function firstOpen(R){return R.i+(R.awaitNext&&R.rd==null?1:0);} /* first position not yet answered */
 function secProgress(R,k){const n=R.items.filter(it=>it.sec===k&&it.kind!=='example').length,d=R.res.filter(r=>r.sec===k).length;return {n,d:Math.min(d,n)};}
 function todaysRun(){return S.run&&S.run.date===TODAY?initRun(S.run):null;}
@@ -1007,29 +1023,29 @@ function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" href="../../index.html">🏠 My games</a></div>`;
   show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
 function startLesson(extra){
-  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);}
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);syncRunCursor(RUN);}
   else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
     RUN=S.run=newRun(variant,extra,p);save();}
-  QS=buildAll(RUN);show('play');startTimer();next(!RUN.awaitNext);}
+  QS=buildAll(RUN);show('play');startTimer();next(true);}
 function newRun(variant,extra,p){p.items.forEach((it,i)=>it.qi=i);return {date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};}
 function startTimer(){clearInterval(tick);let lastT=Date.now(),k=0;tick=setInterval(()=>{const now=Date.now();if(!document.hidden&&RUN)RUN.el+=Math.min(5000,now-lastT);lastT=now;if(++k%5===0)save();timeUI();},1000);timeUI();}
 function timeUI(){if(!RUN)return;const left=Math.max(0,LESSON_MS-RUN.el),mm=Math.floor(left/60000),ss=Math.floor(left%60000/1000);
   $('#timeTxt').textContent=left?`⏱️ ${mm}:${pad(ss)}`:'⏱️ 0:00';const tb=$('#timeBar');tb.firstElementChild.style.width=Math.min(100,100*RUN.el/LESSON_MS)+'%';tb.classList.toggle('over',!left);
   $('#timesUp').classList.toggle('hidden',!!left);}
 const NQ=()=>RUN.items.filter(x=>x.kind!=='example').length;
-function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔁 ${pr}`:'');$('#progTxt').title=pr?`${pr} to try again`:'';$('#progBar').firstElementChild.style.width=(100*d/n)+'%';}
+function progUI(){const n=NQ(),d=RUN.res.length,pr=pendingRedos().length;$('#progTxt').textContent=`${d} / ${n}`+(pr?` · 🔧 ${pr} to fix`:'');$('#progTxt').title=pr?`${pr} still to fix`:'';$('#progBar').firstElementChild.style.width=(100*Math.min(1,d/n))+'%';}
 function next(resume,noRedo){
   if(!resume){if(RUN.rd!=null)RUN.rd=null;else RUN.i++;}
   RUN.awaitNext=false;
-  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length,prev=RUN.items[RUN.i-1];
-    /* a missed question is due again (never straight after a worked example), or the final Try again round */
-    const k=!mainLeft?pickRedo(false):(noRedo||(prev&&prev.kind==='example'))?-1:pickRedo(true);
+  if(RUN.rd==null){const mainLeft=RUN.i<RUN.items.length;
+    /* Fix-up only after the main queue; missed items sit at the back until then */
+    const k=!mainLeft&&!noRedo?pickRedo():-1;
     if(k>=0)RUN.rd=k;else if(!mainLeft)return finish();}
   save();
   const rk=RUN.rd!=null?RUN.rq[RUN.rd]:null,it=rk?RUN.items[rk.of]:RUN.items[RUN.i];
   q=Object.assign({},rk?redoQ(rk):QS[RUN.i],{it,done:false,usedHint:false,f:{},redo:rk});
-  const sn0=rk&&RUN.i>=RUN.items.length?['🔁','Try again round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
-  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔁 Redo · try ${rk.tries+1} of ${REDO_MAX}${rk.tries>=2?' · new numbers':''}</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
+  const pr=pendingRedos().length;const sn0=rk&&RUN.i>=RUN.items.length?['🔧','Fix-up round']:(SECN[it.sec]||['','']),sn=RUN.practice?[sn0[0],sn0[1]+' · extra practice']:sn0;const tname=TOPICS[it.t]?TOPICS[it.t].title:'';
+  $('#secName').innerHTML=`${sn[0]} ${sn[1]} <span class="tag">${TOPICS[it.t]?TOPICS[it.t].icon:''} ${esc(tname)}</span>${rk?` <span class="tag redo" id="redoBadge">🔧 Fix-up · try ${rk.tries+1}${rk.tries>=2?' · new numbers':''} · ${pr} to fix</span>`:''}${!rk&&(it.sec==='challenge'||it.up)?' <span class="tag new">⚡ harder</span>':''}`;
   $('#hintBox').classList.add('hidden');$('#feedback').classList.add('hidden');$('#controls').classList.remove('hidden');$('#hintBtn').disabled=false;
   progUI();topbar();
   if(q.example){$('#prompt').classList.remove('bigp');$('#prompt').innerHTML=`👀 Worked example: ${esc(tname)}`;$('#qvis').innerHTML='';
@@ -1057,16 +1073,15 @@ function showHint(guided){if(!q||q.done)return;if(!guided)q.usedHint=true;else q
   const mb=$('#moreHint');if(mb)mb.onclick=()=>{if(!q||q.done)return;if(!q.guidedHint)q.usedHint=true;mb.parentNode.outerHTML='<div class="hint2">🔎 '+q.hint2+'</div>';sfx('tap');};$('#hintBox').classList.remove('hidden');$('#hintBtn').disabled=true;if(!guided)sfx('tap');}
 function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN.asked=(RUN.asked||0)+1;RUN.awaitNext=true;
   let pts=0,fbNote='';
-  if(rk){/* a redo: never changes score, mastery or history; a fix earns a small bonus */
+  if(rk){/* Fix-up: never changes score, mastery or history; a fix earns a small bonus; miss → back of queue */
     if(ok){rk.ok=true;RUN.fixed++;pts=REDO_PTS;RUN.pts+=pts;S.points+=pts;sfx('good');}
-    else{rk.tries++;if(rk.tries>=REDO_MAX){rk.out=true;fbNote=`<div class="redonote">That was the last try for this one. Look at how it works, then let's move on.</div>`;}
-      else{rk.at=RUN.asked+redoGap(rk);fbNote=`<div class="redonote">🔁 You'll get one more go soon, with new numbers.</div>`;}sfx('bad');}
+    else{rk.tries++;backOfQueue(rk);const left=pendingRedos().length;fbNote=`<div class="redonote">🔁 Not yet — back of the Fix-up queue. <b>${left} to fix</b>.</div>`;sfx('bad');}
   }else{RUN.doneIdx=RUN.i;
   if(ok){RUN.streak++;RUN.best=Math.max(RUN.best,RUN.streak);pts=q.usedHint?5:10;if(RUN.streak>=3)pts+=5;RUN.pts+=pts;S.points+=pts;sfx('good');}else{RUN.streak=0;sfx('bad');}
   RUN.res.push({t:it.t,s:q.sub,sec:it.sec,ok,h:q.usedHint,qi:it.qi});
   if(!RUN.practice){const t=T(it.t);t.n++;if(ok)t.c++;t.last=TODAY;
   S.log.push({d:TODAY,t:it.t,s:q.sub,ok});if(S.log.length>800)S.log=S.log.slice(-800);}
-  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};k.at=RUN.asked+redoGap(k);RUN.rq.push(k);fbNote=`<div class="redonote">🔁 We'll come back to this one in a few questions.</div>`;}
+  if(!ok){const k={of:RUN.i,tries:1,ok:false,out:false};backOfQueue(k);RUN.rq.push(k);const left=pendingRedos().length;fbNote=`<div class="redonote">🔁 We'll put this at the end and fix it then. <b>${left} to fix</b>.</div>`;}
   }
   save();
   if(q.kind==='choice')document.querySelectorAll('.opt').forEach((b,i)=>{if(i===q.answer)b.classList.add('right');else if(i===q.chosen)b.classList.add('wrong');});
@@ -1076,7 +1091,7 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
   if(!RUN.practice)revRecord(q,it,rk,ok,correct);
   const fb=$('#feedback');fb.className='feedback '+(ok?'good':'bad');
   const mainDone=rk?RUN.i>=RUN.items.length:RUN.i>=RUN.items.length-1,pend=pendingRedos().length;
-  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔁 Next try ➜':'🔁 Try again round ➜'):'See my results ⭐'):'Next question ➜';
+  const nextLbl=mainDone?(pend?(rk&&RUN.i>=RUN.items.length?'🔧 Next to fix ➜':'🔧 Fix-up round ➜'):'See my results ⭐'):'Next question ➜';
   fb.innerHTML=(ok?(rk?`<div class="fbtitle">🔧 Fixed it!</div><div>+${pts} points</div>`:`<div class="fbtitle">🎉 ${PRAISE[RUN.res.length%PRAISE.length]}</div><div>+${pts} points${RUN.streak>=3?` · 🔥 ${RUN.streak} in a row!`:''}</div>`):`<div class="fbtitle">🤔 Not quite. Let's look together.</div>${q.kind==='choice'?'':`<div>The answer is ${correct}.</div>`}`)+fbNote+
     `<div class="expl">${q.explain||''}</div>`+(it.tell&&!rk?`<div class="tellbox" id="tellBox">🗣️ <b>Tell a grown-up how you solved it!</b><div class="small">How did you know? Could you do it another way?</div><button class="btn ghost small" id="toldBtn" style="margin-top:6px">✅ I told a grown-up (+5)</button></div>`:'')+
     `<button class="btn" id="nextBtn">${nextLbl}</button>`;
@@ -1105,7 +1120,7 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   const msg=p>=0.95?`Amazing, ${NAME}! 🏅`:p>=0.8?`Great work, ${NAME}!`:p>=0.6?`Well done, ${NAME}!`:`Good effort, ${NAME}! Tomorrow's Fix-it will help. 💪`;
   $('#resultsCard').innerHTML=`<div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div><h2>${msg}</h2>
    <p style="font-size:1.3rem">You got <b>${c} out of ${n}</b> · +${R.pts} points · best streak 🔥 ${R.best} · ⏱️ ${Math.max(1,Math.round(R.el/60000))} min</p>
-   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed${R.fixed<R.rq.length?` (the answer was shown for the other ${R.rq.length-R.fixed})`:'. Brilliant!'}<span class="small"> · score and stars count first tries</span></p>`:''}${msgs.join('')}
+   ${R.rq.length?`<p class="fixedline" id="fixedLine">🔧 You fixed <b>all ${R.rq.length}</b> you missed — every question is right now!<span class="small"> · stars still count first tries</span></p>`:''}${msgs.join('')}
    ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
@@ -1153,7 +1168,7 @@ function revSteps(ex){if(!ex)return '';const parts=String(ex).split(/<br\s*\/?>|
   return parts.length>1?`<ol class="steps">${parts.map(p=>`<li>${p}</li>`).join('')}</ol>`:`<div>${parts[0]||''}</div>`;}
 function revItem(e,n,N){const T0=TOPICS[e.it.t],sn=SECN[e.it.sec]||['',''],pend=!e.fixed&&!e.out&&e.d===TODAY&&S.run&&S.run.date===TODAY&&!S.run.finished;
   const tries=e.tries.map((t,j)=>`<div class="chip ${t.ok?'ok':'bad'}">${t.ok?'✅':'❌'} Try ${j+2}${t.p?` <span class="small">· same type, new numbers:</span><div class="rvvar">${t.p}</div>`:''}${t.p?'Answer: ':': '}${t.a}${!t.ok&&t.p?` <span class="small">(correct: ${t.c})</span>`:''}</div>`).join('');
-  const st=e.fixed?'🔧 Fixed it on a later try!':e.out?'The answer was shown after 3 tries.':pend?'⏳ Still waiting in the Try again round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
+  const nFix=1+(e.tries||[]).length;const st=e.fixed?`🔧 Fixed after ${nFix} tr${nFix===1?'y':'ies'}!`:pend?'⏳ Still in the Fix-up round.':e.legacy&&e.ntries?`Tried again ${e.ntries} time${e.ntries>1?'s':''}.`:'Not tried again yet.';
   return `<article class="card rv" data-rv="${n}" aria-label="Mistake ${n+1} of ${N}">
    <div class="rvhead"><b>Mistake ${n+1} of ${N}</b><span class="tag">${sn[0]} ${sn[1]}</span><span class="tag">${T0?T0.icon+' '+esc(T0.title):''}</span>${RV.sel==='week'?`<span class="small">${weekday(e.d)}</span>`:''}</div>
    <div class="prompt rvprompt"><span class="rvp">${e.q.prompt}</span><button class="say rvsay" aria-label="Read the question aloud">🔈</button></div>
