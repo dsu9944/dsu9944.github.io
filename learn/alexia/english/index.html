@@ -471,12 +471,16 @@ const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevent
 
 /* ===== Alexia's English revision topics (NSW English K–10 Syllabus 2022, Stage 2 → Stage 3) =====
    Every item is multiple choice from curated, age-appropriate lists, so each answer is checkable and unambiguous.
-   Levels: 1 = Year 4, 2 = harder Year 4, 3 = Year 5, 4 = Year 5 stretch (engine lvl 0..3). */
+   Engine levels 0..3: 0-1 = Year 4, 2 = Year 5, 3 = Year 5–6 stretch. pt56u: a modest step further into Year 5.
+   Every question has a hint and stepped explain. */
 const EN=(function(){
   const J=a=>a.join('<br>');
   const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
   const sent=s=>`<div class="esent">${s}</div>`;
   const M=(o,meta)=>Object.assign(o,{meta});
+  /* Prefer the top of the allowed band; sometimes peek one level higher (Year 5–6 stretch). */
+  function pickL(H,arr,l,idx){const stretch=Math.min(3,l+(l>=2&&H.chance(0.35)?1:0));let ok=arr.filter(x=>(x[idx]||0)<=stretch);if(!ok.length)ok=arr.filter(x=>(x[idx]||0)<=l);
+    const floor=Math.max(0,stretch-1);const prefer=ok.filter(x=>(x[idx]||0)>=floor);return H.pick(prefer.length?prefer:ok);}
 
   /* ---------------- quick words (warm-up): spelling, synonyms, antonyms ---------------- */
   const SPELL=[ /* [correct, 3 misspellings that are not real words], level */
@@ -505,6 +509,18 @@ const EN=(function(){
     ['accommodation',['accomodation','acommodation','accommadation'],2,'It has room for two c’s and two m’s.'],
     ['embarrass',['embarass','embarras','embaress'],2,'Two r’s and two s’s: I go Really Red and Smile Shyly.'],
     ['government',['goverment','govenment','guvernment'],2,'govern + ment: the n from govern stays.'],
+    ['mysterious',['misterious','mysterous','mystirious'],2,'myster- + -ious: the i is part of the ending.'],
+    ['precious',['precous','presious','precios'],2,'pre-cious: the “sh” sound is spelt ci.'],
+    ['visible',['visable','visibile','vizible'],2,'Use -ible (not -able) after vis: vis-ible.'],
+    ['terrible',['terible','terrable','terribble'],2,'Double r, then -ible: ter-rib-le.'],
+    ['musician',['musition','musican','musisian'],2,'A person who makes music: the ending is -cian.'],
+    ['decision',['decition','decission','desision'],2,'decide → decision: the ending is -sion, with one s.'],
+    ['photograph',['fotograf','photograf','photgraph'],2,'photo (light) + graph (write or draw).'],
+    ['environment',['enviroment','enviornment','enviromment'],2,'envi-ron-ment: keep the n in the middle.'],
+    ['definite',['definate','definete','definit'],3,'The ending is -ite, not -ate: def-in-ite.'],
+    ['biography',['biograffy','biogrophy','byography'],3,'bio (life) + graphy (writing).'],
+    ['opportunity',['oportunity','opportunety','oppertunity'],3,'Two p’s, then or-tun-i-ty.'],
+    ['conscience',['concience','consciense','consceince'],3,'con-science: the word science sits inside it.'],
   ];
   const SYN=[ /* [word, synonym, non-synonym distractors], level */
     ['enormous','huge',['tiny','quiet','early'],0],['begin','start',['finish','borrow','hide'],0],['quick','fast',['slow','heavy','brave'],0],
@@ -514,6 +530,9 @@ const EN=(function(){
     ['furious','very angry',['very calm','very sleepy','very lucky'],1],['generous','giving',['selfish','curious','timid'],1],
     ['reluctant','unwilling',['eager','ancient','hungry'],2],['fragile','easily broken',['very strong','very heavy','brightly coloured'],2],
     ['peculiar','strange',['ordinary','gentle','famous'],2],['vast','very large',['very small','very old','very wet'],2],
+    ['scarce','rare',['plentiful','ordinary','recent'],2],['hesitant','uncertain',['confident','rapid','ancient'],2],
+    ['elated','delighted',['miserable','calm','sleepy'],2],['abundant','plentiful',['scarce','tiny','bitter'],3],
+    ['dwindle','gradually shrink',['grow quickly','stay the same','shine brightly'],3],['meticulous','very careful',['careless','noisy','ancient'],3],
   ];
   const ANT=[ /* [word, antonym, non-antonym distractors], level */
     ['ancient','modern',['old','huge','gentle'],0],['generous','selfish',['kind','giving','tall'],0],['victory','defeat',['win','prize','team'],0],
@@ -521,15 +540,18 @@ const EN=(function(){
     ['rough','smooth',['bumpy','hard','sharp'],0],['asleep','awake',['tired','resting','dreaming'],0],['arrive','depart',['reach','come','enter'],1],
     ['expand','shrink',['grow','stretch','open'],1],['include','exclude',['contain','add','join'],1],['temporary','permanent',['brief','short','quick'],2],
     ['maximum','minimum',['most','largest','highest'],2],['ascend','descend',['climb','rise','soar'],2],
+    ['scarce','plentiful',['rare','few','limited'],2],['cautious','reckless',['careful','slow','quiet'],2],
+    ['frequent','rare',['often','regular','common'],2],['humble','arrogant',['modest','quiet','kind'],3],
+    ['abundant','scarce',['plentiful','many','full'],3],
   ];
   const quick={id:'quick',title:'Quick Words',icon:'⚡',warm:true,dedupByText:true,code:'EN2-SPELL-01 · EN2-VOCAB-01',
     blurb:'Spelling tricky words, synonyms (same meaning) and antonyms (opposites).',
     subs:l=>['spell','spell','syn','ant'],
     gen(H,l,sub){
-      if(sub==='spell'){const [w,bad,,tip]=H.pick(SPELL.filter(x=>x[2]<=l));
+      if(sub==='spell'){const [w,bad,,tip]=pickL(H,SPELL,l,2);
         return M(Object.assign({sub,prompt:'Which word is spelt correctly?',vis:'',hint:'Sound each word out slowly, part by part.',
           explain:J(['Look at each word slowly, one part at a time.',`<b>${w}</b> is the correct spelling.`,`Tip: ${tip}`])},H.opts(w,bad,{cls:'txt'})),{type:'spell',w});}
-      const L=sub==='ant'?ANT:SYN;const [w,a,d]=H.pick(L.filter(x=>x[3]<=l));const what=sub==='ant'?'the opposite of':'the same as';
+      const L=sub==='ant'?ANT:SYN;const [w,a,d]=pickL(H,L,l,3);const what=sub==='ant'?'the opposite of':'the same as';
       return M(Object.assign({sub,prompt:`Which word means <b>${what}</b> “${w}”?`,vis:'',hint:sub==='ant'?'An antonym is a word with the opposite meaning.':'A synonym is a word with the same (or nearly the same) meaning.',
         explain:J([sub==='ant'?`An <b>antonym</b> means the opposite.`:`A <b>synonym</b> means the same, or nearly the same.`,`“${w}” → <b>${a}</b>.`,`Check: try it in a sentence. ${sub==='ant'?'The meanings should be opposites.':'The sentence should still mean the same thing.'}`])},H.opts(a,d,{cls:'txt'})),{type:sub,w});
     },
@@ -548,7 +570,18 @@ const EN=(function(){
     ['She {carefully} carried the full glass.','adverb',1],['The {happiness} on her face was easy to see.','noun',1],['Sam lent {her} his umbrella.','pronoun',1],
     ['The cat hid {under} the bed.','preposition',2],['I wanted to play outside, {but} it was raining.','conjunction',2],['We ate lunch {because} we were hungry.','conjunction',2],
     ['The book is {on} the shelf.','preposition',2],['The koala slept {in} the tree.','preposition',2],['Kai {and} Lily played chess.','conjunction',2],['We played {after} school.','preposition',2],
+    ['You {should} pack a jumper for the excursion.','verb',2],['The visitors {may} enter through the side gate.','verb',2],
+    ['The athlete {who} won the race lives nearby.','pronoun',2],['Here is the map {that} we used on the hike.','pronoun',2],
+    ['I spoke to the author {whose} book we studied.','pronoun',3],
   ];
+  const MODAL=[['We should leave early to catch the train.','should'],['You must wear a helmet on your bike.','must'],
+    ['It might rain this afternoon.','might'],['Leah could solve the puzzle if she tried.','could'],
+    ['The visitors may enter through the side gate.','may'],['I would help if I had more time.','would'],
+    ['We can finish the model before Friday.','can']];
+  const REL=[['The athlete who won the race lives nearby.','who','who won the race'],['Here is the map that we used on the hike.','that','that we used on the hike'],
+    ['The storm, which arrived at dusk, closed the road.','which','which arrived at dusk'],['I spoke to the author whose book we studied.','whose','whose book we studied'],
+    ['The island, where Gran lives, is only a short ferry ride away.','where','where Gran lives']];
+
   const WC_WORDS={noun:['elephant','kitchen','happiness','umbrella','teacher','mountain','bicycle','friendship','castle','library'],
     verb:['swam','ate','threw','flew','drank','sang','wrote','brought','caught','giggled'],
     adjective:['enormous','fluffy','ancient','delicious','curious','gigantic','slippery','noisy','peaceful','colourful'],
@@ -576,8 +609,14 @@ const EN=(function(){
   const art=w=>/^[aeiou]/.test(w)?'an':'a';
   const wordclass={id:'wordclass',title:'Word Classes',icon:'🧩',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
     blurb:'Nouns, verbs, adjectives, adverbs, pronouns, prepositions and conjunctions: what job each word does in a sentence.',
-    subs:l=>l>=1?['tagged','tagged','pick','which']:['tagged','tagged','pick'],
+    subs:l=>l>=2?['tagged','pick','which','modal','relative']:l>=1?['tagged','tagged','pick','which']:['tagged','tagged','pick'],
     gen(H,l,sub){
+      if(sub==='modal'){const [sen,a]=H.pick(MODAL);const d=sen.replace(/[.,]/g,'').split(' ').filter(w=>w.toLowerCase()!==a&&!/^(we|you|it|the|to|for|if|she|i)$/i.test(w));
+        return M(Object.assign({sub,prompt:'Which word is a <b>modal verb</b> (it shows possibility, necessity, permission or advice)?',vis:sent(sen),hint:'Modal verbs include can, could, may, might, must, should and would. They sit in front of another verb.',
+          explain:J(['A modal verb shows possibility, necessity, permission or advice, and it comes before another verb.',`In “${sen}”, <b>${a}</b> is the modal verb.`,'The other words are doing a different job.'])},H.opts(a,d,{cls:'txt'})),{type:'modal'});}
+      if(sub==='relative'){const [sen,a,cl]=H.pick(REL);
+        return M(Object.assign({sub,prompt:'Which word introduces the <b>relative clause</b> (the group of words that adds information about a noun)?',vis:sent(sen),hint:'Look for who, which, that, whose or where. It starts the extra information about a noun.',
+          explain:J(['A relative clause adds information about a noun and often starts with who, which, that, whose or where.',`In “${sen}”, the relative clause is “<b>${cl}</b>”.`,`So <b>${a}</b> introduces it.`])},H.opts(a,sen.replace(/[.,]/g,'').split(' ').filter(w=>w!==a&&w.length>3&&!/^(that|this|with|from|they|them|then|than|were|when|what)$/i.test(w)),{cls:'txt'})),{type:'relative'});}
       if(sub==='pick'){const cls=H.pick(Object.keys(WC_WORDS));const ans=H.pick(WC_WORDS[cls]);const d=Object.keys(WC_WORDS).filter(c=>c!==cls).map(c=>H.pick(WC_WORDS[c]));
         return M(Object.assign({sub,prompt:`Which of these words is ${art(cls)} <b>${cls}</b>?`,vis:'',hint:`Remember: ${WC_DEF[cls]}.`,
           explain:J([`Remember: ${WC_DEF[cls]}.`,`<b>${ans}</b> is ${art(cls)} ${cls}.`,`The others: ${d.map(w=>`${w} (${Object.keys(WC_WORDS).find(c=>WC_WORDS[c].includes(w))})`).join(', ')}.`])},H.opts(ans,d,{cls:'txt'})),{type:'wcpick',cls});}
@@ -586,7 +625,7 @@ const EN=(function(){
           return M(Object.assign({sub,prompt:`Which word in this sentence is ${art(cls)} <b>${cls}</b>?`,vis:sent(s),hint:`Remember: ${WC_DEF[cls]}.`,
             explain:J([`Remember: ${WC_DEF[cls]}.`,`In “${s}”, <b>${ans}</b> is the ${cls}.`,`The others: ${d.map(k=>`${k} (${w[k]})`).join(', ')}.`])},H.opts(ans,d,{cls:'txt'})),{type:'wcwhich',cls,tags:w});}
         throw new Error('which');}
-      const [s,cls]=H.pick(TAG.filter(x=>x[2]<=l));const word=s.match(/\{(.+?)\}/)[1];const shown=s.replace(/\{(.+?)\}/,'<u><b>$1</b></u>');
+      const [s,cls]=pickL(H,TAG,l,2);const word=s.match(/\{(.+?)\}/)[1];const shown=s.replace(/\{(.+?)\}/,'<u><b>$1</b></u>');
       const base=['noun','verb','adjective','adverb'];const pool=l>=2?base.concat(['pronoun','preposition','conjunction']):base.concat(['pronoun']);
       const d=H.shuffle(pool.filter(c=>c!==cls)).sort((a,b)=>base.includes(b)-base.includes(a));
       return M(Object.assign({sub:'tagged',prompt:'What word class is the <u>underlined</u> word?',vis:sent(shown),hint:'Ask: what job is this word doing in the sentence?',
@@ -604,11 +643,28 @@ const EN=(function(){
   const ST_DEF={statement:'a <b>statement</b> tells you something and ends with a full stop',question:'a <b>question</b> asks something and ends with a question mark',
     command:'a <b>command</b> tells someone to do something (it often starts with a verb)',exclamation:'an <b>exclamation</b> shows strong feeling (What a … ! / How … !) and ends with an exclamation mark'};
   const COMP=['I wanted to swim, but the pool was closed.','It started to rain, so we went inside.','Mum made pasta and Dad baked bread.','You can have an apple or you can have a pear.','The bus was late, so we walked home.','Sam loves cricket, but Mia prefers netball.','We packed the tent and we packed the stove.','You can finish now or you can finish tomorrow.','The movie ended, so everyone clapped.','I called grandpa, but nobody answered.'];
+  const COMPLEX=['Although the track was steep, we reached the summit.','We stayed inside because the storm was approaching.','When the bell rings, please line up quietly.','The novel that won the prize is in the library.','If it rains tomorrow, the picnic will be indoors.','Mum packed extra water, which we were glad of later.'];
+  const PASS=['The window was repaired by the glazier.','The results were published on Friday.','The anthem was sung by the choir.','The nests are built by scrub turkeys.','The winner was announced by the committee.'];
+  const ACTV=['The glazier repaired the window.','The newspaper published the results on Friday.','The choir sang the anthem.','Scrub turkeys build large nests.','The committee announced the winner.'];
+  const LINK=[['Teams practised all week. ___ they were ready for the carnival.','Therefore',['However','Meanwhile','Instead']],
+    ['The museum was closed. ___ we visited the gallery next door.','Instead',['Therefore','Meanwhile','Similarly']],
+    ['Mum heated the soup. ___ Dad set the table.','Meanwhile',['Therefore','Otherwise','Although']],
+    ['The ferry was delayed. ___ we still arrived in time.','However',['Therefore','Meanwhile','Furthermore']]];
+
   const SIMP=['The red kite flew high above the hill.','After lunch, we played cricket.','My cousin from Perth loves surfing.','The tired dog slept by the fire.','Our school has a big vegetable garden.','The orange cat stretched on the warm windowsill.','Before sunrise, the baker lit the ovens.','My sister collects shiny shells.','The quiet library filled with soft whispers.','A rainbow arched over the wet oval.','During assembly, we sang the school song.'];
   const sentences={id:'sentences',title:'Sentence Types',icon:'💬',dedupByText:true,code:'EN2-CWT-01 → EN3-CWT-01',
-    blurb:'Statements, questions, commands and exclamations, and simple vs compound sentences.',
-    subs:l=>l>=2?['type','type','needq','compound']:['type','type','needq'],
+    blurb:'Sentence types, compound and complex sentences, active and passive voice, and linking words.',
+    subs:l=>l>=3?['type','compound','complex','voice','link']:l>=2?['type','type','needq','compound','complex']:['type','type','needq'],
     gen(H,l,sub){
+      if(sub==='complex'){const c=H.pick(COMPLEX);const d=H.shuffle(SIMP.concat(COMP.filter(x=>!/because|when |if |although|that /i.test(x))).slice()).slice(0,3);
+        return M(Object.assign({sub,prompt:'Which is a <b>complex sentence</b> (a main clause plus a clause that cannot stand alone)?',vis:'',hint:'Look for a joining word such as because, although, when, if, that or which, and a part that would not be a full sentence on its own.',
+          explain:J(['A complex sentence has a main clause and a subordinate clause (one that cannot stand alone).',`<b>${c}</b>`,'The other sentences are simple (one main idea) or compound (two main ideas joined by and, but, or, so).'])},H.opts(c,d,{cls:'sent'})),{type:'complex'});}
+      if(sub==='voice'){const a=H.pick(PASS);const d=H.shuffle(ACTV.filter(x=>x!==a)).slice(0,3);
+        return M(Object.assign({sub,prompt:'Which sentence is written in the <b>passive voice</b>?',vis:'',hint:'In the passive voice, the thing the action happens to comes first, often with was, were or are plus a past participle (was repaired).',
+          explain:J(['Active voice: the doer comes first (The glazier repaired the window).','Passive voice: the receiver comes first (The window was repaired by the glazier).',`<b>${a}</b> is passive.`])},H.opts(a,d,{cls:'sent'})),{type:'voice'});}
+      if(sub==='link'){const [sen,a,d]=H.pick(LINK);
+        return M(Object.assign({sub,prompt:'Which linking word or phrase fits the gap best?',vis:sent(sen.replace('___','<span class="gap">____</span>')),hint:'Read both sentences. Does the second one contrast, add a result, or happen at the same time?',
+          explain:J(['Linking words (however, therefore, meanwhile, instead) show how ideas connect.',`Here the best fit is <b>${a}</b>.`,`So: <b>${sen.replace('___',a)}</b>`])},H.opts(a,d,{cls:'txt'})),{type:'link'});}
       if(sub==='needq'){const qn=H.pick(ST.filter(x=>x[1]==='question'))[0];const d=H.shuffle(ST.filter(x=>x[1]==='statement'||x[1]==='command').map(x=>x[0])).slice(0,3);
         const strip=s=>s.replace(/[.?!]$/,'');
         return M(Object.assign({sub,prompt:'Which sentence needs a <b>question mark</b> at the end?',vis:'',hint:'Which one is asking something? Questions often start with who, what, where, when, why, how, are, can or does.',
@@ -635,9 +691,16 @@ const EN=(function(){
     ['The bird built ___ nest in the gum tree.',0],['The school changed ___ uniform.',0],['Do you know if ___ open on Sunday?',1],['The car has a scratch on ___ door.',0],['Hurry up, ___ nearly three o’clock!',1]];
   const A=s=>s.replace(/'/g,'’');
   const apostrophe={id:'apostrophe',title:'Apostrophes',icon:'✏️',dedupByText:true,code:'EN2-CWT-01 · EN2-SPELL-01 → EN3',
-    blurb:'Apostrophes for contractions (missing letters) and for ownership (the dog’s bone, the dogs’ bones), and its vs it’s.',
-    subs:l=>['contract','own','own','its'],
+    blurb:'Apostrophes for contractions and ownership, its vs it’s, and commas around extra clauses.',
+    subs:l=>l>=2?['contract','own','own','its','clause']:['contract','own','own','its'],
     gen(H,l,sub){
+      if(sub==='clause'){const row=H.pick([['Ms Patel, who organises the choir, asked us to rehearse.',['Ms Patel who organises the choir, asked us to rehearse.','Ms Patel, who organises the choir asked us to rehearse.','Ms Patel who, organises the choir, asked us to rehearse.']],
+        ['Uluru, which is sacred to the Anangu, glows red at sunset.',['Uluru which is sacred to the Anangu, glows red at sunset.','Uluru, which is sacred to the Anangu glows red at sunset.','Uluru which, is sacred to the Anangu, glows red at sunset.']],
+        ['After the final whistle, the crowd roared.',['After, the final whistle the crowd roared.','After the final, whistle the crowd roared.','After the final whistle the, crowd roared.']],
+        ['If we leave now, we will catch the bus.',['If, we leave now we will catch the bus.','If we leave now we will, catch the bus.','If we, leave now, we will catch the bus.']]]);
+        const [right,d]=row;
+        return M(Object.assign({sub,prompt:'Which sentence uses <b>commas</b> correctly?',vis:'',hint:'Extra information about a name often sits between two commas. A starting clause (If…, After…) is usually followed by a comma.',
+          explain:J(['Use a pair of commas around extra information about a name or noun.','A clause that starts the sentence (If…, After…) is usually followed by a comma.',`<b>${right}</b>`])},H.opts(right,d,{cls:'sent'})),{type:'clause'});}
       if(sub==='contract'){const [f,c,d,miss]=H.pick(CON.filter((x,i)=>l>=2||x[0]!=='would have'));
         return M(Object.assign({sub,prompt:`What is the short form (contraction) of “<b>${f}</b>”?`,vis:'',hint:'The apostrophe goes exactly where the letters were taken out.',
           explain:J([`In a contraction, the apostrophe ( ’ ) shows where letters are missing.`,miss?`${f} → take out “${miss}” → <b>${A(c)}</b>`:`will not is a special one: it becomes <b>${A(c)}</b>.`,c==="would've"?'Never write “would of”: it is would’ve (would have).':`The apostrophe sits where the missing letter${miss&&miss.length>1?'s were':' was'}.`])},H.opts(A(c),d.map(A),{cls:'txt'})),{type:'contract',f});}
@@ -664,7 +727,11 @@ const EN=(function(){
     ['We ate the ___ pizza!','whole',['whole','hole']],['The ___ was sunny all week.','weather',['weather','whether']],['Dad pressed the ___ to stop the car.','brake',['brake','break']],
     ['My friend ___ the race.','won',['won','one']],['I have ___ sister.','one',['won','one']],['Our dog has a long fluffy ___.','tail',['tail','tale']],['The fairy ___ had a happy ending.','tale',['tail','tale']],
     ['We are not ___ to run in the hall.','allowed',['allowed','aloud'],2],['Read the poem ___ to the class.','aloud',['allowed','aloud'],2],['The ___ spoke at our school assembly.','principal',['principal','principle'],2],
-    ['I don’t know ___ to laugh or cry.','whether',['weather','whether'],2]];
+    ['I don’t know ___ to laugh or cry.','whether',['weather','whether'],2],
+    ['___ bag was left on the bus?','whose',['whose',"who's"],2],['___ knocking at the door?',"who's",['whose',"who's"],2],
+    ['The dry weather will ___ the crops.','affect',['affect','effect'],3],['The ___ of the drought was clear.','effect',['affect','effect'],3],
+    ['Please ___ your spelling before the test.','practise',['practise','practice'],3],['The doctor’s ___ is on High Street.','practice',['practise','practice'],3],
+    ['Can you give me some ___ about the speech?','advice',['advice','advise'],3],['Teachers ___ students to plan their writing.','advise',['advice','advise'],3]];
   const HP_Y=[['pear','pair'],['night','knight'],['sail','sale'],['meat','meet'],['flour','flower'],['son','sun'],['road','rode'],['mail','male'],['blue','blew'],['eight','ate'],['week','weak'],['plain','plane'],['stair','stare']];
   const HP_N=[['quiet','quite'],['desert','dessert'],['loose','lose'],['were','where'],['than','then'],['through','though'],['angel','angle'],['breath','breathe'],['chose','choose'],['cloth','clothe']];
   const homophones={id:'homophones',title:'Homophones',icon:'👂',dedupByText:true,code:'EN2-SPELL-01 · EN2-VOCAB-01 → EN3',
@@ -674,7 +741,7 @@ const EN=(function(){
       if(sub==='pair'){const y=H.pick(HP_Y);const d=H.shuffle(HP_N.slice()).slice(0,3).map(p=>p.join(' / '));
         return M(Object.assign({sub,prompt:'Which pair are <b>homophones</b> (they sound the same but have different spellings and meanings)?',vis:'',hint:'Say each pair out loud. Do they sound exactly the same?',
           explain:J(['Homophones sound exactly the same but are spelt differently and mean different things.',`<b>${y.join(' / ')}</b> sound the same.`,'The other pairs look alike, but they sound different when you say them.'])},H.opts(y.join(' / '),d,{cls:'txt'})),{type:'hpair'});}
-      const [s,a,set]=H.pick(HOM.filter(x=>(x[3]||0)<=l));const start=s.startsWith('___');const f=w=>A(start?cap(w):w);
+      const [s,a,set]=pickL(H,HOM,l,3);const start=s.startsWith('___');const f=w=>A(start?cap(w):w);
       return M(Object.assign({sub:'fill',prompt:'Which word fills the gap?',vis:sent(s.replace('___','<span class="gap">____</span>')),hint:set.includes("they're")?'they’re = they are. there = a place. their = belongs to them.':set.includes("you're")?'you’re = you are. your = belongs to you.':'Think about what the sentence means.',
         explain:J([`The choices sound the same: ${set.map(A).join(', ')}.`,HMEAN[a]||'',`So: <b>${A(s.replace('___',start?cap(a):a))}</b>`].filter(Boolean))},H.opts(f(a),set.filter(w=>w!==a).map(f),{n:set.length,cls:'txt'})),{type:'hfill',a,set});
     },
@@ -683,12 +750,12 @@ const EN=(function(){
     your:'<i>your</i> = belonging to you.',"you're":'<i>you’re</i> = you are.',hear:'<i>hear</i> = with your ears (hEAR).',here:'<i>here</i> = this place.',sea:'<i>sea</i> = the ocean.',knew:'<i>knew</i> = past tense of know.',new:'<i>new</i> = not old.',
     write:'<i>write</i> = put words on paper.',right:'<i>right</i> = the direction (or correct).',witch:'<i>witch</i> = a person in stories who casts spells.',which:'<i>which</i> = asks about a choice.',piece:'<i>piece</i> = a part of something (a piece of pie).',
     bear:'<i>bear</i> = the animal.',flour:'<i>flour</i> = powder for baking.',whole:'<i>whole</i> = all of it.',weather:'<i>weather</i> = sun, rain, wind.',whether:'<i>whether</i> = if (one choice or another).',brake:'<i>brake</i> = what stops a car or bike.',
-    won:'<i>won</i> = past tense of win.',one:'<i>one</i> = the number 1.',tail:'<i>tail</i> = at the back of an animal.',tale:'<i>tale</i> = a story.',allowed:'<i>allowed</i> = permitted.',aloud:'<i>aloud</i> = out loud.',principal:'<i>principal</i> = the head of a school.'};
+    won:'<i>won</i> = past tense of win.',one:'<i>one</i> = the number 1.',tail:'<i>tail</i> = at the back of an animal.',tale:'<i>tale</i> = a story.',allowed:'<i>allowed</i> = permitted.',aloud:'<i>aloud</i> = out loud.',principal:'<i>principal</i> = the head of a school.',whose:'<i>whose</i> = belonging to whom.',"who's":'<i>who’s</i> = who is / who has.',affect:'<i>affect</i> = to change something (a verb).',effect:'<i>effect</i> = the result (a noun).',practise:'<i>practise</i> = the verb (to practise spelling).',practice:'<i>practice</i> = the noun (a doctor’s practice).',advice:'<i>advice</i> = helpful ideas (a noun).',advise:'<i>advise</i> = to give helpful ideas (a verb).'};
 
   /* ---------------- prefixes and suffixes ---------------- */
   const PRE=[['re','again',['rebuild','reread','rewrite','refill'],0],['un','not',['unhappy','unkind','unsafe','untidy'],0,'neg'],['pre','before',['preview','preheat','prepay','preschool'],0],
     ['mis','wrongly',['misspell','misplace','misbehave','misread'],0],['dis','the opposite of',['disagree','dishonest','disobey','disappear'],0,'neg'],['sub','under',['submarine','subway','subheading'],1],
-    ['tri','three',['triangle','tricycle','tripod'],0],['bi','two',['bicycle','biplane','binoculars'],1],['inter','between',['international','interstate','interschool'],2],['auto','self',['autograph','autobiography'],2],['multi','many',['multicoloured','multimedia'],2]];
+    ['tri','three',['triangle','tricycle','tripod'],0],['bi','two',['bicycle','biplane','binoculars'],1],['inter','between',['international','interstate','interschool'],2],['auto','self',['autograph','autobiography'],2],['multi','many',['multicoloured','multimedia'],2],['photo','light',['photograph','photosynthesis'],2],['tele','far',['telephone','telescope','television'],2],['bio','life',['biography','biology'],2],['micro','small',['microscope','microchip'],2],['anti','against',['antiseptic','anticlockwise'],2],['geo','earth',['geography','geology'],3]];
   const OPP=[['happy','un'],['kind','un'],['tidy','un'],['fair','un'],['lock','un'],['comfortable','un'],['honest','dis'],['obey','dis'],['agree','dis'],['appear','dis'],
     ['possible','im'],['polite','im'],['perfect','im'],['complete','in'],['correct','in'],['visible','in'],['legal','il',2],['logical','il',2],['regular','ir',2],['responsible','ir',2]];
   const SUF=[['run','ing','running',['runing','runeing','runnning'],'Short vowel + one consonant: double the last letter (run → runn + ing).'],
@@ -700,26 +767,35 @@ const EN=(function(){
     ['hope','ful','hopeful',['hopefull','hopful','hoppeful'],'The suffix starts with a consonant, so keep the e. -ful has one l.'],['big','est','biggest',['bigest','biggist','bigggest'],'Short vowel + one consonant: double the g.'],
     ['shop','ing','shopping',['shoping','shopeing','shoppinng'],'Short vowel + one consonant: double the p.'],
     ['begin','ing','beginning',['begining','beginnig','beggining'],'The stress is on the end (be-GIN), so double the n.',2],['argue','ment','argument',['arguement','argumant','argumint'],'A rule-breaker: argue drops its e → argument.',2],
-    ['easy','ly','easily',['easyly','easilly','eazily'],'Consonant + y: change y to i, then add -ly.',2],['forget','ful','forgetful',['forgetfull','forgettful','forgetfol'],'-ful has only one l.',2]];
+    ['easy','ly','easily',['easyly','easilly','eazily'],'Consonant + y: change y to i, then add -ly.',2],['forget','ful','forgetful',['forgetfull','forgettful','forgetfol'],'-ful has only one l.',2],
+    ['mystery','ous','mysterious',['mysteryous','misterious','mysterous'],'Keep the stem and add -ous, with an i: mysterious.',2],
+    ['fame','ous','famous',['fameous','famus','famouse'],'Drop the silent e, then add -ous: famous.',2],
+    ['sense','ible','sensible',['sensable','senseible','senssible'],'Drop the silent e and use -ible: sensible.',2],
+    ['rely','able','reliable',['relyable','relable','reliible'],'Change y to i, then add -able: reliable.',2],
+    ['magic','ian','magician',['magition','magican','magisian'],'A person who does magic: the ending is -cian.',2],
+    ['divide','sion','division',['divition','divission','divizion'],'divide → division: the ending is -sion.',3],
+    ['explode','sion','explosion',['explotion','explossion','explizion'],'explode → explosion: the ending is -sion.',3]];
   const SMEAN=[['fearless','without fear',['full of fear','able to fear','fear again']],['careful','full of care',['without care','care again','before care']],
     ['teacher','a person who teaches',['without teaching','teaching again','able to teach']],['readable','able to be read',['read again','without reading','full of reading']],
     ['helpless','without help',['full of help','able to help','a person who helps']],['colourful','full of colour',['without colour','colour again','not coloured']],
     ['washable','able to be washed',['washed before','without washing','full of washing']],['painter','a person who paints',['able to be painted','without paint','paint again']],
-    ['kindness','the state of being kind',['without kindness','not kind','a kind person']],['thankful','full of thanks',['without thanks','able to thank','thank again']]];
+    ['kindness','the state of being kind',['without kindness','not kind','a kind person']],['thankful','full of thanks',['without thanks','able to thank','thank again']],
+    ['mysterious','full of mystery',['without mystery','able to mystery','mystery again']],['visible','able to be seen',['seen again','without seeing','full of sight']],
+    ['musician','a person who plays music',['able to be music','without music','music again']],['sensible','full of good sense',['without sense','sense again','a person who senses']]];
   const affixes={id:'affixes',title:'Prefixes & Suffixes',icon:'🧱',dedupByText:true,code:'EN2-SPELL-01 → EN3-SPELL-01',
     blurb:'Word parts: prefixes at the start (un-, dis-, re-, pre-) and suffixes at the end (-ing, -ed, -ful, -less), and their spelling rules.',
     subs:l=>l>=1?['prefix','opp','suffix','smean']:['prefix','opp','suffix'],
     gen(H,l,sub){
-      if(sub==='prefix'){const p=H.pick(PRE.filter(x=>x[3]<=l));const w=H.pick(p[2]);const d=H.shuffle(PRE.filter(x=>x[0]!==p[0]&&!(p[4]&&x[4]===p[4])).map(x=>x[1]));
+      if(sub==='prefix'){const p=pickL(H,PRE,l,3);const w=H.pick(p[2]);const d=H.shuffle(PRE.filter(x=>x[0]!==p[0]&&!(p[4]&&x[4]===p[4])).map(x=>x[1]));
         return M(Object.assign({sub,prompt:`In the word <b>${w}</b>, what does the prefix <b>${p[0]}-</b> mean?`,vis:'',hint:'Cover the prefix. What is the base word? How does the prefix change it?',
           explain:J([`${w} = <b>${p[0]}</b> + ${w.slice(p[0].length)}.`,`The prefix ${p[0]}- means “<b>${p[1]}</b>”.`,`More: ${p[2].filter(x=>x!==w).join(', ')}.`])},H.opts(p[1],d,{cls:'txt'})),{type:'prefix'});}
-      if(sub==='opp'){const [w,p]=H.pick(OPP.filter(x=>(x[2]||0)<=l));const set=l>=2?['un','dis','im','in','il','ir']:['un','dis','im','in'];const d=H.shuffle(set.filter(x=>x!==p));
+      if(sub==='opp'){const [w,p]=pickL(H,OPP,l,2);const set=l>=2?['un','dis','im','in','il','ir']:['un','dis','im','in'];const d=H.shuffle(set.filter(x=>x!==p));
         return M(Object.assign({sub,prompt:`Which prefix makes the <b>opposite</b> of “${w}”?`,vis:'',hint:'Say each one with the word. Which is a real word?',
           explain:J([`${p}- + ${w} = <b>${p}${w}</b>.`,p==='im'?'im- is used before words starting with m or p.':p==='il'?'il- is used before words starting with l.':p==='ir'?'ir- is used before words starting with r.':'Say them aloud: only one makes a real word.'])},H.opts(p+'-',d.map(x=>x+'-'),{cls:'txt'})),{type:'opp',w,p});}
       if(sub==='smean'){const [w,a,d]=H.pick(SMEAN);
         return M(Object.assign({sub,prompt:`What does <b>${w}</b> mean?`,vis:'',hint:'Find the base word, then think about what the suffix adds.',
           explain:J(['-less = without. -ful = full of. -er = a person who. -able = able to be. -ness = the state of being.',`${w} → <b>${a}</b>.`])},H.opts(a,d,{cls:'sent'})),{type:'smean'});}
-      const [b,s,a,d,rule]=H.pick(SUF.filter(x=>(x[5]||0)<=l));
+      const [b,s,a,d,rule]=pickL(H,SUF,l,5);
       return M(Object.assign({sub:'suffix',prompt:`Add <b>-${s}</b> to <b>${b}</b>. Which spelling is correct?`,vis:'',hint:'Look at the end of the base word: silent e? consonant + y? short vowel + one consonant?',
         explain:J([rule,`${b} + ${s} = <b>${a}</b>.`])},H.opts(a,d,{cls:'txt'})),{type:'suffix'});
     },
@@ -766,25 +842,37 @@ const EN=(function(){
     ['Her smile was sunshine.','Her smile was warm and happy.',['Her smile was hot.','She smiled at the sun.','Her smile was sad.']],
     ['The lake was as smooth as glass.','The water was very still and flat.',['The lake was made of glass.','The lake had big waves.','The lake was full of broken glass.']],
     ['The snow was a white blanket over the town.','Snow covered the whole town.',['Someone put a blanket on the town.','The town was warm.','Only a little snow fell.']],
-    ['Time is a thief.','Time seems to slip away too quickly.',['Someone stole a clock.','Time stands still.','Thieves are always on time.'],2]];
+    ['Time is a thief.','Time seems to slip away too quickly.',['Someone stole a clock.','Time stands still.','Thieves are always on time.'],2],
+    ['The wind whispered through the trees.','The wind made a soft sound as it moved through the trees.',['The wind was talking in words.','Someone whispered to the trees.','The trees asked the wind a question.'],2],
+    ['The angry sea hammered the cliffs.','The waves hit the cliffs with great force.',['The sea was in a bad mood.','Someone hammered nails into the cliffs.','The cliffs fell into a calm sea.'],2],
+    ['She spilled the beans about the party.','She accidentally told the secret about the party.',['She dropped a tin of beans.','She cancelled the party.','She cleaned up after the party.'],2],
+    ['Keep an eye on your little brother.','Watch your little brother carefully.',['Take your brother’s eye out.','Ignore your little brother.','Give your brother a new eye.'],3],
+    ['Opportunity knocked on her door.','A good chance became available to her.',['Someone literally knocked on her door.','She bought a new door.','She missed every chance she had.'],3]];
   const FSIM=[['as quiet as a','mouse',['lion','drum','thunderstorm']],['as busy as a','bee',['sloth','rock','pillow']],['as light as a','feather',['brick','elephant','anchor']],
     ['as cold as','ice',['fire','toast','an oven']],['as brave as a','lion',['mouse','worm','jelly']],['as slow as a','snail',['cheetah','rocket','racing car']],['as sly as a','fox',['cow','sheep','koala']],
     ['as tall as a','giraffe',['ant','mouse','pebble']],['as hard as','nails',['jelly','a pillow','butter']],['as fit as a','fiddle',['spoon','cushion','puddle'],2]];
+  const DEV=[['Her hands were as cold as ice.','Simile'],['He ran like the wind.','Simile'],['The classroom was a zoo.','Metaphor'],['Time is a thief.','Metaphor'],
+    ['The wind whispered through the trees.','Personification'],['The sun smiled down on the valley.','Personification'],['The angry sea hammered the cliffs.','Personification'],['Opportunity knocked on her door.','Personification'],
+    ['She spilled the beans about the party.','Idiom'],['It’s raining cats and dogs.','Idiom'],['He finally hit the books before the test.','Idiom'],['Keep an eye on your little brother.','Idiom']];
   const figurative={id:'figurative',title:'Similes & Metaphors',icon:'🎨',dedupByText:true,code:'EN2-UARL-01 · EN2-VOCAB-01 → EN3',
-    blurb:'Figurative language: similes compare using like or as; metaphors say something IS something else.',
-    subs:l=>['kind','kind','meaning','complete'],
+    blurb:'Figurative language: similes, metaphors, personification and idioms, and what they really mean.',
+    subs:l=>l>=2?['kind','meaning','complete','device']:['kind','kind','meaning','complete'],
+
     gen(H,l,sub){
-      if(sub==='meaning'){const [s,a,d]=H.pick(FMEAN.filter(x=>(x[3]||0)<=l));
+      if(sub==='device'){const [sen,k]=H.pick(DEV);const labs=['Simile','Metaphor','Personification','Idiom'];
+        return M(Object.assign({sub,prompt:'What kind of figurative language is this?',vis:sent(sen),hint:'Simile uses like or as. Metaphor says one thing is another. Personification gives human qualities to something non-human. An idiom is a saying whose meaning is not literal.',
+          explain:J(['A <b>simile</b> compares using like or as. A <b>metaphor</b> says one thing is another.','<b>Personification</b> gives human actions or feelings to something non-human. An <b>idiom</b> is a saying that does not mean exactly what the words say.',`“${sen}” → <b>${k}</b>.`])},H.fixedOpts(labs,labs.indexOf(k),'txt')),{type:'device'});}
+      if(sub==='meaning'){const [s,a,d]=pickL(H,FMEAN,l,3);
         return M(Object.assign({sub,prompt:'What does this sentence really mean?',vis:sent(s),hint:'It is not meant literally. What picture is the writer trying to give you?',
           explain:J(['Figurative language is not meant word for word: it paints a picture.',`“${s}” → <b>${a}</b>`])},H.opts(a,d,{cls:'sent'})),{type:'fmean'});}
-      if(sub==='complete'){const [f,a,d]=H.pick(FSIM.filter(x=>(x[3]||0)<=l));
+      if(sub==='complete'){const [f,a,d]=pickL(H,FSIM,l,3);
         return M(Object.assign({sub,prompt:'Complete the simile.',vis:sent(`${cap(f)} <span class="gap">____</span>`),hint:'Which thing is famous for being like that?',
           explain:J(['A simile compares two things using like or as.',`<b>${cap(f)} ${a}</b>`])},H.opts(a,d,{cls:'txt'})),{type:'fsim'});}
-      const [s,k]=H.pick(FIG.filter(x=>(x[2]||0)<=l));const L=['Simile','Metaphor','Neither (it means just what it says)'];
+      const [s,k]=pickL(H,FIG,l,2);const L=['Simile','Metaphor','Neither (it means just what it says)'];
       return M(Object.assign({sub:'kind',prompt:'Is this a simile, a metaphor or neither?',vis:sent(s),hint:'Simile: compares using like or as. Metaphor: says one thing IS another. Neither: it means exactly what it says.',
         explain:J(['A <b>simile</b> compares two different things using <i>like</i> or <i>as</i>. A <b>metaphor</b> says one thing <i>is</i> another.',k==='simile'?`“${s}” compares using ${/like/.test(s)?'like':'as … as'} → <b>simile</b>.`:k==='metaphor'?`“${s}” says one thing is another (not really true) → <b>metaphor</b>.`:`“${s}” means exactly what it says${/like/.test(s)?' (here “like” means enjoy)':''} → <b>neither</b>.`])},H.fixedOpts(L,['simile','metaphor','neither'].indexOf(k),'opts3')),{type:'fkind'});
     },
-    example(){return {html:`<h3>🎨 Similes and metaphors</h3><p>A <b>simile</b> compares using <b>like</b> or <b>as</b>: <i>He ran <b>like</b> the wind.</i> <i>As quiet <b>as</b> a mouse.</i></p><p>A <b>metaphor</b> says something <b>is</b> something else: <i>The classroom <b>was</b> a zoo.</i> (It was very noisy.)</p><p>Neither: <i>The floor was cold.</i> means just what it says.</p>`};}};
+    example(){return {html:`<h3>🎨 Figurative language</h3><p>A <b>simile</b> compares using <b>like</b> or <b>as</b>: <i>He ran <b>like</b> the wind.</i></p><p>A <b>metaphor</b> says something <b>is</b> something else: <i>The classroom <b>was</b> a zoo.</i></p><p><b>Personification</b> gives human qualities to non-human things: <i>The wind <b>whispered</b>.</i></p><p>An <b>idiom</b> is a saying that does not mean exactly what it says: <i>She spilled the beans</i> (she told a secret).</p>`};}};
 
   /* ---------------- reading comprehension (original short texts) ---------------- */
   const P=[
@@ -802,27 +890,41 @@ const EN=(function(){
         ['infer','Why did they put up a fence?','To stop bush turkeys digging up or eating the plants',['To keep the children out of the hall','To make the garden look pretty','To hold up the carrots']],['vocab','“Compost” is …','rotted plant scraps that feed the soil',['a kind of fence','a garden tool','a type of carrot']]]},
     {t:'A Letter to the Council',x:'Dear Councillors, Our local park needs a water bubbler. On hot days, children playing sport have nowhere to fill their bottles. Some families buy plastic bottles, which often end up as litter. A bubbler would keep everyone healthy and help the environment. Please add one before summer. Yours sincerely, Amelia (Year 4)',
      q:[['literal','What does Amelia want the council to add?','a water bubbler',['a playground','a rubbish bin','a sports field']],['infer','Why does Amelia mention plastic bottles?','To show that a bubbler would help reduce litter',['Because she collects bottles','To ask for more plastic bottles','Because bottles are good for sport']],
-        ['infer','What is the main purpose of this letter?','to persuade the council to do something',['to tell a funny story','to explain how to play a sport','to describe the weather']]]},
+        ['infer','What is the main purpose of this letter?','to persuade the council to do something',['to tell a funny story','to explain how to play a sport','to describe the weather']],
+        ['purpose','What is the main purpose of this letter?','to persuade the council to add a water bubbler',['to tell a funny story about sport','to explain how plastic bottles are made','to describe the weather in summer']]]},
     {t:'The Secret Note',x:'Leo found a note tucked inside his library book. It said: TEEM TA EHT KAO TA NOON. At first it looked like nonsense. Then Leo read each word backwards and grinned. Only one word looked exactly the same both ways. Someone was sending him a puzzle!',
      q:[['literal','Where did Leo find the note?','inside his library book',['under his pillow','in his school bag','on the classroom door']],['infer','What did the note really say?','MEET AT THE OAK AT NOON',['MEET THE TEAM AT NOON','EAT AT THE OAK SOON','MEET AT THE PARK AT NINE']],
         ['infer','Which word looked the same forwards and backwards?','NOON',['TEEM','KAO','EHT']],['vocab','“Grinned” means …','smiled widely',['frowned','yawned','shouted']]]},
     {t:'Uluru',lv:2,x:'Uluru is a huge sandstone rock in the Northern Territory. It is sacred to the Anangu, the Traditional Owners of the land, who have cared for it for tens of thousands of years. Uluru seems to change colour during the day, glowing bright red at sunset. Since 2019, visitors have not been allowed to climb it, out of respect for Anangu culture.',
      q:[['literal','Who are the Traditional Owners of Uluru?','the Anangu',['the visitors','the council','the park rangers']],['infer','Why are visitors no longer allowed to climb Uluru?','Out of respect for Anangu culture',['Because the rock is too slippery','Because it is too hot at sunset','Because the rock is changing colour']],
-        ['vocab','In this text, “sacred” means …','very special and deeply respected',['very dangerous','very old and broken','very easy to climb']]]},
+        ['vocab','In this text, “sacred” means …','very special and deeply respected',['very dangerous','very old and broken','very easy to climb']],
+        ['purpose','What is the main purpose of this text?','to inform readers about Uluru and why it is respected',['to persuade readers to climb Uluru','to tell a made-up story about a sunset','to advertise a holiday package']]]},
+    {t:'The Night Ferry',lv:2,x:'Ari and her dad reached the wharf just as the last warning horn sounded. The night ferry to the island was already pulling in its ropes. “We should have left when I first called,” Dad muttered, jogging the final stretch. Ari, clutching a tin of shortbread for Gran, felt her stomach drop. Then a deckhand waved them on. “One minute later and you’d have watched us leave,” he said, grinning. On the upper deck, the town lights shrank into a thin gold line. Ari pulled her jacket tight. She had been cross about missing her netball training, but as the dark water spread around them she found herself listening for the slap of waves against the hull and wondering what Gran would say about the journey. Dad handed her a sandwich he had packed “just in case”. Ari smiled. Some delays, she decided, were worth it.',
+     q:[['literal','What was Ari taking to Gran?','a tin of shortbread',['a sandwich','a netball','a gold line']],
+        ['infer','Why did Ari’s stomach drop?','She thought they had missed the ferry.',['She was already seasick.','She had dropped the shortbread.','She was late for netball training.']],
+        ['infer','How did Ari’s feelings change during the crossing?','She stopped being annoyed and began to enjoy the trip.',['She grew angrier with Dad.','She decided never to visit Gran again.','She became too frightened to look at the water.']],
+        ['vocab','In this story, “muttered” means …','said quietly, almost under his breath',['shouted across the wharf','wrote a message','laughed loudly']],
+        ['purpose','What is the main purpose of this story?','to show how a rushed journey can still become a memorable visit',['to explain how to catch a ferry','to persuade readers to visit an island','to list the safety rules for ferry passengers']]]},
+    {t:'Why Cities Need Trees',lv:3,x:'On a forty-degree afternoon, a street lined with mature trees can be several degrees cooler than a bare one. Leaves give shade, and water evaporating from them takes heat out of the air. Trees also trap fine dust and soak up rain that might otherwise flood drains. Some people argue that trees are messy: they drop leaves, crack footpaths and hide street signs. Those problems are real, and councils should choose species carefully and prune them well. But the evidence is clear. Neighbourhoods with healthy tree cover have cooler homes, cleaner air and, in many studies, calmer streets. If we want cities that are comfortable in a warming climate, planting — and looking after — urban trees is not a luxury. It is part of the city’s essential equipment.',
+     q:[['literal','According to the text, what can a tree-lined street be like on a very hot afternoon?','several degrees cooler than a bare street',['exactly the same temperature as a bare street','several degrees warmer than a bare street','too shady to walk along']],
+        ['infer','Why does the writer mention leaf litter and cracked footpaths?','To show that the drawbacks are real, then argue they can be managed',['To prove that cities should stop planting trees','To give instructions for pruning a tree','To explain why trees hide street signs']],
+        ['infer','What does the writer mean by calling trees “essential equipment”?','Trees are a necessary part of a well-run city, not just decoration',['Trees are machines that councils should buy from a catalogue','Only equipment sheds need trees nearby','Trees should replace all street signs']],
+        ['vocab','In this text, “mature” trees are …','fully grown trees',['newly planted seedlings','trees that drop no leaves','artificial trees']],
+        ['purpose','What is the main purpose of this text?','to persuade readers that urban trees are worth planting and looking after',['to tell a story about a hot afternoon','to instruct readers, step by step, how to prune trees','to advertise a brand of garden tools']]]},
   ];
   const comprehension={id:'comprehension',title:'Reading Comprehension',icon:'📖',dedupByText:true,code:'EN2-RECOM-01 → EN3-RECOM-01',
-    blurb:'Reading short stories and information texts, then finding facts (literal), working things out (inference) and word meanings in context.',
-    subs:l=>['literal','infer','vocab'],
-    gen(H,l,sub){const ps=P.filter(p=>(p.lv||0)<=l);for(let t=0;t<40;t++){const p=H.pick(ps);const qs=p.q.filter(x=>x[0]===sub);if(!qs.length)continue;const [k,qq,a,d]=H.pick(qs);
-        return M(Object.assign({sub,prompt:qq,vis:`<div class="passage"><b>${p.t}</b><p>${p.x}</p></div>`,hint:k==='literal'?'The answer is written in the text. Find the sentence that tells you.':k==='vocab'?'Re-read the sentence with the word. Try each choice in its place.':'The answer is not written exactly. Use clues in the text.',
-          explain:J([k==='literal'?'This is a “right there” question: the answer is in the text.':k==='vocab'?'Use the words around it (context) to work out the meaning.':'This is a “think and search” question: put clues together.',`Answer: <b>${a}</b>.`])},H.opts(a,d,{cls:'sent'})),{type:'comp',k});}
+    blurb:'Reading stories and information texts: finding facts, making inferences, word meanings in context, and the author’s purpose.',
+    subs:l=>l>=2?['literal','infer','vocab','purpose']:['literal','infer','vocab'],
+    gen(H,l,sub){const ps=P.filter(p=>(p.lv||0)<=l);const floor=l>=2?Math.max(0,l-1):0;const prefer=ps.filter(p=>(p.lv||0)>=floor);const pool=prefer.length?prefer:ps;for(let t=0;t<50;t++){const p=H.pick(pool);const qs=p.q.filter(x=>x[0]===sub);if(!qs.length)continue;const [k,qq,a,d]=H.pick(qs);
+        return M(Object.assign({sub,prompt:qq,vis:`<div class="passage"><b>${p.t}</b><p>${p.x}</p></div>`,hint:k==='literal'?'The answer is written in the text. Find the sentence that tells you.':k==='vocab'?'Re-read the sentence with the word. Try each choice in its place.':k==='purpose'?'Ask: why did the writer write this? To inform, to persuade, or to tell a story?':'The answer is not written exactly. Use clues in the text.',
+          explain:J([k==='literal'?'This is a “right there” question: the answer is in the text.':k==='vocab'?'Use the words around it (context) to work out the meaning.':k==='purpose'?'Think about what the writer wants the reader to know, feel or do.':'This is a “think and search” question: put clues together.',`Answer: <b>${a}</b>.`])},H.opts(a,d,{cls:'sent'})),{type:'comp',k});}
       throw new Error('comp');},
     example(){return {html:`<h3>📖 Reading detective</h3><p><b>Literal</b> (right there): the answer is written in the text.<br><b>Inference</b> (think and search): use clues to work it out.<br><b>Vocabulary</b>: use the words around a word to work out what it means.</p><p>💡 Read the text first, then the question, then look back at the text.</p>`};}};
 
   return {quick,wordclass,sentences,apostrophe,homophones,affixes,speech,figurative,comprehension};
 })();
 const TOPICS_EN=Object.values(EN);
-const CFG_EN={player:'alexia',name:'Alexia',theme:'alexia',year:'Year 4 → Year 5',warm:'quick',
+const CFG_EN={player:'alexia',name:'Alexia',theme:'alexia',year:'Year 4 → Year 5–6',warm:'quick',
   path:['wordclass','sentences','apostrophe','homophones','affixes','speech','figurative','comprehension'],start:'wordclass',games:{}};
 
 const BUILTIN=TOPICS_EN,CFG=CFG_EN;
@@ -877,7 +979,8 @@ function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){
 /* ---------- lesson planning: English revision, about 10 minutes (20-24 questions) ----------
    Normal day: 3 warm-up, 6 new-topic, 7 mixed, 2 fix-it, 2 challenge (20).
    School-focus weekday: the school topic is about 2/3 of the lesson (16 of 24).
-   Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes; a school topic from this week is about 2/3. */
+   Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes; a school topic from this week is about 2/3.
+   pt56u: last two mixed items on a normal day get a +1 level bump (modest Year 5 stretch). */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
   const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:Math.min(3,T(t).lvl+(o.up||0)),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
@@ -902,7 +1005,7 @@ function planLesson(date,variant=0){
     for(let i=0;i<3;i++)add('warm',CFG.warm,{});
     newSec(6);
     const pl=pool.length?pool:(cur?[cur]:[CFG.warm]);
-    interleave(pl,7,mixW).forEach(t=>add('mix',t));
+    interleave(pl,7,mixW).forEach((t,i)=>add('mix',t,{up:i>=5?1:0}));
     const rm=mistakes(()=>true,14),rk=Object.keys(rm);
     for(let i=0;i<2;i++){const fk=rk.length?wpick(rk,k=>rm[k]):(pl.slice().sort((a,b)=>acc(a)-acc(b))[0]+'|');const [t,s]=fk.split('|');add('fix',t,{sub:s||null});}
     const ch=pool.concat(cur?[cur]:[]);for(let i=0;i<2;i++)add('challenge',ch.length?pick(ch):CFG.warm,{up:1});
@@ -1179,7 +1282,8 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
   const msgs=[];const cur=curTopic();
   Object.entries(by).forEach(([id,o])=>{if(o.n<3||!TOPICS[id]||TOPICS[id].warm)return;const t=T(id);t.les.push([o.n,o.c,TODAY]);if(t.les.length>12)t.les=t.les.slice(-12);
-    const a=o.c/o.n;if(a>=0.9&&o.n>=3&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
+    const a=o.c/o.n,upAcc=CFG.stepUpAcc!=null?CFG.stepUpAcc:0.9,upN=CFG.stepUpN!=null?CFG.stepUpN:4;
+    if(a>=upAcc&&o.n>=Math.min(upN,3)&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
   let mastered=null;
   if(cur){const t=T(cur),L=t.les.slice(-2);if(L.length>=2){const nn=L[0][0]+L[1][0],cc=L[0][1]+L[1][1];if(cc/nn>=0.8){t.mastered=true;S.cur++;mastered=cur;}}}
   const prevDay=S.days[TODAY];
