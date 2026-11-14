@@ -5,7 +5,7 @@ Each child has a 15-minute lesson page that works offline (it also opens straigh
 - `alexia/daily/index.html` (Year 4, stretching to Year 5)
 - `ethan/daily/index.html` (Year 2, stretching to Year 3)
 
-**Lesson length:** Alexia's lesson is 18 questions every day (Mon–Thu Daily Mix: 3 warm-up, 4 new topic, 6 mixed, 3 Fix-it, 2 challenge; Friday/weekend review: 3 warm-up, 12 review, 3 toughest). Ethan's lesson is 25–30 questions. The sizes are set per child in `CFG.sizes` in `daily-src/topics-<child>.js`. Redo questions are extra and don't count toward the total.
+**Lesson length:** Alexia's lesson is 36 questions every day (Mon–Thu Daily Mix: 6 warm-up, 8 new topic, 12 mixed, 6 Fix-it, 4 challenge; Friday/weekend review: 6 warm-up, 24 review, 6 toughest). Ethan's lesson is 25–30 questions. The sizes are set per child in `CFG.sizes` in `daily-src/topics-<child>.js`. Redo questions are extra and don't count toward the total.
 
 **Hints:** each question has a 💡 Hint that shows the first steps using the question's own numbers, and a second level behind a 🔎 button ("Show me more help" for Alexia, "More help" for Ethan) that walks through more of the method without giving the answer. Ethan's hints are kept to one or two short steps.
 
@@ -19,9 +19,9 @@ Each child's folder has a `daily/focus.js` file that starts out empty. To make t
 DAILY_FOCUS.push({date:'2026-10-22', topicId:'percent', title:'Percentages', note:'Did 10%, 25%, 50% of amounts', until:'2026-10-24'});
 ```
 
-- The focus runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. On those days the school topic makes up most of the lesson (Ethan: about 17 of 27 questions; Alexia: 12 of 18). There is a "From school today" section with a worked example and 6 questions (hints showing on the first 2), then most of the mixed-practice, Fix-it and Challenge questions. The warm-up gets shorter (Ethan 3, Alexia 1) and the current path topic gets 3 questions, which is still enough for mastery tracking.
+- The focus runs from `date` to `until` (inclusive). If you leave out `until`, it runs on `date` only. On those days the school topic makes up most of the lesson (Ethan: about 17 of 27 questions; Alexia: about 25 of 36). There is a "From school today" section with a worked example and 12 questions (hints showing on the first 2), then most of the mixed-practice, Fix-it and Challenge questions. The warm-up gets shorter (Ethan 3, Alexia 2) and the current path topic gets 6 questions, which is still enough for mastery tracking.
 - If two entries are active on the same day, the one listed first in the file is the school focus.
-- On Friday (the week review), every school topic dated that week makes up 13 of the 18 review questions (Alexia: 9 of 13) and gets a place in the "Toughest of the week" section.
+- On Friday (the week review), every school topic dated that week makes up 13 of the 18 review questions (Alexia: 18 of 26) and gets a place in the "Toughest of the week" section.
 - `topicId` must be one of the IDs listed below or a module you added (see the next section). The page ignores an unknown ID.
 - Delete the line when you no longer need it. The file can be edited in any text editor, and no rebuild is needed.
 

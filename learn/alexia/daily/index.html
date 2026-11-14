@@ -749,8 +749,8 @@ const TOPICS_A=[
 ];
 const CFG_A={player:'alexia',name:'Alexia',theme:'alexia',year:'Year 4 → Year 5',warm:'quick',
   path:['eqfrac','addfrac','decline','thou','multdiv','fracqty','percent','money','time24','areaper','angles','chance','data','nets'],start:'thou',
-  /* shorter lessons (about 18 questions, Oct 2026): see the size keys in planLesson (engine.js) */
-  sizes:{fSchool:6,fWarm:1,fNew:3,fMixF:3,fMixO:1,fMixONoCur:3,fFix:2,fCh:['f','f'],nWarm:3,nNew:4,nMix:6,nMixNoCur:4,nFix:3,nCh:2,rWarmSf:2,rWarm:3,rT:13,rO:4,rT2:12,rTough:3},
+  /* lesson length (Nov 2026): about 36 questions, twice the earlier 18-question lesson. See the size keys in planLesson (engine.js). */
+  sizes:{fSchool:12,fWarm:2,fNew:6,fMixF:6,fMixO:2,fMixONoCur:6,fFix:4,fCh:['f','f','f','f'],nWarm:6,nNew:8,nMix:12,nMixNoCur:8,nFix:6,nCh:4,rWarmSf:4,rWarm:6,rT:26,rO:8,rT2:24,rTough:6},
   games:{fractions:'eqfrac',addfractions:'addfrac',decimals:'decline'}};
 
 const BUILTIN=TOPICS_A,CFG=CFG_A;
@@ -830,7 +830,8 @@ function planLesson(date,variant=0){
     const ok1=rk.length?wpick(rk,x=>recent[x]):weak[0]+'|';
     add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});if(Z.fFix>1){const [t,s]=ok1.split('|');add('fix',t,{sub:s||null});}
     if(Z.fFix>2)add('fix',f,{sub:fks.length?wpick(fks,x=>fm[x]):null});if(Z.fFix>3)add('fix',f,{});
-    const ch=opl.concat(cur?[cur]:[]);Z.fCh.forEach(c=>add('challenge',c==='pick'?(ch.length?pick(ch):f):f,{up:1}));
+    const ch=opl.concat(cur?[cur]:[]);const chUp=CFG.chUpN!=null?CFG.chUpN:Z.fCh.length;
+    Z.fCh.forEach((c,i)=>add('challenge',c==='pick'?(ch.length?pick(ch):f):f,{up:i<chUp?1:0}));
   }else if(!review){
     if(focusToday.length){const f=focusToday[0];add('school',f.topicId,{kind:'example'});for(let i=0;i<5;i++)add('school',f.topicId,{guided:i<2});}
     for(let i=0;i<Z.nWarm;i++)add('warm',CFG.warm,{});
@@ -842,7 +843,8 @@ function planLesson(date,variant=0){
     const used={};for(let i=0;i<8&&fix.length<Z.nFix&&keys.length;i++){const k=wpick(keys,x=>recent[x]);fix.push(k);used[k]=(used[k]||0)+1;if(used[k]>=Math.min(2,recent[k]))keys.splice(keys.indexOf(k),1);}
     const weak=pl.slice().sort((a,b)=>acc(a)-acc(b));while(fix.length<Z.nFix)fix.push(weak[fix.length%weak.length]+'|');
     fix.forEach(k=>{const [t,s]=k.split('|');add('fix',t,{sub:s||null});});
-    const ch=pl.concat(cur?[cur]:[]);for(let i=0;i<Z.nCh;i++)add('challenge',pick(ch),{up:1});
+    const ch=pl.concat(cur?[cur]:[]);const chUp=CFG.chUpN!=null?CFG.chUpN:Z.nCh;
+    for(let i=0;i<Z.nCh;i++)add('challenge',pick(ch),{up:i<chUp?1:0});
   }else{
     const sf=wf.concat(focusToday.map(f=>f.topicId)).filter((x,i,a)=>a.indexOf(x)===i);
     for(let i=0;i<(sf.length?Z.rWarmSf:Z.rWarm);i++)add('warm',CFG.warm,{});
@@ -1107,7 +1109,8 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   const by={};res.forEach(r=>{const o=by[r.t]||(by[r.t]={n:0,c:0});o.n++;if(r.ok)o.c++;});
   const msgs=[];const cur=curTopic();
   Object.entries(by).forEach(([id,o])=>{if(o.n<3||!TOPICS[id]||TOPICS[id].warm)return;const t=T(id);t.les.push([o.n,o.c,TODAY]);if(t.les.length>12)t.les=t.les.slice(-12);
-    const a=o.c/o.n;if(a>=0.9&&o.n>=4&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
+    const a=o.c/o.n,upAcc=CFG.stepUpAcc!=null?CFG.stepUpAcc:0.9,upN=CFG.stepUpN!=null?CFG.stepUpN:4;
+    if(a>=upAcc&&o.n>=upN&&t.lvl<3){t.lvl++;msgs.push(`<div class="msg up">⬆️ ${TOPICS[id].icon} ${esc(TOPICS[id].title)} steps up to level ${t.lvl+1}!</div>`);}else if(a<0.5&&t.lvl>0){t.lvl--;}});
   let mastered=null;
   if(cur){const t=T(cur),L=t.les.slice(-2);if(L.length>=2){const nn=L[0][0]+L[1][0],cc=L[0][1]+L[1][1];if(cc/nn>=0.8){t.mastered=true;S.cur++;mastered=cur;}}}
   const prevDay=S.days[TODAY];
