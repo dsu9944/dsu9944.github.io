@@ -1053,6 +1053,8 @@ const BUILTIN=TOPICS_ENE,CFG=CFG_ENE;
 const $=s=>document.querySelector(s);
 const PLAYER=CFG.player,NAME=(()=>{try{const pr=JSON.parse(localStorage.getItem('kidsHub.profiles')||'null');if(pr&&pr[PLAYER]&&pr[PLAYER].name)return String(pr[PLAYER].name).replace(/[<>&"'`]/g,'').slice(0,20)||CFG.name;}catch(e){}return CFG.name;})();
 const STORE=`kidsHub.p.${PLAYER}.english`;
+/* Silent results sync: paste the deployed Apps Script web app URL here (see results-sync/DEPLOY.md). Leave blank to disable. */
+const RESULTS_SYNC_URL='https://script.google.com/macros/s/AKfycbyDh1N9JhBxdKMo5Crn7JLXuItlZaqUINTUzwS5QwZCjfmg3_D5QNybpqO2nQSre80-/exec';
 const params=new URLSearchParams(location.search);
 const LESSON_MS=10*60*1000;
 /* ---------- topics: built-in + extra modules from focus.js ---------- */
@@ -1402,6 +1404,17 @@ function answer(ok){if(!q||q.done)return;q.done=true;const it=q.it,rk=q.redo;RUN
   const tb=$('#toldBtn');if(tb)tb.onclick=()=>{RUN.told++;S.told++;RUN.pts+=5;S.points+=5;save();topbar();tb.disabled=true;tb.textContent='👍 Great explaining!';sfx('good');};
   $('#nextBtn').onclick=()=>{save();next();};progUI();topbar();
   setTimeout(()=>fb.scrollIntoView({behavior:'smooth',block:'nearest'}),50);}
+
+/* Silent, non-blocking POST of a lesson result for the School Tutor bot. Fails quietly if offline or unset. Never waits, never changes localStorage. */
+function textOf(h){try{const d=document.createElement('div');d.innerHTML=String(h||'');return (d.textContent||'').replace(/\s+/g,' ').trim();}catch(e){return String(h||'');}}
+function resultsSyncUrl(){if(Object.prototype.hasOwnProperty.call(window,'KIDS_HUB_RESULTS_SYNC_URL'))return window.KIDS_HUB_RESULTS_SYNC_URL||'';return (typeof RESULTS_SYNC_URL==='string'&&RESULTS_SYNC_URL)||'';}
+function syncLessonResult(R,c,n){try{const url=resultsSyncUrl();if(!url||!R)return;
+  const page=STORE.indexOf('.english')>=0?'english':'maths';
+  const by={};(R.res||[]).forEach(r=>{if(!r||!r.t)return;const o=by[r.t]||(by[r.t]={id:r.t,title:(TOPICS[r.t]&&TOPICS[r.t].title)||r.t,n:0,correct:0});o.n++;if(r.ok)o.correct++;});
+  const mistakes=(S.rev&&S.rev[R.date||TODAY]||[]).filter(e=>e&&(e.v===R.variant||e.v==null)).map(e=>({topic:(e.it&&TOPICS[e.it.t]&&TOPICS[e.it.t].title)||(e.it&&e.it.t)||'',question:textOf(e.q&&e.q.prompt),childAnswer:textOf(e.a),correctAnswer:textOf(e.c)}));
+  const body=JSON.stringify({child:PLAYER,page,path:PLAYER+'/'+(page==='english'?'english':'daily'),date:R.date||TODAY,score:c,total:n,firstTryAccuracy:n?Math.round(1000*c/n)/10:0,timeTakenSec:Math.round((R.el||0)/1000),kind:R.kind||'mix',extra:!!R.extra,topics:Object.values(by),mistakes,sentAt:new Date().toISOString()});
+  fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body}).catch(()=>{});
+}catch(e){}}
 /* ---------- finish ---------- */
 function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false);RUN.awaitNext=false;return next(true);}
   if(RUN.practice)return finishPractice();
@@ -1418,6 +1431,7 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told,missed:R.rq.length,fixed:R.fixed};}
   else{prevDay.extra=(prevDay.extra||0)+1;prevDay.stars=Math.max(prevDay.stars||0,st);}
   R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());save();
+  try{syncLessonResult(R,c,n);}catch(e){}
   const nxt=curTopic();
   if(mastered)msgs.unshift(`<div class="msg up">🎓 <b>You mastered ${TOPICS[mastered].icon} ${esc(TOPICS[mastered].title)}!</b> It joins your mixed review.</div>`+(nxt?`<div class="msg next">🆕 Next lesson starts a new topic: <b>${TOPICS[nxt].icon} ${esc(TOPICS[nxt].title)}</b></div>`:''));
   const secRows=Object.keys(SECN).filter(k=>res.some(r=>r.sec===k)).map(k=>{const rr=res.filter(r=>r.sec===k);return `<tr><td>${SECN[k][0]} ${SECN[k][1]}</td><td>${rr.filter(r=>r.ok).length} / ${rr.length}</td></tr>`;}).join('');
@@ -1539,7 +1553,7 @@ window.addEventListener('pagehide',()=>{if(RUN)save();});
 window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
   correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
   wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
-  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus};
+  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus,syncLessonResult,resultsSyncUrl};
 home();
 
 })();
