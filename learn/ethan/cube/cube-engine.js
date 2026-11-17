@@ -93,16 +93,48 @@ function reachedStages(f,mode){const flags=stageFlags(f);return stagesFor(mode).
 /* ---- scramble progress + fix-up ---- */
 function scrambleTarget(scramble){return applyAlg(SOLVED,scramble);}
 function prefixState(scramble,k){return applyAlg(SOLVED,parseAlg(scramble).slice(0,k));}
-function progressOnPath(facelets,scramble){
+/* A half-turn like R2 is two quarter turns. GAN i3 (Gen2) reports those as two separate MOVE events (R then R), not one "R2". */
+function expandToQuarters(m){
+  m=normalizeMove(m);
+  if(!m)return [];
+  if(m[1]==="2")return [m[0],m[0]];
+  return [m];
+}
+function pathSnapshots(scramble){
   const moves=parseAlg(scramble);
-  let s=SOLVED,k=0;
-  for(let i=0;i<moves.length;i++){
-    s=applyMove(s,moves[i]);
-    if(eq(s,facelets))k=i+1;
-  }
-  if(eq(facelets,SOLVED))k=0;
-  const on=eq(facelets,prefixState(scramble,k));
-  return {k,on,done:eq(facelets,scrambleTarget(scramble)),total:moves.length,moves};
+  const snaps=[{state:SOLVED,k:0,partial:0,totalParts:moves[0]?expandToQuarters(moves[0]).length:0,current:moves[0]||null,q:0}];
+  let s=SOLVED,q=0;
+  moves.forEach((M,i)=>{
+    const qs=expandToQuarters(M);
+    qs.forEach((qt,qi)=>{
+      s=applyMove(s,qt);q++;
+      const doneMove=qi===qs.length-1;
+      snaps.push({state:s,k:doneMove?i+1:i,partial:doneMove?0:qi+1,totalParts:qs.length,current:doneMove?(moves[i+1]||null):M,q});
+    });
+  });
+  return {moves,snaps};
+}
+function matchSnap(snaps,facelets){
+  let found=null;
+  snaps.forEach(s=>{if(s.state===facelets)found=s;});
+  return found;
+}
+function packProgress(found,moves,done,on){
+  const half=!!(found&&found.partial>0);
+  return {
+    k:found?found.k:0,on:!!on,done:!!done,total:moves.length,moves,
+    partial:found?found.partial:0,totalParts:found?found.totalParts:0,
+    current:found?found.current: (moves[0]||null),
+    currentScramble:found?found.current:(moves[0]||null),
+    half,halfLabel:half?found.partial+"/"+found.totalParts:""
+  };
+}
+function progressOnPath(facelets,scramble){
+  const {moves,snaps}=pathSnapshots(scramble);
+  const target=snaps[snaps.length-1].state;
+  const done=eq(facelets,target);
+  const found=matchSnap(snaps,facelets);
+  return packProgress(found,moves,done,!!found);
 }
 function combineMoves(a,b){
   a=normalizeMove(a);b=normalizeMove(b);
@@ -114,27 +146,42 @@ function combineMoves(a,b){
 }
 
 function createTracker(scramble){
-  const moves=parseAlg(scramble);
-  const target=applyAlg(SOLVED,moves);
-  let state=SOLVED,lastMove="",fixup="";
+  const {moves,snaps}=pathSnapshots(scramble);
+  const target=snaps[snaps.length-1].state;
+  let state=SOLVED,lastMove="",fixup="",lastOn=snaps[0];
   function snapshot(){
-    const p=progressOnPath(state,moves);
     const done=eq(state,target);
-    return {state,moves,target,k:p.k,on:p.on,done,fixup:done?"":fixup,lastMove,total:moves.length};
+    const p=packProgress(lastOn,moves,done,!fixup&&!!lastOn);
+    p.state=state;p.target=target;p.fixup=done?"":fixup;p.lastMove=lastMove;
+    p.on=!!(!fixup&&!done&&lastOn);
+    if(done){p.current=null;p.currentScramble=null;p.k=moves.length;p.partial=0;p.half=false;p.halfLabel="";p.fixup="";p.on=false;}
+    else if(fixup){p.current=fixup;}
+    return p;
   }
   function apply(m){
     m=normalizeMove(m);
     if(!m)return snapshot();
     state=applyMove(state,m);
     lastMove=m;
-    if(eq(state,target)){fixup="";return snapshot();}
-    const p=progressOnPath(state,moves);
-    if(p.on){fixup="";return snapshot();}
+    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];return snapshot();}
+    const found=matchSnap(snaps,state);
+    if(found){fixup="";lastOn=found;return snapshot();}
     fixup=invertMove(m);
     return snapshot();
   }
-  function setState(f){if(f&&f.length===54){state=f;fixup="";}return snapshot();}
-  function reset(){state=SOLVED;lastMove="";fixup="";return snapshot();}
+  function setState(f){
+    if(f&&f.length===54){
+      state=f;
+      if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];}
+      else{
+        const found=matchSnap(snaps,state);
+        if(found){fixup="";lastOn=found;}
+        else fixup="";
+      }
+    }
+    return snapshot();
+  }
+  function reset(){state=SOLVED;lastMove="";fixup="";lastOn=snaps[0];return snapshot();}
   return {apply,setState,reset,get:snapshot,target,moves};
 }
 
@@ -732,6 +779,7 @@ function createApp(opts){
     return {
       facelets,solved:isSolved(facelets),phase,
       scramble:t.moves,scrambleText:fmtAlg(t.moves),k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,
+      current:t.current,currentScramble:t.currentScramble,partial:t.partial,totalParts:t.totalParts,half:t.half,halfLabel:t.halfLabel,total:t.total,
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
       inspectLeft,inspectOn:S.inspect!==false,
       running:phase==="running",elapsed:elapsedNow(),
@@ -771,7 +819,7 @@ const Engine={
   STORE,RESULTS_SYNC_URL,SOLVED,FACES,COL,CYCLES,LBL,CFOP,STAGE_LABEL,STAGE_KID,
   applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
-  createTracker,progressOnPath,scrambleTarget,combineMoves,
+  createTracker,progressOnPath,scrambleTarget,combineMoves,expandToQuarters,pathSnapshots,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
   validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp

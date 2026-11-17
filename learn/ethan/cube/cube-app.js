@@ -18,6 +18,9 @@ let fairScramble = null;
 let TwistyPlayer = null;
 let twisty = null;
 let macResolver = null;
+let appliedAlg = [];
+let showNet = false;
+const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:""};
 
 function isIos(){
   const ua=navigator.userAgent||"";
@@ -37,8 +40,11 @@ async function loadCubing(){
   try{
     const tw=await import(CUBING_TWISTY);
     TwistyPlayer=tw.TwistyPlayer||tw.default||null;
-    mountTwisty();
-  }catch(e){TwistyPlayer=null;}
+  }catch(e){
+    TwistyPlayer=null;
+    twistyLog.lastError=String(e&&e.message||e||"twisty import failed");
+  }
+  mountTwisty();
 }
 async function nextScramble(alg){
   if(alg)return app.setScramble(alg);
@@ -50,43 +56,159 @@ async function nextScramble(alg){
   }
   return app.setScramble(E.randomMoveScramble());
 }
+function twistyClass(){
+  return window.CUBING_TWISTY_PLAYER||TwistyPlayer||window.TwistyPlayer||null;
+}
+function playerOptions(){
+  return {
+    puzzle:"3x3x3",
+    visualization:"3D",
+    hintFacelets:"none",
+    background:"none",
+    controlPanel:"none",
+    backView:"none",
+    viewerLink:"none",
+    cameraLatitude:28,
+    cameraLongitude:32,
+    cameraDistance:6,
+    tempoScale:5,
+    experimentalSetupAlg:"",
+    alg:""
+  };
+}
 function mountTwisty(){
   const host=$("#twistyHost");
-  if(!host||!TwistyPlayer||twisty)return;
+  const Cls=twistyClass();
+  if(!host||!Cls){
+    const ph=$("#twistyPlaceholder");
+    if(ph)ph.textContent=twistyLog.lastError?"3D cube couldn't load. You can turn on the 2D net in Grown-up settings, or check the internet and refresh.":"Loading the 3D cube…";
+    twistyLog.ready=false;
+    syncTwistyApi();
+    return;
+  }
   try{
-    twisty=new TwistyPlayer({
-      puzzle:"3x3x3",
-      visualization:"PG3D",
-      background:"none",
-      hintFacelets:"none",
-      controlPanel:"none",
-      backView:"none",
-      cameraLatitude:35,
-      cameraLongitude:25,
-      tempoScale:4
-    });
-    twisty.style.width="220px";
-    twisty.style.height="220px";
+    let player=null, vis="3D";
+    try{player=new Cls(playerOptions());}
+    catch(e){
+      vis="PG3D";
+      const opts=playerOptions();opts.visualization="PG3D";
+      player=new Cls(opts);
+    }
+    twisty=player;
+    twistyLog.visualization=vis;
+    twistyLog.ready=true;
+    twistyLog.lastError="";
     host.innerHTML="";
     host.appendChild(twisty);
-    host.classList.remove("hidden");
-  }catch(e){twisty=null;}
+    /* Fixed 3/4 view: U, F, R with white on top and green in front. The i3 can send GYRO, but following it is too twitchy for a 7-year-old, so we keep this stable angle. */
+    syncAfterMount();
+  }catch(e){
+    twisty=null;twistyLog.ready=false;twistyLog.lastError=String(e&&e.message||e||"mount failed");
+    const ph=$("#twistyPlaceholder");
+    if(ph)ph.textContent="3D cube couldn't start. You can turn on the 2D net in Grown-up settings.";
+  }
+  syncTwistyApi();
 }
-function twistyMove(m){
-  if(!twisty)return;
-  try{
-    if(typeof twisty.experimentalAddAlgLeaf==="function")twisty.experimentalAddAlgLeaf(m,{cancel:false});
-    else if(typeof twisty.experimentalAddMove==="function")twisty.experimentalAddMove(m);
-  }catch(e){}
+function remountTwisty(){
+  twisty=null;
+  mountTwisty();
 }
-function twistyReset(facelets){
+function snapSetup(alg){
+  const moves=E.parseAlg(alg||"");
+  appliedAlg=moves.slice();
+  const s=moves.join(" ");
+  twistyLog.setup=s;
   if(!twisty)return;
+  try{twisty.experimentalSetupAlg=s;}catch(e){}
+  try{twisty.alg="";}catch(e){}
+}
+function liveMove(m){
+  m=E.normalizeMove(m);
+  if(!m)return;
+  twistyLog.moves.push(m);
+  if(!twisty){appliedAlg.push(m);return;}
   try{
-    if(facelets&&typeof twisty.experimentalModel!=="undefined"){
-      /* best-effort; 2D net is the source of truth if this fails */
-    }
+    twisty.experimentalSetupAlg=appliedAlg.join(" ");
     twisty.alg="";
   }catch(e){}
+  try{
+    if(typeof twisty.experimentalAddMove==="function")twisty.experimentalAddMove(m);
+    else if(typeof twisty.experimentalAddAlgLeaf==="function")twisty.experimentalAddAlgLeaf(m,{cancel:false});
+  }catch(e){}
+  appliedAlg.push(m);
+}
+function onScrambleChanged(alg){
+  twistyLog.moves=[];
+  if(app.get().connected)snapSetup("");
+  else snapSetup(alg||"");
+}
+function syncAfterMount(){
+  const v=app.get();
+  if(!v)return snapSetup("");
+  if(!v.connected)return snapSetup(v.scrambleText||"");
+  const moves=v.scramble||[];
+  const k=v.k||0;
+  let applied=moves.slice(0,k);
+  if(v.half&&moves[k]&&v.partial&&E.expandToQuarters){
+    applied=applied.concat(E.expandToQuarters(moves[k]).slice(0,v.partial));
+  }
+  snapSetup(applied.join(" "));
+}
+function hookApp(){
+  const rawMove=app.onMove.bind(app);
+  app.onMove=function(evt){
+    const r=rawMove(evt);
+    const m=E.normalizeMove(evt&&(evt.move||evt));
+    if(m)liveMove(m);
+    return r;
+  };
+  const rawSet=app.setScramble.bind(app);
+  app.setScramble=function(alg){
+    const r=rawSet(alg);
+    onScrambleChanged(String(r||alg||(app.get().scrambleText||"")));
+    return r;
+  };
+  const rawNew=app.newScramble.bind(app);
+  app.newScramble=function(alg){
+    const r=rawNew(alg);
+    onScrambleChanged(String(r||alg||(app.get().scrambleText||"")));
+    return r;
+  };
+  const rawReset=app.resetToSolved.bind(app);
+  app.resetToSolved=function(){
+    const r=rawReset();
+    twistyLog.moves=[];
+    snapSetup("");
+    return r;
+  };
+  const rawSim=app.simulateConnected.bind(app);
+  app.simulateConnected=function(info){
+    const r=rawSim(info);
+    syncAfterMount();
+    return r;
+  };
+  const rawConn=app.setConnected.bind(app);
+  app.setConnected=function(on,info){
+    const r=rawConn(on,info);
+    if(on)syncAfterMount();
+    else onScrambleChanged(app.get().scrambleText||"");
+    return r;
+  };
+}
+function syncTwistyApi(){
+  window.CUBE_TWISTY=twistyLog;
+  twistyLog.player=twisty||null;
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet};
+}
+function setShowNet(on){
+  showNet=!!on;
+  const net=$("#cubeNet");
+  if(net){
+    net.classList.toggle("hidden",!showNet);
+    net.setAttribute("aria-hidden",showNet?"false":"true");
+    if(showNet)net.innerHTML=(app.get()&&app.get().svg)||E.svgNet((app.get()&&app.get().facelets)||E.SOLVED,260);
+  }
+  const cb=$("#optShowNet");if(cb)cb.checked=showNet;
 }
 
 /* ---------- MAC prompt (GAN 356 i3 / Gen2) ---------- */
@@ -165,7 +287,6 @@ function onGanEvent(ev){
   if(!ev||!ev.type)return;
   if(ev.type==="MOVE"){
     app.onMove({move:ev.move,localTimestamp:ev.localTimestamp,cubeTimestamp:ev.cubeTimestamp,facelets:null});
-    twistyMove(ev.move);
   }else if(ev.type==="FACELETS"){
     app.onFacelets(ev.facelets);
   }else if(ev.type==="BATTERY"){
@@ -179,7 +300,6 @@ function onGanEvent(ev){
 }
 async function doReset(){
   app.resetToSolved();
-  twistyReset(E.SOLVED);
   if(conn){
     try{await conn.sendCubeCommand({type:"REQUEST_RESET"});}catch(e){}
     try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
@@ -187,16 +307,33 @@ async function doReset(){
 }
 
 /* ---------- render ---------- */
+function scrambleDone(v){
+  return !!(v.scrambled||v.phase==="inspect"||v.phase==="ready"||v.phase==="running"||v.phase==="stopped");
+}
+function calloutHTML(v){
+  if(scrambleDone(v))return `<div class="callout done">Scramble done!</div>`;
+  if(v.fixup){
+    const nxt=v.currentScramble||(v.scramble&&v.scramble[v.k])||"";
+    return `<div class="callout fix">Fix-up: <b>${v.fixup}</b></div>${nxt?`<p class="callout-sub">Then we'll go on with ${nxt}${v.halfLabel?" ("+v.halfLabel+")":""}.</p>`:""}`;
+  }
+  const m=v.current||(v.scramble&&v.scramble[v.k])||"";
+  if(!m)return "";
+  const half=v.halfLabel?`<span class="half-big">${v.halfLabel}</span>`:"";
+  return `<div class="callout next">Next: <b>${m}</b>${half}</div>`;
+}
 function scrambleHTML(v){
   const moves=v.scramble||[];
   const k=v.k||0;
-  const on=v.onPath!==false;
+  const doneAll=scrambleDone(v);
   return moves.map((m,i)=>{
-    let cls="mv";
-    if(v.scrambled||v.phase==="inspect"||v.phase==="ready"||v.phase==="running"||v.phase==="stopped")cls+=" done";
-    else if(on&&i<k)cls+=" done";
-    else if(on&&i===k)cls+=" next";
-    return `<span class="${cls}">${m}</span>`;
+    let cls="mv",extra="";
+    if(doneAll||i<k){cls+=" done";extra=`<span class="tick" aria-hidden="true">✓</span>`;}
+    else if(i===k){
+      if(v.fixup){cls+=" waiting";if(v.halfLabel)extra=`<span class="half">${v.halfLabel}</span>`;}
+      else if(v.half){cls+=" next half";extra=`<span class="half">${v.halfLabel||"1/2"}</span>`;}
+      else cls+=" next";
+    }
+    return `<span class="${cls}" data-i="${i}">${m}${extra}</span>`;
   }).join(" ");
 }
 function timerText(v){
@@ -210,9 +347,10 @@ function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
   if(v.phase==="needSolved")return "Nice work! Solve the cube the rest of the way (or put it in the solved position and tap Reset to solved), then we'll start the next scramble.";
   if(v.phase==="scrambling"){
-    if(v.fixup)return "Oops — turn "+v.fixup+" to get back on track.";
+    if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
-    return "Follow the scramble on your cube. I'll tick off each turn.";
+    if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it.";
+    return "Do the big move next. I'll tick off each turn as you go.";
   }
   if(v.phase==="inspect")return "Inspection! Look at the cube. Your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
   if(v.phase==="ready")return "Ready — your first turn (or let go of the timer) starts the clock.";
@@ -310,11 +448,15 @@ function render(v){
   const err=$("#connError");
   if(v.lastError){err.textContent=v.lastError;show(err,true);}else show(err,false);
 
-  $("#cubeNet").innerHTML=v.svg||E.svgNet(v.facelets,260);
+  if(showNet){
+    const net=$("#cubeNet");
+    if(net)net.innerHTML=v.svg||E.svgNet(v.facelets,260);
+  }
+  const call=$("#callout");
+  if(call)call.innerHTML=calloutHTML(v);
   $("#scramble").innerHTML=scrambleHTML(v);
   const fix=$("#fixup");
-  if(v.fixup&&v.phase==="scrambling"){fix.innerHTML=`<strong>Fix-up:</strong> turn <span class="mv fix">${v.fixup}</span>`;show(fix,true);}
-  else show(fix,false);
+  if(fix)show(fix,false);
 
   const timer=$("#timer");
   timer.textContent=timerText(v);
@@ -357,6 +499,8 @@ function bind(){
   $("#macClear").addEventListener("click",()=>{app.setMac("");setText("#savedMac","not saved yet");});
   $("#optInspect").addEventListener("change",e=>app.setSetting("inspect",e.target.checked));
   $("#optMode").addEventListener("change",e=>app.setSetting("splitsMode",e.target.value));
+  const netCb=$("#optShowNet");
+  if(netCb)netCb.addEventListener("change",e=>setShowNet(e.target.checked));
   $("#sessionBox").addEventListener("click",e=>{
     if(e.target.id==="startLessonBtn"){app.startLesson();nextScramble();}
     if(e.target.id==="skipPhaseBtn"){app.skipLessonPhase();nextScramble();}
@@ -393,8 +537,11 @@ function bind(){
 }
 
 function init(){
+  hookApp();
+  syncTwistyApi();
   app.setIos(isIos());
   bind();
+  setShowNet(false);
   render(app.get());
   loadCubing();
   nextScramble();
