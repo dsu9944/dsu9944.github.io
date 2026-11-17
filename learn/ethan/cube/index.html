@@ -34,9 +34,15 @@ body.connected #connectBtn{background:#16a34a;box-shadow:0 4px 0 #15803d}
 #battery.low{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
 .status{color:#4b5563;font-size:.95rem}
 .err{color:#991b1b;background:#fef2f2;border-radius:14px;padding:10px 12px;margin-top:8px}
-.cube-wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center}
-#cubeNet svg{display:block;max-width:280px;height:auto}
-#twistyHost{min-width:200px}
+.cube-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
+#twistyHost{width:min(92vw,70vh,560px);height:min(92vw,70vh,560px);max-width:560px;max-height:560px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+#twistyHost twisty-player,#twistyHost .fake-twisty{width:100%!important;height:100%!important;max-width:100%;max-height:100%}
+.twisty-ph{color:#0f766e;font-weight:bold;text-align:center;padding:24px;font-size:1.1rem}
+#cubeNet{margin-top:8px}
+#cubeNet.hidden{display:none!important}
+#cubeNet svg{display:block;max-width:280px;height:auto;margin:0 auto}
+@media (min-width:700px){#twistyHost{width:min(70vh,560px);height:min(70vh,560px)}}
+@media (max-width:560px){#twistyHost{width:min(92vw,420px);height:min(92vw,420px)}}
 .scramble{font-size:1.35rem;font-weight:bold;letter-spacing:.02em;line-height:1.85;text-align:center;min-height:2.8em}
 .mv{display:inline-block;padding:4px 9px;border-radius:10px;margin:3px 2px;color:#1f2937;vertical-align:middle}
 .mv.done{background:transparent;color:#9ca3af;font-weight:600}
@@ -142,8 +148,10 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 
   <section class="card">
     <div class="cube-wrap">
-      <div id="cubeNet" aria-label="Live cube"></div>
-      <div id="twistyHost" class="hidden"></div>
+      <div id="twistyHost" aria-label="3D cube">
+        <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
+      </div>
+      <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
     </div>
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
@@ -188,6 +196,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
           <option value="cfop">CFOP (cross, F2L, OLL, PLL)</option>
         </select>
       </label>
+      <label class="opt"><input type="checkbox" id="optShowNet"> Show a flat 2D cube net (the 3D cube is used by default)</label>
       <p>Saved MAC address: <code id="savedMac">not saved yet</code>
         <button type="button" class="tiny" id="macClear">Clear saved MAC</button></p>
       <p>Times and settings are stored in this browser only, under <code>kidsHub.p.ethan.cube</code>. When a session finishes we quietly send a summary to the same results sheet as the other lessons (it never blocks a solve if the network is down).</p>
