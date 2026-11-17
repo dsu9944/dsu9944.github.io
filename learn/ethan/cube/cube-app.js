@@ -187,16 +187,33 @@ async function doReset(){
 }
 
 /* ---------- render ---------- */
+function scrambleDone(v){
+  return !!(v.scrambled||v.phase==="inspect"||v.phase==="ready"||v.phase==="running"||v.phase==="stopped");
+}
+function calloutHTML(v){
+  if(scrambleDone(v))return `<div class="callout done">Scramble done!</div>`;
+  if(v.fixup){
+    const nxt=v.currentScramble||(v.scramble&&v.scramble[v.k])||"";
+    return `<div class="callout fix">Fix-up: <b>${v.fixup}</b></div>${nxt?`<p class="callout-sub">Then we'll go on with ${nxt}${v.halfLabel?" ("+v.halfLabel+")":""}.</p>`:""}`;
+  }
+  const m=v.current||(v.scramble&&v.scramble[v.k])||"";
+  if(!m)return "";
+  const half=v.halfLabel?`<span class="half-big">${v.halfLabel}</span>`:"";
+  return `<div class="callout next">Next: <b>${m}</b>${half}</div>`;
+}
 function scrambleHTML(v){
   const moves=v.scramble||[];
   const k=v.k||0;
-  const on=v.onPath!==false;
+  const doneAll=scrambleDone(v);
   return moves.map((m,i)=>{
-    let cls="mv";
-    if(v.scrambled||v.phase==="inspect"||v.phase==="ready"||v.phase==="running"||v.phase==="stopped")cls+=" done";
-    else if(on&&i<k)cls+=" done";
-    else if(on&&i===k)cls+=" next";
-    return `<span class="${cls}">${m}</span>`;
+    let cls="mv",extra="";
+    if(doneAll||i<k){cls+=" done";extra=`<span class="tick" aria-hidden="true">✓</span>`;}
+    else if(i===k){
+      if(v.fixup){cls+=" waiting";if(v.halfLabel)extra=`<span class="half">${v.halfLabel}</span>`;}
+      else if(v.half){cls+=" next half";extra=`<span class="half">${v.halfLabel||"1/2"}</span>`;}
+      else cls+=" next";
+    }
+    return `<span class="${cls}" data-i="${i}">${m}${extra}</span>`;
   }).join(" ");
 }
 function timerText(v){
@@ -210,9 +227,10 @@ function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
   if(v.phase==="needSolved")return "Nice work! Solve the cube the rest of the way (or put it in the solved position and tap Reset to solved), then we'll start the next scramble.";
   if(v.phase==="scrambling"){
-    if(v.fixup)return "Oops — turn "+v.fixup+" to get back on track.";
+    if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
-    return "Follow the scramble on your cube. I'll tick off each turn.";
+    if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it.";
+    return "Do the big move next. I'll tick off each turn as you go.";
   }
   if(v.phase==="inspect")return "Inspection! Look at the cube. Your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
   if(v.phase==="ready")return "Ready — your first turn (or let go of the timer) starts the clock.";
@@ -311,10 +329,11 @@ function render(v){
   if(v.lastError){err.textContent=v.lastError;show(err,true);}else show(err,false);
 
   $("#cubeNet").innerHTML=v.svg||E.svgNet(v.facelets,260);
+  const call=$("#callout");
+  if(call)call.innerHTML=calloutHTML(v);
   $("#scramble").innerHTML=scrambleHTML(v);
   const fix=$("#fixup");
-  if(v.fixup&&v.phase==="scrambling"){fix.innerHTML=`<strong>Fix-up:</strong> turn <span class="mv fix">${v.fixup}</span>`;show(fix,true);}
-  else show(fix,false);
+  if(fix)show(fix,false);
 
   const timer=$("#timer");
   timer.textContent=timerText(v);
