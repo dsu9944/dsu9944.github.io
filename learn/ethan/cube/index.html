@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d9488">
+<title>Speedcubing – Ethan</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%8B%3C/text%3E%3C/svg%3E">
+<style>
+:root{--blue:#2563eb;--teal:#0d9488;--teal2:#0f766e;--green:#16a34a;--red:#ef4444;--orange:#f97316;--ink:#1f2937;--gold:#f59e0b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4);min-height:100vh;font-size:19px}
+button,select,input{font-family:inherit;font-size:1rem}
+button{cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:52px;touch-action:manipulation}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(90deg,#0d9488,#2563eb);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
+.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(13,148,136,.12);margin-bottom:16px}
+.note{background:#fff7ed;border:3px solid #fdba74;border-radius:20px;padding:14px 16px;margin-bottom:16px}
+.note.ios{background:#ecfeff;border-color:#5eead4}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row-gap{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.btn{background:var(--teal);color:#fff;font-weight:bold;box-shadow:0 4px 0 var(--teal2)}
+.btn.big{font-size:1.25rem;min-height:64px;padding:16px 22px;border-radius:20px}
+.btn.ghost{background:#ccfbf1;color:var(--teal2);box-shadow:0 4px 0 #99f6e4}
+.btn.danger,.tiny.danger{background:#fee2e2;color:#991b1b;box-shadow:none}
+#connectBtn{background:#2563eb;box-shadow:0 4px 0 #1d4ed8;font-size:1.15rem;min-height:58px}
+body.connected #connectBtn{background:#16a34a;box-shadow:0 4px 0 #15803d}
+#battery{background:#ecfdf5;border:2px solid #86efac;border-radius:999px;padding:6px 12px;font-weight:bold}
+#battery.low{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+.status{color:#4b5563;font-size:.95rem}
+.err{color:#991b1b;background:#fef2f2;border-radius:14px;padding:10px 12px;margin-top:8px}
+.cube-wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:center}
+#cubeNet svg{display:block;max-width:280px;height:auto}
+#twistyHost{min-width:200px}
+.scramble{font-size:1.45rem;font-weight:bold;letter-spacing:.02em;line-height:1.7;text-align:center;min-height:3.2em}
+.mv{display:inline-block;padding:2px 8px;border-radius:10px;margin:2px}
+.mv.done{background:#dcfce7;color:#166534}
+.mv.next{background:#fef08a;color:#854d0e;box-shadow:0 0 0 3px #fde047}
+.mv.fix{background:#ffedd5;color:#9a3412;font-size:1.3rem}
+#fixup{text-align:center;background:#fff7ed;border-radius:16px;padding:10px;margin-top:8px;font-size:1.15rem}
+.timer-pad{text-align:center;padding:12px 8px;border-radius:28px;border:5px dashed #99f6e4;background:linear-gradient(180deg,#f0fdfa,#fff);user-select:none}
+.timer{font-variant-numeric:tabular-nums;font-size:4.2rem;font-weight:bold;color:#0f766e;line-height:1;padding:10px 0}
+.timer.ph-inspect{color:#d97706}
+.timer.ph-running{color:#16a34a}
+.timer.ph-stopped{color:#2563eb}
+.timer.ready{color:#16a34a;background:#dcfce7;border-radius:20px}
+#hint{margin:8px 0 0;color:#374151;font-size:1.05rem}
+.splits{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
+.split{background:#f8fafc;border:3px solid #e2e8f0;border-radius:16px;padding:10px;text-align:center}
+.split.on{border-color:#86efac;background:#ecfdf5}
+.split .sn{font-size:.85rem;color:#4b5563;font-weight:bold}
+.split .st{font-size:1.3rem;font-weight:bold}
+.split .sb{font-size:.8rem;color:#6b7280}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.stat{background:#f0f9ff;border-radius:16px;padding:12px;text-align:center}
+.stat b{display:block;font-size:1.5rem;color:#1d4ed8}
+.stat span{font-size:.85rem;color:#4b5563}
+.chart{width:100%;height:90px}
+.hist .hrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e7eb}
+.ht{font-weight:bold;min-width:4.5rem}
+.hm{color:#6b7280;flex:1}
+.tiny{min-height:36px;padding:4px 10px;border-radius:10px;background:#e5e7eb;font-size:.85rem;font-weight:bold}
+.muted{color:#6b7280}
+h2{margin:0 0 10px;color:var(--teal2);font-size:1.45rem}
+.hero-copy p{margin:0 0 8px}
+.stars-line{color:#f59e0b;font-size:1.3rem;font-weight:bold}
+details, .help{font-size:1rem;line-height:1.45}
+.help ol{padding-left:1.3em}
+.help code,.help kbd{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:.9em}
+#cele{position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px}
+#cele .pop{background:#fff;border-radius:28px;padding:28px 22px;text-align:center;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25);border:6px solid #facc15}
+#cele h2{font-size:2rem;color:#b45309}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.modal .box{background:#fff;border-radius:24px;padding:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+.modal h2{color:#0f766e}
+input[type=text]{width:100%;padding:12px;border:3px solid #99f6e4;border-radius:14px;font-size:1.1rem;letter-spacing:.08em}
+label.opt{display:flex;gap:8px;align-items:center;margin:8px 0}
+footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
+@media (max-width:560px){.timer{font-size:3.1rem}.scramble{font-size:1.2rem}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1>🧊 Ethan's Speedcubing</h1>
+  <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
+  <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
+</header>
+<main>
+  <div id="iosNote" class="note ios hidden">
+    <strong>You're on an iPhone or iPad.</strong> Safari and Chrome on iOS can't talk to the smart cube. You can still use the scramble and the tap / spacebar timer, and keep your times. To connect Ethan's GAN 356 i3, open this page in <strong>Chrome on a computer or Android</strong>.
+  </div>
+  <div id="btNote" class="note hidden">
+    This browser doesn't support Web Bluetooth. Please open this page in <strong>Google Chrome</strong> on a computer or Android to connect the cube. The manual timer still works here.
+  </div>
+
+  <section class="card" id="connectCard">
+    <div class="row">
+      <button class="btn" id="connectBtn" type="button">Connect cube</button>
+      <span id="battery" class="hidden">🔋</span>
+      <span class="status" id="connStatus">Not connected — timer still works</span>
+    </div>
+    <div id="connError" class="err hidden"></div>
+    <div class="row-gap">
+      <button class="btn ghost" id="resetBtn" type="button">Reset to solved</button>
+      <button class="btn ghost" id="helpToggle" type="button">How to connect the i3</button>
+    </div>
+    <div id="helpPanel" class="help hidden">
+      <h3>Connecting Ethan's GAN 356 i3</h3>
+      <p>The 356 i3 is a <strong>GAN Gen2</strong> smart cube. Chrome can talk to it over Bluetooth (this site is HTTPS). The cube encrypts its moves with a key based on its <strong>MAC address</strong>, so Chrome sometimes has to ask for that address once.</p>
+      <ol>
+        <li>Use <strong>Google Chrome</strong> on a computer or Android phone (not an iPhone or iPad).</li>
+        <li>Wake the cube by turning a face. It should have some charge.</li>
+        <li>Tap <strong>Connect cube</strong> and pick the device whose name starts with <strong>GAN</strong> (often something like <strong>GAN356i3</strong>).</li>
+        <li>We'll try to read the MAC address automatically from the cube's Bluetooth advertisement. This often works on Windows, Linux and Android. It usually <strong>does not</strong> work on a Mac, because Chrome hides the real address there.</li>
+        <li>If a box asks for the MAC (six pairs like <code>AB:12:CD:34:EF:56</code>), enter it once. We save it in this browser and shouldn't ask again.
+          <ul>
+            <li><strong>Windows, Linux or Android:</strong> in Chrome open <code>chrome://bluetooth-internals/#devices</code>, scan, wake the cube, and copy the <strong>Address</strong> of the GAN device. (On a Mac this address is fake — don't use it.)</li>
+            <li><strong>On a Mac, or if that page doesn't help:</strong> open the official <strong>GAN Cube Station</strong> app, connect the i3, and look for the Bluetooth / MAC address in the cube info. It may also be on the box or a sticker.</li>
+          </ul>
+        </li>
+        <li>After it connects you should see the battery and a live cube that follows Ethan's turns. If the picture doesn't match the real cube, physically solve it, then tap <strong>Reset to solved</strong>.</li>
+      </ol>
+      <p>Optional: turning on <code>chrome://flags/#enable-experimental-web-platform-features</code> and restarting Chrome can help auto-detect the MAC, but it isn't required once the address is saved.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="cube-wrap">
+      <div id="cubeNet" aria-label="Live cube"></div>
+      <div id="twistyHost" class="hidden"></div>
+    </div>
+    <div id="scramble" class="scramble" aria-live="polite"></div>
+    <div id="fixup" class="hidden"></div>
+    <div class="row-gap" style="justify-content:center">
+      <button class="btn" id="newScrambleBtn" type="button">New scramble</button>
+      <button class="btn ghost" id="nextBtn" type="button">Next solve</button>
+    </div>
+  </section>
+
+  <section class="card timer-pad" id="timerPad" tabindex="0" role="button" aria-label="Timer. Hold to ready, release to start, tap to stop.">
+    <div class="timer ph-idle" id="timer">0.00</div>
+    <p id="hint">Connect Ethan's GAN 356 i3, or use the timer by itself.</p>
+    <div id="splits"></div>
+  </section>
+
+  <section class="card" id="sessionBox"></section>
+
+  <section class="card">
+    <h2>Progress</h2>
+    <div class="stats">
+      <div class="stat"><b id="statPb">—</b><span>Personal best</span></div>
+      <div class="stat"><b id="statAo5">—</b><span>Average of 5</span></div>
+      <div class="stat"><b id="statAo12">—</b><span>Average of 12</span></div>
+      <div class="stat"><b id="statStreak">0 days</b><span>Daily streak</span></div>
+      <div class="stat"><b id="statStars">★ 0</b><span>Stars</span></div>
+    </div>
+    <div id="chart" style="margin-top:12px"></div>
+    <h3>Best splits</h3>
+    <ul id="bestSplits"></ul>
+    <h3>Recent solves</h3>
+    <div id="history"></div>
+  </section>
+
+  <section class="card">
+    <button class="btn ghost" id="grownToggle" type="button">Grown-up settings</button>
+    <div id="grownPanel" class="hidden help">
+      <label class="opt"><input type="checkbox" id="optInspect" checked> 15-second inspection before the timer starts</label>
+      <label class="opt">Split method
+        <select id="optMode">
+          <option value="lbl">Beginner LBL (cross, first layer, second layer, last layer)</option>
+          <option value="cfop">CFOP (cross, F2L, OLL, PLL)</option>
+        </select>
+      </label>
+      <p>Saved MAC address: <code id="savedMac">not saved yet</code>
+        <button type="button" class="tiny" id="macClear">Clear saved MAC</button></p>
+      <p>Times and settings are stored in this browser only, under <code>kidsHub.p.ethan.cube</code>. When a session finishes we quietly send a summary to the same results sheet as the other lessons (it never blocks a solve if the network is down).</p>
+    </div>
+  </section>
+</main>
+<footer>Progress is saved in this browser on this device only.</footer>
+
+<div id="cele" class="hidden"><div class="pop">
+  <h2 id="celeText">New personal best!</h2>
+  <p>That was a flyer. ⭐</p>
+  <button class="btn big" type="button" onclick="document.getElementById('cele').classList.add('hidden')">Woohoo!</button>
+</div></div>
+
+<div id="macModal" class="modal hidden"><div class="box">
+  <h2>Cube MAC address</h2>
+  <p>Ethan's <strong>GAN 356 i3</strong> needs its Bluetooth MAC address so Chrome can understand the moves. A grown-up should type it once.</p>
+  <p id="macDevice" class="muted"></p>
+  <p>Find it on Windows, Linux or Android in Chrome at <code>chrome://bluetooth-internals/#devices</code> (the Address column — not on a Mac, where that value is fake), or in the official GAN Cube Station app / on the box.</p>
+  <p><input type="text" id="macInput" placeholder="AB:12:CD:34:EF:56" autocomplete="off" spellcheck="false" aria-label="MAC address"></p>
+  <div class="row-gap">
+    <button class="btn" id="macSave" type="button">Save and connect</button>
+    <button class="btn ghost" id="macCancel" type="button">Cancel</button>
+  </div>
+</div></div>
+
+<script src="cube-engine.js"></script>
+<script src="cube-app.js"></script>
+</body>
+</html>

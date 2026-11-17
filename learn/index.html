@@ -57,6 +57,10 @@ h2{color:#7c3aed;text-align:center;font-size:1.9rem;margin:10px 0 18px}
 @media (min-width:900px){#todayCard.two{grid-template-columns:1.4fr 1fr}#todayCard.two .today{height:calc(100% - 18px);box-sizing:border-box}}
 .today.eng{background:linear-gradient(120deg,#f5f3ff,#ecfeff);border-color:#7c3aed;box-shadow:0 8px 22px rgba(124,58,237,.22)}
 .today.eng .tt{color:#6d28d9}.today.eng .go{background:#7c3aed}
+.today.cube{background:linear-gradient(120deg,#ecfeff,#f0fdf4);border-color:#0d9488;box-shadow:0 8px 22px rgba(13,148,136,.22)}
+.today.cube .tt{color:#0f766e}.today.cube .go{background:#0d9488}
+#todayCard.three{display:grid;gap:0 18px;grid-template-columns:1fr}
+@media (min-width:900px){#todayCard.three{grid-template-columns:1.3fr 1fr 1fr}#todayCard.three .today{height:calc(100% - 18px);box-sizing:border-box}}
 footer{text-align:center;font-size:.85rem;color:#6b7280;padding:10px 0 24px}
 </style>
 </head>
@@ -148,12 +152,22 @@ function englishCard(id){
   const st=done?'✅ Done for today!':going?'▶️ Keep going where you left off':review?'🏆 Week review':E.sub;
   return `<a class="today eng" href="${id}/english/index.html?player=${id}" data-english="${id}"><span class="ti">📖</span><span><div class="tt">${E.t}</div><div class="ts">${st}</div></span><span class="go">${done?'Extra practice':going?'Continue ➜':'Start ➜'}</span></a>`;
 }
+function cubeCard(id){
+  if(id!=='ethan')return '';
+  const d=new Date(),pad=n=>String(n).padStart(2,'0'),today=`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  let s=null;try{s=JSON.parse(ls.get('kidsHub.p.ethan.cube')||'null');}catch(e){}
+  const days=(s&&s.days)||{},sess=s&&s.session,done=days[today]&&days[today].done,going=sess&&sess.date===today&&!sess.finished;
+  const pb=s&&s.pb?` · PB ${formatHubTime(s.pb)}`:'';
+  const st=done?'✅ Session done!':going?'▶️ Keep going':('🧊 GAN 356 i3 · timer & lessons'+pb);
+  return `<a class="today cube" href="ethan/cube/index.html?player=ethan" data-cube="ethan"><span class="ti">🧊</span><span><div class="tt">Speedcubing</div><div class="ts">${st}</div></span><span class="go">${done?'Practise':going?'Continue ➜':'Start ➜'}</span></a>`;
+}
+function formatHubTime(ms){if(ms==null||!isFinite(ms))return '';const a=Math.round(ms),m=Math.floor(a/60000),sec=Math.floor((a%60000)/1000),cs=Math.floor((a%1000)/10);return (m?m+':'+String(sec).padStart(2,'0'):String(sec))+'.'+String(cs).padStart(2,'0');}
 function openKid(id){
   ls.set(CKEY,id);const p=P[id];
   $('#kidAvatar').innerHTML=avatarHTML(p);
   $('#kidHello').textContent=`Hi ${p.name}! 👋`;
   document.title=`${p.name}'s Learning Games`;
-  {const ec=englishCard(id);$('#todayCard').innerHTML=todayCard(id)+ec;$('#todayCard').classList.toggle('two',!!ec);}
+  {const ec=englishCard(id);const cc=cubeCard(id);$('#todayCard').innerHTML=todayCard(id)+ec+cc;$('#todayCard').classList.toggle('two',!!ec&&!cc);$('#todayCard').classList.toggle('three',!!(ec&&cc));}
   $('#games').innerHTML=GAMES[id].map(g=>{const s=gameStats(id,g);
     return `<a class="game${s&&s.complete?' done':''}" href="${g.href}?player=${id}" data-game="${g.id}"><span class="gi">${g.icon}</span><span><div class="gt">${esc(g.title)}</div><div class="gs">${esc(g.sub)}</div>
       <div class="gp">${s&&s.complete?'<span class="badge">✅ Complete!</span> ':''}${s&&s.complete&&!s.allDone&&g.core?'<span class="badge new">⚡ New challenge levels</span> ':''}${!s&&g.isNew?'<span class="badge new">🆕 New game</span> ':''}${s?`<span class="stars">★</span> ${s.stars} / ${g.levels*3} · ⭐ ${s.points} points · 🔥 best ${s.best}`:'Tap to start ➜'}</div></span></a>`;}).join('');
