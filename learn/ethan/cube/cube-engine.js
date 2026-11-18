@@ -556,9 +556,9 @@ function drillGoalReached(f,stage){
 }
 function drillExplain(stage){
   stage=drillBucket(stage);
-  if(stage==="cross")return "Drill: cross. Scramble, then solve only the cross in 8 moves or fewer. 5 reps.";
-  if(stage==="f2l")return "Drill: first two layers. Scramble, then solve only the first two layers. 5 reps.";
-  return "Drill: last layer. Scramble (first two layers stay solved), then solve only the last layer. 5 reps.";
+  if(stage==="cross")return "Drill: white cross. I'll watch the cube and give you a tip. Make the white cross on top, lined up with the side centres. 5 reps.";
+  if(stage==="f2l")return "Drill: first two layers. After the scramble, put each white corner with its matching edge into the right slot. I'll tell you when the first two layers are done. 5 reps.";
+  return "Drill: last layer. Scramble (first two layers stay solved), then I'll coach you step by step through the last layer. 5 reps.";
 }
 /* Rotate the cube 180° around the R–L axis so we can reuse standard U-layer last-layer algs, then flip back (our cross lives on U, last layer on D). */
 function faceletsX2(f){
@@ -573,7 +573,436 @@ function mapAlgX2(alg){
     return (map[m[0]]||m[0])+m.slice(1);
   });
 }
+
+/* ---- last-layer coaching (yellow on top in this view; yellow colour letter is still D) ---- */
+const COACH_ALGS={
+  fruruf:"F R U R' U' F'",
+  sune:"R U R' U R U2 R'",
+  antisune:"R U2 R' U' R U' R'",
+  pi:"R U2 R2 U' R2 U' R2 U2 R",
+  ollH:"F R U R' U' R U R' U' R U R' U' F'",
+  ollU:"R2 D' R U2 R' D R U2 R",
+  ollU2:"R2 D R' U2 R D' R' U2 R'",
+  ollL:"R U2 R D R' U2 R D' R2",
+  ollT:"R U2 R' U' R U' R2 U2 R U R' U R",
+  cperm:"R' F R' B2 R F' R' B2 R2",
+  cpermInv:"R2 B2 R F R' B2 R F' R",
+  ua:"R U' R U R U R U' R' U' R2",
+  ub:"R2 U R U R' U' R' U' R' U R'",
+  tperm:"R U R' U' R' F R2 U' R' U' R U R' F'",
+  yperm:"F R U' R' U' R U R' F' R U R' U' R' F R F'"
+};
+COACH_ALGS.hperm=COACH_ALGS.ua+" U "+COACH_ALGS.ua+" U'";
+COACH_ALGS.zperm=COACH_ALGS.ua+" U2 "+COACH_ALGS.ub+" U2";
+
+function yellowTopSolved(){return faceletsX2(SOLVED);}
+function uTurns(v,n){
+  let s=v;
+  n=((n%4)+4)%4;
+  for(let i=0;i<n;i++)s=applyMove(s,"U");
+  return s;
+}
+/* faceletsX2 is a sticker view only — do not apply algs to that string. Holds and algs run in cube space with mapped moves. */
+function applyHoldAlgCube(cubeF,hold,yellowAlg){
+  let s=cubeF;
+  const hAlg=holdTurns(hold).alg;
+  if(hAlg)s=applyAlg(s,mapAlgX2(hAlg));
+  if(yellowAlg)s=applyAlg(s,mapAlgX2(yellowAlg));
+  return s;
+}
+function findHoldCube(cubeF,yellowAlg,ok){
+  for(let h=0;h<4;h++){
+    const t=applyHoldAlgCube(cubeF,h,yellowAlg);
+    if(ok(t,h))return h;
+  }
+  return -1;
+}
+function aufToSolvedCube(f){
+  for(let h=0;h<4;h++){
+    if(applyHoldAlgCube(f,h,"")===SOLVED)return h;
+  }
+  return -1;
+}
+function yCenters(v){return {U:v[4],R:v[13],F:v[22],D:v[31],L:v[40],B:v[49]};}
+function yEdgeCount(v){return [1,3,5,7].filter(i=>v[i]==="D").length;}
+function yCornerCount(v){return [0,2,6,8].filter(i=>v[i]==="D").length;}
+function yEdgeBits(v){return {UB:v[1]==="D",UR:v[5]==="D",UF:v[7]==="D",UL:v[3]==="D"};}
+function cornersPlacedY(v){
+  const c=yCenters(v);
+  return v[9]===c.R&&v[11]===c.R&&v[18]===c.F&&v[20]===c.F&&v[36]===c.L&&v[38]===c.L&&v[45]===c.B&&v[47]===c.B;
+}
+function edgesPlacedY(v){
+  const c=yCenters(v);
+  return v[19]===c.F&&v[10]===c.R&&v[46]===c.B&&v[37]===c.L;
+}
+function headlightsY(v){
+  return {F:v[18]===v[20],R:v[9]===v[11],B:v[45]===v[47],L:v[36]===v[38]};
+}
+function aufToYellowSolved(v){
+  const y=yellowTopSolved();
+  for(let h=0;h<4;h++)if(uTurns(v,h)===y)return h;
+  return -1;
+}
+function findHold(v,alg,ok){
+  for(let h=0;h<4;h++){
+    const t=applyAlg(uTurns(v,h),alg);
+    if(ok(t,h))return h;
+  }
+  return -1;
+}
+function holdTurns(h){
+  h=((h%4)+4)%4;
+  if(!h)return {alg:"",text:"You're already holding it the right way."};
+  if(h===1)return {alg:"U",text:"Turn the yellow face once clockwise (one U)."};
+  if(h===2)return {alg:"U2",text:"Turn the yellow face halfway around (U2)."};
+  return {alg:"U'",text:"Turn the yellow face once the other way (U')."};
+}
+function packCoachStep(opts){
+  const hold=opts.hold||0;
+  const ht=holdTurns(hold);
+  const alg=opts.alg||"";
+  return {
+    stage:opts.stage,
+    caseId:opts.caseId,
+    title:opts.title||"",
+    caseName:opts.caseName||"",
+    hold:hold,
+    holdText:opts.holdText||ht.text,
+    holdAlg:ht.alg,
+    alg:alg,
+    algName:opts.algName||"",
+    tip:opts.tip||"",
+    cubeAlg:alg?mapAlgX2(alg):[],
+    done:!!opts.done,
+    method:opts.method||"beginner",
+    kind:opts.kind||"lastLayer"
+  };
+}
+function detectYellowCross(v,method){
+  const n=yEdgeCount(v);
+  const b=yEdgeBits(v);
+  method=method||"beginner";
+  if(n>=4)return null;
+  if(n<=1){
+    return packCoachStep({
+      method,stage:"yellow-cross",caseId:n?"almost-dot":"dot",
+      title:"Yellow cross",
+      caseName:n?"You have only one yellow edge on top — treat this like a dot.":"You have a dot (no yellow edges on top yet).",
+      hold:0,holdText:"Any hold is fine for this first move.",
+      alg:COACH_ALGS.fruruf,algName:"F R U R' U' F'",
+      tip:"Do F R U R' U' F'. That should make an L shape. Then I'll look again."
+    });
+  }
+  let holdL=-1;
+  if(b.UB&&b.UL&&!b.UF&&!b.UR)holdL=0;
+  else if(b.UL&&b.UF&&!b.UR&&!b.UB)holdL=1;
+  else if(b.UF&&b.UR&&!b.UB&&!b.UL)holdL=2;
+  else if(b.UR&&b.UB&&!b.UL&&!b.UF)holdL=3;
+  if(holdL>=0){
+    return packCoachStep({
+      method,stage:"yellow-cross",caseId:"L",
+      title:"Yellow cross",
+      caseName:"You have an L shape.",
+      hold:holdL,holdText:"Hold the L at the back-left (yellow stickers on the back and left edges of the top).",
+      alg:COACH_ALGS.fruruf,algName:"F R U R' U' F'",
+      tip:"With the L at the back-left, do F R U R' U' F'. That should make a straight line."
+    });
+  }
+  if((b.UL&&b.UR&&!b.UB&&!b.UF)||(b.UB&&b.UF&&!b.UL&&!b.UR)){
+    const hold=(b.UL&&b.UR)?0:1;
+    return packCoachStep({
+      method,stage:"yellow-cross",caseId:"line",
+      title:"Yellow cross",
+      caseName:"You have a straight line.",
+      hold:hold,holdText:"Hold the line left-to-right across the top.",
+      alg:COACH_ALGS.fruruf,algName:"F R U R' U' F'",
+      tip:"With the line going left to right, do F R U R' U' F'. That should finish the yellow cross."
+    });
+  }
+  return packCoachStep({
+    method,stage:"yellow-cross",caseId:"dot",
+    title:"Yellow cross",
+    caseName:"The yellow edges are not a cross yet.",
+    hold:0,holdText:"Any hold is fine.",
+    alg:COACH_ALGS.fruruf,algName:"F R U R' U' F'",
+    tip:"Do F R U R' U' F', then I'll look again."
+  });
+}
+function suneHoldForOne(v){
+  /* U-face: 0=UBL, 2=UBR, 6=UFL, 8=UFR. A U turn sends 0→2, 2→8, 8→6, 6→0. Target is UFL (6). */
+  if(v[6]==="D")return 0;
+  if(v[8]==="D")return 1;
+  if(v[2]==="D")return 2;
+  if(v[0]==="D")return 3;
+  return 0;
+}
+function detectSuneCorners(cubeF,method){
+  const v=faceletsX2(cubeF);
+  const n=yCornerCount(v);
+  if(n>=4)return null;
+  let hold=0,bestN=-1,bestH=0;
+  for(let h=0;h<4;h++){
+    const t=faceletsX2(applyHoldAlgCube(cubeF,h,COACH_ALGS.sune));
+    const cn=yCornerCount(t),en=yEdgeCount(t);
+    if(en===4&&(cn>bestN||(cn===bestN&&h<bestH))){bestN=cn;bestH=h;hold=h;}
+  }
+  if(bestN<0)hold=n===1?suneHoldForOne(v):0;
+  const name=n===0?"None of the yellow corners are facing up yet.":n===1?"One yellow corner is already facing up.":n===2?"Two yellow corners are facing up.":"Three yellow corners are facing up.";
+  return packCoachStep({
+    method,stage:"orient-corners",caseId:"sune-"+n,
+    title:"Orient the yellow corners",
+    caseName:name+(n===1?" We'll use Sune.":" We'll use Sune, then look again."),
+    hold:hold,
+    holdText:n===1?"Hold the cube so the corner that already has yellow on top is at the front-left.":"Hold the cube as I show, then do Sune. I'll look again after.",
+    alg:COACH_ALGS.sune,algName:"Sune",
+    tip:"Sune is R U R' U R U2 R'. After this I'll tell you if we need to do it again."
+  });
+}
+function cornersPlacedUpToAuf(cubeF){
+  for(let h=0;h<4;h++){
+    if(cornersPlacedY(faceletsX2(applyHoldAlgCube(cubeF,h,""))))return true;
+  }
+  return false;
+}
+function detectCornerPerm(cubeF,method){
+  const v=faceletsX2(cubeF);
+  if(cornersPlacedY(v)||cornersPlacedUpToAuf(cubeF))return null;
+  let hold=-1;
+  for(let h=0;h<4;h++){
+    if(headlightsY(faceletsX2(applyHoldAlgCube(cubeF,h,""))).B){hold=h;break;}
+  }
+  if(hold>=0){
+    return packCoachStep({
+      method,stage:"perm-corners",caseId:"headlights",
+      title:"Position the yellow corners",
+      caseName:"You have headlights (two corners on one side showing the same colour).",
+      hold:hold,holdText:"Hold the headlights at the back.",
+      alg:COACH_ALGS.cperm,algName:"Corner perm",
+      tip:"With headlights at the back, do R' F R' B2 R F' R' B2 R2."
+    });
+  }
+  return packCoachStep({
+    method,stage:"perm-corners",caseId:"diagonal",
+    title:"Position the yellow corners",
+    caseName:"The corners are swapped diagonally — no headlights yet.",
+    hold:0,holdText:"Any hold is fine for this first move. Headlights will appear after.",
+    alg:COACH_ALGS.cperm,algName:"Corner perm",
+    tip:"Do R' F R' B2 R F' R' B2 R2 once, then I'll look for headlights."
+  });
+}
+function detectEdgePerm(cubeF,method){
+  const v=faceletsX2(cubeF);
+  if(edgesPlacedY(v))return null;
+  const cands=[
+    {id:"ua",name:"U-perm (clockwise)",alg:COACH_ALGS.ua,tip:"This U-perm swaps three edges. Hold the finished edge at the back if you can see one."},
+    {id:"ub",name:"U-perm (the other way)",alg:COACH_ALGS.ub,tip:"This U-perm swaps three edges the other way. Hold the finished edge at the back if you can see one."},
+    {id:"z",name:"Z-perm",alg:COACH_ALGS.zperm,tip:"Two pairs of edges need to swap (Z-perm). This is a longer combo — take it slowly."},
+    {id:"h",name:"H-perm",alg:COACH_ALGS.hperm,tip:"All four edges swap with the opposite one (H-perm). This is a longer combo — take it slowly."}
+  ];
+  let best=null;
+  for(let i=0;i<cands.length;i++){
+    const c=cands[i];
+    const h=findHoldCube(cubeF,c.alg,t=>t===SOLVED||aufToSolvedCube(t)>=0||edgesPlacedY(faceletsX2(t)));
+    if(h>=0){
+      const len=parseAlg(c.alg).length;
+      if(!best||len<best.len)best={c:c,hold:h,len:len};
+    }
+  }
+  if(!best)best={c:cands[0],hold:0,len:parseAlg(cands[0].alg).length};
+  const held=faceletsX2(applyHoldAlgCube(cubeF,best.hold,""));
+  const cen=yCenters(held);
+  const backDone=held[46]===cen.B;
+  let holdText=holdTurns(best.hold).text;
+  if((best.c.id==="ua"||best.c.id==="ub")&&(backDone||best.hold)){
+    holdText="Hold the cube so the edge that already matches its centre is at the back.";
+  }
+  const caseName=best.c.id==="h"?"You have an H-perm (two opposite pairs).":best.c.id==="z"?"You have a Z-perm (two adjacent swaps).":"Three edges still need to cycle (U-perm).";
+  return packCoachStep({
+    method,stage:"perm-edges",caseId:best.c.id,
+    title:"Position the last-layer edges",
+    caseName:caseName,
+    hold:best.hold,holdText:holdText,
+    alg:best.c.alg,algName:best.c.name,tip:best.c.tip
+  });
+}
+function detectSolvedOrAuf(cubeF,method){
+  method=method||"beginner";
+  if(cubeF===SOLVED||isSolved(cubeF)){
+    return packCoachStep({method,stage:"solved",caseId:"solved",title:"Solved!",caseName:"The last layer is done.",done:true,alg:"",holdText:"Nice work — the cube is solved."});
+  }
+  const auf=aufToSolvedCube(cubeF);
+  if(auf>=0){
+    return packCoachStep({
+      method,stage:"auf",caseId:"auf",title:"Last turn",
+      caseName:"The last layer is all in place — just turn the yellow face until the sides match the centres.",
+      hold:auf,holdText:"Turn the yellow face until every side matches its centre.",
+      alg:"",tip:"A short turn of the yellow face finishes the cube."
+    });
+  }
+  return null;
+}
+function detectBeginnerLL(facelets){
+  const v=faceletsX2(facelets);
+  return detectSolvedOrAuf(facelets,"beginner")||detectYellowCross(v,"beginner")||detectSuneCorners(facelets,"beginner")||detectCornerPerm(facelets,"beginner")||detectEdgePerm(facelets,"beginner")||detectSolvedOrAuf(SOLVED,"beginner");
+}
+
+function ollCornerCases(){
+  const a=COACH_ALGS;
+  return [
+    {id:"sune",name:"Sune",alg:a.sune,holdText:"Put the corner that already has yellow on top at the front-left."},
+    {id:"antisune",name:"Anti-Sune",alg:a.antisune,holdText:"Hold it as I show, then do Anti-Sune."},
+    {id:"pi",name:"Pi (bowtie)",alg:a.pi,holdText:"Hold it as I show, then do the Pi algorithm."},
+    {id:"h",name:"H (double headlights)",alg:a.ollH,holdText:"Hold it as I show, then do this headlights algorithm."},
+    {id:"u",name:"U-shape",alg:a.ollU,holdText:"Hold it as I show, then do the U-shape algorithm."},
+    {id:"u2",name:"U-shape",alg:a.ollU2,holdText:"Hold it as I show, then do the U-shape algorithm."},
+    {id:"l",name:"L-shape",alg:a.ollL,holdText:"Hold it as I show, then do the L-shape algorithm."},
+    {id:"t",name:"T-shape",alg:a.ollT,holdText:"Hold it as I show, then do the T-shape algorithm."}
+  ];
+}
+function pllCases(){
+  const a=COACH_ALGS;
+  return [
+    {id:"ua",name:"U-perm (clockwise)",alg:a.ua},
+    {id:"ub",name:"U-perm (the other way)",alg:a.ub},
+    {id:"aa",name:"A-perm",alg:a.cperm},
+    {id:"ab",name:"A-perm (the other way)",alg:a.cpermInv},
+    {id:"t",name:"T-perm",alg:a.tperm},
+    {id:"y",name:"Y-perm",alg:a.yperm},
+    {id:"z",name:"Z-perm",alg:a.zperm},
+    {id:"h",name:"H-perm",alg:a.hperm}
+  ];
+}
+function detect4LookLL(facelets){
+  const v=faceletsX2(facelets);
+  const done=detectSolvedOrAuf(facelets,"cfop4look");
+  if(done)return done;
+  const cross=detectYellowCross(v,"cfop4look");
+  if(cross)return cross;
+  if(yCornerCount(v)<4){
+    let best=null;
+    const cases=ollCornerCases();
+    for(let i=0;i<cases.length;i++){
+      const c=cases[i];
+      const h=findHoldCube(facelets,c.alg,t=>{const w=faceletsX2(t);return yEdgeCount(w)===4&&yCornerCount(w)===4;});
+      if(h>=0){
+        const len=parseAlg(c.alg).length;
+        if(!best||len<best.len)best={c:c,hold:h,len:len};
+      }
+    }
+    if(best){
+      return packCoachStep({
+        method:"cfop4look",stage:"orient-corners",caseId:best.c.id,
+        title:"Orient the last-layer corners (2-look OLL)",
+        caseName:"This is a "+best.c.name+" case.",
+        hold:best.hold,holdText:best.c.holdText,
+        alg:best.c.alg,algName:best.c.name,
+        tip:"This 4-look algorithm should orient all four corners at once."
+      });
+    }
+    const s=detectSuneCorners(facelets,"cfop4look");
+    if(s){s.tip="I don't have a one-shot for this yet — we'll use Sune and look again.";return s;}
+  }
+  let best=null;
+  const cases=pllCases();
+  for(let i=0;i<cases.length;i++){
+    const c=cases[i];
+    const h=findHoldCube(facelets,c.alg,t=>t===SOLVED||aufToSolvedCube(t)>=0);
+    if(h>=0){
+      const len=parseAlg(c.alg).length;
+      if(!best||len<best.len)best={c:c,hold:h,len:len};
+    }
+  }
+  if(best){
+    const placed=cornersPlacedY(v);
+    return packCoachStep({
+      method:"cfop4look",
+      stage:placed?"perm-edges":"pll",
+      caseId:best.c.id,
+      title:"Permute the last layer (2-look PLL)",
+      caseName:"This is a "+best.c.name+" case.",
+      hold:best.hold,
+      holdText:holdTurns(best.hold).text+" Then do "+best.c.name+".",
+      alg:best.c.alg,algName:best.c.name,
+      tip:"This 4-look algorithm should place the last-layer pieces. You may still need a short yellow-face turn at the end."
+    });
+  }
+  return detectCornerPerm(facelets,"cfop4look")||detectEdgePerm(facelets,"cfop4look")||packCoachStep({method:"cfop4look",stage:"solved",caseId:"solved",title:"Solved!",done:true});
+}
+function detectStageCoach(facelets,goal){
+  const flags=stageFlags(facelets||SOLVED);
+  if(goal==="cross"){
+    return packCoachStep({
+      kind:"cross",method:"tips",stage:"cross",caseId:flags.cross?"cross-done":"cross",
+      title:"White cross",
+      caseName:flags.cross?"The white cross is done!":"Make the white cross.",
+      hold:0,holdText:"Hold the cube with the white centre on top.",
+      alg:"",tip:"Make a white plus, and line up each white edge with the side centre of the same colour. Try to do it in 8 moves or fewer.",
+      done:!!flags.cross
+    });
+  }
+  return packCoachStep({
+    kind:"f2l",method:"tips",stage:"f2l",caseId:flags.f2l?"f2l-done":(flags.cross?"f2l-pairs":"f2l-cross-first"),
+    title:"First two layers",
+    caseName:flags.f2l?"The first two layers are done!":(flags.cross?"The white cross is done — now pair each white corner with its matching edge and insert them.":"Start with the white cross, then the first two layers."),
+    hold:0,holdText:"Keep the white centre on top.",
+    alg:"",tip:"Put each white corner with its matching edge into the correct slot. I'll tell you when the first two layers are finished.",
+    done:!!flags.f2l
+  });
+}
+function detectDrillCoach(facelets,opts){
+  opts=opts||{};
+  const goal=drillBucket(opts.goal||opts.stage||"lastLayer");
+  if(goal==="cross"||goal==="f2l")return detectStageCoach(facelets,goal);
+  const method=opts.llMethod==="cfop4look"?"cfop4look":"beginner";
+  return method==="cfop4look"?detect4LookLL(facelets):detectBeginnerLL(facelets);
+}
+function faceletsOnAlgPath(f,start,alg){
+  if(f===start)return true;
+  const moves=parseAlg(alg);
+  let s=start;
+  for(let i=0;i<moves.length;i++){
+    const m=moves[i];
+    if(m[1]==="2"){
+      const midA=applyMove(s,m[0]),midB=applyMove(s,m[0]+"'");
+      if(f===midA||f===midB)return true;
+    }
+    s=applyMove(s,m);
+    if(f===s)return true;
+  }
+  return false;
+}
+function coachStepLabel(stage,caseId){
+  if(stage==="yellow-cross")return "Cross";
+  if(stage==="orient-corners")return "Corners (orient)";
+  if(stage==="perm-corners")return "Corners (place)";
+  if(stage==="perm-edges")return "Edges";
+  if(stage==="pll")return "PLL";
+  if(stage==="auf")return "Last turn";
+  if(stage==="cross")return "Cross";
+  if(stage==="f2l")return "F2L";
+  return caseId||stage||"Step";
+}
+function fmtCoachMs(ms){
+  if(!isFinite(ms)||ms<0)return "0.0s";
+  return (Math.round(ms/100)/10).toFixed(1)+"s";
+}
+function coachSummaryText(stepTimes,totalMs){
+  const rows=stepTimes||[];
+  const bits=rows.map(r=>coachStepLabel(r.stage,r.caseId)+" "+fmtCoachMs(r.ms));
+  const by={};
+  rows.forEach(r=>{
+    const k=coachStepLabel(r.stage,r.caseId);
+    by[k]=(by[k]||0)+r.ms;
+  });
+  let slow=null;
+  Object.keys(by).forEach(k=>{if(!slow||by[k]>slow.ms)slow={name:k,ms:by[k]};});
+  const ll=isFinite(totalMs)?fmtCoachMs(totalMs):(rows.length?fmtCoachMs(rows.reduce((s,r)=>s+r.ms,0)):"0.0s");
+  const slowBit=slow?(" · slowest: "+slow.name+" "+fmtCoachMs(slow.ms)):"";
+  return {text:"Last layer "+ll+slowBit,lines:bits,totalMs:rows.reduce((s,r)=>s+(r.ms||0),0),slowest:slow};
+}
+
 const LL_ALGS=[
+
   "R U R' U' R' F R2 U' R' U' R U R' F'",
   "R U R' F' R U R' U' R' F R2 U' R'",
   "R U2 R' U' R U' R'",
@@ -705,7 +1134,7 @@ function svgNet(facelets,size){
 
 /* ---- storage ---- */
 function defState(){
-  return {v:1,mac:"",splitsMode:"lbl",inspect:true,sound:true,scrambleLen:13,solves:[],days:{},session:null,points:0,stars:0,bestStreak:0,pb:null};
+  return {v:1,mac:"",splitsMode:"lbl",llMethod:"beginner",inspect:true,sound:true,scrambleLen:13,solves:[],days:{},session:null,points:0,stars:0,bestStreak:0,pb:null};
 }
 function loadRaw(ls){
   ls=ls||(typeof localStorage!=="undefined"?localStorage:null);
@@ -749,10 +1178,11 @@ function createApp(opts){
   let hold=null; /* manual stackmat hold */
   let lastSolveRec=null, nextAt=0;
 
-  function settings(){return {splitsMode:S.splitsMode||"lbl",inspect:S.inspect!==false,sound:S.sound!==false,mac:S.mac||"",scrambleLen:clampScrambleLen(S.scrambleLen==null?13:S.scrambleLen)};}
+  function settings(){return {splitsMode:S.splitsMode||"lbl",llMethod:S.llMethod==="cfop4look"?"cfop4look":"beginner",inspect:S.inspect!==false,sound:S.sound!==false,mac:S.mac||"",scrambleLen:clampScrambleLen(S.scrambleLen==null?13:S.scrambleLen)};}
   function save(){saveRaw(S,ls);}
   function setSetting(k,val){
     if(k==="splitsMode")S.splitsMode=val==="cfop"?"cfop":"lbl";
+    else if(k==="llMethod")S.llMethod=val==="cfop4look"?"cfop4look":"beginner";
     else if(k==="inspect")S.inspect=!!val;
     else if(k==="sound")S.sound=!!val;
     else if(k==="mac")S.mac=validMac(val);
@@ -760,6 +1190,179 @@ function createApp(opts){
     save();emit();
   }
   function setMac(m){S.mac=validMac(m);deviceMAC=S.mac;save();emit();return S.mac;}
+
+  let coach=null;
+  function currentLlMethod(){return S.llMethod==="cfop4look"?"cfop4look":"beginner";}
+  function detectLLFor(f){return currentLlMethod()==="cfop4look"?detect4LookLL(f):detectBeginnerLL(f);}
+  function startStageCoachFrom(f){
+    const stage=run&&run.drillStage?run.drillStage:null;
+    const d=detectStageCoach(f,stage);
+    coach={active:true,kind:stage,method:"tips",phase:d.done?"done":"tip",detect:d,tracker:null,algStart:f,stepStartedAt:now(),repStartedAt:now(),stepTimes:[],oops:"",guard:"",summary:null,yellowTop:false};
+  }
+  function startLLCoachFrom(f,keepTimes){
+    const d=detectLLFor(f);
+    const times=(keepTimes&&coach&&coach.stepTimes)?coach.stepTimes.slice():[];
+    const repStartedAt=(keepTimes&&coach&&coach.repStartedAt)?coach.repStartedAt:now();
+    const phase=d.done||d.stage==="solved"?"done":((d.hold&&d.hold!==0)||d.stage==="auf"||!d.alg)?"hold":"alg";
+    coach={active:true,kind:"lastLayer",method:currentLlMethod(),phase:phase,detect:d,tracker:null,algStart:f,stepStartedAt:now(),repStartedAt:repStartedAt,stepTimes:times,oops:"",guard:"",summary:null,yellowTop:true};
+    if(phase==="alg"&&d.cubeAlg&&d.cubeAlg.length){
+      coach.tracker=createTracker(d.cubeAlg,f);
+      coach.algStart=f;
+    }
+    if(phase==="done"){
+      coach.summary=coachSummaryText(coach.stepTimes,now()-coach.repStartedAt);
+    }
+  }
+  function maybeStartCoach(){
+    const kind=currentKind();
+    const stage=(run&&run.drillStage)?run.drillStage:null;
+    if(kind!=="drill"||!stage){coach=null;return;}
+    if(stage==="cross"||stage==="f2l")startStageCoachFrom(facelets);
+    else startLLCoachFrom(facelets,false);
+  }
+  function recordCoachStep(prev){
+    if(!coach||!prev||!prev.stage||prev.stage==="solved")return;
+    const ms=Math.max(0,now()-(coach.stepStartedAt||now()));
+    coach.stepTimes.push({stage:prev.stage,caseId:prev.caseId,name:prev.title,ms:ms});
+  }
+  function closeCoachSolved(f){
+    if(!coach)return;
+    if(coach.phase!=="done"&&coach.detect&&coach.detect.stage!=="solved")recordCoachStep(coach.detect);
+    const d=coach.kind==="lastLayer"?detectLLFor(f||facelets):detectStageCoach(f||facelets,coach.kind);
+    d.lead="Done!";
+    coach.detect=d;
+    coach.phase="done";
+    coach.tracker=null;
+    coach.oops="";
+    coach.summary=coachSummaryText(coach.stepTimes,now()-(coach.repStartedAt||now()));
+  }
+  function completeCoachStep(f){
+    if(!coach||!coach.active)return;
+    const prev=coach.detect;
+    recordCoachStep(prev);
+    if(coach.kind==="cross"||coach.kind==="f2l"){
+      const d=detectStageCoach(f,coach.kind);
+      coach.detect=d;
+      coach.stepStartedAt=now();
+      if(d.done)closeCoachSolved(f);
+      return;
+    }
+    const d=detectLLFor(f);
+    if(prev&&d&&prev.stage===d.stage&&!d.done)d.lead="Repeat once more.";
+    else if(d&&d.stage==="orient-corners")d.lead="Now orient the corners.";
+    else if(d&&d.stage==="perm-corners")d.lead="Now position the corners.";
+    else if(d&&d.stage==="perm-edges")d.lead="Now position the edges.";
+    else if(d&&d.stage==="pll")d.lead="Now permute the last layer.";
+    else if(d&&d.stage==="auf")d.lead="Almost there.";
+    else if(d&&(d.stage==="solved"||d.done))d.lead="Done!";
+    if(d.stage==="solved"||d.done){
+      coach.detect=d;coach.phase="done";coach.tracker=null;coach.oops="";
+      coach.summary=coachSummaryText(coach.stepTimes,now()-(coach.repStartedAt||now()));
+      return;
+    }
+    coach.detect=d;
+    coach.stepStartedAt=now();
+    coach.oops="";
+    coach.guard="";
+    const phase=((d.hold&&d.hold!==0)||d.stage==="auf"||!d.alg)?"hold":"alg";
+    coach.phase=phase;
+    coach.tracker=null;
+    if(phase==="alg"&&d.cubeAlg&&d.cubeAlg.length){
+      coach.tracker=createTracker(d.cubeAlg,f);
+      coach.algStart=f;
+    }
+  }
+  function onCoachEvent(move,f,serial){
+    if(!coach||!coach.active)return;
+    if(coach.kind==="cross"||coach.kind==="f2l"){
+      const d=detectStageCoach(f,coach.kind);
+      if(d.done&&coach.detect&&!coach.detect.done)recordCoachStep(coach.detect);
+      coach.detect=d;
+      if(d.done){coach.phase="done";coach.summary=coachSummaryText(coach.stepTimes,now()-(coach.repStartedAt||now()));}
+      return;
+    }
+    if(coach.kind!=="lastLayer")return;
+    const fresh=detectLLFor(f);
+    if(fresh.stage==="solved"||fresh.done){
+      if(coach.phase!=="done")closeCoachSolved(f);
+      return;
+    }
+    if(coach.phase==="hold"||coach.phase==="tip"){
+      const lead=coach.detect&&coach.detect.lead;
+      if(lead&&!fresh.lead)fresh.lead=lead;
+      coach.detect=fresh;
+      if(fresh.stage==="auf"){coach.phase="hold";return;}
+      if((!fresh.hold||fresh.hold===0)&&fresh.alg){
+        coach.phase="alg";
+        coach.tracker=createTracker(fresh.cubeAlg,f);
+        coach.algStart=f;
+      }
+      return;
+    }
+    if(coach.phase==="alg"&&coach.tracker){
+      let t;
+      if(move&&serial!=null&&serial===lastFaceletsSerial){
+        /* FACELETS already updated the coach tracker for this serial; the MOVE is the companion (same X2 1/2 handling as the scramble). */
+        t=coach.tracker.get();
+      }else if(move){
+        t=coach.tracker.apply(move);
+      }else{
+        t=coach.tracker.setState(f);
+      }
+      const end=applyAlg(coach.algStart,coach.detect.cubeAlg||[]);
+      if(t.done||eq(f,end)){completeCoachStep(f);return;}
+      if(t.fixup){
+        const undo=fmtAlg(mapAlgX2(t.fixup));
+        coach.oops="Oops, undo: "+undo;
+        const fu=parseAlg(t.fixup);
+        if(fu.length>=4&&!faceletsOnAlgPath(f,coach.algStart,coach.detect.cubeAlg||[])){
+          const prev=coach.detect;
+          fresh.lead="Oops, I'll look again.";
+          coach.detect=fresh;
+          coach.oops="Oops, I'll look again. "+(fresh.caseName||"");
+          if(!prev||fresh.stage!==prev.stage||fresh.caseId!==prev.caseId||fresh.hold!==prev.hold||fmtAlg(fresh.cubeAlg||[])!==fmtAlg(prev.cubeAlg||[])){
+            const phase=((fresh.hold&&fresh.hold!==0)||fresh.stage==="auf"||!fresh.alg)?"hold":"alg";
+            coach.phase=phase;
+            coach.tracker=null;
+            if(phase==="alg"&&fresh.cubeAlg&&fresh.cubeAlg.length){
+              coach.tracker=createTracker(fresh.cubeAlg,f);
+              coach.algStart=f;
+            }
+          }
+        }
+        return;
+      }
+      if(faceletsOnAlgPath(f,coach.algStart,coach.detect.cubeAlg||[]))coach.oops="";
+    }
+  }
+  function coachNextCase(){
+    if(coach&&coach.kind==="lastLayer"&&!isSolved(facelets)){
+      coach.guard="Solve the cube first (or press My cube is solved), then I'll give you a new case.";
+      emit();
+      return {ok:false,guard:coach.guard};
+    }
+    if(coach)coach.guard="";
+    const scr=newScramble();
+    return {ok:true,scramble:scr};
+  }
+  function coachView(){
+    if(!coach||!coach.active)return null;
+    const t=coach.tracker&&coach.tracker.get();
+    const d=coach.detect||{};
+    const curCube=t&&t.current;
+    const curDisp=curCube?((mapAlgX2(curCube)||[])[0]||curCube):"";
+    return {
+      active:true,kind:coach.kind,method:coach.method,phase:coach.phase,
+      title:d.title||"",caseId:d.caseId||"",caseName:d.caseName||"",stage:d.stage||"",
+      hold:d.hold||0,holdText:d.holdText||"",holdAlg:d.holdAlg||"",lead:d.lead||"",tip:d.tip||"",
+      alg:d.alg||"",algMoves:d.alg?parseAlg(d.alg):[],algName:d.algName||"",cubeAlg:d.cubeAlg||[],
+      k:t?t.k:0,current:curDisp,currentCube:curCube||"",half:!!(t&&t.half),halfLabel:(t&&t.halfLabel)||"",
+      fixup:(t&&t.fixup)||"",fixupDisplay:(t&&t.fixup)?fmtAlg(mapAlgX2(t.fixup)):"",
+      oops:coach.oops||"",guard:coach.guard||"",
+      stepTimes:(coach.stepTimes||[]).slice(),summary:coach.summary||null,
+      yellowTop:!!coach.yellowTop,done:!!(d.done||d.stage==="solved"||coach.phase==="done")
+    };
+  }
 
   function stats(){
     const solves=S.solves||[];
@@ -809,6 +1412,7 @@ function createApp(opts){
       phase="ready";
     }
     run=newAttempt();
+    maybeStartCoach();
     emit();
   }
   function newAttempt(){
@@ -865,6 +1469,7 @@ function createApp(opts){
       if(fit!=null&&(run.moves.length>=1))return Math.max(0,Math.round(fit));
       return Math.max(0,Math.round(now()-(run.timerHost0||now())));
     })();
+    if(coach&&coach.active)closeCoachSolved(f);
     finishSolve(ms,f);
     return true;
   }
@@ -1157,6 +1762,7 @@ function createApp(opts){
   function beginOfficialScramble(opts){return startScrambleFromCurrent(opts);}
   function newScramble(alg,opts){
     opts=opts||{};
+    coach=null;
     clearInspect();
     if(!opts.keepCelebration)celebration=null;
     run=null;
@@ -1207,8 +1813,12 @@ function createApp(opts){
     const tBefore=phase==="scrambling"?tracker.get():null;
     const beforeF=facelets;
     const alreadyMid=!!(tBefore&&tBefore.current&&tBefore.current[1]==="2"&&tBefore.partial>0&&tBefore.dir===m);
+    const evSerial=evt&&evt.serial;
     if(!alreadyMid){
-      if(!(evt&&evt.facelets&&evt.facelets.length===54))facelets=applyMove(facelets,m);
+      if(!(evt&&evt.facelets&&evt.facelets.length===54)){
+        const skipApply=(phase==="inspect"||phase==="ready"||phase==="running")&&evSerial!=null&&evSerial===lastFaceletsSerial;
+        if(!skipApply)facelets=applyMove(facelets,m);
+      }
     }
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
     if(phase==="needSolved")phase="scrambling";
@@ -1261,6 +1871,7 @@ function createApp(opts){
       run.moves.push(ts);
       startTimer(ts);
       markSplits(facelets,0,0);
+      onCoachEvent(m,facelets,evt&&evt.serial);
       if(stopIfDone(facelets,ts))return;
       emit();return;
     }
@@ -1269,6 +1880,7 @@ function createApp(opts){
       run.moveCount=run.moves.length;
       const el=elapsedNow();
       markSplits(facelets,Math.round(el),run.moveCount);
+      onCoachEvent(m,facelets,evt&&evt.serial);
       if(stopIfDone(facelets,ts))return;
       emit();
     }else emit();
@@ -1311,6 +1923,9 @@ function createApp(opts){
     }
     if((phase==="inspect"||phase==="ready")&&eq(facelets,SOLVED)&&run&&!run.started){
       /* ignore; wait for a move or a later solved-after-solve path */
+    }
+    if(phase==="inspect"||phase==="ready"||phase==="running"){
+      onCoachEvent(null,facelets,serial);
     }
     if(phase==="running"&&run){
       markSplits(facelets,Math.round(elapsedNow()),run.moves.length);
@@ -1429,7 +2044,8 @@ function createApp(opts){
       session:sess,celebration,ios,lastSyncBody,lastError,
       kind:currentKind(),
       stages:stageFlags(facelets),
-      svg:svgNet(facelets,260)
+      svg:svgNet(facelets,260),
+      coach:coachView()
     };
   }
 
@@ -1440,7 +2056,7 @@ function createApp(opts){
     STORE,SOLVED,RESULTS_SYNC_URL,STAGE_LABEL,STAGE_KID,
     applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,
     stageFlags,stagesFor,reachedStages,createTracker,progressOnPath,
-    formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,DRILL_REPS,DRILL_LABEL,
+    formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
     validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
@@ -1448,7 +2064,7 @@ function createApp(opts){
     newScramble,setScramble,skipScramble,startSolveAnyway,proceedToNextScramble,tickNext,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
     whenPathReady,bumpFacelets,
     simulateConnected,setConnected,setBattery,setIos,setSetting,setMac,
-    startLesson,skipLessonPhase,skipDrill,stopSession,abandonLesson,finishSession,
+    startLesson,skipLessonPhase,skipDrill,stopSession,abandonLesson,finishSession,coachNextCase,
     setPenalty,deleteSolve,manualDown,manualUp,manualStop,manualReadyCheck,
     startTimer,finishSolve,nextAfterStop,elapsedNow,
     getState:()=>S,getFacelets:()=>facelets,getPhase:()=>phase,lastSync:()=>lastSyncBody,
@@ -1463,7 +2079,7 @@ const Engine={
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
   createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
   invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
-  formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,DRILL_REPS,DRILL_LABEL,
+  formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
   validMac,randomMoveScramble,clampScrambleLen,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
 };

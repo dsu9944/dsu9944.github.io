@@ -77,7 +77,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v10 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v11 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -91,6 +91,7 @@ function debugText(v){
     "facelets == T?: "+(v.atTarget?"yes":"no"),
     "solved: "+!!v.solved,
     "phase: "+v.phase,
+    "coach: "+(v.coach&&v.coach.active?((v.coach.kind||"")+" "+(v.coach.phase||"")+" "+(v.coach.stage||"")+" "+(v.coach.caseId||"")+(v.coach.yellowTop?" yellow-top":"")):"(off)"),
     "expected move: "+(v.fixup||v.current||"(none)")+(v.halfLabel?" "+v.halfLabel:""),
     "path: "+(v.scrambleText||""),
     "on path: "+!!v.onPath+"  k="+v.k+"/"+v.total+"  pathReady="+!!v.pathReady,
@@ -140,6 +141,43 @@ function hasWebBluetooth(){return typeof navigator!=="undefined" && !!navigator.
 
 function show(el,on){if(!el)return;el.classList.toggle("hidden",!on);}
 function setText(id,t){const n=$(id);if(n)n.textContent=t;}
+function displayFaceletsFor(v){
+  if(v&&v.coach&&v.coach.active&&v.coach.yellowTop)return E.faceletsX2(v.facelets);
+  return v&&v.facelets;
+}
+function displayMoveFor(m,v){
+  if(v&&v.coach&&v.coach.active&&v.coach.yellowTop){
+    const x=E.mapAlgX2(m);
+    return (x&&x[0])||m;
+  }
+  return m;
+}
+let showingMe=false, showMeToken=0, lastYellowTop=false;
+async function showMeCoach(){
+  const v=app.get();
+  const c=v&&v.coach;
+  if(!c||!c.active)return;
+  const token=++showMeToken;
+  const moves=[];
+  if(c.phase==="hold"&&c.holdAlg)moves.push.apply(moves,E.parseAlg(c.holdAlg));
+  else if(c.alg){/* after hold is done, just the alg */}
+  if(c.phase!=="hold"&&c.alg)moves.push.apply(moves,E.parseAlg(c.alg));
+  if(c.phase==="hold"&&!c.holdAlg&&c.alg)moves.push.apply(moves,E.parseAlg(c.alg));
+  if(!moves.length)return;
+  showingMe=true;
+  const base=displayFaceletsFor(v)||v.facelets;
+  try{await setupFromFacelets(base);}catch(e){}
+  for(let i=0;i<moves.length;i++){
+    if(token!==showMeToken)return;
+    liveMove(moves[i]);
+    await new Promise(r=>setTimeout(r,320));
+  }
+  await new Promise(r=>setTimeout(r,500));
+  if(token!==showMeToken)return;
+  showingMe=false;
+  const now=app.get();
+  setupFromFacelets(displayFaceletsFor(now)||(now&&now.facelets));
+}
 
 /* ---------- scramble (cubing.js when it loads, else built-in) ---------- */
 async function loadCubing(){
@@ -386,7 +424,7 @@ function hookApp(){
     try{
       const r=rawMove(evt);
       const m=E.normalizeMove(typeof evt==="string"?evt:(evt&&evt.move));
-      if(m)liveMove(m);
+      if(m&&!showingMe)liveMove(displayMoveFor(m,app.get()));
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onMove");}
   };
@@ -397,7 +435,8 @@ function hookApp(){
       const st=(f&&typeof f==="object"&&f.state)?f.state:state;
       const ser=(f&&typeof f==="object"&&f.serial!=null)?f.serial:serial;
       const r=rawFace(face,st,ser);
-      if(face&&face.length===54&&face!==expectedFacelets())setupFromFacelets(face,st);
+      const shown=face&&face.length===54?displayFaceletsFor(Object.assign({},app.get(),{facelets:face})):null;
+      if(shown&&shown.length===54&&shown!==expectedFacelets()&&!showingMe)setupFromFacelets(shown);
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onFacelets");}
   };
@@ -450,7 +489,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());}};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -602,22 +641,39 @@ function splitsLine(v){
   });
   return bits.length?`<div class="solve-splits">${bits.join(" · ")}</div>`:"";
 }
+function coachCallout(c){
+  if(!c||!c.active)return "";
+  if(c.guard)return `<div class="callout fix">${c.guard}</div>`;
+  if(c.oops)return `<div class="callout fix">${c.oops}</div><p class="callout-sub">Undo those turns, or keep going and I'll look at the cube again.</p>`;
+  const lead=c.lead?c.lead+" ":"";
+  const title=c.title||"";
+  const name=c.caseName?((title?": ":"")+c.caseName):"";
+  const hold=c.phase==="hold"&&c.holdText?`<p class="callout-sub">${c.holdText}</p>`:"";
+  const alg=c.phase==="alg"&&c.alg?`<p class="callout-sub">${c.algName?c.algName+": ":""}${c.alg}</p>`:"";
+  return `<div class="callout next">${lead}<b>${title}</b>${name}</div>${hold}${alg}`;
+}
 function calloutHTML(v){
+  const c=v.coach;
+  const coachLine=(c&&c.active&&v.phase!=="scrambling")?coachCallout(c):"";
   if(v.phase==="running"){
-    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.elapsed||0)}</div><p class="callout-sub">Go! The timer stops when the cube is solved.</p>`;
+    const sub=coachLine||`<p class="callout-sub">Go! The timer stops when the cube is solved.</p>`;
+    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.elapsed||0)}</div>${sub}`;
   }
   if(v.phase==="stopped"){
     const rec=v.lastSolve||(v.solves&&v.solves[v.solves.length-1]);
     const t=rec?E.formatTime(rec.ms,rec.penalty):E.formatTime(v.elapsed||0);
     const sec=Math.ceil((v.nextIn||0)/1000);
     const next=sec>0?`<p class="callout-sub">Next scramble in ${sec}…</p>`:`<p class="callout-sub">Loading the next scramble…</p>`;
-    return `<div class="callout done">Solved!</div><div class="live-timer done" id="liveTimer">${t}</div>${splitsLine(v)}${next}`;
+    const sum=c&&c.summary?`<p class="callout-sub">${c.summary.text}${(c.summary.lines&&c.summary.lines.length)?" — "+c.summary.lines.join(" · "):""}</p>`:"";
+    return `<div class="callout done">Solved!</div><div class="live-timer done" id="liveTimer">${t}</div>${splitsLine(v)}${sum}${next}`;
   }
   if(v.phase==="inspect"){
     const s=Math.ceil((v.inspectLeft||0)/1000);
+    if(coachLine)return `${coachLine}<p class="callout-sub">Inspection ${s>0?s:0}. Your first turn starts the timer.</p>`;
     return `<div class="callout next">Scrambled! Inspection ${s>0?s:0}</div><p class="callout-sub">Look at the cube. Your first turn starts the timer.</p>`;
   }
   if(v.phase==="ready"){
+    if(coachLine)return `${coachLine}<p class="callout-sub">Start solving — the timer starts on your first turn.</p>`;
     return `<div class="callout done">Scrambled! Start solving — the timer starts on your first turn.</div>`;
   }
   if(v.replanning||(v.phase==="scrambling"&&v.pathReady===false)){
@@ -633,7 +689,32 @@ function calloutHTML(v){
   const note=v.replanNote?`<p class="callout-sub">Scramble updated, keep going.</p>`:"";
   return `<div class="callout next">Next: <b>${m}</b>${half}</div>${note}`;
 }
+function coachStripHTML(c){
+  if(!c||!c.active)return "";
+  if(c.phase==="hold"){
+    if(c.holdAlg)return `<span class="mv next">${c.holdAlg}</span>`;
+    return "";
+  }
+  const moves=c.algMoves||[];
+  if(!moves.length)return "";
+  const k=c.k||0;
+  const doneAll=c.done||c.phase==="done";
+  return moves.map((m,i)=>{
+    let cls="mv",extra="";
+    if(doneAll||i<k){cls+=" done";extra=`<span class="tick" aria-hidden="true">✓</span>`;}
+    else if(i===k){
+      if(c.oops||c.fixup){cls+=" waiting";if(c.halfLabel)extra=`<span class="half">${c.halfLabel}</span>`;}
+      else if(c.half){cls+=" next half";extra=`<span class="half">${c.halfLabel||"1/2"}</span>`;}
+      else cls+=" next";
+    }
+    return `<span class="${cls}" data-i="${i}">${m}${extra}</span>`;
+  }).join(" ");
+}
 function scrambleHTML(v){
+  if(v.coach&&v.coach.active&&v.phase!=="scrambling"&&v.phase!=="needSolved"){
+    if(v.phase==="stopped"&&!(v.coach.algMoves&&v.coach.algMoves.length))return "";
+    return coachStripHTML(v.coach);
+  }
   if(v.phase==="running"||v.phase==="stopped")return "";
   const moves=v.scramble||[];
   const k=v.k||0;
@@ -666,6 +747,13 @@ function phaseHint(v){
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
     if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it. That's not a mistake.";
     return "Do the big move next. I'll tick off each turn as you go. If you want to start the solve early, tap Start solve anyway.";
+  }
+  if(v.coach&&v.coach.active&&v.phase!=="scrambling"){
+    if(v.coach.guard)return v.coach.guard;
+    if(v.coach.oops)return v.coach.oops;
+    if(v.coach.summary)return v.coach.summary.text;
+    if(v.coach.tip)return v.coach.tip;
+    if(v.coach.holdText&&v.coach.phase==="hold")return v.coach.holdText;
   }
   if(v.phase==="inspect")return "Scrambled! Inspection — your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
   if(v.phase==="ready")return "Scrambled! Start solving — the timer starts on your first turn.";
@@ -768,6 +856,23 @@ function historyHTML(v){
   </div>`).join("")}</div>`;
 }
 
+function coachPanelHTML(v){
+  const c=v.coach;
+  if(!c||!c.active)return "";
+  const times=(c.stepTimes||[]).map(r=>`${E.coachStepLabel?E.coachStepLabel(r.stage,r.caseId):(r.name||r.stage)} ${E.fmtCoachMs?E.fmtCoachMs(r.ms):(Math.round((r.ms||0)/100)/10).toFixed(1)+"s"}`);
+  const showAlg=c.phase==="alg"&&c.algName?`<div class="alg-name">${c.algName}</div>`:"";
+  const hold=c.holdText?`<p class="hold">${c.holdText}</p>`:"";
+  const tip=c.tip?`<p class="tip">${c.tip}</p>`:"";
+  const oops=c.oops?`<div class="oops">${c.oops}</div>`:"";
+  const guard=c.guard?`<div class="guard">${c.guard}</div>`:"";
+  const sum=c.summary?`<p class="summary">${c.summary.text}</p>`:"";
+  const timeLine=times.length?`<p class="times">${times.join(" · ")}</p>`:"";
+  const showMe=c.kind==="lastLayer"&&(c.alg||c.holdAlg)?`<button class="btn" id="coachShowMe" type="button">Show me</button>`:"";
+  return `<h3>${c.title||"Coach"}</h3>
+    ${c.caseName?`<p class="hold">${c.lead?c.lead+" ":""}${c.caseName}</p>`:""}
+    ${hold}${tip}${showAlg}${oops}${guard}${timeLine}${sum}
+    <div class="coach-btns">${showMe}<button class="btn ghost" id="coachNextCase" type="button">Next case</button></div>`;
+}
 function render(v){
   document.body.classList.toggle("connected",!!v.connected);
   document.body.classList.toggle("ios",!!v.ios);
@@ -797,7 +902,14 @@ function render(v){
   const scr=$("#scramble");
   if(scr){
     scr.innerHTML=scrambleHTML(v);
-    scr.classList.toggle("locked",!!v.locked);
+    scr.classList.toggle("locked",!!v.locked && !(v.coach&&v.coach.active&&v.phase!=="scrambling"));
+  }
+  const panel=$("#coachPanel");
+  if(panel){
+    const on=!!(v.coach&&v.coach.active&&v.phase!=="scrambling");
+    panel.classList.toggle("hidden",!on);
+    if(on){panel.hidden=false;panel.removeAttribute("hidden");panel.innerHTML=coachPanelHTML(v);}
+    else{panel.hidden=true;panel.setAttribute("hidden","");panel.innerHTML="";}
   }
   const startSol=$("#startSolveBtn");
   if(startSol)startSol.classList.toggle("hidden",v.phase!=="scrambling");
@@ -828,6 +940,7 @@ function render(v){
 
   const insp=$("#optInspect");if(insp)insp.checked=v.settings.inspect!==false;
   const mode=$("#optMode");if(mode)mode.value=v.settings.splitsMode||"lbl";
+  const llm=$("#optLlMethod");if(llm)llm.value=(v.settings&&v.settings.llMethod)||"beginner";
   const slen=$("#optScrambleLen");if(slen&&document.activeElement!==slen)slen.value=v.settings.scrambleLen||13;
   setText("#savedMac",v.settings.mac||"not saved yet");
 
@@ -845,6 +958,11 @@ function render(v){
 
 function onAppView(v){
   render(v);
+  const yt=!!(v.coach&&v.coach.active&&v.coach.yellowTop);
+  if(yt!==lastYellowTop){
+    lastYellowTop=yt;
+    if(!showingMe)setupFromFacelets(displayFaceletsFor(v)||v.facelets);
+  }
   if(v.faceletsGen!=null&&v.faceletsGen!==lastFaceletsGen){
     lastFaceletsGen=v.faceletsGen;
     requestFacelets();
@@ -861,7 +979,7 @@ function bind(){
     render(app.get());
   });
   const resync=$("#resyncBtn");
-  if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(v.facelets);});
+  if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(displayFaceletsFor(v)||v.facelets);});
   $("#newScrambleBtn").addEventListener("click",()=>nextScramble());
   $("#helpToggle").addEventListener("click",()=>$("#helpPanel").classList.toggle("hidden"));
   $("#grownToggle").addEventListener("click",()=>$("#grownPanel").classList.toggle("hidden"));
@@ -871,6 +989,8 @@ function bind(){
   $("#macClear").addEventListener("click",()=>{app.setMac("");setText("#savedMac","not saved yet");});
   $("#optInspect").addEventListener("change",e=>app.setSetting("inspect",e.target.checked));
   $("#optMode").addEventListener("change",e=>app.setSetting("splitsMode",e.target.value));
+  const optLl=$("#optLlMethod");
+  if(optLl)optLl.addEventListener("change",e=>app.setSetting("llMethod",e.target.value));
   const slen=$("#optScrambleLen");
   if(slen)slen.addEventListener("change",e=>app.setSetting("scrambleLen",e.target.value));
   const startSol=$("#startSolveBtn");
@@ -893,6 +1013,10 @@ function bind(){
       else if(btn.id==="skipPhaseBtn"){app.skipLessonPhase();onScrambleChanged();}
       else if(btn.id==="skipDrillBtn"){if(app.skipDrill)app.skipDrill();else app.skipLessonPhase();onScrambleChanged();}
       else if(btn.id==="stopSessionBtn"||btn.id==="abandonBtn"){if(app.stopSession)app.stopSession();else app.abandonLesson();onScrambleChanged();}
+      else if(btn.id==="coachShowMe"){showMeCoach();}
+      else if(btn.id==="coachNextCase"){
+        if(app.coachNextCase){app.coachNextCase();onScrambleChanged();}
+      }
     }catch(err){cubeDebug.lastError=String(err&&err.message||err||"session click");}
   }
   const cubeCard=$("#cubeCard");
