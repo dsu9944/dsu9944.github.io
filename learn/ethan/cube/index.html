@@ -152,13 +152,26 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 #sessionBox:empty{display:none}
 #skipDrillBtn{margin-top:0}
 #cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
+
+.coach{background:#fffbeb;border:3px solid #f59e0b;border-radius:16px;padding:10px 12px;margin:8px 0 10px}
+.coach.hidden{display:none}
+.coach h3{margin:0 0 6px;color:#b45309;font-size:1.2rem}
+.coach .hold{font-weight:700;color:#1f2937;margin:0 0 6px}
+.coach .tip{margin:0 0 8px;color:#334155}
+.coach .oops{background:#fee2e2;border:2px solid #ef4444;border-radius:10px;padding:6px 8px;margin:6px 0;font-weight:800;color:#991b1b}
+.coach .guard{background:#fef3c7;border:2px solid #d97706;border-radius:10px;padding:6px 8px;margin:6px 0;font-weight:700;color:#92400e}
+.coach .times{margin:6px 0 0;font-size:.95rem;font-weight:700;color:#1f2937}
+.coach .alg-name{font-weight:800;color:#0f766e;margin:0 0 4px}
+.coach .coach-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.coach .summary{margin:6px 0 0;font-weight:800;color:#1d4ed8}
+
 </style>
 </head>
 <body>
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v10 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v11 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -207,6 +220,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <div id="sessionBanner"></div>
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
+    <div id="coachPanel" class="coach hidden" hidden></div>
     <div id="fixup" class="hidden"></div>
     <div class="row-gap" style="justify-content:center">
       <button class="btn" id="startSolveBtn" type="button">Start solve anyway</button>
@@ -272,6 +286,12 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
           <option value="cfop">CFOP (cross, F2L, OLL, PLL)</option>
         </select>
       </label>
+      <label class="opt">Last-layer method
+        <select id="optLlMethod">
+          <option value="beginner">Beginner LL</option>
+          <option value="cfop4look">4-look LL (CFOP)</option>
+        </select>
+      </label>
       <label class="opt"><input type="checkbox" id="optShowNet"> Show a flat 2D cube net (the 3D cube is used by default)</label>
       <label class="opt"><input type="checkbox" id="optShowDebug"> Show cube debug</label>
       <p>Saved MAC address: <code id="savedMac">not saved yet</code>
@@ -280,7 +300,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v10 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v11 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -300,7 +320,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=10"></script>
-<script src="cube-app.js?v=10"></script>
+<script src="cube-engine.js?v=11"></script>
+<script src="cube-app.js?v=11"></script>
 </body>
 </html>
