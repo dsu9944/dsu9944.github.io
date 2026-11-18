@@ -132,6 +132,14 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 #cubeDebug:not(.hidden){position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:80;max-height:min(42vh,320px);margin:0;box-shadow:0 -8px 30px rgba(15,23,42,.4)}
 #errorStrip{position:sticky;top:0;z-index:120;background:#991b1b;color:#fff;padding:8px 12px;font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
 #errorStrip.hidden,#errorStrip[hidden]{display:none!important}
+
+.live-timer{font-variant-numeric:tabular-nums;font-size:64px;line-height:1;font-weight:900;color:#16a34a;text-align:center;padding:8px 0 4px;letter-spacing:.02em}
+ .live-timer.done{color:#2563eb}
+.solve-splits{text-align:center;margin:8px 0;font-size:1.05rem;font-weight:700;color:#1f2937}
+.scramble.locked .mv{opacity:.45;filter:grayscale(.2)}
+#startSolveBtn{margin-top:8px}
+@media (max-width:560px){.live-timer{font-size:52px}}
+
 #cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
 </style>
 </head>
@@ -139,7 +147,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v8 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v9 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -188,6 +196,9 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
     <div id="fixup" class="hidden"></div>
+    <div class="row-gap" style="justify-content:center">
+      <button class="btn" id="startSolveBtn" type="button">Start solve anyway</button>
+    </div>
     <div id="matchAsk" class="note hidden" role="dialog">
       <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
       <div class="row-gap">
@@ -239,6 +250,10 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <button class="btn ghost" id="grownToggle" type="button">Grown-up settings</button>
     <div id="grownPanel" class="hidden help">
       <label class="opt"><input type="checkbox" id="optInspect" checked> 15-second inspection before the timer starts</label>
+      <label class="opt">Scramble length
+        <input type="number" id="optScrambleLen" min="8" max="20" value="13" step="1" style="width:4.5rem">
+        <span class="muted">(12–15 is comfortable; default 13)</span>
+      </label>
       <label class="opt">Split method
         <select id="optMode">
           <option value="lbl">Beginner LBL (cross, first layer, second layer, last layer)</option>
@@ -253,7 +268,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v8 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v9 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -273,7 +288,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=8"></script>
-<script src="cube-app.js?v=8"></script>
+<script src="cube-engine.js?v=9"></script>
+<script src="cube-app.js?v=9"></script>
 </body>
 </html>

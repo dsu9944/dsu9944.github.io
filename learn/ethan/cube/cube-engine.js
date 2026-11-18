@@ -301,12 +301,30 @@ function createTracker(scramble,start,targetState){
     p.state=state;p.target=target;p.fixup=done?"":fixup;p.lastMove=lastMove;
     p.on=!!(!fixup&&!done&&lastOn);
     if(done){p.current=null;p.currentScramble=null;p.k=moves.length;p.partial=0;p.half=false;p.halfLabel="";p.fixup="";p.on=false;}
-    else if(fixup){p.current=fixup;}
+    else if(fixup){p.current=fixup;p.half=false;p.halfLabel="";p.partial=0;p.on=false;}
     return p;
+  }
+  function startSnapFor(k,current){
+    let s=null;
+    snaps.forEach(x=>{if(x.k===k&&!x.partial&&x.current===current)s=s||x;});
+    return s;
   }
   function apply(m){
     m=normalizeMove(m);
     if(!m)return snapshot();
+    const cur=(!fixup&&lastOn&&lastOn.current)||null;
+    /* X2: first quarter either way is 1/2, never an error. Opposite second quarter (X then X')
+       puts the face back and stays on that same X2 with nothing done — not a miss. */
+    if(!fixup&&cur&&cur[1]==="2"&&m[0]===cur[0]){
+      const start=startSnapFor(lastOn.k,cur);
+      if(lastOn.partial>0&&start&&m!==lastOn.dir){
+        state=applyMove(state,m);
+        lastMove=m;
+        fixup="";
+        lastOn=start;
+        return snapshot();
+      }
+    }
     state=applyMove(state,m);
     lastMove=m;
     if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];return snapshot();}
@@ -485,12 +503,18 @@ function validMac(s){
   return "";
 }
 
-function randomMoveScramble(rng){
+function clampScrambleLen(n){
+  n=Math.round(Number(n));
+  if(!isFinite(n))return 13;
+  return Math.max(8,Math.min(20,n));
+}
+function randomMoveScramble(rng,len){
   rng=typeof rng==="function"?rng:Math.random;
+  const n=clampScrambleLen(len==null?13:len);
   const faces=FACES.split(""),opp={U:"D",D:"U",R:"L",L:"R",F:"B",B:"F"};
   const suf=["","'","2"];
   const out=[];let last="",last2="",guard=0;
-  while(out.length<25&&guard++<4000){
+  while(out.length<n&&guard++<4000){
     const f=faces[Math.floor(rng()*6)%6];
     if(f===last)continue;
     if(last2&&f===last2&&opp[f]===last)continue;
@@ -522,7 +546,7 @@ function svgNet(facelets,size){
 
 /* ---- storage ---- */
 function defState(){
-  return {v:1,mac:"",splitsMode:"lbl",inspect:true,sound:true,solves:[],days:{},session:null,points:0,stars:0,bestStreak:0,pb:null};
+  return {v:1,mac:"",splitsMode:"lbl",inspect:true,sound:true,scrambleLen:13,solves:[],days:{},session:null,points:0,stars:0,bestStreak:0,pb:null};
 }
 function loadRaw(ls){
   ls=ls||(typeof localStorage!=="undefined"?localStorage:null);
@@ -564,14 +588,16 @@ function createApp(opts){
   let run=null; /* current attempt */
   let celebration=null,ios=false,lastSyncBody=null,lastError="";
   let hold=null; /* manual stackmat hold */
+  let lastSolveRec=null, nextAt=0;
 
-  function settings(){return {splitsMode:S.splitsMode||"lbl",inspect:S.inspect!==false,sound:S.sound!==false,mac:S.mac||""};}
+  function settings(){return {splitsMode:S.splitsMode||"lbl",inspect:S.inspect!==false,sound:S.sound!==false,mac:S.mac||"",scrambleLen:clampScrambleLen(S.scrambleLen==null?13:S.scrambleLen)};}
   function save(){saveRaw(S,ls);}
   function setSetting(k,val){
     if(k==="splitsMode")S.splitsMode=val==="cfop"?"cfop":"lbl";
     else if(k==="inspect")S.inspect=!!val;
     else if(k==="sound")S.sound=!!val;
     else if(k==="mac")S.mac=validMac(val);
+    else if(k==="scrambleLen")S.scrambleLen=clampScrambleLen(val);
     save();emit();
   }
   function setMac(m){S.mac=validMac(m);deviceMAC=S.mac;save();emit();return S.mac;}
@@ -718,14 +744,11 @@ function createApp(opts){
     S.bestStreak=Math.max(S.bestStreak||0,st);
     save();
     afterSessionSolve(rec);
-    const keep=celebration;
+    lastSolveRec=rec;
     const sessionDone=!!(S.session&&S.session.finished);
     if(!sessionDone){
-      /* Manual / no-cube solves don't update facelets as a physical cube would. Reset the virtual cube so the next official scramble can start. */
-      if(!connected||(run&&run.source==="manual"))facelets=SOLVED;
-      newScramble(null,{keepCelebration:true,keepFacelets:!!connected&&run&&run.source==="cube"});
-      if(keep)celebration=keep;
-    }
+      nextAt=wall()+3000;
+    }else nextAt=0;
     emit();
     return rec;
   }
@@ -853,10 +876,23 @@ function createApp(opts){
     emit();
     return fmtAlg(tracker.get().moves);
   }
+  function inHalfTurn(t){
+    t=t||tracker.get();
+    return !!(t&&!t.fixup&&t.on&&(t.partial>0||t.half));
+  }
   function scheduleReplanToTarget(){
     if(phase!=="scrambling")return;
     if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return;}
     const t=tracker.get();
+    /* Mid X2 (including a slow pause, or X then X' back to the start of that move) is never off-path. */
+    if(inHalfTurn(t)||(!t.fixup&&t.on&&t.current&&t.current[1]==="2"&&!t.partial&&offPathMoves.length&&offPathMoves[offPathMoves.length-1]&&offPathMoves[offPathMoves.length-1][0]===t.current[0])){
+      clearReplanTimer();
+      offPathMoves=[];
+      pathAnchorRemaining=tracker.remaining();
+      replanning=false;
+      pathReady=true;
+      return;
+    }
     if(!t.fixup&&t.on){ /* back on the current path */
       clearReplanTimer();
       offPathMoves=[];
@@ -876,6 +912,7 @@ function createApp(opts){
     if(gen!==replanGen||phase!=="scrambling")return;
     if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return;}
     const t=tracker.get();
+    if(inHalfTurn(t)){clearReplanTimer();offPathMoves=[];replanning=false;pathReady=true;emit();return;}
     if(!t.fixup&&t.on){offPathMoves=[];pathAnchorRemaining=tracker.remaining();replanning=false;pathReady=true;emit();return;}
     const remaining=pathAnchorRemaining!=null?pathAnchorRemaining.slice():tracker.remaining();
     const inversePath=offPathMoves.length===1?simplifyAlg([invertMove(offPathMoves[0])].concat(remaining)):null;
@@ -941,7 +978,8 @@ function createApp(opts){
     clearInspect();
     if(!opts.keepCelebration)celebration=null;
     run=null;
-    const official=parseAlg(alg||randomMoveScramble());
+    nextAt=0;
+    const official=parseAlg(alg||randomMoveScramble(null,S.scrambleLen));
     officialScramble=official;
     if(!connected&&!opts.keepFacelets)facelets=SOLVED;
     bumpFacelets();
@@ -949,6 +987,29 @@ function createApp(opts){
   }
   function setScramble(alg){return newScramble(alg);}
   function skipScramble(){return newScramble();}
+  /* Leave a scramble early and start the solve from the current state. Ends when the cube is solved. */
+  function startSolveAnyway(){
+    if(phase!=="scrambling"&&phase!=="idle"&&phase!=="needSolved")return;
+    resetReplanState();
+    armAfterScramble();
+  }
+  function proceedToNextScramble(){
+    if(phase!=="stopped")return;
+    nextAt=0;
+    const keep=celebration;
+    const src=run&&run.source;
+    if(!connected||src==="manual")facelets=SOLVED;
+    newScramble(null,{keepCelebration:true,keepFacelets:!!connected&&src==="cube"});
+    if(keep)celebration=keep;
+    emit();
+  }
+  function tickNext(){
+    if(phase==="stopped"&&nextAt&&wall()>=nextAt)proceedToNextScramble();
+  }
+  function nextIn(){
+    if(phase!=="stopped"||!nextAt)return 0;
+    return Math.max(0,nextAt-wall());
+  }
 
   function onMove(evt){
     /* gan-web-bluetooth's `move` string is authoritative (never rebuild from face/direction:
@@ -970,7 +1031,15 @@ function createApp(opts){
       if(wasOn)pathAnchorRemaining=tracker.remaining();
       const t=tracker.apply(m);
       if(t.done||eq(facelets,scrambleTargetState)){resetReplanState();armAfterScramble();return t;}
-      if(t.fixup||!t.on){
+      if(inHalfTurn(t)||(!t.fixup&&t.on)){
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        clearReplanTimer();
+        replanning=false;
+        pathReady=true;
+        replanNote=false;
+        emit();
+      }else if(t.fixup||!t.on){
         if(wasOn)offPathMoves=[m];
         else offPathMoves=offPathMoves.concat(m);
         replanNote=false;
@@ -1020,7 +1089,13 @@ function createApp(opts){
         startScrambleFromCurrent();
         return;
       }
-      if(t.fixup||!t.on){
+      if(inHalfTurn(t)||(!t.fixup&&t.on)){
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        clearReplanTimer();
+        replanning=false;
+        pathReady=true;
+      }else if(t.fixup||!t.on){
         scheduleReplanToTarget();
       }else{
         offPathMoves=[];
@@ -1121,6 +1196,8 @@ function createApp(opts){
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
       inspectLeft,inspectOn:S.inspect!==false,
       running:phase==="running",elapsed:elapsedNow(),
+      lastSolve:lastSolveRec,nextIn:nextIn(),
+      locked:phase==="inspect"||phase==="ready"||phase==="running"||phase==="stopped",
       run,hold:hold&&{ready:!!hold.ready,held:now()-(hold.t0||0)},
       settings:settings(),stats:st,solves:S.solves.slice(),
       session:sess,celebration,ios,lastSyncBody,lastError,
@@ -1130,7 +1207,7 @@ function createApp(opts){
     };
   }
 
-  function nextAfterStop(){if(phase==="stopped")newScramble();}
+  function nextAfterStop(){if(phase==="stopped")proceedToNextScramble();}
 
   /* public */
   const api={
@@ -1142,7 +1219,7 @@ function createApp(opts){
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
     get:view,emit,save,
-    newScramble,setScramble,skipScramble,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
+    newScramble,setScramble,skipScramble,startSolveAnyway,proceedToNextScramble,tickNext,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
     whenPathReady,bumpFacelets,
     simulateConnected,setConnected,setBattery,setIos,setSetting,setMac,
     startLesson,skipLessonPhase,abandonLesson,finishSession,
@@ -1161,7 +1238,7 @@ const Engine={
   createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
   invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
-  validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
+  validMac,randomMoveScramble,clampScrambleLen,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
 };
 root.CubeEngine=Engine;
