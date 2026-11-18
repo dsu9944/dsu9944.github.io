@@ -99,6 +99,8 @@ input[type=text]{width:100%;padding:12px;border:3px solid #99f6e4;border-radius:
 label.opt{display:flex;gap:8px;align-items:center;margin:8px 0}
 footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 @media (max-width:560px){.timer{font-size:3.1rem}.scramble{font-size:1.15rem}.callout{font-size:1.45rem}.callout b{font-size:2rem}.mv.next{font-size:1.5rem}}
+#cubeDebug{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.35;white-space:pre-wrap;max-height:280px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:10px;margin-top:8px}
+#cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
 </style>
 </head>
 <body>
@@ -198,6 +200,8 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
         </select>
       </label>
       <label class="opt"><input type="checkbox" id="optShowNet"> Show a flat 2D cube net (the 3D cube is used by default)</label>
+      <label class="opt"><input type="checkbox" id="optShowDebug"> Show cube debug</label>
+      <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
       <p>Saved MAC address: <code id="savedMac">not saved yet</code>
         <button type="button" class="tiny" id="macClear">Clear saved MAC</button></p>
       <p>Times and settings are stored in this browser only, under <code>kidsHub.p.ethan.cube</code>. When a session finishes we quietly send a summary to the same results sheet as the other lessons (it never blocks a solve if the network is down).</p>

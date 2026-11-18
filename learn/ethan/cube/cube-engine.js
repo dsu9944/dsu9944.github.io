@@ -196,11 +196,22 @@ function pathSnapshots(scramble,start){
   const snaps=[{state:start,k:0,partial:0,totalParts:moves[0]?expandToQuarters(moves[0]).length:0,current:moves[0]||null,q:0}];
   let s=start,q=0;
   moves.forEach((M,i)=>{
+    const next=moves[i+1]||null;
+    /* A half turn is two quarter turns in THE SAME direction: R R or R' R' (the i3 never sends "R2"). */
+    if(M[1]==="2"){
+      const cw=applyMove(s,M[0]),ccw=applyMove(s,M[0]+"'");
+      q++;
+      snaps.push({state:cw,k:i,partial:1,totalParts:2,current:M,q,dir:M[0]});
+      snaps.push({state:ccw,k:i,partial:1,totalParts:2,current:M,q,dir:M[0]+"'"});
+      s=applyMove(s,M);q++;
+      snaps.push({state:s,k:i+1,partial:0,totalParts:next?expandToQuarters(next).length:0,current:next,q});
+      return;
+    }
     const qs=expandToQuarters(M);
     qs.forEach((qt,qi)=>{
       s=applyMove(s,qt);q++;
       const doneMove=qi===qs.length-1;
-      snaps.push({state:s,k:doneMove?i+1:i,partial:doneMove?0:qi+1,totalParts:qs.length,current:doneMove?(moves[i+1]||null):M,q});
+      snaps.push({state:s,k:doneMove?i+1:i,partial:doneMove?0:qi+1,totalParts:qs.length,current:doneMove?next:M,q});
     });
   });
   return {moves,snaps};
@@ -665,7 +676,9 @@ function createApp(opts){
     const keep=celebration;
     const sessionDone=!!(S.session&&S.session.finished);
     if(!sessionDone){
-      newScramble(null,{keepCelebration:true,keepFacelets:true});
+      /* Manual / no-cube solves don't update facelets as a physical cube would. Reset the virtual cube so the next official scramble can start. */
+      if(!connected||(run&&run.source==="manual"))facelets=SOLVED;
+      newScramble(null,{keepCelebration:true,keepFacelets:!!connected&&run&&run.source==="cube"});
       if(keep)celebration=keep;
     }
     emit();
@@ -792,6 +805,16 @@ function createApp(opts){
     emit();
     return p;
   }
+  function beginOfficialScramble(opts){
+    pathReady=true;
+    pathPromise=Promise.resolve(fmtAlg(officialScramble));
+    tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
+    const t=tracker.setState(facelets);
+    if(t.done||eq(facelets,scrambleTargetState))armAfterScramble();
+    else phase="scrambling";
+    emit();
+    return fmtAlg(officialScramble);
+  }
   function newScramble(alg,opts){
     opts=opts||{};
     clearInspect();
@@ -808,25 +831,14 @@ function createApp(opts){
       armAfterScramble();
       return "";
     }
-    if(isSolved(facelets)){
-      pathPromise=Promise.resolve(fmtAlg(official));
-      return adoptPath(official,opts);
-    }
-    const short=solveFromToSync(facelets,scrambleTargetState,4);
-    if(short){
-      pathPromise=Promise.resolve(fmtAlg(short));
-      return adoptPath(short,opts);
-    }
-    pathReady=false;
-    phase="scrambling";
-    tracker=createTracker([],facelets,scrambleTargetState);
+    if(isSolved(facelets))return beginOfficialScramble(opts);
+    /* Not solved: do not invent a path (cubing.js search may fail on github.io).
+       Ask him to finish / press My cube is solved, then follow the official scramble move-by-move. */
+    pathReady=true;
+    pathPromise=Promise.resolve(fmtAlg(official));
+    tracker=createTracker(official,SOLVED,scrambleTargetState);
+    phase="needSolved";
     emit();
-    const p=solveFromTo(facelets,scrambleTargetState).then(path=>{
-      if(path&&path.length)return adoptPath(path,opts);
-      pathReady=true;
-      return adoptPath(official,opts);
-    });
-    pathPromise=p;
     return fmtAlg(official);
   }
   function setScramble(alg){return newScramble(alg);}
@@ -843,13 +855,26 @@ function createApp(opts){
     facelets=applyMove(facelets,m);
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
     if(phase==="needSolved"){
-      phase="scrambling";
+      if(isSolved(facelets)){
+        phase="scrambling";
+        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
+        if(eq(facelets,scrambleTargetState)){armAfterScramble();return tracker.get();}
+        emit();
+        return tracker.get();
+      }
+      emit();
+      return;
     }
     if(phase==="scrambling"){
       if(eq(facelets,scrambleTargetState)){tracker.setState(facelets);armAfterScramble();return tracker.get();}
       const t=tracker.apply(m);
       if(t.done||eq(facelets,scrambleTargetState)){armAfterScramble();return t;}
-      if(!t.on){recomputeRemaining(true);return tracker.get();}
+      if(!t.on){
+        const short=solveFromToSync(facelets,scrambleTargetState,4);
+        if(short){tracker.repath(facelets,short,true);emit();return tracker.get();}
+        emit();
+        return t;
+      }
       emit();
       return t;
     }
@@ -871,15 +896,30 @@ function createApp(opts){
       emit();
     }else emit();
   }
-  function onFacelets(f){
+  function onFacelets(f,state){
+    if(f&&typeof f==="object"&&!Array.isArray(f)&&f.facelets){state=f.state||state;f=f.facelets;}
     if(!f||f.length!==54)return;
     facelets=f;
-    if(phase==="needSolved")phase="scrambling";
+    if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
+    if(phase==="needSolved"){
+      if(isSolved(facelets)){
+        phase="scrambling";
+        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
+        if(eq(facelets,scrambleTargetState)){armAfterScramble();return;}
+      }
+      emit();
+      return;
+    }
     if(phase==="scrambling"){
       if(eq(facelets,scrambleTargetState)){tracker.setState(f);armAfterScramble();return;}
       const t=tracker.setState(f);
       if(t.done){armAfterScramble();return;}
-      if(!t.on){recomputeRemaining(true);return;}
+      if(!t.on){
+        const short=solveFromToSync(facelets,scrambleTargetState,4);
+        if(short){tracker.repath(facelets,short,true);}
+        emit();
+        return;
+      }
       emit();
       return;
     }
@@ -894,14 +934,11 @@ function createApp(opts){
   }
   function markSolved(){
     facelets=SOLVED;
-    if(phase==="scrambling"){
-      if(eq(SOLVED,scrambleTargetState)){tracker.setState(SOLVED);armAfterScramble();}
-      else{
-        pathReady=true;
-        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
-        phase="scrambling";
-        emit();
-      }
+    if(phase==="needSolved"||phase==="scrambling"||phase==="idle"){
+      if(officialScramble&&officialScramble.length){
+        if(eq(SOLVED,scrambleTargetState)){tracker.setState(SOLVED);armAfterScramble();}
+        else beginOfficialScramble({});
+      }else emit();
     }else emit();
     return {requestReset:true};
   }
