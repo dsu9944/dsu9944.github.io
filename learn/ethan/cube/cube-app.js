@@ -77,7 +77,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v11 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v12 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -92,6 +92,9 @@ function debugText(v){
     "solved: "+!!v.solved,
     "phase: "+v.phase,
     "coach: "+(v.coach&&v.coach.active?((v.coach.kind||"")+" "+(v.coach.phase||"")+" "+(v.coach.stage||"")+" "+(v.coach.caseId||"")+(v.coach.yellowTop?" yellow-top":"")):"(off)"),
+    "timerMode: "+(v.timerMode||"—")+(v.timerLabel?(" ("+v.timerLabel+")"):""),
+    "reset: "+((v.resetLog&&v.resetLog.length)?v.resetLog.join(" / "):"(none)"),
+    "calibration: "+(v.calibration?"yes":"no")+(v.resetNote?(" · "+v.resetNote):""),
     "expected move: "+(v.fixup||v.current||"(none)")+(v.halfLabel?" "+v.halfLabel:""),
     "path: "+(v.scrambleText||""),
     "on path: "+!!v.onPath+"  k="+v.k+"/"+v.total+"  pathReady="+!!v.pathReady,
@@ -152,32 +155,222 @@ function displayMoveFor(m,v){
   }
   return m;
 }
+
 let showingMe=false, showMeToken=0, lastYellowTop=false;
+let algPlayer=null, demoTwisty=null, demoOn=false, demoFacelets=null, playerIv=null, lastPlayerTick=0, moreDetail=false;
+const VIDEO_STORE="ethan-cube-videos-v1";
+function loadWatched(){try{return JSON.parse(localStorage.getItem(VIDEO_STORE)||"{}");}catch(e){return {};}}
+function saveWatched(map){try{localStorage.setItem(VIDEO_STORE,JSON.stringify(map||{}));}catch(e){}}
+function markVideoWatched(id){const m=loadWatched();m[id]=Date.now();saveWatched(m);return m;}
+function turnArrow(mv){
+  if(!mv)return "";
+  const face=mv[0], suf=mv.slice(1);
+  if("URFDLB".indexOf(face)<0)return "";
+  if(suf==="'")return "↺  counterclockwise";
+  if(suf==="2")return "↻↻  half turn";
+  return "↻  clockwise";
+}
+function stopAlgPlayer(backToLive){
+  if(playerIv){clearInterval(playerIv);playerIv=null;}
+  demoOn=false;showingMe=false;
+  if(demoTwisty&&demoTwisty.parentNode)try{demoTwisty.parentNode.removeChild(demoTwisty);}catch(e){}
+  demoTwisty=null;demoFacelets=null;
+  document.body.classList.remove("demo-on");
+  const panel=$("#algPlayerPanel");
+  if(panel&&backToLive){panel.hidden=true;panel.setAttribute("hidden","");panel.classList.add("hidden");panel.innerHTML="";}
+  if(backToLive){
+    algPlayer=null;
+    const now=app.get();
+    if(now&&!showingMe)setupFromFacelets(displayFaceletsFor(now)||now.facelets);
+  }
+}
+function mountDemoTwisty(facelets){
+  const host=$("#demoHost");
+  if(!host)return;
+  host.innerHTML="";
+  const Cls=typeof twistyClass==="function"?twistyClass():TwistyPlayer;
+  if(Cls){
+    try{
+      const opts=typeof playerOptions==="function"?playerOptions():{visualization:"3D"};
+      const p=new Cls(opts);
+      demoTwisty=p;
+      host.appendChild(p);
+    }catch(e){demoTwisty=null;}
+  }
+  demoFacelets=facelets||E.SOLVED;
+  applyDemoFacelets(demoFacelets);
+}
+function applyDemoFacelets(f){
+  demoFacelets=f||E.SOLVED;
+  if(!demoTwisty)return;
+  try{
+    if(E.isSolved(demoFacelets)){
+      demoTwisty.experimentalSetupAlg="";
+      demoTwisty.alg="";
+      return;
+    }
+    const short=E.solveFromToSync&&E.solveFromToSync(demoFacelets,E.SOLVED,8);
+    const setup=short?E.fmtAlg(E.invertAlg(short)):"";
+    demoTwisty.experimentalSetupAlg=setup;
+    demoTwisty.alg="";
+  }catch(e){}
+}
+function demoAddMove(m){
+  m=E.normalizeMove(m);
+  if(!m)return;
+  demoFacelets=E.applyMove(demoFacelets||E.SOLVED,m);
+  if(!demoTwisty)return;
+  try{
+    if(typeof demoTwisty.experimentalAddMove==="function")demoTwisty.experimentalAddMove(m);
+    else if(typeof demoTwisty.experimentalAddAlgLeaf==="function")demoTwisty.experimentalAddAlgLeaf(m,{cancel:false});
+  }catch(e){}
+}
+function playerStartState(opts){
+  opts=opts||{};
+  if(opts.startFacelets&&opts.startFacelets.length===54)return opts.startFacelets;
+  if(opts.setupAlg)return E.applyAlg(E.SOLVED,E.parseAlg(opts.setupAlg));
+  if(opts.alg)return E.applyAlg(E.SOLVED,E.parseAlg(E.invertAlgStr?E.invertAlgStr(opts.alg):opts.alg));
+  return E.SOLVED;
+}
+function openAlgPlayer(opts){
+  opts=opts||{};
+  stopAlgPlayer(false);
+  algPlayer=E.createAlgPlayer({alg:opts.alg||"",setupAlg:opts.setupAlg,speed:opts.speed||1,hintAfterMs:3000});
+  const start=playerStartState(opts);
+  demoOn=true;showingMe=true;document.body.classList.add("demo-on");
+  const panel=$("#algPlayerPanel");
+  if(panel){panel.hidden=false;panel.removeAttribute("hidden");panel.classList.remove("hidden");panel.innerHTML=algPlayerHTML(opts.title||"Algorithm player",algPlayer.get());}
+  mountDemoTwisty(start);
+  bindAlgPlayerPanel();
+  return algPlayer.get();
+}
+function algPlayerHTML(title,g){
+  g=g||(algPlayer&&algPlayer.get())||{};
+  const hide=!!g.hideStrip;
+  const moves=(g.moves||[]).map((m,i)=>`<button type="button" class="mv${i===g.i?" on":""}" data-jump="${i}">${m}</button>`).join("");
+  const hint=g.hintMove?`<p class="tip">Hint: <b>${g.hintMove}</b></p>`:"";
+  const speeds=[0.25,0.5,1,2].map(s=>`<button type="button" class="btn ghost" id="playerSpeed${String(s).replace(".","_")}" data-speed="${s}">${s}×</button>`).join("");
+  return `<h3>${title||"Algorithm player"}</h3>
+    <div id="demoHost" aria-label="Demo cube"></div>
+    <div class="player-now">${g.current||(g.atEnd?"Done":"Ready")}</div>
+    <div class="player-arrow">${turnArrow(g.current)}</div>
+    ${hide?hint:`<div class="player-strip" id="playerStrip">${moves||""}</div>`}
+    <div class="player-btns">
+      <button class="btn" type="button" id="playerPlay">${g.playing?"Pause":"Play"}</button>
+      <button class="btn ghost" type="button" id="playerBack">Step back</button>
+      <button class="btn ghost" type="button" id="playerFwd">Step forward</button>
+      <button class="btn ghost" type="button" id="playerRestart">Restart</button>
+      <button class="btn ghost" type="button" id="playerLoop">${g.loop?"Loop: on":"Loop: off"}</button>
+    </div>
+    <div class="player-btns">${speeds}</div>
+    <div class="player-btns">
+      ${g.atStart||g.mode==="demo"?`<button class="btn" type="button" id="playerYourTurn">Your turn</button>`:""}
+      <button class="btn ghost" type="button" id="playerMemorise">Memorise</button>
+    </div>`;
+}
+function refreshAlgPlayerPanel(){
+  const panel=$("#algPlayerPanel");
+  if(!panel||!algPlayer||!demoOn&&!(algPlayer.get().mode==="memorise"||algPlayer.get().mode==="live"))return;
+  const g=algPlayer.get();
+  const host=$("#demoHost");
+  const keep=host;
+  panel.innerHTML=algPlayerHTML("Algorithm player",g);
+  if(keep&&g.mode==="demo"){
+    const host2=$("#demoHost");
+    if(host2&&demoTwisty)host2.appendChild(demoTwisty);
+  }
+  bindAlgPlayerPanel();
+}
+function bindAlgPlayerPanel(){
+  const play=$("#playerPlay"); if(play)play.onclick=()=>{const g=algPlayer.get(); if(g.playing)algPlayer.pause(); else algPlayer.play(); refreshAlgPlayerPanel();};
+  const back=$("#playerBack"); if(back)back.onclick=()=>{playerStepBack();};
+  const fwd=$("#playerFwd"); if(fwd)fwd.onclick=()=>{playerStepForward();};
+  const rs=$("#playerRestart"); if(rs)rs.onclick=()=>{algPlayer.restart(); applyDemoFacelets(playerStartState({setupAlg:algPlayer.get().setupAlg,alg:algPlayer.get().alg})); refreshAlgPlayerPanel();};
+  const lp=$("#playerLoop"); if(lp)lp.onclick=()=>{algPlayer.setLoop(!algPlayer.get().loop); refreshAlgPlayerPanel();};
+  $$("[data-speed]").forEach(b=>b.onclick=()=>{algPlayer.setSpeed(parseFloat(b.getAttribute("data-speed"))); refreshAlgPlayerPanel();});
+  $$("[data-jump]").forEach(b=>b.onclick=()=>{playerJumpTo(+b.getAttribute("data-jump"));});
+  const yt=$("#playerYourTurn"); if(yt)yt.onclick=()=>{yourTurnFromPlayer();};
+  const mem=$("#playerMemorise"); if(mem)mem.onclick=()=>{startMemorise();};
+}
+function playerStepForward(){
+  if(!algPlayer)return;
+  const g=algPlayer.get();
+  if(g.current)demoAddMove(g.current);
+  algPlayer.stepForward();
+  refreshAlgPlayerPanel();
+}
+function playerStepBack(){
+  if(!algPlayer)return;
+  const g=algPlayer.get();
+  if(g.i>0){
+    const mv=g.moves[g.i-1];
+    const inv=E.invertMove?E.invertMove(mv):null;
+    if(inv)demoAddMove(inv);
+  }
+  algPlayer.stepBack();
+  refreshAlgPlayerPanel();
+}
+function playerJumpTo(i){
+  if(!algPlayer)return;
+  const g=algPlayer.get();
+  const start=playerStartState({setupAlg:g.setupAlg,alg:g.alg});
+  applyDemoFacelets(start);
+  let f=start;
+  const target=Math.max(0,Math.min(g.moves.length,i|0));
+  for(let k=0;k<target;k++){f=E.applyMove(f,g.moves[k]); if(demoTwisty)demoAddMove(g.moves[k]);}
+  demoFacelets=f;
+  algPlayer.jumpTo(target);
+  refreshAlgPlayerPanel();
+}
+function tickAlgPlayer(){
+  if(!algPlayer||!algPlayer.get().playing)return;
+  const g=algPlayer.get();
+  const interval=Math.max(80, Math.round(320/((g.speed)||1)));
+  const now=Date.now();
+  if(now-lastPlayerTick<interval)return;
+  lastPlayerTick=now;
+  if(g.current)demoAddMove(g.current);
+  algPlayer.tickPlay(true);
+  if(algPlayer.get().atEnd&&!algPlayer.get().playing&&!algPlayer.get().loop)refreshAlgPlayerPanel();
+  else refreshAlgPlayerPanel();
+}
+function yourTurnFromPlayer(){
+  if(algPlayer)algPlayer.yourTurn();
+  stopAlgPlayer(true);
+  demoOn=false;
+}
+function startMemorise(){
+  if(!algPlayer)return;
+  algPlayer.memorise();
+  stopAlgPlayer(false);
+  demoOn=false;
+  document.body.classList.remove("demo-on");
+  showingMe=false;
+  const now=app.get();
+  if(now)setupFromFacelets(displayFaceletsFor(now)||now.facelets);
+  const panel=$("#algPlayerPanel");
+  if(panel){panel.hidden=false;panel.removeAttribute("hidden");panel.classList.remove("hidden");panel.innerHTML=algPlayerHTML("Memorise — do it on your cube",algPlayer.get());bindAlgPlayerPanel();}
+}
+function tickMemoriseHint(){
+  if(!algPlayer||algPlayer.get().mode!=="memorise")return;
+  const before=algPlayer.get().hintMove;
+  algPlayer.checkMemoriseHint(Date.now());
+  if(algPlayer.get().hintMove&&!before)refreshAlgPlayerPanel();
+}
 async function showMeCoach(){
   const v=app.get();
   const c=v&&v.coach;
   if(!c||!c.active)return;
-  const token=++showMeToken;
   const moves=[];
   if(c.phase==="hold"&&c.holdAlg)moves.push.apply(moves,E.parseAlg(c.holdAlg));
-  else if(c.alg){/* after hold is done, just the alg */}
   if(c.phase!=="hold"&&c.alg)moves.push.apply(moves,E.parseAlg(c.alg));
   if(c.phase==="hold"&&!c.holdAlg&&c.alg)moves.push.apply(moves,E.parseAlg(c.alg));
   if(!moves.length)return;
-  showingMe=true;
-  const base=displayFaceletsFor(v)||v.facelets;
-  try{await setupFromFacelets(base);}catch(e){}
-  for(let i=0;i<moves.length;i++){
-    if(token!==showMeToken)return;
-    liveMove(moves[i]);
-    await new Promise(r=>setTimeout(r,320));
-  }
-  await new Promise(r=>setTimeout(r,500));
-  if(token!==showMeToken)return;
-  showingMe=false;
-  const now=app.get();
-  setupFromFacelets(displayFaceletsFor(now)||(now&&now.facelets));
+  const alg=E.fmtAlg(moves);
+  const start=displayFaceletsFor(v)||v.facelets;
+  openAlgPlayer({alg,startFacelets:start,title:c.algName||c.title||"Show me"});
 }
+
 
 /* ---------- scramble (cubing.js when it loads, else built-in) ---------- */
 async function loadCubing(){
@@ -424,7 +617,8 @@ function hookApp(){
     try{
       const r=rawMove(evt);
       const m=E.normalizeMove(typeof evt==="string"?evt:(evt&&evt.move));
-      if(m&&!showingMe)liveMove(displayMoveFor(m,app.get()));
+      if(m&&!showingMe&&!demoOn)liveMove(displayMoveFor(m,app.get()));
+      if(algPlayer&&algPlayer.get().mode==="memorise"){algPlayer.noteLiveMove();refreshAlgPlayerPanel();}
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onMove");}
   };
@@ -435,8 +629,9 @@ function hookApp(){
       const st=(f&&typeof f==="object"&&f.state)?f.state:state;
       const ser=(f&&typeof f==="object"&&f.serial!=null)?f.serial:serial;
       const r=rawFace(face,st,ser);
-      const shown=face&&face.length===54?displayFaceletsFor(Object.assign({},app.get(),{facelets:face})):null;
-      if(shown&&shown.length===54&&shown!==expectedFacelets()&&!showingMe)setupFromFacelets(shown);
+      const after=app.get()||{};
+      const shown=after.facelets&&after.facelets.length===54?displayFaceletsFor(after):null;
+      if(shown&&shown.length===54&&shown!==expectedFacelets()&&!showingMe&&!demoOn)setupFromFacelets(shown);
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onFacelets");}
   };
@@ -448,6 +643,7 @@ function hookApp(){
   };
   const rawNew=app.newScramble.bind(app);
   app.newScramble=function(alg,opts){
+    try{stopAlgPlayer(true);}catch(e){}
     const r=rawNew(alg,opts);
     onScrambleChanged();
     return r;
@@ -489,7 +685,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor,openAlgPlayer,stopAlgPlayer,getAlgPlayer:()=>algPlayer,doReset,moreDetail:()=>moreDetail};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -616,11 +812,24 @@ function onGanEvent(ev){
   }
 }
 async function doReset(){
-  app.resetToSolved();
-  if(conn){
-    try{await conn.sendCubeCommand({type:"REQUEST_RESET"});}catch(e){}
+  try{stopAlgPlayer(true);}catch(e){}
+  showingMe=false;showMeToken++;
+  if(app.beginResetConfirm)app.beginResetConfirm();
+  const r=app.markSolved?app.markSolved():app.resetToSolved();
+  twistyLog.moves=[];
+  if(typeof clearSetupTransformation==="function")try{clearSetupTransformation();}catch(e){}
+  faceletsAnchor=E.SOLVED;
+  try{await setupFromFacelets(E.SOLVED);}catch(e){}
+  let ack=false;
+  if(conn&&conn.sendCubeCommand){
+    for(let i=0;i<2&&!ack;i++){
+      try{await conn.sendCubeCommand({type:"REQUEST_RESET"});ack=true;if(app.noteResetAck)app.noteResetAck(true);}
+      catch(e){if(i===1&&app.noteResetAck)app.noteResetAck(false);}
+    }
     try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
   }
+  render(app.get());
+  return r;
 }
 
 /* ---------- render ---------- */
@@ -655,6 +864,10 @@ function coachCallout(c){
 function calloutHTML(v){
   const c=v.coach;
   const coachLine=(c&&c.active&&v.phase!=="scrambling")?coachCallout(c):"";
+  if(v.timerMode==="step"||(c&&c.active&&(v.phase==="ready"||v.phase==="running"||v.phase==="inspect"))){
+    const sub=coachLine||`<p class="callout-sub">Step time — I'll time this step, not a full solve.</p>`;
+    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.stepElapsed||v.elapsed||0)}</div>${sub}`;
+  }
   if(v.phase==="running"){
     const sub=coachLine||`<p class="callout-sub">Go! The timer stops when the cube is solved.</p>`;
     return `<div class="live-timer" id="liveTimer">${E.formatTime(v.elapsed||0)}</div>${sub}`;
@@ -735,9 +948,13 @@ function timerText(v){
     const s=Math.ceil((v.inspectLeft||0)/1000);
     return s>0?String(s):"0";
   }
+  if(v.phase==="wait"||v.timerMode==="off")return "0.00";
+  if(v.timerMode==="step")return E.formatTime(v.stepElapsed||v.elapsed||0);
   return E.formatTime(v.elapsed||0);
 }
 function phaseHint(v){
+  if(v.phase==="wait")return (v.coach&&v.coach.guard)||"Solve the cube first (or press My cube is solved), then I'll give you a new case.";
+  if(v.resetNote&&(v.calibration||v.solved))return v.resetNote;
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
   if(v.phase==="needSolved")return "Do the big move next. I'll tick off each turn as you go. If the picture is wrong, tap Re-sync or Debug.";
   if(v.phase==="scrambling"){
@@ -856,6 +1073,85 @@ function historyHTML(v){
   </div>`).join("")}</div>`;
 }
 
+
+function videoPanelHTML(v){
+  const vids=(v.sessionProgress&&v.sessionProgress.videos)||v.videos||[];
+  if(!vids.length)return "";
+  if(!(v.sessionProgress&&v.sessionProgress.active&&v.sessionProgress.phase==="drill"))return "";
+  const v0=vids[0];
+  const watched=!!loadWatched()[v0.id];
+  const src=E.embedUrlFor?E.embedUrlFor(v0):("https://www.youtube-nocookie.com/embed/"+v0.id+"?rel=0");
+  return `<h3>Watch first</h3>
+    <p>${v0.title} — ${v0.channel}${watched?" <b>✓ watched</b>":""}</p>
+    <button class="btn ghost" type="button" id="watchToggle">Show or hide the video</button>
+    <div id="watchBody">
+      <div class="vid-frame"><iframe src="${src}" title="${v0.title}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+      <button class="btn" type="button" id="markWatched" data-vid="${v0.id}">I've watched this</button>
+    </div>`;
+}
+function reviewHTML(v){
+  const rec=v.lastSolve;
+  const a=rec&&rec.analysis;
+  if(!a||v.phase!=="stopped")return "";
+  const stages=a.stages||[];
+  const total=Math.max(1,a.timeMs||stages.reduce((s,x)=>s+(x.ms||0),0));
+  const bar=stages.map(s=>`<span class="${s.name}" style="width:${Math.max(4,(s.ms||0)/total*100)}%">${s.name}</span>`).join("");
+  const tip=a.tip||{};
+  const detail=moreDetail?`<p class="why">Why this works: ${tip.why||"Practising the weak step on its own is how you get faster."}</p>
+    <p class="why">Moves ${a.moveCount||0} · ${a.tps||0} TPS · pauses ${a.pauseCount||0} (${((a.pauseMs||0)/1000).toFixed(1)}s) · cancelled turns ${(a.waste&&a.waste.cancel)||0}</p>`:"";
+  const drill=(a.weakness&&a.weakness.type)||a.drill||"";
+  return `<h3>How that solve went</h3>
+    <p class="feedback">${a.feedback||rec.feedback||""}</p>
+    <div class="stagebar">${bar}</div>
+    ${a.biggestLoss?`<p><b>Biggest time loss:</b> ${a.biggestLoss.label||a.biggestLoss.kind} (${((a.biggestLoss.ms||0)/1000).toFixed(1)}s)</p>`:""}
+    <p>${tip.tip||""}</p>
+    ${detail}
+    <div class="player-btns">
+      <button class="btn" type="button" id="practiseThis" data-drill="${drill}" data-why="${(a.weakness&&a.weakness.why)||""}">Practise this</button>
+      <button class="btn ghost" type="button" id="replaySolve">Replay</button>
+      ${(stages.filter(s=>s.name==="cross"&&s.optimalAlg)[0])?`<button class="btn ghost" type="button" id="replayOpt">Show a shorter cross</button>`:""}
+      <button class="btn ghost" type="button" id="reviewMore">${moreDetail?"Less detail":"More detail"}</button>
+    </div>`;
+}
+function trendsHTML(v){
+  const t=v.trends;
+  if(!t||!t.n)return "";
+  if(!(v.phase==="stopped"||(v.sessionProgress&&v.sessionProgress.done)))return "";
+  const weak=(t.weaknesses||[]).slice(0,3);
+  const lines=weak.map(w=>`<li>${w.stage}: ${(w.avgMs/1000).toFixed(1)}s ${w.target!=null?("(target "+(w.target/1000).toFixed(0)+"s)"):""}</li>`).join("");
+  const sess=v.sessionProgress&&v.sessionProgress.summary&&v.sessionProgress.summary.feedback;
+  return `<h3>Where you lose time</h3>
+    <p class="feedback">${sess||("Across your last "+t.n+" solves"+(t.improvedMs>400?(", you're "+E.formatTime(Math.round(t.improvedMs))+" faster than your first day"):"."))}</p>
+    <ol>${lines}</ol>`;
+}
+function fillSidePanels(v){
+  function put(id, html){
+    const el=$(id); if(!el)return;
+    const on=!!html;
+    el.classList.toggle("hidden",!on);
+    if(on){el.hidden=false;el.removeAttribute("hidden");el.innerHTML=html;}
+    else{el.hidden=true;el.setAttribute("hidden","");el.innerHTML="";}
+  }
+  put("#videoPanel", videoPanelHTML(v));
+  put("#reviewCard", reviewHTML(v));
+  put("#trendsCard", trendsHTML(v));
+  if(v.resetNote){
+    /* keep the note visible via hint */
+  }
+}
+function replayLastSolve(optCross){
+  const v=app.get();
+  const rec=v&&v.lastSolve;
+  if(!rec)return;
+  const start=rec.startFacelets||E.SOLVED;
+  if(optCross){
+    const st=(rec.analysis&&rec.analysis.stages||[]).filter(s=>s.name==="cross")[0];
+    if(st&&st.optimalAlg)return openAlgPlayer({alg:st.optimalAlg,startFacelets:start,title:"A shorter cross"});
+  }
+  const alg=E.fmtAlg((rec.trace||[]).map(x=>x.m||x));
+  openAlgPlayer({alg,startFacelets:start,title:"Replay that solve"});
+}
+
 function coachPanelHTML(v){
   const c=v.coach;
   if(!c||!c.active)return "";
@@ -867,10 +1163,12 @@ function coachPanelHTML(v){
   const guard=c.guard?`<div class="guard">${c.guard}</div>`:"";
   const sum=c.summary?`<p class="summary">${c.summary.text}</p>`:"";
   const timeLine=times.length?`<p class="times">${times.join(" · ")}</p>`:"";
-  const showMe=c.kind==="lastLayer"&&(c.alg||c.holdAlg)?`<button class="btn" id="coachShowMe" type="button">Show me</button>`:"";
-  return `<h3>${c.title||"Coach"}</h3>
+  const stepNow=(v.timerMode==="step")?`<p class="times">Step time ${E.formatTime(v.stepElapsed||0)}</p>`:"";
+  const showMe=(c.alg||c.holdAlg)?`<button class="btn" id="coachShowMe" type="button">Show me</button>`:"";
+  const metro=c.metronome?`<div class="metro" aria-hidden="true"><i></i></div>`:"";
+  return `<h3>${c.title||"Coach"}</h3>${metro}
     ${c.caseName?`<p class="hold">${c.lead?c.lead+" ":""}${c.caseName}</p>`:""}
-    ${hold}${tip}${showAlg}${oops}${guard}${timeLine}${sum}
+    ${hold}${tip}${showAlg}${oops}${guard}${stepNow}${timeLine}${sum}
     <div class="coach-btns">${showMe}<button class="btn ghost" id="coachNextCase" type="button">Next case</button></div>`;
 }
 function render(v){
@@ -911,6 +1209,7 @@ function render(v){
     if(on){panel.hidden=false;panel.removeAttribute("hidden");panel.innerHTML=coachPanelHTML(v);}
     else{panel.hidden=true;panel.setAttribute("hidden","");panel.innerHTML="";}
   }
+  fillSidePanels(v);
   const startSol=$("#startSolveBtn");
   if(startSol)startSol.classList.toggle("hidden",v.phase!=="scrambling");
   const fix=$("#fixup");
@@ -918,7 +1217,12 @@ function render(v){
 
   const timer=$("#timer");
   timer.textContent=timerText(v);
-  timer.className="timer ph-"+v.phase+(v.hold&&v.hold.ready?" ready":"");
+  timer.className="timer ph-"+((v.timerMode==="step")?"ready":v.phase)+(v.hold&&v.hold.ready?" ready":"");
+  const tLab=$("#timerLabel");
+  if(tLab){tLab.textContent=v.timerLabel||"";tLab.classList.toggle("hidden",!v.timerLabel);}
+  document.body.classList.toggle("plan-blind", !!(v.sessionProgress&&v.sessionProgress.planMode&&v.phase!=="inspect"&&v.phase!=="scrambling"&&v.phase!=="idle"));
+  if(v.resetNote){/* shown in debug and as a short hint overlay via hint if just reset */}
+
   setText("#hint",phaseHint(v));
   $("#splits").innerHTML=splitsHTML(v);
 
@@ -1004,7 +1308,7 @@ function bind(){
   const yes=$("#matchYes");
   if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
   const no=$("#matchNo");
-  if(no)no.addEventListener("click",()=>{matchMode="help";render(app.get());});
+  if(no)no.addEventListener("click",()=>{matchMode="help";doReset();render(app.get());});
   function onSessionClick(e){
     const btn=e.target.closest?e.target.closest("button"):e.target;
     if(!btn||!btn.id)return;
@@ -1017,6 +1321,12 @@ function bind(){
       else if(btn.id==="coachNextCase"){
         if(app.coachNextCase){app.coachNextCase();onScrambleChanged();}
       }
+      else if(btn.id==="practiseThis"){const typ=btn.getAttribute("data-drill")||"";if(app.startTargetedDrill){app.startTargetedDrill(typ,btn.getAttribute("data-why")||"");onScrambleChanged();}}
+      else if(btn.id==="reviewMore"){moreDetail=!moreDetail;render(app.get());}
+      else if(btn.id==="replaySolve"){replayLastSolve(false);}
+      else if(btn.id==="replayOpt"){replayLastSolve(true);}
+      else if(btn.id==="watchToggle"){const box=$("#watchBody"); if(box)box.classList.toggle("hidden");}
+      else if(btn.id==="markWatched"){markVideoWatched(btn.getAttribute("data-vid")||"");render(app.get());}
     }catch(err){cubeDebug.lastError=String(err&&err.message||err||"session click");}
   }
   const cubeCard=$("#cubeCard");
@@ -1055,12 +1365,26 @@ function bind(){
   function tickLiveTimer(){
     try{
       if(app.tickNext)app.tickNext();
+      tickAlgPlayer();
+      tickMemoriseHint();
       const v=app.get();
       if(!v)return;
-      if(v.phase==="running"){
+      const lab=$("#timerLabel");
+      if(lab){
+        lab.textContent=v.timerLabel||"";
+        lab.classList.toggle("hidden",!v.timerLabel);
+      }
+      const mode=v.timerMode||(v.running?"solve":"off");
+      if(mode==="solve"&&v.running){
         const t=E.formatTime(v.elapsed||0);
         const live=$("#liveTimer"); if(live)live.textContent=t;
         const timer=$("#timer"); if(timer)timer.textContent=t;
+      }else if(mode==="step"){
+        const t=E.formatTime(v.stepElapsed||v.elapsed||0);
+        const live=$("#liveTimer"); if(live)live.textContent=t;
+        const timer=$("#timer"); if(timer){timer.textContent=t;timer.className="timer ph-ready";}
+      }else if(mode==="off"&&v.phase==="wait"){
+        const timer=$("#timer"); if(timer)timer.textContent="0.00";
       }else if(v.phase==="inspect"||v.phase==="stopped"){
         const timer=$("#timer"); if(timer)timer.textContent=timerText(v);
         const call=$("#callout"); if(call)call.innerHTML=calloutHTML(v);
