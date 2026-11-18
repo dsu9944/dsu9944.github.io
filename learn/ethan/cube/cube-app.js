@@ -26,6 +26,68 @@ let showNet = false;
 let searchSolve = null, kpuzzle = null, KPatternCls = null, solveReady = false;
 let setupToken = 0, lastFaceletsGen = -1;
 const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:"", faceletsSynced:false};
+let faceletsAnchor = E.SOLVED;
+let showDebug = false;
+const cubeDebug = {
+  protocol:"",
+  hardwareName:"",
+  searchStatus:"not loaded",
+  setupMethod:"",
+  faceletsRequestedAt:0,
+  faceletsReceivedAt:0,
+  faceletsReply:false,
+  lastFacelets:"",
+  lastFaceletsSerial:null,
+  lastError:"",
+  gyroCount:0,
+  events:[]
+};
+function guessProtocol(name){
+  const n=String(name||"").toLowerCase().replace(/\s+/g,"");
+  if(/carry2/.test(n))return "Gen3";
+  if(/gan14|gan12uimaglev/.test(n))return "Gen4";
+  if(/356i3|i3|gan356|icarry|miniui|monstergo|moyuai|gan12ui/.test(n))return "Gen2";
+  return "";
+}
+function pushDebug(ev){
+  try{
+    if(!ev)return;
+    if(ev.type==="GYRO"){cubeDebug.gyroCount++;return;}
+    const copy={};
+    Object.keys(ev).forEach(k=>{
+      const v=ev[k];
+      if(v==null||typeof v==="string"||typeof v==="number"||typeof v==="boolean")copy[k]=v;
+      else if(k==="state"&&v&&typeof v==="object")copy.state={CP:v.CP,CO:v.CO,EP:v.EP,EO:v.EO};
+      else copy[k]=typeof v==="object"?JSON.parse(JSON.stringify(v)):String(v);
+    });
+    cubeDebug.events.push(copy);
+    if(cubeDebug.events.length>20)cubeDebug.events.shift();
+  }catch(e){}
+}
+function debugText(v){
+  v=v||app.get()||{};
+  const reply=cubeDebug.faceletsReply?"yes (serial "+(cubeDebug.lastFaceletsSerial!=null?cubeDebug.lastFaceletsSerial:"?")+")":"NO — REQUEST_FACELETS got no FACELETS event";
+  const evs=(cubeDebug.events||[]).map(e=>{
+    try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
+  }).join("\n");
+  return [
+    "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
+    "hardware: "+(cubeDebug.hardwareName||v.deviceName||"—"),
+    "search: "+cubeDebug.searchStatus,
+    "3D setup method: "+(cubeDebug.setupMethod||twistyLog.setup||"—"),
+    "facelets request reply: "+reply,
+    "tracked facelets: "+(v.facelets||"—"),
+    "solved: "+!!v.solved,
+    "phase: "+v.phase,
+    "expected move: "+(v.fixup||v.current||"(none)")+(v.halfLabel?" "+v.halfLabel:""),
+    "path: "+(v.scrambleText||""),
+    "on path: "+!!v.onPath+"  k="+v.k+"/"+v.total+"  pathReady="+!!v.pathReady,
+    "gyro events ignored: "+cubeDebug.gyroCount,
+    "last error: "+(cubeDebug.lastError||twistyLog.lastError||"—"),
+    "last 20 events (GYRO omitted, too frequent):",
+    evs||"(none yet)"
+  ].join("\n");
+}
 
 function isIos(){
   const ua=navigator.userAgent||"";
@@ -64,10 +126,14 @@ async function loadCubing(){
     if(searchSolve&&kpuzzle&&KPatternCls){
       E.setSolveFromTo(solveFromToSearch);
       solveReady=true;
+      cubeDebug.searchStatus="loaded";
+    }else{
+      cubeDebug.searchStatus="loaded incomplete (puzzles or search missing)";
     }
   }catch(e){
     solveReady=false;
-    twistyLog.lastError=twistyLog.lastError||String(e&&e.message||e||"search import failed");
+    cubeDebug.searchStatus="failed: "+String(e&&e.message||e||"search import failed");
+    twistyLog.lastError=twistyLog.lastError||cubeDebug.searchStatus;
   }
   mountTwisty();
   const v=app.get();
@@ -100,35 +166,78 @@ async function solveFromToSearch(from,to){
   const alg=await searchSolve(patternFromCubies(rel));
   return algToMoves(alg);
 }
-function expectedFacelets(){return E.applyAlg(E.SOLVED,appliedAlg);}
-async function setupFromFacelets(f){
+function expectedFacelets(){return E.applyAlg(faceletsAnchor||E.SOLVED,appliedAlg);}
+function clearSetupTransformation(){
+  try{
+    const m=twisty&&twisty.experimentalModel&&twisty.experimentalModel.setupTransformation;
+    if(m&&typeof m.set==="function")m.set(null);
+  }catch(e){}
+}
+function setSetupTransformation(f,state){
+  if(!twisty||!kpuzzle||!KPatternCls)return false;
+  const c=(state&&state.CP&&state.CO&&state.EP&&state.EO)?{cp:state.CP,co:state.CO,ep:state.EP,eo:state.EO}:E.cubiesFromFacelets(f);
+  if(!c)return false;
+  const pat=patternFromCubies(c);
+  if(!pat)return false;
+  let tr=null;
+  try{tr=pat.experimentalToTransformation&&pat.experimentalToTransformation();}catch(e){tr=null;}
+  const model=twisty.experimentalModel;
+  if(!tr||!model||!model.setupTransformation||typeof model.setupTransformation.set!=="function")return false;
+  model.setupTransformation.set(tr);
+  try{twisty.experimentalSetupAlg="";}catch(e){}
+  try{twisty.alg="";}catch(e){}
+  faceletsAnchor=f;
+  appliedAlg=[];
+  twistyLog.setup="transformation:"+f;
+  twistyLog.faceletsSynced=true;
+  cubeDebug.setupMethod="setupTransformation (no solver)";
+  return true;
+}
+async function setupFromFacelets(f,state){
   f=f||(app.get()&&app.get().facelets)||E.SOLVED;
   if(!f||f.length!==54)return;
   const token=++setupToken;
-  twistyLog.faceletsSynced=E.isSolved(f)?true:false;
-  if(E.isSolved(f)){snapSetup("");twistyLog.faceletsSynced=true;return;}
-  const short=E.solveFromToSync(f,E.SOLVED,4);
-  if(short){
-    snapSetup(E.fmtAlg(E.invertAlg(short)));
-    twistyLog.faceletsSynced=expectedFacelets()===f;
-    return;
-  }
-  if(!searchSolve||!kpuzzle||!KPatternCls)return;
   try{
+    if(E.isSolved(f)){
+      clearSetupTransformation();
+      faceletsAnchor=E.SOLVED;snapSetup("");
+      twistyLog.faceletsSynced=true;
+      cubeDebug.setupMethod="solved";
+      return;
+    }
+    if(setSetupTransformation(f,state))return;
+    const short=E.solveFromToSync(f,E.SOLVED,4);
+    if(short){
+      faceletsAnchor=E.SOLVED;
+      snapSetup(E.fmtAlg(E.invertAlg(short)));
+      twistyLog.faceletsSynced=expectedFacelets()===f;
+      cubeDebug.setupMethod="short BFS setupAlg";
+      return;
+    }
+    if(!searchSolve||!kpuzzle||!KPatternCls){
+      cubeDebug.setupMethod="pending (no pattern API, search not ready)";
+      return;
+    }
     const alg=await searchSolve(patternFromFacelets(f));
     if(token!==setupToken)return;
     let setup="";
     if(alg&&typeof alg.invert==="function")setup=String(alg.invert());
     else if(alg)setup=E.fmtAlg(E.invertAlg(String(alg)));
+    faceletsAnchor=E.SOLVED;
     snapSetup(setup);
     twistyLog.faceletsSynced=expectedFacelets()===f;
+    cubeDebug.setupMethod="cubing.js search setupAlg";
   }catch(e){
-    twistyLog.lastError=String(e&&e.message||e||"setup from facelets failed");
+    const msg=String(e&&e.message||e||"setup from facelets failed");
+    twistyLog.lastError=msg;cubeDebug.lastError=msg;
+    cubeDebug.setupMethod="failed: "+msg;
   }
 }
 async function requestFacelets(){
   if(!conn||typeof conn.sendCubeCommand!=="function")return;
-  try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
+  cubeDebug.faceletsRequestedAt=Date.now();
+  pushDebug({type:"COMMAND",command:"REQUEST_FACELETS",at:cubeDebug.faceletsRequestedAt});
+  try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){cubeDebug.lastError=String(e&&e.message||e||"REQUEST_FACELETS failed");}
 }
 async function nextScramble(alg){
   if(alg)return app.setScramble(alg);
@@ -200,6 +309,7 @@ function remountTwisty(){
 function snapSetup(alg){
   const moves=E.parseAlg(alg||"");
   appliedAlg=moves.slice();
+  if(!alg)faceletsAnchor=E.SOLVED;
   const s=moves.join(" ");
   twistyLog.setup=s;
   if(!twisty)return;
@@ -210,16 +320,13 @@ function liveMove(m){
   m=E.normalizeMove(m);
   if(!m)return;
   twistyLog.moves.push(m);
-  if(!twisty){appliedAlg.push(m);return;}
-  try{
-    twisty.experimentalSetupAlg=appliedAlg.join(" ");
-    twisty.alg="";
-  }catch(e){}
+  appliedAlg.push(m);
+  if(!twisty)return;
+  /* Do not reset experimentalSetupAlg to "all moves from solved" — that wipes a FACELETS setupTransformation and forces a solved-looking cube. */
   try{
     if(typeof twisty.experimentalAddMove==="function")twisty.experimentalAddMove(m);
     else if(typeof twisty.experimentalAddAlgLeaf==="function")twisty.experimentalAddAlgLeaf(m,{cancel:false});
-  }catch(e){}
-  appliedAlg.push(m);
+  }catch(e){cubeDebug.lastError=String(e&&e.message||e||"experimentalAddMove failed");}
 }
 function onScrambleChanged(){
   twistyLog.moves=[];
@@ -237,16 +344,22 @@ function syncAfterMount(){
 function hookApp(){
   const rawMove=app.onMove.bind(app);
   app.onMove=function(evt){
-    const r=rawMove(evt);
-    const m=E.normalizeMove(evt&&(evt.move||evt));
-    if(m)liveMove(m);
-    return r;
+    try{
+      const r=rawMove(evt);
+      const m=E.normalizeMove(evt&&(evt.move||evt));
+      if(m)liveMove(m);
+      return r;
+    }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onMove");}
   };
   const rawFace=app.onFacelets.bind(app);
-  app.onFacelets=function(f){
-    const r=rawFace(f);
-    if(f&&f.length===54&&f!==expectedFacelets())setupFromFacelets(f);
-    return r;
+  app.onFacelets=function(f,state){
+    try{
+      const face=(f&&typeof f==="object"&&f.facelets)?f.facelets:f;
+      const st=(f&&typeof f==="object"&&f.state)?f.state:state;
+      const r=rawFace(face,st);
+      if(face&&face.length===54&&face!==expectedFacelets())setupFromFacelets(face,st);
+      return r;
+    }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onFacelets");}
   };
   const rawSet=app.setScramble.bind(app);
   app.setScramble=function(alg){
@@ -264,6 +377,8 @@ function hookApp(){
   app.resetToSolved=function(){
     const r=rawReset();
     twistyLog.moves=[];
+    clearSetupTransformation();
+    faceletsAnchor=E.SOLVED;
     snapSetup("");
     return r;
   };
@@ -272,6 +387,8 @@ function hookApp(){
     app.markSolved=function(){
       const r=rawMark();
       twistyLog.moves=[];
+      clearSetupTransformation();
+      faceletsAnchor=E.SOLVED;
       snapSetup("");
       return r;
     };
@@ -293,7 +410,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets()};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:on=>{showDebug=!!on;},feedGanEvent:onGanEvent};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -357,6 +474,9 @@ async function connectCube(){
     const mac=E.validMac(conn.deviceMAC);
     if(mac)app.setMac(mac);
     app.setConnected(true,{name,mac:mac||"",battery:null});
+    cubeDebug.protocol=guessProtocol(name)||"Gen2";
+    cubeDebug.hardwareName=name;
+    cubeDebug.faceletsReply=false;
     unsub=conn.events$.subscribe(onGanEvent);
     try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
     try{await conn.sendCubeCommand({type:"REQUEST_BATTERY"});}catch(e){}
@@ -379,18 +499,36 @@ async function disconnectCube(){
   $("#connectBtn").textContent="Connect cube";
 }
 function onGanEvent(ev){
-  if(!ev||!ev.type)return;
-  if(ev.type==="MOVE"){
-    app.onMove({move:ev.move,localTimestamp:ev.localTimestamp,cubeTimestamp:ev.cubeTimestamp,facelets:null});
-  }else if(ev.type==="FACELETS"){
-    app.onFacelets(ev.facelets);
-  }else if(ev.type==="BATTERY"){
-    app.setBattery(ev.batteryLevel);
-  }else if(ev.type==="HARDWARE"){
-    /* name already set; nothing required */
-  }else if(ev.type==="DISCONNECT"){
-    conn=null;app.setConnected(false);
-    $("#connectBtn").textContent="Connect cube";
+  try{
+    pushDebug(ev);
+    if(!ev||!ev.type)return;
+    if(ev.type==="MOVE"){
+      app.onMove({
+        move:ev.move,
+        face:ev.face,
+        direction:ev.direction,
+        localTimestamp:ev.localTimestamp,
+        cubeTimestamp:ev.cubeTimestamp,
+        serial:ev.serial,
+        timestamp:ev.timestamp
+      });
+    }else if(ev.type==="FACELETS"){
+      cubeDebug.faceletsReply=true;
+      cubeDebug.faceletsReceivedAt=Date.now();
+      cubeDebug.lastFacelets=ev.facelets||"";
+      cubeDebug.lastFaceletsSerial=ev.serial;
+      app.onFacelets(ev.facelets,ev.state);
+    }else if(ev.type==="BATTERY"){
+      app.setBattery(ev.batteryLevel);
+    }else if(ev.type==="HARDWARE"){
+      cubeDebug.hardwareName=ev.hardwareName||cubeDebug.hardwareName;
+      if(!cubeDebug.protocol)cubeDebug.protocol=guessProtocol(ev.hardwareName||(app.get()&&app.get().deviceName));
+    }else if(ev.type==="DISCONNECT"){
+      conn=null;app.setConnected(false);
+      $("#connectBtn").textContent="Connect cube";
+    }
+  }catch(e){
+    cubeDebug.lastError=String(e&&e.message||e||"onGanEvent");
   }
 }
 async function doReset(){
@@ -440,7 +578,7 @@ function timerText(v){
 }
 function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
-  if(v.phase==="needSolved")return "Follow the scramble on the screen — it starts from how your cube is now. If the picture is wrong, tap Re-sync. If the real cube is solved, tap My cube is solved.";
+  if(v.phase==="needSolved")return "The cube isn't solved yet, so I can't start this scramble. Finish solving it (or if it already looks solved, tap My cube is solved). Then I'll tick off each turn as you go.";
   if(v.phase==="scrambling"){
     if(!v.pathReady)return "Working out the scramble from how your cube is now…";
     if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
@@ -583,6 +721,11 @@ function render(v){
   const cele=$("#cele");
   show(cele,v.celebration==="pb");
   if(v.celebration==="pb")setText("#celeText","New personal best! "+(st.pb?st.pb.text:""));
+  const dbg=$("#cubeDebug");
+  if(dbg){
+    dbg.classList.toggle("hidden",!showDebug);
+    if(showDebug)dbg.textContent=debugText(v);
+  }
 }
 
 function onAppView(v){
@@ -610,6 +753,8 @@ function bind(){
   $("#optMode").addEventListener("change",e=>app.setSetting("splitsMode",e.target.value));
   const netCb=$("#optShowNet");
   if(netCb)netCb.addEventListener("change",e=>setShowNet(e.target.checked));
+  const dbgCb=$("#optShowDebug");
+  if(dbgCb)dbgCb.addEventListener("change",e=>{showDebug=!!e.target.checked;const box=$("#cubeDebug");if(box){box.classList.toggle("hidden",!showDebug);if(showDebug)box.textContent=debugText(app.get());}});
   $("#sessionBox").addEventListener("click",e=>{
     if(e.target.id==="startLessonBtn"){app.startLesson();nextScramble();}
     if(e.target.id==="skipPhaseBtn"){app.skipLessonPhase();nextScramble();}
