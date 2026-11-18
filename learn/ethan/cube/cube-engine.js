@@ -159,6 +159,24 @@ function cubiesEqual(a,b){
   if(!a||!b)return false;
   return a.cp.join()===b.cp.join()&&a.co.join()===b.co.join()&&a.ep.join()===b.ep.join()&&a.eo.join()===b.eo.join();
 }
+function faceletsFromCubies(c){
+  if(!c||!c.cp||!c.ep)return null;
+  const f=SOLVED.split("");
+  for(let i=0;i<8;i++){
+    const home=CORNER_COLORS[c.cp[i]],ori=c.co[i]||0;
+    const slots=CORNER_FACELETS[i];
+    for(let k=0;k<3;k++)f[slots[k]]=home[(k-ori+3)%3];
+  }
+  for(let i=0;i<12;i++){
+    const home=EDGE_COLORS[c.ep[i]],ori=c.eo[i]?1:0;
+    const slots=EDGE_FACELETS[i];
+    f[slots[0]]=home[ori];
+    f[slots[1]]=home[1-ori];
+  }
+  return f.join("");
+}
+function solvedCubies(){return cubiesFromFacelets(SOLVED);}
+
 /* cubing.js 3x3 orbit order is not Kociemba/GAN order. Cubing U-corners run URF,UBR,ULB,UFL (swap Kociemba 1/3);
    U/D edges are swapped in pairs (UR/UF, UB/UL, DR/DF, DB/DL) and BR/BL are swapped; FR/FL stay. */
 const C2K_CORNER=[0,3,2,1,4,5,6,7];
@@ -537,28 +555,43 @@ function weakestStage(solves,mode){
   return {id:weak,avg:worst>=0?worst:null,label:STAGE_LABEL[weak],kid:STAGE_KID[weak],counts:acc};
 }
 const DRILL_REPS=5;
-const DRILL_LABEL={cross:"cross",f2l:"first two layers",lastLayer:"last layer"};
+const DRILL_LABEL={cross:"cross",crossPlan:"plan the cross",f2l:"first two layers",lastLayer:"last layer",lookahead:"look ahead",metronome:"look ahead",fingerTricks:"finger tricks"};
 const DRILL_MOVES={cross:8,f2l:20,lastLayer:15};
 function drillBucket(id){
-  if(id==="cross")return "cross";
-  if(id==="f2l"||id==="firstLayer"||id==="secondLayer")return "f2l";
+  if(id==="cross"||id==="crossPlan")return id;
+  if(id==="lookahead"||id==="metronome"||id==="fingerTricks")return id;
+  if(id==="firstLayer"||id==="secondLayer")return "f2l";
+  if(id==="f2l")return "f2l";
   return "lastLayer";
 }
 function pickDrillStage(solves,mode){
+  const recs=(solves||[]).filter(s=>s&&s.analysis);
+  if(recs.length){
+    const last=recs[recs.length-1];
+    if(last.analysis&&last.analysis.weakness&&last.analysis.weakness.type)return last.analysis.weakness.type;
+  }
   const w=weakestStage(solves,mode);
   return drillBucket(w&&w.id);
 }
 function drillGoalReached(f,stage){
   const flags=stageFlags(f||SOLVED);
-  if(stage==="cross")return !!flags.cross;
-  if(stage==="f2l")return !!flags.f2l;
+  const raw=stage;
+  stage=drillBucket(stage);
+  if(raw==="crossPlan"||stage==="cross"||stage==="crossPlan")return !!flags.cross;
+  if(stage==="f2l"||stage==="lookahead"||stage==="metronome")return !!flags.f2l;
+  if(stage==="fingerTricks")return !!(flags.solved||flags.lastLayer);
   return !!(flags.solved||flags.lastLayer);
 }
-function drillExplain(stage){
+function drillExplain(stage,reason){
+  const raw=stage;
   stage=drillBucket(stage);
-  if(stage==="cross")return "Drill: white cross. I'll watch the cube and give you a tip. Make the white cross on top, lined up with the side centres. 5 reps.";
-  if(stage==="f2l")return "Drill: first two layers. After the scramble, put each white corner with its matching edge into the right slot. I'll tell you when the first two layers are done. 5 reps.";
-  return "Drill: last layer. Scramble (first two layers stay solved), then I'll coach you step by step through the last layer. 5 reps.";
+  const why=reason?(" "+reason):"";
+  if(raw==="crossPlan"||stage==="crossPlan")return "Drill: plan the cross in inspection. You get 15 seconds to look. Then I'll hide the 3D cube and you do the white cross from memory. Aim for a short path."+why+" 5 reps.";
+  if(stage==="cross")return "Drill: white cross. I'll watch the cube and give you a tip. Make the white cross on top, lined up with the side centres."+why+" 5 reps.";
+  if(stage==="lookahead"||stage==="metronome")return "Drill: look ahead (slow turning). Turn steadily with the metronome and try not to pause. Watch the next pair while you finish this one."+why+" 5 reps.";
+  if(stage==="fingerTricks")return "Drill: clean turning and finger tricks. Use the algorithm player, then do the moves smoothly with no cancelled turns."+why+" 5 reps.";
+  if(stage==="f2l")return "Drill: first two layers. After the scramble, put each white corner with its matching edge into the right slot. I'll tell you when the first two layers are done."+why+" 5 reps.";
+  return "Drill: last layer. Scramble (first two layers stay solved), then I'll coach you step by step through the last layer."+why+" 5 reps.";
 }
 /* Rotate the cube 180° around the R–L axis so we can reuse standard U-layer last-layer algs, then flip back (our cross lives on U, last layer on D). */
 function faceletsX2(f){
@@ -930,6 +963,17 @@ function detect4LookLL(facelets){
 }
 function detectStageCoach(facelets,goal){
   const flags=stageFlags(facelets||SOLVED);
+  if(goal==="crossPlan")goal="cross";
+  if(goal==="lookahead"||goal==="metronome"){
+    return packCoachStep({
+      kind:"lookahead",method:"tips",stage:"f2l",caseId:flags.f2l?"f2l-done":"lookahead",
+      title:"Look ahead",
+      caseName:flags.f2l?"The first two layers are done!":"Solve the first two layers slowly and smoothly.",
+      hold:0,holdText:"White centre on top. Turn at a steady pace — no bursts.",
+      alg:"",tip:"Keep turning slowly enough that you can already see the next corner or edge before you finish this one. If you freeze, that's a pause to practise away.",
+      done:!!flags.f2l
+    });
+  }
   if(goal==="cross"){
     return packCoachStep({
       kind:"cross",method:"tips",stage:"cross",caseId:flags.cross?"cross-done":"cross",
@@ -1028,9 +1072,11 @@ function lastLayerScramble(){
   return mapAlgX2(pick(LL_ALGS));
 }
 function randomDrillScramble(stage){
+  const raw=stage;
   stage=drillBucket(stage);
-  if(stage==="cross")return randomMoveScramble(null,8);
-  if(stage==="f2l")return randomMoveScramble(null,12);
+  if(raw==="crossPlan"||stage==="cross"||stage==="crossPlan")return randomMoveScramble(null,8);
+  if(stage==="f2l"||stage==="lookahead"||stage==="metronome")return randomMoveScramble(null,12);
+  if(stage==="fingerTricks")return lastLayerScramble();
   return lastLayerScramble();
 }
 
@@ -1053,6 +1099,556 @@ function streakFromDays(days,today){
   return n;
 }
 function tps(moves,ms){if(!ms||ms<=0||!moves)return 0;return Math.round(1000*moves/ms*100)/100;}
+
+/* v12 helpers: analysis, alg player, videos, sync, calibration, written feedback */
+
+const PAUSE_GAP_MS=600;
+const LBL_TARGET={cross:8000,fl:10000,sl:12000,ll:10000,total:40000};
+const CFOP_TARGET={cross:6000,f2l:16000,ll:8000,total:30000};
+
+const DRILL_VIDEOS={
+  lookahead:{
+    id:"ZhUuDwX1Bhk",title:"How to start practicing Look-Ahead",channel:"TheCubicle",
+    url:"https://www.youtube.com/watch?v=ZhUuDwX1Bhk",start:0,drills:["lookahead","metronome"]
+  },
+  lookaheadPlus:{
+    id:"za9RvM1bS0k",title:"A Faster F2L Look Ahead Technique (CFOP)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=za9RvM1bS0k",start:0,drills:["lookahead"]
+  },
+  crossPlan:{
+    id:"IWXpkfwimo0",title:"Rubik's Cube: 7 Tips For An Efficient Cross Every Solve (CFOP)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=IWXpkfwimo0",start:0,drills:["crossPlan","cross"]
+  },
+  crossSkills:{
+    id:"Q132-oLj1nA",title:"Intermediate Cross - Techniques",channel:"CubeSkills",
+    url:"https://www.youtube.com/watch?v=Q132-oLj1nA",start:0,drills:["crossPlan","cross"]
+  },
+  fingerTricks:{
+    id:"wLuVF9Dk3AQ",title:"Rubik's Cube: Finger Tricks Tutorial (Beginner to Advanced)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=wLuVF9Dk3AQ",start:0,drills:["fingerTricks"]
+  },
+  beginner:{
+    id:"7Ron6MN45LY",title:"Learn How to Solve a Rubik's Cube in 10 Minutes (Beginner Tutorial)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=7Ron6MN45LY",start:0,drills:["firstLayer","secondLayer","lastLayer","beginner"]
+  },
+  f2l:{
+    id:"Ar_Zit1VLG0",title:"Learn F2L in 6 minutes (Full Intuitive F2L Tutorial)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=Ar_Zit1VLG0",start:0,drills:["f2l"]
+  },
+  oll2look:{
+    id:"GhmYBgLoQQg",title:"Rubik's Cube: Easy 2-Look OLL Tutorial (Beginner CFOP)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=GhmYBgLoQQg",start:0,drills:["lastLayer","oll"]
+  },
+  pll2look:{
+    id:"f_Yor-ydZjs",title:"Rubik's Cube: Easy 2-Look PLL Tutorial (Beginner CFOP)",channel:"J Perm",
+    url:"https://www.youtube.com/watch?v=f_Yor-ydZjs",start:0,drills:["lastLayer","pll"]
+  }
+};
+
+function videosForDrill(type){
+  const t=String(type||"");
+  const out=[];
+  const seen={};
+  Object.keys(DRILL_VIDEOS).forEach(k=>{
+    const v=DRILL_VIDEOS[k];
+    if((v.drills||[]).indexOf(t)>=0 && !seen[v.id]){seen[v.id]=1;out.push(Object.assign({key:k},v));}
+  });
+  if(!out.length && (t==="warmup"||t==="ao5"||!t)){
+    out.push(Object.assign({key:"beginner"},DRILL_VIDEOS.beginner));
+  }
+  return out;
+}
+
+function invertAlgStr(alg){return fmtAlg(invertAlg(typeof alg==="string"?parseAlg(alg):alg||[]));}
+
+function createAlgPlayer(opts){
+  opts=opts||{};
+  let moves=parseAlg(opts.alg||"");
+  let setupAlg=opts.setupAlg!=null?String(opts.setupAlg):invertAlgStr(moves);
+  let i=0, playing=false, loop=!!opts.loop, speed=Number(opts.speed)>0?Number(opts.speed):1;
+  let mode=opts.mode||"demo";
+  let watched=false, hideStrip=false, hintAfter=opts.hintAfterMs!=null?opts.hintAfterMs:3000;
+  let lastLiveAt=0, hinted=false;
+  const listeners=[];
+  function emit(){const v=get();for(let k=0;k<listeners.length;k++){try{listeners[k](v);}catch(e){}}}
+  function get(){
+    return {
+      moves:moves.slice(),
+      i,
+      current:i<moves.length?moves[i]:"",
+      prev:i>0?moves[i-1]:"",
+      playing,loop,speed,
+      setupAlg,alg:fmtAlg(moves),
+      atStart:i===0,
+      atEnd:i>=moves.length,
+      mode,watched,
+      hideStrip:mode==="memorise"&&watched&&hideStrip,
+      hintMove:(mode==="memorise"&&hinted)?(moves[i]||""):"",
+      hintAfterMs:hintAfter,
+      total:moves.length
+    };
+  }
+  function load(next){
+    next=next||{};
+    moves=parseAlg(next.alg||"");
+    setupAlg=next.setupAlg!=null?String(next.setupAlg):invertAlgStr(moves);
+    i=0;playing=false;loop=!!next.loop;speed=Number(next.speed)>0?Number(next.speed):speed||1;
+    mode=next.mode||"demo";watched=false;hideStrip=false;hinted=false;lastLiveAt=0;
+    emit();
+    return get();
+  }
+  function play(){if(i>=moves.length)i=0;playing=true;hinted=false;emit();return get();}
+  function pause(){playing=false;emit();return get();}
+  function setSpeed(s){const n=Number(s);if(n>0)speed=n;emit();return get();}
+  function stepForward(){if(i<moves.length)i++;playing=false;if(i>=moves.length)watched=true;hinted=false;emit();return get();}
+  function stepBack(){if(i>0)i--;playing=false;hinted=false;emit();return get();}
+  function restart(){i=0;playing=false;hinted=false;emit();return get();}
+  function setLoop(on){loop=!!on;emit();return get();}
+  function jumpTo(k){i=Math.max(0,Math.min(moves.length,k|0));playing=false;if(i>=moves.length)watched=true;hinted=false;emit();return get();}
+  function tickPlay(advance){
+    if(!playing)return get();
+    if(advance){
+      if(i<moves.length)i++;
+      if(i>=moves.length){
+        watched=true;
+        if(loop)i=0;
+        else playing=false;
+      }
+      emit();
+    }
+    return get();
+  }
+  function yourTurn(){playing=false;mode="live";hideStrip=false;hinted=false;lastLiveAt=Date.now();emit();return get();}
+  function memorise(){playing=false;mode="memorise";hideStrip=true;watched=true;i=0;hinted=false;lastLiveAt=Date.now();emit();return get();}
+  function noteLiveMove(){lastLiveAt=Date.now();hinted=false;return get();}
+  function checkMemoriseHint(now){
+    if(mode!=="memorise"||!hideStrip)return get();
+    const t=now!=null?now:Date.now();
+    if(lastLiveAt && t-lastLiveAt>=hintAfter && !hinted){hinted=true;emit();}
+    return get();
+  }
+  function on(fn){if(typeof fn==="function")listeners.push(fn);return function(){const x=listeners.indexOf(fn);if(x>=0)listeners.splice(x,1);};}
+  return {load,play,pause,setSpeed,stepForward,stepBack,restart,setLoop,jumpTo,tickPlay,yourTurn,memorise,noteLiveMove,checkMemoriseHint,get,on,invertAlgStr:function(){return setupAlg;}};
+}
+
+function isCancelPair(a,b){
+  if(!a||!b)return false;
+  const fa=a[0],fb=b[0];
+  if(fa!==fb)return false;
+  const sa=a.length>1?a.slice(1):"",sb=b.length>1?b.slice(1):"";
+  return (sa===""&&sb==="'")||(sa==="'"&&sb==="")||(sa==="2"&&sb==="2");
+}
+
+function wastedFromMoves(moves){
+  const m=moves||[];
+  let cancel=0,uRuns=0,rot=0,i=0;
+  while(i<m.length){
+    if(i+1<m.length && isCancelPair(m[i],m[i+1])){cancel++;i+=2;continue;}
+    const face=m[i][0];
+    if(face==="x"||face==="y"||face==="z"){rot++;i++;continue;}
+    if(face==="U"||face==="u"){
+      let run=0,j=i;
+      while(j<m.length && (m[j][0]==="U"||m[j][0]==="u")){run++;j++;}
+      if(run>3)uRuns++;
+      i=j;continue;
+    }
+    i++;
+  }
+  return {cancel,uRuns,rotations:rot};
+}
+
+function pauseSpans(moves,gapMs){
+  gapMs=gapMs==null?PAUSE_GAP_MS:gapMs;
+  const out=[];
+  for(let i=1;i<moves.length;i++){
+    const a=moves[i-1].t,b=moves[i].t;
+    if(a==null||b==null)continue;
+    const d=b-a;
+    if(d>gapMs)out.push({from:i-1,to:i,ms:d,after:moves[i-1].m,before:moves[i].m});
+  }
+  return out;
+}
+
+const CROSS_MOVES=["U","U'","U2","D","D'","D2","L","L'","L2","R","R'","R2","F","F'","F2","B","B'","B2"];
+function crossPiecesKey(f){
+  const c=cubiesFromFacelets(f);
+  if(!c)return null;
+  let key=0;
+  for(let p=0;p<4;p++){
+    let pos=-1;
+    for(let i=0;i<12;i++)if(c.ep[i]===p){pos=i;break;}
+    if(pos<0)return null;
+    key=key*24+(pos*2+(c.eo[pos]&1));
+  }
+  return key;
+}
+function whiteCrossSolved(f){
+  if(!f)return false;
+  const c=cubiesFromFacelets(f);if(!c)return false;
+  return c.ep[0]===0&&c.ep[1]===1&&c.ep[2]===2&&c.ep[3]===3&&!c.eo[0]&&!c.eo[1]&&!c.eo[2]&&!c.eo[3];
+}
+function optimalCross(facelets){
+  if(!facelets)return {moves:[],len:0,found:false};
+  if(whiteCrossSolved(facelets))return {moves:[],len:0,found:true};
+  const startKey=crossPiecesKey(facelets);
+  if(startKey==null)return {moves:[],len:-1,found:false};
+  const dist=Object.create(null);
+  const prev=Object.create(null);
+  dist[startKey]=0;
+  const q=[facelets];
+  let qi=0;
+  const MAX=8;
+  while(qi<q.length){
+    const f=q[qi++];
+    const k=crossPiecesKey(f);
+    const d=dist[k];
+    if(d>=MAX)continue;
+    for(let i=0;i<CROSS_MOVES.length;i++){
+      const mv=CROSS_MOVES[i];
+      const nf=applyMove(f,mv);
+      const nk=crossPiecesKey(nf);
+      if(nk==null||dist[nk]!=null)continue;
+      dist[nk]=d+1;
+      prev[nk]={k,mv};
+      if(whiteCrossSolved(nf)){
+        const sol=[];
+        let x=nk;
+        while(x!==startKey){
+          const p=prev[x];
+          if(!p)break;
+          sol.push(p.mv);
+          x=p.k;
+        }
+        sol.reverse();
+        return {moves:sol,len:sol.length,found:true};
+      }
+      q.push(nf);
+    }
+  }
+  return {moves:[],len:-1,found:false};
+}
+
+function classifyStageAt(facelets,method){
+  if(!facelets)return "unknown";
+  if(isSolved(facelets))return "solved";
+  if(!whiteCrossSolved(facelets))return "cross";
+  if(method==="cfop"){
+    if(!f2lSolved(facelets))return "f2l";
+    return "ll";
+  }
+  if(!firstLayerSolved(facelets))return "fl";
+  if(!secondLayerSolved(facelets))return "sl";
+  return "ll";
+}
+
+function firstLayerSolved(f){
+  if(!f)return false;
+  if(!whiteCrossSolved(f))return false;
+  const c=cubiesFromFacelets(f);if(!c)return false;
+  for(let i=0;i<4;i++)if(c.cp[i]!==i||(c.co[i]&3))return false;
+  return true;
+}
+function secondLayerSolved(f){
+  if(!firstLayerSolved(f))return false;
+  const c=cubiesFromFacelets(f);if(!c)return false;
+  for(let i=4;i<8;i++)if(c.ep[i]!==i||c.eo[i])return false;
+  return true;
+}
+function f2lSolved(f){return secondLayerSolved(f);}
+
+function splitSolveStages(startFacelets,moves,method,totalMs){
+  method=method==="cfop"?"cfop":"lbl";
+  const stamped=(moves||[]).map((m,i)=>typeof m==="string"?{m,t:null,i}:{m:m.m||m.move,t:m.t,i});
+  let f=startFacelets||SOLVED;
+  const ev=[{t:0,f,stage:classifyStageAt(f,method),i:-1}];
+  for(let i=0;i<stamped.length;i++){
+    const mv=stamped[i].m;
+    if(!mv)continue;
+    f=applyMove(f,mv);
+    ev.push({t:stamped[i].t,f,stage:classifyStageAt(f,method),i,m:mv});
+  }
+  const names=method==="cfop"?["cross","f2l","ll"]:["cross","fl","sl","ll"];
+  const stages=[];
+  let cur=ev[0].stage, startMove=0, startT=0, startF=ev[0].f;
+  function close(endEv,name,endMoveExclusive){
+    if(names.indexOf(name)<0)return;
+    const endT=endEv.t!=null?endEv.t:(totalMs||0);
+    const dur=Math.max(0,(endT||0)-(startT||0));
+    const slice=stamped.slice(startMove,endMoveExclusive).filter(x=>x&&x.m);
+    const pauses=pauseSpans(slice);
+    const rec={
+      name,ms:dur,moves:slice.length,tps:tps(slice.length,dur),
+      pauseMs:pauses.reduce((s,p)=>s+p.ms,0),
+      pauses:pauses.length,
+      longestPause:pauses.reduce((m,p)=>Math.max(m,p.ms),0),
+      waste:wastedFromMoves(slice.map(x=>x.m)),
+      startFacelets:startF
+    };
+    if(name==="cross"){
+      const opt=optimalCross(startF);
+      rec.optimal=opt.len;
+      rec.foundOptimal=opt.found;
+      rec.extra=opt.found?Math.max(0,slice.length-opt.len):0;
+      rec.optimalAlg=fmtAlg(opt.moves||[]);
+    }
+    stages.push(rec);
+  }
+  for(let i=1;i<ev.length;i++){
+    if(ev[i].stage!==cur){
+      close(ev[i],cur,ev[i].i+1);
+      cur=ev[i].stage;
+      startMove=ev[i].i+1;
+      startT=ev[i].t!=null?ev[i].t:startT;
+      startF=ev[i].f;
+    }
+  }
+  const last=ev[ev.length-1];
+  if(cur && cur!=="solved")close({t:totalMs!=null?totalMs:last.t},cur,stamped.length);
+  const allPauses=pauseSpans(stamped);
+  return {method,stages,pauses:allPauses,endFacelets:f,events:ev};
+}
+
+function biggestTimeLoss(analysis){
+  const a=analysis||{};
+  const candidates=[];
+  (a.pauses||[]).forEach(p=>{
+    candidates.push({kind:"pause",ms:p.ms,label:"a pause",detail:p,stage:p.stage||""});
+  });
+  (a.stages||[]).forEach(s=>{
+    const tgt=(a.targets||{})[s.name];
+    if(tgt!=null && s.ms>tgt){
+      candidates.push({kind:"slow-stage",ms:s.ms-tgt,label:s.name+" was slower than the target",stage:s.name,detail:s});
+    }
+    if(s.waste && s.waste.cancel){
+      candidates.push({kind:"cancel",ms:Math.min(800,s.waste.cancel*400),label:"cancelled moves (R then R')",stage:s.name,detail:s});
+    }
+    if(s.name==="cross" && s.extra>0){
+      candidates.push({kind:"cross-extra",ms:s.extra*400,label:"extra cross moves",stage:"cross",detail:s});
+    }
+    if(s.longestPause>PAUSE_GAP_MS){
+      candidates.push({kind:"stage-pause",ms:s.longestPause,label:"a pause in "+s.name,stage:s.name,detail:s});
+    }
+  });
+  candidates.sort((x,y)=>y.ms-x.ms);
+  return candidates[0]||null;
+}
+
+function tipForLoss(loss,analysis){
+  const k=loss&&loss.kind;
+  const why={
+    pause:{
+      tip:"Try turning slowly enough that you can already see the next piece before you finish this one.",
+      why:"This is look-ahead: slow, smooth turns beat stop-and-start bursts, because your eyes get a head start on the next step."
+    },
+    "stage-pause":{
+      tip:"When you reach that step, look first, then turn. If you freeze, take a breath and name the case out loud.",
+      why:"Recognition and turning are two different skills. Practising them apart (look, then go) shrinks the pause."
+    },
+    "slow-stage":{
+      tip:"Do a short drill just for that step, and aim to beat today's time by a little.",
+      why:"Deliberate practice on one weak step improves your average faster than doing more full solves."
+    },
+    cancel:{
+      tip:"Watch for turns that undo the one you just did. Pause a beat before you turn if you are not sure.",
+      why:"Cancelled moves add lockups and waste time. Cleaner turning (and finger tricks) removes them."
+    },
+    "cross-extra":{
+      tip:"In inspection, plan the whole white cross before you start, and try to stay close to the shortest path.",
+      why:"World-class solvers plan the cross in inspection so the solve starts without a search."
+    }
+  };
+  return why[k]||{
+    tip:"Do one focused drill for your slowest step, then come back to full solves.",
+    why:"Your average comes from your weakest step. Fixing that step first is how deliberate practice works."
+  };
+}
+
+function stageLabelKid(name){
+  return ({cross:"cross",fl:"first-layer corners",sl:"second layer",f2l:"first two layers",ll:"last layer",solved:"solved"})[name]||name||"that step";
+}
+
+function writtenFeedback(analysis,ctx){
+  ctx=ctx||{};
+  const a=analysis||{};
+  const sentences=[];
+  const timeSec=((a.timeMs||0)/1000).toFixed(1);
+  const moves=a.moveCount||0;
+  const t=a.tps!=null?a.tps.toFixed(1):"0.0";
+  sentences.push("That solve was "+timeSec+"s with "+moves+" moves ("+t+" turns per second).");
+  const loss=a.biggestLoss;
+  if(loss){
+    const sec=(loss.ms/1000).toFixed(1);
+    if(loss.kind==="pause"||loss.kind==="stage-pause"){
+      sentences.push("The biggest time loss was a "+sec+"s pause"+(loss.stage?" during your "+stageLabelKid(loss.stage):"")+".");
+    }else if(loss.kind==="cross-extra"){
+      const s=(a.stages||[]).filter(x=>x.name==="cross")[0];
+      sentences.push("The biggest time loss was the cross: you used "+(s&&s.moves)+" moves, and a shorter path is "+(s&&s.optimal)+". That's about "+sec+"s you can get back.");
+    }else if(loss.kind==="cancel"){
+      sentences.push("The biggest time loss was extra cancelled turns — about "+sec+"s of going back on yourself.");
+    }else{
+      sentences.push("The biggest time loss was your "+stageLabelKid(loss.stage||"slow step")+" — about "+sec+"s over the target.");
+    }
+    const tip=a.tip||tipForLoss(loss,a);
+    sentences.push((tip&&tip.tip)||"Practise that step on its own next.");
+  }else{
+    sentences.push("Nice and steady — no big pauses or wasted turns stood out.");
+    sentences.push("Keep this rhythm and the average will keep falling.");
+  }
+  if(ctx.sessionLine)sentences.push(ctx.sessionLine);
+  return sentences.slice(0,4).join(" ");
+}
+
+function analyzeSolve(opts){
+  opts=opts||{};
+  const method=opts.method==="cfop"?"cfop":"lbl";
+  const timeMs=opts.timeMs||0;
+  const stamped=(opts.moves||[]).map((m,i)=>{
+    if(typeof m==="string")return {m,t:null,i};
+    return {m:m.m||m.move||"",t:m.t,i};
+  });
+  const moveCount=stamped.filter(x=>x.m).length;
+  const start=opts.startFacelets||SOLVED;
+  const parts=splitSolveStages(start,stamped,method,timeMs);
+  const targets=method==="cfop"?CFOP_TARGET:LBL_TARGET;
+  const stages=parts.stages.map(s=>{
+    const copy=Object.assign({},s);
+    copy.target=targets[s.name];
+    copy.share=timeMs?s.ms/timeMs:0;
+    return copy;
+  });
+  (parts.pauses||[]).forEach(p=>{
+    let st="";
+    for(let i=0;i<stages.length;i++){
+      /* approximate later */
+    }
+    const ev=parts.events||[];
+    for(let i=0;i<ev.length;i++){
+      if(ev[i].i===p.to){st=ev[i].stage;break;}
+    }
+    p.stage=st;
+  });
+  const pauseMs=parts.pauses.reduce((s,p)=>s+p.ms,0);
+  const waste=wastedFromMoves(stamped.map(x=>x.m));
+  const analysis={
+    method,timeMs,moveCount,tps:tps(moveCount,timeMs),
+    stages,pauses:parts.pauses,pauseMs,pauseCount:parts.pauses.length,
+    longestPause:parts.pauses.reduce((m,p)=>Math.max(m,p.ms),0),
+    waste,targets,
+    startFacelets:start
+  };
+  analysis.biggestLoss=biggestTimeLoss(analysis);
+  analysis.tip=tipForLoss(analysis.biggestLoss,analysis);
+  analysis.feedback=writtenFeedback(analysis,opts);
+  analysis.weakness=recommendWeakness(analysis);
+  analysis.drill=analysis.weakness&&analysis.weakness.drill;
+  return analysis;
+}
+
+function recommendWeakness(analysis){
+  const a=analysis||{};
+  const loss=a.biggestLoss;
+  const drillFor={
+    pause:{type:"lookahead",why:"You lost the most time pausing. Slow-turning look-ahead practice teaches your eyes to find the next piece while you finish this one."},
+    "stage-pause":{type:"lookahead",why:"Those freezes are recognition pauses. A metronome / look-ahead drill shrinks the gap between seeing and turning."},
+    "cross-extra":{type:"crossPlan",why:"Your cross used more moves than the shortest path. Planning the whole cross in inspection is how faster solvers start every solve."},
+    cancel:{type:"fingerTricks",why:"Cancelled turns and lockups get better with clean finger tricks and less frantic bursting."},
+    "slow-stage":null
+  };
+  if(loss&&loss.kind==="slow-stage"){
+    const st=loss.stage;
+    if(st==="cross")return {type:"crossPlan",why:"Your cross is the slowest part versus the target, so we will plan it in inspection."};
+    if(st==="fl")return {type:"firstLayer",why:"First-layer corners took the biggest share, so a short corners drill will help most."};
+    if(st==="sl"||st==="f2l")return {type:"f2l",why:"The first two layers took the biggest share of the solve."};
+    if(st==="ll")return {type:"lastLayer",why:"The last layer was the slowest step, so we will drill those algorithms with a coach."};
+  }
+  if(loss&&drillFor[loss.kind])return Object.assign({stage:loss.stage||""},drillFor[loss.kind]);
+  const slowest=(a.stages||[]).slice().sort((x,y)=>y.ms-x.ms)[0];
+  if(slowest){
+    if(slowest.name==="cross")return {type:"cross",why:"The cross used the most time today.",stage:"cross"};
+    if(slowest.name==="ll")return {type:"lastLayer",why:"The last layer used the most time today.",stage:"ll"};
+    if(slowest.name==="fl")return {type:"firstLayer",why:"First-layer corners used the most time today.",stage:"fl"};
+    return {type:slowest.name==="f2l"?"f2l":"secondLayer",why:"That step used the most time today.",stage:slowest.name};
+  }
+  return {type:"lastLayer",why:"Last-layer algorithms are the highest-leverage next drill.",stage:"ll"};
+}
+
+function trendFromRecords(records,method){
+  const recs=(records||[]).filter(r=>r&&!r.dnf&&typeof r.t==="number"&&r.t>0);
+  const last=recs.slice(-12);
+  const firstDay=recs[0]&&recs[0].day;
+  const firstDayRecs=recs.filter(r=>r.day===firstDay);
+  const avg=function(arr){return arr.length?arr.reduce((s,r)=>s+r.t,0)/arr.length:0;};
+  const stageAcc={};
+  last.forEach(r=>{
+    const stages=(r.analysis&&r.analysis.stages)||[];
+    stages.forEach(s=>{
+      if(!stageAcc[s.name])stageAcc[s.name]={ms:0,n:0};
+      stageAcc[s.name].ms+=s.ms;stageAcc[s.name].n++;
+    });
+  });
+  const stageAvg={};
+  Object.keys(stageAcc).forEach(k=>{stageAvg[k]=stageAcc[k].ms/stageAcc[k].n;});
+  const targets=method==="cfop"?CFOP_TARGET:LBL_TARGET;
+  const weaknesses=[];
+  Object.keys(stageAvg).forEach(k=>{
+    const tgt=targets[k];
+    const over=tgt!=null?stageAvg[k]-tgt:0;
+    const share=last.length&&avg(last)?stageAvg[k]/avg(last):0;
+    weaknesses.push({stage:k,avgMs:stageAvg[k],target:tgt,over,share});
+  });
+  weaknesses.sort((a,b)=> (b.over||0)-(a.over||0) || (b.share||0)-(a.share||0));
+  const firstAvg=avg(firstDayRecs);
+  const nowAvg=avg(last);
+  return {
+    n:last.length,
+    sessionN:recs.length,
+    avgMs:nowAvg,
+    firstDayAvg:firstAvg,
+    improvedMs:firstAvg&&nowAvg?firstAvg-nowAvg:0,
+    stageAvg,
+    weaknesses:weaknesses.slice(0,3),
+    targets
+  };
+}
+
+function syncPayload(analysis,ctx){
+  ctx=ctx||{};
+  const a=analysis||{};
+  const details={
+    time:a.timeMs||0,
+    splits:(a.stages||[]).map(s=>({name:s.name,ms:s.ms,moves:s.moves,tps:s.tps,pauses:s.pauses,optimal:s.optimal})),
+    moves:a.moveCount||0,
+    tps:a.tps||0,
+    pauses:a.pauseCount||0,
+    pauseMs:a.pauseMs||0,
+    weakness:a.weakness&&a.weakness.type||"",
+    drill:a.drill||(a.weakness&&a.weakness.drill)||"",
+    feedback:a.feedback||""
+  };
+  return {
+    child:ctx.child||"ethan",
+    page:ctx.page||"cube",
+    path:ctx.path||"/ethan/cube/",
+    date:ctx.date||dayKey(),
+    kind:ctx.kind||"cube",
+    score:ctx.score!=null?ctx.score:"",
+    total:ctx.total!=null?ctx.total:"",
+    firstTryAccuracy:"",
+    timeTakenSec:a.timeMs?Math.round(a.timeMs/10)/100:"",
+    topics:details.weakness||"",
+    mistakes:details.drill||"",
+    sentAt:ctx.sentAt||new Date().toISOString(),
+    lesson:"cube",
+    details:JSON.stringify(details)
+  };
+}
+
+function embedUrlFor(video){
+  if(!video||!video.id)return "";
+  const start=video.start?("&start="+video.start):"";
+  return "https://www.youtube-nocookie.com/embed/"+video.id+"?rel=0"+start;
+}
+
 
 function linearFitElapsed(moveList){
   const pts=(moveList||[]).filter(m=>m&&m.localTimestamp!=null&&m.cubeTimestamp!=null&&isFinite(m.localTimestamp)&&isFinite(m.cubeTimestamp));
@@ -1177,6 +1773,7 @@ function createApp(opts){
   let celebration=null,ios=false,lastSyncBody=null,lastError="";
   let hold=null; /* manual stackmat hold */
   let lastSolveRec=null, nextAt=0;
+  let calibCubies=null, resetNote="", resetLog=[], pendingResetConfirm=false;
 
   function settings(){return {splitsMode:S.splitsMode||"lbl",llMethod:S.llMethod==="cfop4look"?"cfop4look":"beginner",inspect:S.inspect!==false,sound:S.sound!==false,mac:S.mac||"",scrambleLen:clampScrambleLen(S.scrambleLen==null?13:S.scrambleLen)};}
   function save(){saveRaw(S,ls);}
@@ -1217,8 +1814,16 @@ function createApp(opts){
     const kind=currentKind();
     const stage=(run&&run.drillStage)?run.drillStage:null;
     if(kind!=="drill"||!stage){coach=null;return;}
-    if(stage==="cross"||stage==="f2l")startStageCoachFrom(facelets);
-    else startLLCoachFrom(facelets,false);
+    const raw=stage;
+    const bucket=drillBucket(stage);
+    if(raw==="crossPlan"||bucket==="cross"||bucket==="crossPlan"||bucket==="f2l"||bucket==="lookahead"||bucket==="metronome"){
+      startStageCoachFrom(facelets);
+      if(coach&&raw==="crossPlan")coach.planMode=true;
+      if(coach&&(bucket==="lookahead"||bucket==="metronome"))coach.metronome=true;
+      return;
+    }
+    if(bucket==="fingerTricks"){startLLCoachFrom(facelets,false);return;}
+    startLLCoachFrom(facelets,false);
   }
   function recordCoachStep(prev){
     if(!coach||!prev||!prev.stage||prev.stage==="solved")return;
@@ -1338,6 +1943,8 @@ function createApp(opts){
   function coachNextCase(){
     if(coach&&coach.kind==="lastLayer"&&!isSolved(facelets)){
       coach.guard="Solve the cube first (or press My cube is solved), then I'll give you a new case.";
+      abortTimer({keepCoach:true});
+      phase="wait";
       emit();
       return {ok:false,guard:coach.guard};
     }
@@ -1360,7 +1967,8 @@ function createApp(opts){
       fixup:(t&&t.fixup)||"",fixupDisplay:(t&&t.fixup)?fmtAlg(mapAlgX2(t.fixup)):"",
       oops:coach.oops||"",guard:coach.guard||"",
       stepTimes:(coach.stepTimes||[]).slice(),summary:coach.summary||null,
-      yellowTop:!!coach.yellowTop,done:!!(d.done||d.stage==="solved"||coach.phase==="done")
+      yellowTop:!!coach.yellowTop,done:!!(d.done||d.stage==="solved"||coach.phase==="done"),
+      metronome:!!coach.metronome,planMode:!!coach.planMode
     };
   }
 
@@ -1417,8 +2025,27 @@ function createApp(opts){
   }
   function newAttempt(){
     const kind=currentKind();
-    const drillStage=(kind==="drill"&&S.session&&S.session.drillStage)?drillBucket(S.session.drillStage):null;
-    return {kind,drillStage,scramble:fmtAlg(tracker.get().moves),started:false,moves:[],t0:null,hostT0:null,splits:{},moveCount:0,penalty:null,source:connected?"cube":"manual"};
+    const raw=(kind==="drill"&&S.session&&S.session.drillStage)?S.session.drillStage:null;
+    const drillStage=raw?drillBucket(raw):null;
+    return {kind,drillStage,drillRaw:raw,scramble:fmtAlg(tracker.get().moves),started:false,moves:[],trace:[],t0:null,hostT0:null,timerHost0:null,startFacelets:facelets,splits:{},moveCount:0,penalty:null,source:connected?"cube":"manual"};
+  }
+  function coachingActive(){return !!(coach&&coach.active&&coach.phase!=="done");}
+  function stepElapsed(){
+    if(coachingActive())return Math.max(0,now()-(coach.stepStartedAt||now()));
+    return 0;
+  }
+  function timerModeNow(){
+    if(phase==="wait"||phase==="stopped"||phase==="idle"||phase==="scrambling"||phase==="needSolved")return "off";
+    if(coachingActive())return "step";
+    if(phase==="running"&&run&&run.started)return "solve";
+    return "off";
+  }
+  function abortTimer(opts){
+    opts=opts||{};
+    clearInspect();
+    if(run){run.started=false;run.timerHost0=null;}
+    if(!opts.keepCoach){/* caller may keep coach */}
+    if(phase==="running")phase=opts.phase||"ready";
   }
   function inspectPenalty(){
     if(phase!=="inspect"||S.inspect===false)return null;
@@ -1430,17 +2057,26 @@ function createApp(opts){
 
   function startTimer(ts){
     if(!run||run.started)return;
+    if(phase==="wait")return;
     const pen=inspectPenalty();
     clearInspect();
-    phase="running";
     run.started=true;
     run.t0=ts&&ts.cubeTimestamp!=null?ts.cubeTimestamp:null;
     run.hostT0=ts&&ts.localTimestamp!=null?ts.localTimestamp:now();
     run.timerHost0=now();
+    if(!run.startFacelets)run.startFacelets=facelets;
     if(pen)run.penalty=pen;
+    if(coachingActive()){
+      if(phase==="inspect")phase="ready";
+      emit();
+      return;
+    }
+    phase="running";
     emit();
   }
   function elapsedNow(){
+    if(phase==="wait")return 0;
+    if(coachingActive())return stepElapsed();
     if(!run||!run.started)return 0;
     if(phase==="stopped"&&run.ms!=null)return run.ms;
     /* Live display must use the host clock, not cube move timestamps.
@@ -1459,12 +2095,17 @@ function createApp(opts){
     });
   }
   function stopIfDone(f,ts){
-    if(!run||!run.started||phase!=="running")return false;
+    if(!run)return false;
+    const coaching=coachingActive();
+    const coachJustDone=!!(coach&&coach.active&&coach.phase==="done");
+    if(!run.started&&!coaching&&!coachJustDone)return false;
+    if(phase!=="running"&&phase!=="wait"&&!coaching&&!coachJustDone)return false;
     const goal=run.drillStage||"solved";
     const flags=stageFlags(f);
     const done=goal==="solved"?flags.solved:(currentKind()==="drill"?drillGoalReached(f,goal):!!flags[goal]);
     if(!done)return false;
     const ms=(()=>{
+      if(coaching&&coach.repStartedAt)return Math.max(0,Math.round(now()-coach.repStartedAt));
       const fit=linearFitElapsed(run.moves.concat(ts?[ts]:[]));
       if(fit!=null&&(run.moves.length>=1))return Math.max(0,Math.round(fit));
       return Math.max(0,Math.round(now()-(run.timerHost0||now())));
@@ -1495,6 +2136,37 @@ function createApp(opts){
       kind:run.kind||"free",
       drillStage:run.drillStage||null
     };
+    try{
+      const t0=run.timerHost0||run.hostT0||0;
+      const stamped=(run.moves||[]).map((mv,i)=>{
+        if(typeof mv==="string")return {m:mv,t:null,i};
+        const m=mv.move||mv.m||"";
+        const at=mv.localTimestamp!=null?mv.localTimestamp:mv.t;
+        return {m,t:at!=null&&t0?Math.max(0,at-t0):null,i};
+      });
+      const startF=run.startFacelets||(rec.scramble?applyAlg(SOLVED,parseAlg(rec.scramble)):SOLVED);
+      const analysis=analyzeSolve({
+        method:rec.method,timeMs:rec.ms,moves:stamped,startFacelets:startF,
+        sessionLine:null
+      });
+      rec.startFacelets=startF;
+      rec.trace=stamped.map(x=>({m:x.m,t:x.t}));
+      rec.analysis={
+        timeMs:analysis.timeMs,moveCount:analysis.moveCount,tps:analysis.tps,
+        stages:(analysis.stages||[]).map(s=>({name:s.name,ms:s.ms,moves:s.moves,tps:s.tps,pauseMs:s.pauseMs,pauses:s.pauses,longestPause:s.longestPause,waste:s.waste,optimal:s.optimal,extra:s.extra,optimalAlg:s.optimalAlg,target:s.target,share:s.share})),
+        pauseMs:analysis.pauseMs,pauseCount:analysis.pauseCount,longestPause:analysis.longestPause,
+        waste:analysis.waste,biggestLoss:analysis.biggestLoss,tip:analysis.tip,
+        feedback:analysis.feedback,weakness:analysis.weakness,drill:analysis.drill,targets:analysis.targets,method:analysis.method
+      };
+      rec.feedback=analysis.feedback;
+      rec.weakness=analysis.weakness&&analysis.weakness.type||"";
+    }catch(e){rec.analysis=null;}
+    try{
+      if(rec.analysis){
+        const payload=syncPayload(rec.analysis,{child:"ethan",page:"cube",path:"/ethan/cube/",date:rec.date,kind:"cube",sentAt:new Date(wall()).toISOString()});
+        lastSyncBody=syncCubeSession(payload)||JSON.stringify(payload);
+      }
+    }catch(e){}
     const prevPb=bestSingle(S.solves);
     S.solves.push(rec);
     const off=officialMs(rec);
@@ -1567,6 +2239,16 @@ function createApp(opts){
     const stars=sess.ao5&&sess.ao5.length>=5?3:sess.ao5&&sess.ao5.length?2:1;
     const warmupRecs=(sess.warmup||[]).map(id=>S.solves.find(x=>x.id===id)).filter(Boolean);
     const drillRecs=(sess.drill||[]).map(id=>S.solves.find(x=>x.id===id)).filter(Boolean);
+    const trend=trendFromRecords(recs,S.splitsMode);
+    const lastA=(recs.slice().reverse().find(s=>s.analysis)||{}).analysis;
+    const weakDrill=lastA&&lastA.weakness||{type:drillBucket(sess.drillStage||weak&&weak.id),why:""};
+    const sessionLine="Today you did "+recs.length+" timed solves"+(ao5&&ao5.text?(" and your average of 5 was "+ao5.text):".")+(trend.improvedMs>400?(" That's "+formatTime(Math.round(trend.improvedMs))+" faster than your first day."):"");
+    const feedback=[sessionLine];
+    if(trend.weaknesses&&trend.weaknesses[0]){
+      const w0=trend.weaknesses[0];
+      feedback.push("You lose the most time on the "+stageLabelKid(w0.stage)+" (about "+(w0.avgMs/1000).toFixed(1)+"s, target "+((w0.target||0)/1000).toFixed(0)+"s).");
+    }
+    if(weakDrill&&weakDrill.why)feedback.push(weakDrill.why);
     sess.summary={
       ao5,pb,weak,stars,n:recs.length,
       warmupTimes:warmupRecs.map(s=>({ms:s.ms,penalty:s.penalty||null,text:formatTime(s.ms,s.penalty)})),
@@ -1574,7 +2256,9 @@ function createApp(opts){
       drillTarget:DRILL_REPS,
       drillStage:sess.drillStage||null,
       drillLabel:DRILL_LABEL[drillBucket(sess.drillStage)]||sess.drillStage||"",
-      ao5Times:recs.filter(s=>s.kind==="ao5").map(s=>({ms:s.ms,penalty:s.penalty||null,text:formatTime(s.ms,s.penalty)}))
+      ao5Times:recs.filter(s=>s.kind==="ao5").map(s=>({ms:s.ms,penalty:s.penalty||null,text:formatTime(s.ms,s.penalty)})),
+      feedback:feedback.filter(Boolean).join(" "),
+      trend,nextDrill:weakDrill
     };
     const d=S.days[today]||(S.days[today]={solves:0,done:false,stars:0});
     d.done=true;d.stars=Math.max(d.stars||0,stars);d.ao5=ao5?ao5.text:null;
@@ -1598,6 +2282,21 @@ function createApp(opts){
   function startLesson(){
     S.session={date:dayKey(wall()),phase:"warmup",warmup:[],drill:[],ao5:[],drillStage:null,startedAt:wall(),finished:false};
     save();newScramble();emit();
+  }
+  function startTargetedDrill(type,reason){
+    type=type||(lastSolveRec&&lastSolveRec.analysis&&lastSolveRec.analysis.drill)||"lastLayer";
+    reason=reason||(lastSolveRec&&lastSolveRec.analysis&&lastSolveRec.analysis.weakness&&lastSolveRec.analysis.weakness.why)||"";
+    const today=dayKey(wall());
+    if(!S.session||S.session.finished){
+      S.session={date:today,phase:"drill",warmup:[],drill:[],ao5:[],drillStage:type,drillReason:reason,startedAt:wall(),finished:false,targeted:true};
+    }else{
+      S.session.phase="drill";
+      S.session.drillStage=type;
+      S.session.drillReason=reason;
+      S.session.drill=S.session.drill||[];
+    }
+    save();newScramble();emit();
+    return type;
   }
   function skipLessonPhase(){
     const sess=S.session;if(!sess||sess.finished)return;
@@ -1767,6 +2466,7 @@ function createApp(opts){
     if(!opts.keepCelebration)celebration=null;
     run=null;
     nextAt=0;
+    if(phase==="running"||phase==="wait"||phase==="inspect"||phase==="ready")phase="idle";
     const sess=S.session;
     const useDrill=!alg&&sess&&!sess.finished&&sess.phase==="drill";
     const official=parseAlg(alg||(useDrill?randomDrillScramble(sess.drillStage):randomMoveScramble(null,S.scrambleLen)));
@@ -1816,11 +2516,11 @@ function createApp(opts){
     const evSerial=evt&&evt.serial;
     if(!alreadyMid){
       if(!(evt&&evt.facelets&&evt.facelets.length===54)){
-        const skipApply=(phase==="inspect"||phase==="ready"||phase==="running")&&evSerial!=null&&evSerial===lastFaceletsSerial;
+        const skipApply=(phase==="inspect"||phase==="ready"||phase==="running"||phase==="wait")&&evSerial!=null&&evSerial===lastFaceletsSerial;
         if(!skipApply)facelets=applyMove(facelets,m);
       }
     }
-    if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
+    if(evt&&evt.facelets&&evt.facelets.length===54)facelets=applyCalibFacelets(evt.facelets);
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
       if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return tracker.get();}
@@ -1858,7 +2558,7 @@ function createApp(opts){
       }
       return t;
     }
-    if(phase==="inspect"||phase==="ready"){
+    if(phase==="inspect"||phase==="ready"||phase==="wait"){
       const serial=evt&&evt.serial;
       if(armedFromFacelets&&serial!=null&&serial===lastFaceletsSerial){
         armedFromFacelets=false;
@@ -1872,6 +2572,7 @@ function createApp(opts){
       startTimer(ts);
       markSplits(facelets,0,0);
       onCoachEvent(m,facelets,evt&&evt.serial);
+      if(phase==="wait"&&coach&&isSolved(facelets))coach.guard="";
       if(stopIfDone(facelets,ts))return;
       emit();return;
     }
@@ -1889,17 +2590,18 @@ function createApp(opts){
     if(f&&typeof f==="object"&&!Array.isArray(f)&&f.facelets){serial=f.serial!=null?f.serial:serial;state=f.state||state;f=f.facelets;}
     if(serial!=null)lastFaceletsSerial=serial;
     if(!f||f.length!==54)return;
-    facelets=f;
+    if(pendingResetConfirm)confirmResetFacelets(f,state);
+    facelets=applyCalibFacelets(f,state);
     if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
-      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(f);armAfterScramble({fromFacelets:true});return;}
-      const t=tracker.setState(f);
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble({fromFacelets:true});return;}
+      const t=tracker.setState(facelets);
       if(t.done){resetReplanState();armAfterScramble({fromFacelets:true});return;}
       /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. Do not rebase after a re-plan (new path starts at k=0 from a non-F0 state). */
       const first=(tracker.moves&&tracker.moves[0])||officialScramble[0];
-      const midOfFirst=!!(first&&first[1]==="2"&&(eq(f,applyMove(scrambleStart,first[0]))||eq(f,applyMove(scrambleStart,first[0]+"'"))||eq(f,applyMove(scrambleStart,first))));
-      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart&&!midOfFirst&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
+      const midOfFirst=!!(first&&first[1]==="2"&&(eq(facelets,applyMove(scrambleStart,first[0]))||eq(facelets,applyMove(scrambleStart,first[0]+"'"))||eq(facelets,applyMove(scrambleStart,first))));
+      if(t.k===0&&!t.partial&&!t.fixup&&facelets!==scrambleStart&&!midOfFirst&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
         startScrambleFromCurrent();
         return;
       }
@@ -1924,29 +2626,63 @@ function createApp(opts){
     if((phase==="inspect"||phase==="ready")&&eq(facelets,SOLVED)&&run&&!run.started){
       /* ignore; wait for a move or a later solved-after-solve path */
     }
-    if(phase==="inspect"||phase==="ready"||phase==="running"){
+    if(phase==="inspect"||phase==="ready"||phase==="running"||phase==="wait"){
       onCoachEvent(null,facelets,serial);
+      if(phase==="wait"&&coach&&isSolved(facelets))coach.guard="";
     }
-    if(phase==="running"&&run){
+    if((phase==="running"||phase==="wait"||coachingActive()||(coach&&coach.active))&&run){
       markSplits(facelets,Math.round(elapsedNow()),run.moves.length);
       if(stopIfDone(facelets,null))return;
     }
     emit();
   }
+  function applyCalibFacelets(f,state){
+    if(!calibCubies||!f)return f;
+    let reported=null;
+    if(state&&state.CP&&state.EP)reported={cp:state.CP,co:state.CO,ep:state.EP,eo:state.EO};
+    else reported=cubiesFromFacelets(f);
+    if(!reported)return f;
+    const tru=mulCubies(invertCubies(calibCubies),reported);
+    return faceletsFromCubies(tru)||f;
+  }
+  function logReset(msg){
+    resetLog=(resetLog||[]).concat(msg);
+    if(resetLog.length>12)resetLog=resetLog.slice(-12);
+  }
+  function beginResetConfirm(){pendingResetConfirm=true;}
+  function confirmResetFacelets(f,state){
+    pendingResetConfirm=false;
+    const solved=isSolved(f);
+    logReset("reset: facelets solved="+(solved?"yes":"no"));
+    if(solved){
+      calibCubies=null;
+      logReset("reset: calibration cleared");
+      return {applied:false,solved:true};
+    }
+    const c=cubiesFromFacelets(f)||(state&&state.CP?{cp:state.CP,co:state.CO,ep:state.EP,eo:state.EO}:null);
+    if(!c){logReset("reset: calibration skipped (bad state)");return {applied:false,solved:false};}
+    calibCubies=c;
+    logReset("reset: calibration applied");
+    return {applied:true,solved:false};
+  }
   function markSolved(){
     facelets=SOLVED;
-    if(phase==="running"){
-      stopIfDone(SOLVED,null);
-      if(phase==="running")finishSolve(elapsedNow(),SOLVED);
-      return {requestReset:true};
-    }
-    if(phase==="needSolved"||phase==="scrambling"||phase==="idle"||phase==="stopped"){
-      if(officialScramble&&officialScramble.length)startScrambleFromCurrent();
-      else emit();
-    }else emit();
-    return {requestReset:true};
+    resetNote="Cube reset to solved ✓";
+    logReset("reset: sent");
+    abortTimer();
+    coach=null;
+    if(run)run=null;
+    if(phase==="running"||phase==="inspect"||phase==="ready"||phase==="wait")phase="idle";
+    /* Do not arm calibration here. resetToSolved/markSolved only set the local model
+       to solved; doReset() calls beginResetConfirm() after REQUEST_RESET so the next
+       hardware FACELETS can confirm or calibrate. Otherwise ordinary test/reset
+       facelets would be treated as a drift offset and break scramble tracking. */
+    if(officialScramble&&officialScramble.length)startScrambleFromCurrent();
+    else emit();
+    return {requestReset:true,requestFacelets:true,resetNote:resetNote};
   }
   function resetToSolved(){return markSolved();}
+  function noteResetAck(ok){logReset(ok?"reset: ack":"reset: ack failed");emit();}
 
   /* manual stackmat: press/hold ready, release start, press stop */
   function manualDown(){
@@ -1993,7 +2729,7 @@ function createApp(opts){
   }
   function setConnected(on,info){
     if(on)simulateConnected(info);
-    else{connected=false;battery=null;deviceName="";emit();}
+    else{connected=false;battery=null;deviceName="";calibCubies=null;pendingResetConfirm=false;emit();}
   }
   function setBattery(n){battery=n;emit();}
   function setIos(v){ios=!!v;emit();}
@@ -2011,7 +2747,7 @@ function createApp(opts){
     if(sess.phase==="drill"){
       const n=(sess.drill||[]).length;
       const stage=drillBucket(sess.drillStage);
-      return {active:true,done:false,phase:"drill",title:"Drill: "+(DRILL_LABEL[stage]||stage)+" "+(n+1)+" of "+DRILL_REPS,explain:drillExplain(stage),n:n,of:DRILL_REPS,stage:stage,summary:null};
+      return {active:true,done:false,phase:"drill",title:"Drill: "+(DRILL_LABEL[stage]||stage)+" "+(n+1)+" of "+DRILL_REPS,explain:drillExplain(sess.drillStage||stage,sess.drillReason),n:n,of:DRILL_REPS,stage:stage,drillStage:sess.drillStage,reason:sess.drillReason||"",videos:videosForDrill(sess.drillStage||stage),summary:null,planMode:sess.drillStage==="crossPlan",metronome:sess.drillStage==="lookahead"||sess.drillStage==="metronome"};
     }
     if(sess.phase==="ao5"){
       const n=(sess.ao5||[]).length;
@@ -2034,7 +2770,16 @@ function createApp(opts){
       current:t.current,currentScramble:t.currentScramble,partial:t.partial,totalParts:t.totalParts,half:t.half,halfLabel:t.halfLabel,total:t.total,
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
       inspectLeft,inspectOn:S.inspect!==false,
-      running:phase==="running",elapsed:elapsedNow(),
+      running:phase==="running"&&!coachingActive()&&phase!=="wait",
+      elapsed:elapsedNow(),
+      stepElapsed:stepElapsed(),
+      timerMode:timerModeNow(),
+      timerLabel:timerModeNow()==="step"?"Step time":(timerModeNow()==="solve"?"Solve time":""),
+      resetNote,resetLog:resetLog.slice(),
+      calibration:!!calibCubies,
+      analysis:lastSolveRec&&lastSolveRec.analysis||null,
+      trends:trendFromRecords(S.solves,S.splitsMode),
+      videos:videosForDrill((S.session&&!S.session.finished&&S.session.phase==="drill"&&S.session.drillStage)||(lastSolveRec&&lastSolveRec.drillStage)||""),
       lastSolve:lastSolveRec,nextIn:nextIn(),
       sessionProgress:sp,sessionBanner:sp&&(sp.active||sp.done)?sp.title:"",
       sessionExplain:sp?sp.explain:"",
@@ -2057,6 +2802,7 @@ function createApp(opts){
     applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,
     stageFlags,stagesFor,reachedStages,createTracker,progressOnPath,
     formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
+    createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,faceletsFromCubies,
     validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
@@ -2064,11 +2810,12 @@ function createApp(opts){
     newScramble,setScramble,skipScramble,startSolveAnyway,proceedToNextScramble,tickNext,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
     whenPathReady,bumpFacelets,
     simulateConnected,setConnected,setBattery,setIos,setSetting,setMac,
-    startLesson,skipLessonPhase,skipDrill,stopSession,abandonLesson,finishSession,coachNextCase,
+    startLesson,startTargetedDrill,skipLessonPhase,skipDrill,stopSession,abandonLesson,finishSession,coachNextCase,
     setPenalty,deleteSolve,manualDown,manualUp,manualStop,manualReadyCheck,
-    startTimer,finishSolve,nextAfterStop,elapsedNow,
+    startTimer,finishSolve,nextAfterStop,elapsedNow,abortTimer,timerModeNow,stepElapsed,
+    applyCalibFacelets,confirmResetFacelets,beginResetConfirm,noteResetAck,logReset,
     getState:()=>S,getFacelets:()=>facelets,getPhase:()=>phase,lastSync:()=>lastSyncBody,
-    setError:m=>{lastError=m||"";emit();}
+    getCalibration:()=>calibCubies,setError:m=>{lastError=m||"";emit();}
   };
   return api;
 }
@@ -2078,8 +2825,9 @@ const Engine={
   applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
   createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
-  invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
+  invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,faceletsFromCubies,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
+  createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,
   validMac,randomMoveScramble,clampScrambleLen,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
 };

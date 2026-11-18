@@ -165,13 +165,44 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 .coach .coach-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .coach .summary{margin:6px 0 0;font-weight:800;color:#1d4ed8}
 
+
+.timer-label{font-size:.95rem;font-weight:800;color:#0f766e;letter-spacing:.04em;text-transform:uppercase;margin:0 0 2px}
+.timer-label.hidden{display:none}
+.watch,.review,.trends,.algplayer{background:#f8fafc;border:3px solid #7dd3fc;border-radius:16px;padding:10px 12px;margin:8px 0 10px}
+.watch{border-color:#38bdf8;background:#f0f9ff}
+.review{border-color:#34d399;background:#ecfdf5}
+.trends{border-color:#a78bfa;background:#f5f3ff}
+.algplayer{border-color:#0d9488;background:#f0fdfa}
+.watch.hidden,.review.hidden,.trends.hidden,.algplayer.hidden{display:none}
+.watch h3,.review h3,.trends h3,.algplayer h3{margin:0 0 6px;font-size:1.15rem;color:#0f172a}
+.review .feedback,.trends .feedback{margin:0 0 8px;font-size:1.05rem;line-height:1.35;color:#1f2937}
+.stagebar{display:flex;height:18px;border-radius:999px;overflow:hidden;background:#e2e8f0;margin:8px 0}
+.stagebar span{display:block;height:100%;font-size:10px;color:#fff;text-align:center;line-height:18px;font-weight:800}
+.stagebar .cross{background:#0ea5e9}.stagebar .fl,.stagebar .f2l{background:#22c55e}.stagebar .sl{background:#84cc16}.stagebar .ll{background:#f59e0b}
+.why{margin:6px 0 0;font-size:.9rem;color:#475569}
+.player-strip{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.player-strip .mv{padding:4px 8px;border-radius:8px;background:#fff;border:2px solid #99f6e4;font-weight:800;cursor:pointer}
+.player-strip .mv.on{background:#0d9488;color:#fff;border-color:#0d9488}
+.player-now{font-size:2.2rem;font-weight:900;color:#0f766e;text-align:center;margin:4px 0}
+.player-arrow{font-size:1.6rem;text-align:center;margin:0 0 6px}
+.player-btns{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
+#demoHost{width:min(72vw,28vh,260px);height:min(72vw,28vh,260px);margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+#demoHost twisty-player{width:100%!important;height:100%!important}
+body.demo-on #twistyHost{opacity:.35}
+body.plan-blind #twistyHost{visibility:hidden}
+.metro{width:100%;height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin:6px 0}
+.metro i{display:block;height:100%;width:30%;background:#14b8a6;animation:metro 1s linear infinite}
+@keyframes metro{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+.vid-frame{position:relative;padding-top:56.25%;margin:8px 0;border-radius:12px;overflow:hidden}
+.vid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
 </style>
 </head>
 <body>
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v11 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v12 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -221,6 +252,10 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
     <div id="coachPanel" class="coach hidden" hidden></div>
+    <div id="videoPanel" class="watch hidden" hidden></div>
+    <div id="algPlayerPanel" class="algplayer hidden" hidden></div>
+    <div id="reviewCard" class="review hidden" hidden></div>
+    <div id="trendsCard" class="trends hidden" hidden></div>
     <div id="fixup" class="hidden"></div>
     <div class="row-gap" style="justify-content:center">
       <button class="btn" id="startSolveBtn" type="button">Start solve anyway</button>
@@ -249,6 +284,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </section>
 
   <section class="card timer-pad" id="timerPad" tabindex="0" role="button" aria-label="Timer. Hold to ready, release to start, tap to stop.">
+    <div id="timerLabel" class="timer-label hidden"></div>
     <div class="timer ph-idle" id="timer">0.00</div>
     <p id="hint">Connect Ethan's GAN 356 i3, or use the timer by itself.</p>
     <div id="splits"></div>
@@ -300,7 +336,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v11 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v12 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -320,7 +356,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=11"></script>
-<script src="cube-app.js?v=11"></script>
+<script src="cube-engine.js?v=12"></script>
+<script src="cube-app.js?v=12"></script>
 </body>
 </html>
