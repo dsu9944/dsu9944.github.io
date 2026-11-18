@@ -77,7 +77,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v12 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v13 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -105,12 +105,15 @@ function debugText(v){
     "last error: "+(cubeDebug.lastError||twistyLog.lastError||"—"),
     "page errors: "+((window.__cubePageErrors&&window.__cubePageErrors.length)?window.__cubePageErrors.join(" | "):"—"),
     "last 20 events (GYRO omitted, too frequent):",
-    evs||"(none yet)"
+    evs||"(none yet)",
+    "last 60 judged events:",
+    (app.debugLogText&&app.debugLogText())||"(none yet)"
   ].join("\n");
 }
 function setShowDebug(on){
   showDebug=!!on;
   const box=$("#cubeDebug");
+  const tools=$("#debugTools");
   const cb=$("#optShowDebug");
   const btn=$("#debugBtn");
   if(cb)cb.checked=showDebug;
@@ -118,6 +121,7 @@ function setShowDebug(on){
     btn.setAttribute("aria-pressed",showDebug?"true":"false");
     btn.classList.toggle("on",showDebug);
   }
+  if(tools)tools.classList.toggle("hidden",!showDebug);
   if(box){
     box.classList.toggle("hidden",!showDebug);
     if(showDebug){
@@ -125,6 +129,26 @@ function setShowDebug(on){
       try{box.scrollIntoView({block:"nearest",inline:"nearest"});}catch(e){}
     }
   }
+}
+function debugLogPayload(){
+  const v=app.get();
+  const engineLog=(app.debugLogText&&app.debugLogText())||"";
+  const events=(app.getDebugEvents&&app.getDebugEvents())||[];
+  return [debugText(v),"","--- last 60 judged events ---",engineLog||JSON.stringify(events,null,2)].join("\n");
+}
+async function copyDebugLog(){
+  const text=debugLogPayload();
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta=document.createElement("textarea");
+      ta.value=text;document.body.appendChild(ta);ta.select();
+      document.execCommand("copy");ta.remove();
+    }
+    const btn=$("#copyDebugBtn");
+    if(btn){const prev=btn.textContent;btn.textContent="Copied";setTimeout(()=>{btn.textContent=prev||"Copy debug log";},1200);}
+  }catch(e){cubeDebug.lastError=String(e&&e.message||e||"copy failed");}
 }
 function recordPageError(msg){
   const s=String(msg||"error");
@@ -1074,20 +1098,48 @@ function historyHTML(v){
 }
 
 
+function thumbUrl(id){return "https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";}
+function ytWatchUrl(v0){
+  if(E.watchUrlFor)return E.watchUrlFor(v0);
+  if(v0&&v0.url)return v0.url;
+  return v0&&v0.id?("https://www.youtube.com/watch?v="+v0.id):"";
+}
+function embedSrc(v0){
+  return (E.embedUrlFor?E.embedUrlFor(v0):("https://www.youtube.com/embed/"+(v0&&v0.id||"")+"?rel=0"));
+}
+function watchCardHTML(v0,opts){
+  opts=opts||{};
+  if(!v0||!v0.id)return "";
+  const watched=!!loadWatched()[v0.id];
+  const src=embedSrc(v0);
+  const open=ytWatchUrl(v0);
+  const title=(v0.title||"Video")+" — "+(v0.channel||"");
+  const openEmbed=opts.open===true;
+  return `<div class="watch-card" data-vid="${v0.id}">
+      <img src="${thumbUrl(v0.id)}" alt="" width="96" height="54">
+      <div>
+        <p><b>${opts.heading||"Watch first"}</b> ${title}${watched?" <b>✓ watched</b>":""}</p>
+        <p class="vid-links"><a href="${open}" target="_blank" rel="noopener">Open on YouTube</a></p>
+        ${opts.hideToggle?"":`<button class="btn ghost" type="button" id="${opts.toggleId||"watchToggle"}" data-vid="${v0.id}">${openEmbed?"Hide video":"Watch here"}</button>`}
+        ${opts.mark?`<button class="btn" type="button" id="markWatched" data-vid="${v0.id}">I've watched this</button>`:""}
+      </div>
+    </div>
+    <div id="${opts.bodyId||"watchBody"}" class="${openEmbed?"":"hidden"}">
+      <div class="vid-frame"><iframe src="${openEmbed?src:""}" data-src="${src}" title="${v0.title||"Video"}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+    </div>`;
+}
 function videoPanelHTML(v){
-  const vids=(v.sessionProgress&&v.sessionProgress.videos)||v.videos||[];
+  const drill=(v.sessionProgress&&v.sessionProgress.active&&v.sessionProgress.phase==="drill"&&(v.sessionProgress.drillStage||v.sessionProgress.stage))||"";
+  const vids=(v.sessionProgress&&v.sessionProgress.videos)||(drill&&E.videosForDrill?E.videosForDrill(drill):null)||v.videos||[];
   if(!vids.length)return "";
   if(!(v.sessionProgress&&v.sessionProgress.active&&v.sessionProgress.phase==="drill"))return "";
-  const v0=vids[0];
-  const watched=!!loadWatched()[v0.id];
-  const src=E.embedUrlFor?E.embedUrlFor(v0):("https://www.youtube-nocookie.com/embed/"+v0.id+"?rel=0");
-  return `<h3>Watch first</h3>
-    <p>${v0.title} — ${v0.channel}${watched?" <b>✓ watched</b>":""}</p>
-    <button class="btn ghost" type="button" id="watchToggle">Show or hide the video</button>
-    <div id="watchBody">
-      <div class="vid-frame"><iframe src="${src}" title="${v0.title}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
-      <button class="btn" type="button" id="markWatched" data-vid="${v0.id}">I've watched this</button>
-    </div>`;
+  return `<h3>Watch first</h3>`+watchCardHTML(vids[0],{heading:"",mark:true,open:false,toggleId:"watchToggle",bodyId:"watchBody"});
+}
+function tipWatchHTML(type){
+  if(!type||!E.videosForDrill)return "";
+  const vids=E.videosForDrill(type)||[];
+  if(!vids[0])return "";
+  return `<div class="watch tip-watch">`+watchCardHTML(vids[0],{heading:"Watch this tip",mark:false,open:false,toggleId:"tipWatchToggle",bodyId:"tipWatchBody"})+`</div>`;
 }
 function reviewHTML(v){
   const rec=v.lastSolve;
@@ -1105,6 +1157,7 @@ function reviewHTML(v){
     <div class="stagebar">${bar}</div>
     ${a.biggestLoss?`<p><b>Biggest time loss:</b> ${a.biggestLoss.label||a.biggestLoss.kind} (${((a.biggestLoss.ms||0)/1000).toFixed(1)}s)</p>`:""}
     <p>${tip.tip||""}</p>
+    ${tipWatchHTML(drill)}
     ${detail}
     <div class="player-btns">
       <button class="btn" type="button" id="practiseThis" data-drill="${drill}" data-why="${(a.weakness&&a.weakness.why)||""}">Practise this</button>
@@ -1123,6 +1176,58 @@ function trendsHTML(v){
   return `<h3>Where you lose time</h3>
     <p class="feedback">${sess||("Across your last "+t.n+" solves"+(t.improvedMs>400?(", you're "+E.formatTime(Math.round(t.improvedMs))+" faster than your first day"):"."))}</p>
     <ol>${lines}</ol>`;
+}
+function lessonsHTML(){
+  const all=E.allLessonVideos?E.allLessonVideos():(E.DRILL_VIDEOS?Object.keys(E.DRILL_VIDEOS).map(k=>Object.assign({key:k,skill:E.skillForVideo?E.skillForVideo(E.DRILL_VIDEOS[k]):""},E.DRILL_VIDEOS[k])):[]);
+  const groups=[];
+  const order=["Look-ahead","Cross","F2L","Finger tricks","Last layer","Beginner"];
+  const by={};
+  all.forEach(v=>{
+    const g=v.skill||"Beginner";
+    if(!by[g]){by[g]=[];groups.push(g);}
+    by[g].push(v);
+  });
+  const skills=order.filter(s=>by[s]&&by[s].length).concat(groups.filter(s=>order.indexOf(s)<0));
+  return skills.map(s=>{
+    const cards=by[s].map(v=>`<button type="button" class="lesson-card" data-lesson-id="${v.id}" data-title="${String(v.title||"").replace(/"/g,"&quot;")}" data-url="${ytWatchUrl(v)}">
+        <img src="${thumbUrl(v.id)}" alt="${String(v.title||"").replace(/"/g,"&quot;")}" width="154" height="86">
+        <span>${v.title||"Video"}</span>
+      </button>`).join("");
+    return `<h3 class="lesson-skill">${s}</h3><div class="lesson-list">${cards}</div>`;
+  }).join("");
+}
+function fillLessons(){
+  const list=$("#lessonList");
+  if(!list||list.getAttribute("data-filled")==="1")return;
+  list.innerHTML=lessonsHTML();
+  list.setAttribute("data-filled","1");
+}
+function setLessonsOpen(on){
+  const panel=$("#lessonsPanel");
+  const btn=$("#lessonsBtn");
+  const show=!!on;
+  if(panel){
+    panel.classList.toggle("hidden",!show);
+    if(show){panel.hidden=false;panel.removeAttribute("hidden");}
+    else{panel.hidden=true;panel.setAttribute("hidden","");}
+  }
+  if(btn){
+    btn.setAttribute("aria-pressed",show?"true":"false");
+    btn.classList.toggle("on",show);
+  }
+  if(show)fillLessons();
+}
+function openLesson(id){
+  const all=E.allLessonVideos?E.allLessonVideos():[];
+  const v0=all.filter(v=>v.id===id)[0]||{id:id,title:"Video",url:"https://www.youtube.com/watch?v="+id};
+  const box=$("#lessonEmbed");
+  if(!box)return;
+  const src=embedSrc(v0);
+  const open=ytWatchUrl(v0);
+  box.hidden=false;
+  box.innerHTML=`<div class="vid-frame"><iframe src="${src}" title="${v0.title||"Video"}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+    <p class="vid-links"><a href="${open}" target="_blank" rel="noopener">Open on YouTube</a></p>`;
+  try{box.scrollIntoView({block:"nearest"});}catch(e){}
 }
 function fillSidePanels(v){
   function put(id, html){
@@ -1305,6 +1410,21 @@ function bind(){
   if(dbgCb)dbgCb.addEventListener("change",e=>setShowDebug(e.target.checked));
   const dbgBtn=$("#debugBtn");
   if(dbgBtn)dbgBtn.addEventListener("click",()=>setShowDebug(!showDebug));
+  const copyDbg=$("#copyDebugBtn");
+  if(copyDbg)copyDbg.addEventListener("click",()=>{copyDebugLog();});
+  const lessonsBtn=$("#lessonsBtn");
+  if(lessonsBtn)lessonsBtn.addEventListener("click",()=>{
+    const panel=$("#lessonsPanel");
+    setLessonsOpen(panel?panel.classList.contains("hidden")||panel.hidden:true);
+  });
+  const lessonList=$("#lessonList");
+  if(lessonList)lessonList.addEventListener("click",e=>{
+    const card=e.target.closest?e.target.closest(".lesson-card"):null;
+    if(!card)return;
+    const id=card.getAttribute("data-lesson-id");
+    if(id)openLesson(id);
+  });
+  fillLessons();
   const yes=$("#matchYes");
   if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
   const no=$("#matchNo");
@@ -1325,7 +1445,15 @@ function bind(){
       else if(btn.id==="reviewMore"){moreDetail=!moreDetail;render(app.get());}
       else if(btn.id==="replaySolve"){replayLastSolve(false);}
       else if(btn.id==="replayOpt"){replayLastSolve(true);}
-      else if(btn.id==="watchToggle"){const box=$("#watchBody"); if(box)box.classList.toggle("hidden");}
+      else if(btn.id==="watchToggle"||btn.id==="tipWatchToggle"){
+        const box=$(btn.id==="tipWatchToggle"?"#tipWatchBody":"#watchBody");
+        if(box){
+          const hide=!box.classList.contains("hidden");
+          box.classList.toggle("hidden",hide);
+          const frame=box.querySelector("iframe");
+          if(frame&&!hide&&!frame.getAttribute("src"))frame.setAttribute("src",frame.getAttribute("data-src")||"");
+        }
+      }
       else if(btn.id==="markWatched"){markVideoWatched(btn.getAttribute("data-vid")||"");render(app.get());}
     }catch(err){cubeDebug.lastError=String(err&&err.message||err||"session click");}
   }
