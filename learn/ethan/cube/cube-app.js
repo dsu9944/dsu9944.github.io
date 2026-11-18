@@ -77,7 +77,9 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v9 · 18 Nov";
   return [
+    "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
     "hardware: "+(cubeDebug.hardwareName||v.deviceName||"—"),
     "search: "+cubeDebug.searchStatus,
@@ -283,13 +285,8 @@ async function requestFacelets(){
 }
 async function nextScramble(alg){
   if(alg)return app.setScramble(alg);
-  if(fairScramble){
-    try{
-      const a=await fairScramble("333");
-      return app.setScramble(String(a));
-    }catch(e){}
-  }
-  return app.setScramble(E.randomMoveScramble());
+  const n=(app.get()&&app.get().settings&&app.get().settings.scrambleLen)||13;
+  return app.setScramble(E.randomMoveScramble(null,n));
 }
 function twistyClass(){
   return window.CUBING_TWISTY_PLAYER||TwistyPlayer||window.TwistyPlayer||null;
@@ -590,8 +587,38 @@ async function doReset(){
 function scrambleDone(v){
   return !!(v.scrambled||v.phase==="inspect"||v.phase==="ready"||v.phase==="running"||v.phase==="stopped");
 }
+function splitsLine(v){
+  const rec=v.lastSolve||(v.solves&&v.solves[v.solves.length-1]);
+  const sp=rec&&rec.splits;
+  if(!sp)return "";
+  const ids=E.stagesFor((rec&&rec.method)||(v.settings&&v.settings.splitsMode)||"lbl");
+  const bits=[];
+  let prev=0;
+  ids.forEach(id=>{
+    if(!sp[id])return;
+    const at=sp[id].at,seg=at-prev;prev=at;
+    bits.push(`<span><b>${E.STAGE_LABEL[id]}</b> ${E.formatTime(seg)}</span>`);
+  });
+  return bits.length?`<div class="solve-splits">${bits.join(" · ")}</div>`:"";
+}
 function calloutHTML(v){
-  if(scrambleDone(v))return `<div class="callout done">Scramble done!</div>`;
+  if(v.phase==="running"){
+    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.elapsed||0)}</div><p class="callout-sub">Go! The timer stops when the cube is solved.</p>`;
+  }
+  if(v.phase==="stopped"){
+    const rec=v.lastSolve||(v.solves&&v.solves[v.solves.length-1]);
+    const t=rec?E.formatTime(rec.ms,rec.penalty):E.formatTime(v.elapsed||0);
+    const sec=Math.ceil((v.nextIn||0)/1000);
+    const next=sec>0?`<p class="callout-sub">Next scramble in ${sec}…</p>`:`<p class="callout-sub">Loading the next scramble…</p>`;
+    return `<div class="callout done">Solved!</div><div class="live-timer done" id="liveTimer">${t}</div>${splitsLine(v)}${next}`;
+  }
+  if(v.phase==="inspect"){
+    const s=Math.ceil((v.inspectLeft||0)/1000);
+    return `<div class="callout next">Scrambled! Inspection ${s>0?s:0}</div><p class="callout-sub">Look at the cube. Your first turn starts the timer.</p>`;
+  }
+  if(v.phase==="ready"){
+    return `<div class="callout done">Scrambled! Start solving — the timer starts on your first turn.</div>`;
+  }
   if(v.replanning||(v.phase==="scrambling"&&v.pathReady===false)){
     return `<div class="callout next">Working out the scramble…</div><p class="callout-sub">Keep turning — I'll rewrite the moves in a moment.</p>`;
   }
@@ -606,6 +633,7 @@ function calloutHTML(v){
   return `<div class="callout next">Next: <b>${m}</b>${half}</div>${note}`;
 }
 function scrambleHTML(v){
+  if(v.phase==="running"||v.phase==="stopped")return "";
   const moves=v.scramble||[];
   const k=v.k||0;
   const doneAll=scrambleDone(v);
@@ -635,20 +663,22 @@ function phaseHint(v){
     if(v.replanNote)return "Scramble updated, keep going.";
     if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
-    if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it.";
-    return "Do the big move next. I'll tick off each turn as you go.";
+    if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it. That's not a mistake.";
+    return "Do the big move next. I'll tick off each turn as you go. If you want to start the solve early, tap Start solve anyway.";
   }
-  if(v.phase==="inspect")return "Inspection! Look at the cube. Your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
-  if(v.phase==="ready")return "Ready — your first turn (or let go of the timer) starts the clock.";
+  if(v.phase==="inspect")return "Scrambled! Inspection — your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
+  if(v.phase==="ready")return "Scrambled! Start solving — the timer starts on your first turn.";
   if(v.phase==="running"){
     if((v.elapsed||0)>=180000)return "Cube finished? Tap My cube is solved.";
     if(v.kind==="drill"&&v.session&&v.session.drillStage)return "Go! Stop when you finish "+(E.STAGE_KID[v.session.drillStage]||"this stage")+".";
     return "Go! The timer stops when the cube is solved.";
   }
   if(v.phase==="stopped"){
-    const rec=v.solves[v.solves.length-1];
-    const msg=v.celebration==="pb"?"🎉 New personal best! "+(rec?E.formatTime(rec.ms,rec.penalty):"") : (rec?E.formatTime(rec.ms,rec.penalty)+" — nice solve!":"Done!");
-    return msg;
+    const rec=v.lastSolve||v.solves[v.solves.length-1];
+    const sec=Math.ceil((v.nextIn||0)/1000);
+    const t=rec?E.formatTime(rec.ms,rec.penalty):"";
+    const msg=v.celebration==="pb"?"🎉 New personal best! "+t : (t?t+" — nice solve!":"Done!");
+    return msg+(sec>0?" Next scramble in "+sec+"…":"");
   }
   if(v.celebration==="pb"&&v.phase==="scrambling"){
     const rec=v.solves[v.solves.length-1];
@@ -745,7 +775,13 @@ function render(v){
   }
   const call=$("#callout");
   if(call)call.innerHTML=calloutHTML(v);
-  $("#scramble").innerHTML=scrambleHTML(v);
+  const scr=$("#scramble");
+  if(scr){
+    scr.innerHTML=scrambleHTML(v);
+    scr.classList.toggle("locked",!!v.locked);
+  }
+  const startSol=$("#startSolveBtn");
+  if(startSol)startSol.classList.toggle("hidden",v.phase!=="scrambling");
   const fix=$("#fixup");
   if(fix)show(fix,false);
 
@@ -769,6 +805,7 @@ function render(v){
 
   const insp=$("#optInspect");if(insp)insp.checked=v.settings.inspect!==false;
   const mode=$("#optMode");if(mode)mode.value=v.settings.splitsMode||"lbl";
+  const slen=$("#optScrambleLen");if(slen&&document.activeElement!==slen)slen.value=v.settings.scrambleLen||13;
   setText("#savedMac",v.settings.mac||"not saved yet");
 
   const cele=$("#cele");
@@ -811,6 +848,10 @@ function bind(){
   $("#macClear").addEventListener("click",()=>{app.setMac("");setText("#savedMac","not saved yet");});
   $("#optInspect").addEventListener("change",e=>app.setSetting("inspect",e.target.checked));
   $("#optMode").addEventListener("change",e=>app.setSetting("splitsMode",e.target.value));
+  const slen=$("#optScrambleLen");
+  if(slen)slen.addEventListener("change",e=>app.setSetting("scrambleLen",e.target.value));
+  const startSol=$("#startSolveBtn");
+  if(startSol)startSol.addEventListener("click",()=>app.startSolveAnyway());
   const netCb=$("#optShowNet");
   if(netCb)netCb.addEventListener("change",e=>setShowNet(e.target.checked));
   const dbgCb=$("#optShowDebug");
@@ -853,7 +894,11 @@ function bind(){
     e.preventDefault();spaceDown=false;app.manualReadyCheck();app.manualUp();
   });
   setInterval(()=>{if(app.get().hold)app.manualReadyCheck();},50);
-  setInterval(()=>{const v=app.get();if(v.phase==="running"||v.phase==="inspect")render(v);},50);
+  setInterval(()=>{
+    if(app.tickNext)app.tickNext();
+    const v=app.get();
+    if(v.phase==="running"||v.phase==="inspect"||v.phase==="stopped")render(v);
+  },50);
 }
 
 function init(){
