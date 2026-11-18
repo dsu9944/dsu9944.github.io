@@ -28,6 +28,7 @@ let setupToken = 0, lastFaceletsGen = -1;
 const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:"", faceletsSynced:false};
 let faceletsAnchor = E.SOLVED;
 let showDebug = false;
+let matchMode = ""; /* "" | "ask" | "help" | "done" */
 const cubeDebug = {
   protocol:"",
   hardwareName:"",
@@ -77,6 +78,9 @@ function debugText(v){
     "3D setup method: "+(cubeDebug.setupMethod||twistyLog.setup||"—"),
     "facelets request reply: "+reply,
     "tracked facelets: "+(v.facelets||"—"),
+    "F0: "+(v.f0||"—"),
+    "target T: "+(v.target||"—"),
+    "facelets == T?: "+(v.atTarget?"yes":"no"),
     "solved: "+!!v.solved,
     "phase: "+v.phase,
     "expected move: "+(v.fixup||v.current||"(none)")+(v.halfLabel?" "+v.halfLabel:""),
@@ -87,6 +91,21 @@ function debugText(v){
     "last 20 events (GYRO omitted, too frequent):",
     evs||"(none yet)"
   ].join("\n");
+}
+function setShowDebug(on){
+  showDebug=!!on;
+  const box=$("#cubeDebug");
+  const cb=$("#optShowDebug");
+  const btn=$("#debugBtn");
+  if(cb)cb.checked=showDebug;
+  if(btn){
+    btn.setAttribute("aria-pressed",showDebug?"true":"false");
+    btn.classList.toggle("on",showDebug);
+  }
+  if(box){
+    box.classList.toggle("hidden",!showDebug);
+    if(showDebug)box.textContent=debugText(app.get());
+  }
 }
 
 function isIos(){
@@ -142,9 +161,10 @@ async function loadCubing(){
 function patternFromCubies(c){
   const def=kpuzzle.defaultPattern();
   const centers=(def.patternData&&def.patternData.CENTERS)||{pieces:[0,1,2,3,4,5],orientation:[0,0,0,0,0,0]};
+  const mapped=(c&&E.cubiesToCubing)?E.cubiesToCubing(c):c;
   const data={
-    EDGES:{pieces:(c?c.ep:[0,1,2,3,4,5,6,7,8,9,10,11]).slice(),orientation:(c?c.eo:Array(12).fill(0)).slice()},
-    CORNERS:{pieces:(c?c.cp:[0,1,2,3,4,5,6,7]).slice(),orientation:(c?c.co:Array(8).fill(0)).slice()},
+    EDGES:{pieces:(mapped?mapped.ep:[0,1,2,3,4,5,6,7,8,9,10,11]).slice(),orientation:(mapped?mapped.eo:Array(12).fill(0)).slice()},
+    CORNERS:{pieces:(mapped?mapped.cp:[0,1,2,3,4,5,6,7]).slice(),orientation:(mapped?mapped.co:Array(8).fill(0)).slice()},
     CENTERS:{pieces:centers.pieces.slice(),orientation:(centers.orientation||[0,0,0,0,0,0]).slice()}
   };
   if(centers.orientationMod)data.CENTERS.orientationMod=centers.orientationMod.slice();
@@ -410,7 +430,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:on=>{showDebug=!!on;},feedGanEvent:onGanEvent};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());}};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -477,6 +497,7 @@ async function connectCube(){
     cubeDebug.protocol=guessProtocol(name)||"Gen2";
     cubeDebug.hardwareName=name;
     cubeDebug.faceletsReply=false;
+    matchMode="ask";
     unsub=conn.events$.subscribe(onGanEvent);
     try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
     try{await conn.sendCubeCommand({type:"REQUEST_BATTERY"});}catch(e){}
@@ -518,6 +539,10 @@ function onGanEvent(ev){
       cubeDebug.lastFacelets=ev.facelets||"";
       cubeDebug.lastFaceletsSerial=ev.serial;
       app.onFacelets(ev.facelets,ev.state);
+      let matchChanged=false;
+      if(!matchMode&&app.get()&&app.get().connected){matchMode="ask";matchChanged=true;}
+      if(matchMode==="help"&&ev.facelets&&ev.facelets===E.SOLVED){matchMode="done";matchChanged=true;}
+      if(matchChanged)render(app.get());
     }else if(ev.type==="BATTERY"){
       app.setBattery(ev.batteryLevel);
     }else if(ev.type==="HARDWARE"){
@@ -578,7 +603,7 @@ function timerText(v){
 }
 function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
-  if(v.phase==="needSolved")return "The cube isn't solved yet, so I can't start this scramble. Finish solving it (or if it already looks solved, tap My cube is solved). Then I'll tick off each turn as you go.";
+  if(v.phase==="needSolved")return "Do the big move next. I'll tick off each turn as you go. If the picture is wrong, tap Re-sync or Debug.";
   if(v.phase==="scrambling"){
     if(!v.pathReady)return "Working out the scramble from how your cube is now…";
     if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
@@ -589,6 +614,7 @@ function phaseHint(v){
   if(v.phase==="inspect")return "Inspection! Look at the cube. Your first turn starts the timer."+(v.inspectLeft<3000?" Time's nearly up!":"");
   if(v.phase==="ready")return "Ready — your first turn (or let go of the timer) starts the clock.";
   if(v.phase==="running"){
+    if((v.elapsed||0)>=180000)return "Cube finished? Tap My cube is solved.";
     if(v.kind==="drill"&&v.session&&v.session.drillStage)return "Go! Stop when you finish "+(E.STAGE_KID[v.session.drillStage]||"this stage")+".";
     return "Go! The timer stops when the cube is solved.";
   }
@@ -721,11 +747,13 @@ function render(v){
   const cele=$("#cele");
   show(cele,v.celebration==="pb");
   if(v.celebration==="pb")setText("#celeText","New personal best! "+(st.pb?st.pb.text:""));
-  const dbg=$("#cubeDebug");
-  if(dbg){
-    dbg.classList.toggle("hidden",!showDebug);
-    if(showDebug)dbg.textContent=debugText(v);
+  if(showDebug){
+    const dbg=$("#cubeDebug");
+    if(dbg)dbg.textContent=debugText(v);
   }
+  const ask=$("#matchAsk"), help=$("#matchHelp");
+  if(ask)ask.classList.toggle("hidden",!(v.connected&&matchMode==="ask"));
+  if(help)help.classList.toggle("hidden",!(v.connected&&matchMode==="help"));
 }
 
 function onAppView(v){
@@ -739,7 +767,12 @@ app.on(onAppView);
 
 function bind(){
   $("#connectBtn").addEventListener("click",()=>{if(app.get().connected)disconnectCube();else connectCube();});
-  $("#resetBtn").addEventListener("click",doReset);
+  $("#resetBtn").addEventListener("click",()=>{
+    doReset();
+    /* Stay on the help copy until FACELETS come back solved (confirms the i3 memory reset). */
+    if(matchMode==="ask"){matchMode="help";}
+    render(app.get());
+  });
   const resync=$("#resyncBtn");
   if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(v.facelets);});
   $("#newScrambleBtn").addEventListener("click",()=>nextScramble());
@@ -754,7 +787,13 @@ function bind(){
   const netCb=$("#optShowNet");
   if(netCb)netCb.addEventListener("change",e=>setShowNet(e.target.checked));
   const dbgCb=$("#optShowDebug");
-  if(dbgCb)dbgCb.addEventListener("change",e=>{showDebug=!!e.target.checked;const box=$("#cubeDebug");if(box){box.classList.toggle("hidden",!showDebug);if(showDebug)box.textContent=debugText(app.get());}});
+  if(dbgCb)dbgCb.addEventListener("change",e=>setShowDebug(e.target.checked));
+  const dbgBtn=$("#debugBtn");
+  if(dbgBtn)dbgBtn.addEventListener("click",()=>setShowDebug(!showDebug));
+  const yes=$("#matchYes");
+  if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
+  const no=$("#matchNo");
+  if(no)no.addEventListener("click",()=>{matchMode="help";render(app.get());});
   $("#sessionBox").addEventListener("click",e=>{
     if(e.target.id==="startLessonBtn"){app.startLesson();nextScramble();}
     if(e.target.id==="skipPhaseBtn"){app.skipLessonPhase();nextScramble();}

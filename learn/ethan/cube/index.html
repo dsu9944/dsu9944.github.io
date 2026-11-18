@@ -98,6 +98,9 @@ details, .help{font-size:1rem;line-height:1.45}
 input[type=text]{width:100%;padding:12px;border:3px solid #99f6e4;border-radius:14px;font-size:1.1rem;letter-spacing:.08em}
 label.opt{display:flex;gap:8px;align-items:center;margin:8px 0}
 footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
+.ver{font-size:.75rem;color:#6b7280;white-space:nowrap;font-weight:600}
+.topbar .ver{margin:0 6px 0 0;align-self:center}
+#debugBtn[aria-pressed="true"]{background:#0f172a;color:#e2e8f0;border-color:#0f172a}
 @media (max-width:560px){.timer{font-size:3.1rem}.scramble{font-size:1.15rem}.callout{font-size:1.45rem}.callout b{font-size:2rem}.mv.next{font-size:1.5rem}}
 #cubeDebug{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.35;white-space:pre-wrap;max-height:280px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:10px;margin-top:8px}
 #cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
@@ -106,6 +109,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 <body>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
+  <span class="ver" id="buildVer" title="Page build">v6 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -127,6 +131,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <div class="row-gap">
       <button class="btn ghost" id="resyncBtn" type="button">Cube looks wrong? Re-sync</button>
       <button class="btn ghost" id="resetBtn" type="button">My cube is solved</button>
+      <button class="btn ghost" id="debugBtn" type="button" aria-pressed="false">Debug</button>
       <button class="btn ghost" id="helpToggle" type="button">How to connect the i3</button>
     </div>
     <div id="helpPanel" class="help hidden">
@@ -156,9 +161,20 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
       </div>
       <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
     </div>
+    <div id="matchAsk" class="note hidden" role="dialog">
+      <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
+      <div class="row-gap">
+        <button class="btn" id="matchYes" type="button">Yes</button>
+        <button class="btn ghost" id="matchNo" type="button">No</button>
+      </div>
+    </div>
+    <div id="matchHelp" class="note hidden">
+      <p style="margin:0">The picture is out of sync (the i3's memory can drift). <strong>Solve your cube</strong>, then tap <strong>My cube is solved</strong>. I'll reset the cube's memory and check again.</p>
+    </div>
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
     <div id="fixup" class="hidden"></div>
+    <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
     <div class="row-gap" style="justify-content:center">
       <button class="btn" id="newScrambleBtn" type="button">Skip / new scramble</button>
       <button class="btn ghost" id="nextBtn" type="button">Next solve</button>
@@ -201,14 +217,13 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
       </label>
       <label class="opt"><input type="checkbox" id="optShowNet"> Show a flat 2D cube net (the 3D cube is used by default)</label>
       <label class="opt"><input type="checkbox" id="optShowDebug"> Show cube debug</label>
-      <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
       <p>Saved MAC address: <code id="savedMac">not saved yet</code>
         <button type="button" class="tiny" id="macClear">Clear saved MAC</button></p>
       <p>Times and settings are stored in this browser only, under <code>kidsHub.p.ethan.cube</code>. When a session finishes we quietly send a summary to the same results sheet as the other lessons (it never blocks a solve if the network is down).</p>
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only.</footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v6 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -228,7 +243,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </div>
 </div></div>
 
-<script src="cube-engine.js"></script>
-<script src="cube-app.js"></script>
+<script src="cube-engine.js?v=6"></script>
+<script src="cube-app.js?v=6"></script>
 </body>
 </html>

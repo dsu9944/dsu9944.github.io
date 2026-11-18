@@ -143,6 +143,17 @@ function cubiesEqual(a,b){
   if(!a||!b)return false;
   return a.cp.join()===b.cp.join()&&a.co.join()===b.co.join()&&a.ep.join()===b.ep.join()&&a.eo.join()===b.eo.join();
 }
+/* cubing.js 3x3 orbit order is not Kociemba/GAN order. Cubing U-corners run URF,UBR,ULB,UFL (swap Kociemba 1/3);
+   U/D edges are swapped in pairs (UR/UF, UB/UL, DR/DF, DB/DL) and BR/BL are swapped; FR/FL stay. */
+const C2K_CORNER=[0,3,2,1,4,5,6,7];
+const C2K_EDGE=[1,0,3,2,5,4,7,6,8,9,11,10];
+function cubiesToCubing(c){
+  if(!c)return null;
+  const cp=[],co=[],ep=[],eo=[];
+  for(let i=0;i<8;i++){const k=C2K_CORNER[i];cp[i]=C2K_CORNER[c.cp[k]];co[i]=c.co[k];}
+  for(let i=0;i<12;i++){const k=C2K_EDGE[i];ep[i]=C2K_EDGE[c.ep[k]];eo[i]=c.eo[k];}
+  return {cp,co,ep,eo};
+}
 
 
 let solveFromToImpl=null;
@@ -805,16 +816,20 @@ function createApp(opts){
     emit();
     return p;
   }
-  function beginOfficialScramble(opts){
+  let scrambleStart=SOLVED;
+  function startScrambleFromCurrent(){
+    scrambleStart=facelets;
+    scrambleTargetState=applyAlg(scrambleStart,officialScramble);
     pathReady=true;
     pathPromise=Promise.resolve(fmtAlg(officialScramble));
-    tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
+    tracker=createTracker(officialScramble,scrambleStart,scrambleTargetState);
     const t=tracker.setState(facelets);
     if(t.done||eq(facelets,scrambleTargetState))armAfterScramble();
     else phase="scrambling";
     emit();
     return fmtAlg(officialScramble);
   }
+  function beginOfficialScramble(opts){return startScrambleFromCurrent(opts);}
   function newScramble(alg,opts){
     opts=opts||{};
     clearInspect();
@@ -822,24 +837,9 @@ function createApp(opts){
     run=null;
     const official=parseAlg(alg||randomMoveScramble());
     officialScramble=official;
-    scrambleTargetState=applyAlg(SOLVED,official);
     if(!connected&&!opts.keepFacelets)facelets=SOLVED;
     bumpFacelets();
-    if(eq(facelets,scrambleTargetState)){
-      pathReady=true;pathPromise=Promise.resolve("");
-      tracker=createTracker([],facelets,scrambleTargetState);
-      armAfterScramble();
-      return "";
-    }
-    if(isSolved(facelets))return beginOfficialScramble(opts);
-    /* Not solved: do not invent a path (cubing.js search may fail on github.io).
-       Ask him to finish / press My cube is solved, then follow the official scramble move-by-move. */
-    pathReady=true;
-    pathPromise=Promise.resolve(fmtAlg(official));
-    tracker=createTracker(official,SOLVED,scrambleTargetState);
-    phase="needSolved";
-    emit();
-    return fmtAlg(official);
+    return startScrambleFromCurrent();
   }
   function setScramble(alg){return newScramble(alg);}
   function skipScramble(){return newScramble();}
@@ -854,27 +854,11 @@ function createApp(opts){
     };
     facelets=applyMove(facelets,m);
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
-    if(phase==="needSolved"){
-      if(isSolved(facelets)){
-        phase="scrambling";
-        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
-        if(eq(facelets,scrambleTargetState)){armAfterScramble();return tracker.get();}
-        emit();
-        return tracker.get();
-      }
-      emit();
-      return;
-    }
+    if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
       if(eq(facelets,scrambleTargetState)){tracker.setState(facelets);armAfterScramble();return tracker.get();}
       const t=tracker.apply(m);
       if(t.done||eq(facelets,scrambleTargetState)){armAfterScramble();return t;}
-      if(!t.on){
-        const short=solveFromToSync(facelets,scrambleTargetState,4);
-        if(short){tracker.repath(facelets,short,true);emit();return tracker.get();}
-        emit();
-        return t;
-      }
       emit();
       return t;
     }
@@ -901,23 +885,14 @@ function createApp(opts){
     if(!f||f.length!==54)return;
     facelets=f;
     if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
-    if(phase==="needSolved"){
-      if(isSolved(facelets)){
-        phase="scrambling";
-        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
-        if(eq(facelets,scrambleTargetState)){armAfterScramble();return;}
-      }
-      emit();
-      return;
-    }
+    if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
       if(eq(facelets,scrambleTargetState)){tracker.setState(f);armAfterScramble();return;}
       const t=tracker.setState(f);
       if(t.done){armAfterScramble();return;}
-      if(!t.on){
-        const short=solveFromToSync(facelets,scrambleTargetState,4);
-        if(short){tracker.repath(facelets,short,true);}
-        emit();
+      /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. */
+      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart){
+        startScrambleFromCurrent();
         return;
       }
       emit();
@@ -934,11 +909,14 @@ function createApp(opts){
   }
   function markSolved(){
     facelets=SOLVED;
-    if(phase==="needSolved"||phase==="scrambling"||phase==="idle"){
-      if(officialScramble&&officialScramble.length){
-        if(eq(SOLVED,scrambleTargetState)){tracker.setState(SOLVED);armAfterScramble();}
-        else beginOfficialScramble({});
-      }else emit();
+    if(phase==="running"){
+      stopIfDone(SOLVED,null);
+      if(phase==="running")finishSolve(elapsedNow(),SOLVED);
+      return {requestReset:true};
+    }
+    if(phase==="needSolved"||phase==="scrambling"||phase==="idle"||phase==="stopped"){
+      if(officialScramble&&officialScramble.length)startScrambleFromCurrent();
+      else emit();
     }else emit();
     return {requestReset:true};
   }
@@ -1001,7 +979,8 @@ function createApp(opts){
     return {
       facelets,solved:isSolved(facelets),phase,
       scramble:t.moves,scrambleText:fmtAlg(t.moves),officialScramble,officialText:fmtAlg(officialScramble),
-      k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,pathReady,faceletsGen,
+      k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,f0:scrambleStart,atTarget:eq(facelets,scrambleTargetState),
+      pathReady,faceletsGen,
       cubies:cubiesFromFacelets(facelets),
       current:t.current,currentScramble:t.currentScramble,partial:t.partial,totalParts:t.totalParts,half:t.half,halfLabel:t.halfLabel,total:t.total,
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
@@ -1045,7 +1024,7 @@ const Engine={
   applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
   createTracker,progressOnPath,scrambleTarget,combineMoves,expandToQuarters,pathSnapshots,
-  invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,solveFromTo,solveFromToSync,setSolveFromTo,
+  invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
   validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
