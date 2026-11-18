@@ -32,7 +32,7 @@ window.addEventListener("unhandledrejection",function(e){
 });
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b9cff' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E">
-<link rel="stylesheet" href="cube.css?v=14">
+<link rel="stylesheet" href="cube.css?v=15">
 </head>
 <body data-theme="dark" data-view="practice">
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
@@ -42,7 +42,7 @@ window.addEventListener("unhandledrejection",function(e){
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
   </a>
   <h1>Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v14 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v15 · 18 Nov</span>
   <div class="status-cluster">
     <span class="dot" id="connDot" title="Connection" aria-hidden="true"></span>
     <span id="battery" class="hidden" title="Battery"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="batteryPct"></span></span>
@@ -102,16 +102,6 @@ window.addEventListener("unhandledrejection",function(e){
       <div id="scramble" class="scramble" aria-live="polite"></div>
       <div id="coachPanel" class="coach hidden" hidden></div>
       <div id="fixup" class="hidden"></div>
-      <div id="matchAsk" class="note hidden" role="dialog">
-        <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
-        <div class="row-gap">
-          <button class="btn" id="matchYes" type="button">Yes</button>
-          <button class="btn ghost" id="matchNo" type="button">No</button>
-        </div>
-      </div>
-      <div id="matchHelp" class="note hidden">
-        <p style="margin:0">The picture is out of sync (the i3's memory can drift). <strong>Solve your cube</strong>, then tap <strong>My cube is solved</strong>. I'll reset the cube's memory and check again.</p>
-      </div>
       <div class="cube-wrap">
         <div id="twistyHost" aria-label="3D cube">
           <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
@@ -171,7 +161,7 @@ window.addEventListener("unhandledrejection",function(e){
 
   <section class="view" id="view-settings">
     <h2>Settings</h2>
-    <p class="muted" id="settingsVer">v14 · 18 Nov</p>
+    <p class="muted" id="settingsVer">v15 · 18 Nov</p>
     <section class="card" id="connectCard">
       <div id="connError" class="err hidden"></div>
       <p class="muted" id="settingsConn"></p>
@@ -181,7 +171,7 @@ window.addEventListener("unhandledrejection",function(e){
         <ol>
           <li>Use <strong>Google Chrome</strong> on a computer or Android phone (not an iPhone or iPad).</li>
           <li>Wake the cube by turning a face. It should have some charge.</li>
-          <li>Tap <strong>Connect</strong> and pick the device whose name starts with <strong>GAN</strong> (often something like <strong>GAN356i3</strong>).</li>
+          <li>Tap <strong>Connect</strong> and pick the device whose name starts with <strong>GAN</strong> (often something like <strong>GAN356i3</strong>). In Chrome's popup, a cube marked <strong>Paired</strong> still needs you to tap it and press <strong>Pair</strong>. That's Chrome remembering it, not connected yet.</li>
           <li>We'll try to read the MAC address automatically from the cube's Bluetooth advertisement. This often works on Windows, Linux and Android. It usually <strong>does not</strong> work on a Mac, because Chrome hides the real address there.</li>
           <li>If a box asks for the MAC (six pairs like <code>AB:12:CD:34:EF:56</code>), enter it once. We save it in this browser and shouldn't ask again.
             <ul>
@@ -192,6 +182,7 @@ window.addEventListener("unhandledrejection",function(e){
           <li>After it connects you should see the battery and a live cube that follows Ethan's turns — even if the cube wasn't solved when you connected. If the picture doesn't match the real cube, tap <strong>Re-sync</strong>. If the real cube is actually solved, tap <strong>My cube is solved</strong>.</li>
         </ol>
         <p>Optional: turning on <code>chrome://flags/#enable-experimental-web-platform-features</code> and restarting Chrome can help auto-detect the MAC, but it isn't required once the address is saved.</p>
+        <p>To reconnect without Chrome's popup, turn on <code>chrome://flags/#enable-experimental-web-platform-features</code> (needed for <code>getDevices()</code> and <code>watchAdvertisements()</code> since Chrome 85; they are still off by default) and <code>chrome://flags/#enable-web-bluetooth-new-permissions-backend</code> so the cube is remembered after Chrome restarts. If that second flag is missing (it has expired and vanished in some versions, including Chrome 121), try <strong>Temporarily unexpire flags</strong>, or start Chrome with <code>--enable-features=WebBluetoothNewPermissionsBackend</code>. Without it, Chrome may only remember the cube until you close the browser.</p>
       </div>
     </section>
 
@@ -237,7 +228,7 @@ window.addEventListener("unhandledrejection",function(e){
 </div>
 <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
 
-<footer>Progress is saved in this browser on this device only. <span class="ver">v14 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v15 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -257,7 +248,7 @@ window.addEventListener("unhandledrejection",function(e){
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=14"></script>
-<script src="cube-app.js?v=14"></script>
+<script src="cube-engine.js?v=15"></script>
+<script src="cube-app.js?v=15"></script>
 </body>
 </html>

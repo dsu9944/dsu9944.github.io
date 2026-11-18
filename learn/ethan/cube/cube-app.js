@@ -70,7 +70,7 @@ let setupToken = 0, lastFaceletsGen = -1;
 const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:"", faceletsSynced:false};
 let faceletsAnchor = E.SOLVED;
 let showDebug = false;
-let matchMode = ""; /* "" | "ask" | "help" | "done" */
+let matchMode = ""; /* unused in v15; match prompt removed */
 const cubeDebug = {
   protocol:"",
   hardwareName:"",
@@ -119,7 +119,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v14 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v15 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -466,9 +466,11 @@ async function loadCubing(){
       if(!KPatternCls&&kpuzzle&&kpuzzle.defaultPattern)KPatternCls=kpuzzle.defaultPattern().constructor;
     }
     if(searchSolve&&kpuzzle&&KPatternCls){
-      E.setSolveFromTo(solveFromToSearch);
+      /* Do not install the full cubing.js solver on the engine re-plan path.
+         experimentalSolve3x3x3IgnoringCenters can block the main thread for seconds
+         and was hanging Chrome around a live i3 stream. Re-plan stays at BFS-4 + undo-stack. */
       solveReady=true;
-      cubeDebug.searchStatus="loaded";
+      cubeDebug.searchStatus="loaded (idle setup only)";
     }else{
       cubeDebug.searchStatus="loaded incomplete (puzzles or search missing)";
     }
@@ -536,51 +538,96 @@ function setSetupTransformation(f,state){
   cubeDebug.setupMethod="setupTransformation (no solver)";
   return true;
 }
-async function setupFromFacelets(f,state){
+let deferredSetupTimer=0, deferredSetupJob=null, lastSetupFacelets="";
+function compactApplied(f){
+  if(f&&f.length===54){faceletsAnchor=f;appliedAlg=[];}
+  if((twistyLog.moves||[]).length>40)twistyLog.moves=twistyLog.moves.slice(-40);
+}
+function applySetupFast(f,state){
+  if(E.isSolved(f)){
+    clearSetupTransformation();
+    faceletsAnchor=E.SOLVED;snapSetup("");
+    lastSetupFacelets=f;
+    twistyLog.faceletsSynced=true;
+    cubeDebug.setupMethod="solved";
+    compactApplied(E.SOLVED);
+    return true;
+  }
+  if(setSetupTransformation(f,state)){
+    lastSetupFacelets=f;
+    compactApplied(f);
+    return true;
+  }
+  const short=E.solveFromToSync(f,E.SOLVED,4);
+  if(short){
+    faceletsAnchor=E.SOLVED;
+    snapSetup(E.fmtAlg(E.invertAlg(short)));
+    lastSetupFacelets=f;
+    twistyLog.faceletsSynced=expectedFacelets()===f;
+    cubeDebug.setupMethod="short BFS setupAlg";
+    if(twistyLog.faceletsSynced)compactApplied(f);
+    return true;
+  }
+  return false;
+}
+function scheduleIdleSearchSetup(f,state){
+  deferredSetupJob={f,state};
+  if(deferredSetupTimer)return;
+  const later=typeof requestIdleCallback==="function"?fn=>requestIdleCallback(fn,{timeout:800}):fn=>setTimeout(fn,250);
+  deferredSetupTimer=later(function(){
+    deferredSetupTimer=0;
+    const job=deferredSetupJob;deferredSetupJob=null;
+    if(!job||!searchSolve||!kpuzzle||!KPatternCls)return;
+    if(job.f===lastSetupFacelets||expectedFacelets()===job.f)return;
+    if(applySetupFast(job.f,job.state))return;
+    const token=++setupToken;
+    cubeDebug.setupMethod="idle cubing.js search";
+    Promise.resolve().then(()=>searchSolve(patternFromFacelets(job.f))).then(alg=>{
+      if(token!==setupToken)return;
+      if(expectedFacelets()===job.f||job.f===lastSetupFacelets)return;
+      if(applySetupFast(job.f,job.state))return;
+      let setup="";
+      if(alg&&typeof alg.invert==="function")setup=String(alg.invert());
+      else if(alg)setup=E.fmtAlg(E.invertAlg(String(alg)));
+      faceletsAnchor=E.SOLVED;
+      snapSetup(setup);
+      lastSetupFacelets=job.f;
+      twistyLog.faceletsSynced=expectedFacelets()===job.f;
+      if(twistyLog.faceletsSynced)compactApplied(job.f);
+      cubeDebug.setupMethod="idle cubing.js search setupAlg";
+    }).catch(e=>{
+      cubeDebug.lastError=String(e&&e.message||e||"idle search failed");
+      cubeDebug.setupMethod="idle search failed";
+    });
+  });
+}
+function setupFromFacelets(f,state){
   f=f||(app.get()&&app.get().facelets)||E.SOLVED;
   if(!f||f.length!==54)return;
-  const token=++setupToken;
+  if(f===lastSetupFacelets&&expectedFacelets()===f)return;
+  ++setupToken;
   try{
-    if(E.isSolved(f)){
-      clearSetupTransformation();
-      faceletsAnchor=E.SOLVED;snapSetup("");
-      twistyLog.faceletsSynced=true;
-      cubeDebug.setupMethod="solved";
-      return;
-    }
-    if(setSetupTransformation(f,state))return;
-    const short=E.solveFromToSync(f,E.SOLVED,4);
-    if(short){
-      faceletsAnchor=E.SOLVED;
-      snapSetup(E.fmtAlg(E.invertAlg(short)));
-      twistyLog.faceletsSynced=expectedFacelets()===f;
-      cubeDebug.setupMethod="short BFS setupAlg";
-      return;
-    }
-    if(!searchSolve||!kpuzzle||!KPatternCls){
-      cubeDebug.setupMethod="pending (no pattern API, search not ready)";
-      return;
-    }
-    const alg=await searchSolve(patternFromFacelets(f));
-    if(token!==setupToken)return;
-    let setup="";
-    if(alg&&typeof alg.invert==="function")setup=String(alg.invert());
-    else if(alg)setup=E.fmtAlg(E.invertAlg(String(alg)));
-    faceletsAnchor=E.SOLVED;
-    snapSetup(setup);
-    twistyLog.faceletsSynced=expectedFacelets()===f;
-    cubeDebug.setupMethod="cubing.js search setupAlg";
+    if(applySetupFast(f,state))return;
+    cubeDebug.setupMethod="pending (no pattern API, search deferred)";
+    scheduleIdleSearchSetup(f,state);
   }catch(e){
     const msg=String(e&&e.message||e||"setup from facelets failed");
     twistyLog.lastError=msg;cubeDebug.lastError=msg;
     cubeDebug.setupMethod="failed: "+msg;
   }
 }
-async function requestFacelets(){
+let lastFaceletsReqAt=0, faceletsReqInFlight=false;
+async function requestFacelets(force){
   if(!conn||typeof conn.sendCubeCommand!=="function")return;
-  cubeDebug.faceletsRequestedAt=Date.now();
+  const nowt=Date.now();
+  if(!force&&(faceletsReqInFlight||nowt-lastFaceletsReqAt<400))return;
+  lastFaceletsReqAt=nowt;
+  faceletsReqInFlight=true;
+  cubeDebug.faceletsRequestedAt=nowt;
   pushDebug({type:"COMMAND",command:"REQUEST_FACELETS",at:cubeDebug.faceletsRequestedAt});
-  try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){cubeDebug.lastError=String(e&&e.message||e||"REQUEST_FACELETS failed");}
+  try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}
+  catch(e){cubeDebug.lastError=String(e&&e.message||e||"REQUEST_FACELETS failed");}
+  finally{faceletsReqInFlight=false;}
 }
 async function nextScramble(alg){
   if(alg)return app.setScramble(alg);
@@ -699,7 +746,10 @@ function hookApp(){
       const r=rawFace(face,st,ser);
       const after=app.get()||{};
       const shown=after.facelets&&after.facelets.length===54?displayFaceletsFor(after):null;
-      if(shown&&shown.length===54&&shown!==expectedFacelets()&&!showingMe&&!demoOn)setupFromFacelets(shown);
+      if(shown&&shown.length===54&&!showingMe&&!demoOn){
+        if(shown===expectedFacelets()||shown===lastSetupFacelets)compactApplied(shown);
+        else setupFromFacelets(shown,st);
+      }
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onFacelets");}
   };
@@ -753,7 +803,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,setView:(n)=>setView(n),feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor,openAlgPlayer,stopAlgPlayer,getAlgPlayer:()=>algPlayer,doReset,moreDetail:()=>moreDetail};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,setView:(n)=>setView(n),feedGanEvent:onGanEvent,getMatchMode:()=>"",setMatchMode:()=>{},tryAutoReconnect,isConnecting,showMeCoach,displayFaceletsFor,openAlgPlayer,stopAlgPlayer,getAlgPlayer:()=>algPlayer,doReset,moreDetail:()=>moreDetail};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -796,51 +846,201 @@ async function macProvider(device,isFallback){
 }
 
 async function loadGan(){
+  if(typeof window!=="undefined"&&window.__mockGan)return window.__mockGan;
   try{return await import(GAN_MODS);}
   catch(e){return await import(GAN_MODS_FALLBACK);}
 }
 
-async function connectCube(){
+const GAN_NAME_RE=/^(GAN|MG|AiCube)/i;
+function isGanLikeDevice(d){return !!(d&&GAN_NAME_RE.test(d.name||""));}
+
+async function listRememberedGanDevices(){
+  const bt=typeof navigator!=="undefined"?navigator.bluetooth:null;
+  if(!bt||typeof bt.getDevices!=="function")return [];
+  try{
+    const all=await bt.getDevices();
+    return (all||[]).filter(isGanLikeDevice);
+  }catch(e){return [];}
+}
+
+function waitForAdvertisement(device,ms){
+  if(!device)return Promise.resolve(null);
+  if(typeof device.watchAdvertisements!=="function")return Promise.resolve(device);
+  return new Promise(resolve=>{
+    let done=false;
+    const ac=typeof AbortController==="function"?new AbortController():null;
+    const finish=d=>{
+      if(done)return;done=true;
+      try{if(ac)ac.abort();}catch(e){}
+      clearTimeout(t);
+      resolve(d);
+    };
+    const t=setTimeout(()=>finish(null),ms||8000);
+    try{
+      device.addEventListener("advertisementreceived",()=>finish(device),{once:true});
+      const p=device.watchAdvertisements(ac?{signal:ac.signal}:{});
+      if(p&&typeof p.catch==="function")p.catch(()=>finish(null));
+    }catch(e){finish(null);}
+  });
+}
+
+async function pickRememberedDevice(opts){
+  opts=opts||{};
+  const waitMs=opts.waitMs!=null?opts.waitMs:8000;
+  const requireAd=!!opts.requireAdvertisement;
+  const devices=await listRememberedGanDevices();
+  if(!devices.length)return null;
+  const watchable=devices.filter(d=>typeof d.watchAdvertisements==="function");
+  if(!watchable.length){
+    if(requireAd)return null;
+    return devices[0];
+  }
+  return await new Promise(resolve=>{
+    let leftover=watchable.length, settled=false;
+    const acs=[];
+    const done=d=>{
+      if(settled)return;
+      leftover--;
+      if(d){
+        settled=true;
+        acs.forEach(a=>{try{a.abort();}catch(e){}});
+        clearTimeout(timer);
+        resolve(d);
+        return;
+      }
+      if(leftover<=0&&!settled){settled=true;clearTimeout(timer);resolve(null);}
+    };
+    const timer=setTimeout(()=>{if(!settled){settled=true;acs.forEach(a=>{try{a.abort();}catch(e){}});resolve(null);}},waitMs);
+    watchable.forEach(device=>{
+      const ac=typeof AbortController==="function"?new AbortController():null;
+      if(ac)acs.push(ac);
+      try{
+        device.addEventListener("advertisementreceived",()=>done(device),{once:true});
+        const p=device.watchAdvertisements(ac?{signal:ac.signal}:{});
+        if(p&&typeof p.catch==="function")p.catch(()=>done(null));
+      }catch(e){done(null);}
+    });
+  });
+}
+
+async function withRememberedRequestDevice(device,fn){
+  const bt=typeof navigator!=="undefined"?navigator.bluetooth:null;
+  if(!bt||!device||typeof bt.requestDevice!=="function")return fn();
+  const orig=bt.requestDevice;
+  bt.requestDevice=async function(){return device;};
+  try{return await fn();}
+  finally{if(bt.requestDevice!==orig)bt.requestDevice=orig;}
+}
+
+function setConnecting(on){
+  connecting=!!on;
+  applyConnectButton(app.get());
+}
+
+function clearPendingLink(){
+  connecting=false;
+  pendingLive=false;
+  pendingInfo=null;
+}
+
+function maybeCompleteConnect(extra){
+  if(!pendingLive)return;
+  pendingLive=false;
+  connecting=false;
+  const info=Object.assign({},pendingInfo||{},extra||{});
+  pendingInfo=null;
+  if(info.mac)app.setMac(info.mac);
+  app.setConnected(true,info);
+  render(app.get());
+}
+
+function unsubscribeGan(){
+  if(unsub&&typeof unsub.unsubscribe==="function"){
+    try{unsub.unsubscribe();}catch(e){}
+  }
+  unsub=null;
+}
+
+async function connectCube(opts){
+  opts=opts||{};
+  const auto=!!opts.auto;
+  if(isConnecting()||(app.get()&&app.get().connected&&conn))return;
   if(isIos()||!hasWebBluetooth()){
-    app.setError("This browser can't talk to the smart cube. Use Chrome on a computer or Android.");
+    if(!auto)app.setError("This browser can't talk to the smart cube. Use Chrome on a computer or Android.");
     return;
   }
-  const btn=$("#connectBtn");
-  btn.disabled=true;btn.textContent="Looking for the cube…";
-  app.setError("");
+  setConnecting(true);
+  if(!auto)app.setError("");
+  cubeDebug.searchStatus=cubeDebug.searchStatus||"";
   try{
     const gan=await loadGan();
     const connectGanCube=gan.connectGanCube;
-    conn=await connectGanCube(macProvider);
-    if(unsub&&typeof unsub.unsubscribe==="function")try{unsub.unsubscribe();}catch(e){}
+    let remembered=null;
+    try{
+      remembered=await pickRememberedDevice({waitMs:8000,requireAdvertisement:true});
+    }catch(e){remembered=null;}
+    if(!remembered&&!auto){
+      /* User tapped Connect: if we have a remembered device but saw no advertisement,
+         still try the remembered device when watchAdvertisements is missing; otherwise open the chooser. */
+      try{
+        const named=await listRememberedGanDevices();
+        if(named.length&&named.every(d=>typeof d.watchAdvertisements!=="function"))remembered=named[0];
+      }catch(e){}
+    }
+    if(auto&&!remembered){
+      clearPendingLink();
+      applyConnectButton(app.get());
+      return;
+    }
+    const run=()=>connectGanCube(macProvider);
+    const next=remembered?await withRememberedRequestDevice(remembered,run):await run();
+    unsubscribeGan();
+    conn=next;
     const name=conn.deviceName||"GAN cube";
     const mac=E.validMac(conn.deviceMAC);
-    if(mac)app.setMac(mac);
-    app.setConnected(true,{name,mac:mac||"",battery:null});
+    pendingInfo={name,mac:mac||"",battery:null};
+    pendingLive=true;
+    connecting=true;
     cubeDebug.protocol=guessProtocol(name)||"Gen2";
     cubeDebug.hardwareName=name;
     cubeDebug.faceletsReply=false;
-    matchMode="ask";
+    matchMode="";
     unsub=conn.events$.subscribe(onGanEvent);
     try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
     try{await conn.sendCubeCommand({type:"REQUEST_BATTERY"});}catch(e){}
     try{await conn.sendCubeCommand({type:"REQUEST_HARDWARE"});}catch(e){}
-    btn.textContent="Connected";
+    applyConnectButton(app.get());
   }catch(e){
     const msg=String(e&&e.message||e||"");
+    clearPendingLink();
+    unsubscribeGan();
+    conn=null;
+    if(auto){
+      applyConnectButton(app.get());
+      return;
+    }
     if(/User cancelled|NotFoundError|cancel/i.test(msg))app.setError("");
     else if(/MAC/i.test(msg))app.setError("The GAN 356 i3 needs its MAC address before it can talk to Chrome. Ask a grown-up — the steps are in “How to connect”.");
     else app.setError("Couldn't connect this time. Make sure the cube is awake (give it a turn), then try again in Chrome.");
     app.setConnected(false);
-    btn.textContent="Connect";
+    applyConnectButton(app.get());
   }
-  btn.disabled=false;
-  render(app.get());
 }
+
+async function tryAutoReconnect(){
+  if(isIos()||!hasWebBluetooth())return;
+  if(isConnecting()||(app.get()&&app.get().connected))return;
+  const bt=typeof navigator!=="undefined"?navigator.bluetooth:null;
+  if(!bt||typeof bt.getDevices!=="function")return;
+  try{await connectCube({auto:true});}catch(e){}
+}
+
 async function disconnectCube(){
+  clearPendingLink();
+  unsubscribeGan();
   try{if(conn&&conn.disconnect)await conn.disconnect();}catch(e){}
   conn=null;app.setConnected(false);
-  $("#connectBtn").textContent="Connect";
+  applyConnectButton(app.get());
 }
 function onGanEvent(ev){
   try{
@@ -861,19 +1061,19 @@ function onGanEvent(ev){
       cubeDebug.faceletsReceivedAt=Date.now();
       cubeDebug.lastFacelets=ev.facelets||"";
       cubeDebug.lastFaceletsSerial=ev.serial;
+      maybeCompleteConnect(pendingInfo||{});
       app.onFacelets(ev.facelets,ev.state,ev.serial);
-      let matchChanged=false;
-      if(!matchMode&&app.get()&&app.get().connected){matchMode="ask";matchChanged=true;}
-      if(matchMode==="help"&&ev.facelets&&ev.facelets===E.SOLVED){matchMode="done";matchChanged=true;}
-      if(matchChanged)render(app.get());
     }else if(ev.type==="BATTERY"){
+      maybeCompleteConnect(Object.assign({},pendingInfo||{},{battery:ev.batteryLevel}));
       app.setBattery(ev.batteryLevel);
     }else if(ev.type==="HARDWARE"){
       cubeDebug.hardwareName=ev.hardwareName||cubeDebug.hardwareName;
       if(!cubeDebug.protocol)cubeDebug.protocol=guessProtocol(ev.hardwareName||(app.get()&&app.get().deviceName));
     }else if(ev.type==="DISCONNECT"){
+      clearPendingLink();
+      unsubscribeGan();
       conn=null;app.setConnected(false);
-      $("#connectBtn").textContent="Connect";
+      applyConnectButton(app.get());
     }
   }catch(e){
     cubeDebug.lastError=String(e&&e.message||e||"onGanEvent");
@@ -1391,28 +1591,48 @@ function coachPanelHTML(v){
     ${hold}${tip}${showAlg}${oops}${guard}${stepNow}${timeLine}${sum}
     <div class="coach-btns">${showMe}<button class="btn ghost" id="coachNextCase" type="button">Next case</button></div>`;
 }
+let connecting=false, pendingLive=false, pendingInfo=null;
+function isConnecting(){return !!(connecting||pendingLive);}
+function applyConnectButton(v){
+  const btn=$("#connectBtn");
+  if(!btn)return;
+  if(isConnecting()){
+    btn.disabled=true;
+    btn.textContent="Connecting…";
+    setText("#connStatus","Connecting…");
+    const sc=$("#settingsConn"); if(sc)sc.textContent="Connecting…";
+    show($("#battery"),false);
+    document.body.classList.remove("connected");
+    return;
+  }
+  btn.disabled=false;
+  if(v&&v.connected){
+    /* Status never uses the word Paired — that is Chrome's chooser label, not a live link. */
+    setText("#connStatus",(v.deviceName||"GAN 356 i3")+(v.deviceMAC?" · "+v.deviceMAC:""));
+    show($("#battery"),v.battery!=null);
+    btn.textContent="Disconnect";
+  }else{
+    setText("#connStatus",(v&&v.ios)?"Timer-only on this iPhone/iPad":"Not connected — timer still works");
+    show($("#battery"),false);
+    btn.textContent="Connect";
+  }
+  const sc=$("#settingsConn");
+  if(sc)sc.textContent=($("#connStatus")&&$("#connStatus").textContent)||"";
+}
 function render(v){
-  document.body.classList.toggle("connected",!!v.connected);
+  document.body.classList.toggle("connected",!!v.connected && !isConnecting());
   document.body.classList.toggle("ios",!!v.ios);
   document.body.classList.toggle("pb",v.celebration==="pb");
   show($("#iosNote"),!!v.ios);
   show($("#btNote"),!v.ios&&!hasWebBluetooth());
   const batt=$("#battery");
-  if(v.connected){
-    setText("#connStatus",(v.deviceName||"GAN 356 i3")+(v.deviceMAC?" · "+v.deviceMAC:""));
-    show(batt,v.battery!=null);
-    if(v.battery!=null){
-      const pct=$("#batteryPct");
-      if(pct)pct.textContent=v.battery+"%";
-      batt.classList.toggle("low",v.battery<20);
-      batt.title="Battery "+v.battery+"%";
-    }
-    $("#connectBtn").textContent="Disconnect";
-  }else{
-    setText("#connStatus",v.ios?"Timer-only on this iPhone/iPad":"Not connected — timer still works");
-    show(batt,false);
-    $("#connectBtn").textContent="Connect";
+  if(v.connected&&v.battery!=null&&!isConnecting()){
+    const pct=$("#batteryPct");
+    if(pct)pct.textContent=v.battery+"%";
+    batt.classList.toggle("low",v.battery<20);
+    batt.title="Battery "+v.battery+"%";
   }
+  applyConnectButton(v);
   const err=$("#connError");
   if(v.lastError){err.textContent=v.lastError;show(err,true);}else show(err,false);
 
@@ -1439,8 +1659,6 @@ function render(v){
   if(startSol)startSol.classList.toggle("hidden",v.phase!=="scrambling");
   const nextBtn=$("#nextBtn");
   if(nextBtn)nextBtn.classList.toggle("hidden",v.phase!=="stopped");
-  const sc=$("#settingsConn");
-  if(sc)sc.textContent=($("#connStatus")&&$("#connStatus").textContent)||"";
   const fix=$("#fixup");
   if(fix)show(fix,false);
 
@@ -1454,39 +1672,62 @@ function render(v){
 
   setText("#hint",phaseHint(v));
   $("#splits").innerHTML=splitsHTML(v);
+  const sb=$("#sessionBanner");
+  if(sb)sb.innerHTML=sessionBannerHTML(v);
+  applyConnectButton(v);
 
+  const cele=$("#cele");
+  show(cele,v.celebration==="pb");
+  if(v.celebration==="pb"){
+    const st=v.stats||{};
+    setText("#celeText","New personal best! "+(st.pb?st.pb.text:""));
+  }
+  if(showDebug){
+    const dbg=$("#cubeDebug");
+    if(dbg)dbg.textContent=debugText(v);
+  }
+  maybeRenderChrome(v);
+}
+
+let lastChromeKey="", chromeRaf=0;
+function renderChrome(v){
+  if(!v)return;
   const st=v.stats||{};
   setText("#statPb",st.pb?st.pb.text:"—");
   setText("#statAo5",st.ao5?st.ao5.text:"—");
   setText("#statAo12",st.ao12?st.ao12.text:"—");
   setText("#statStreak",(st.streak||0)+" day"+(st.streak===1?"":"s"));
   setText("#statStars",String(st.stars||0));
-  $("#chart").innerHTML=chartSVG(st.trend);
+  const chart=$("#chart"); if(chart)chart.innerHTML=chartSVG(st.trend);
   const bs=st.bestSplits||{};
-  $("#bestSplits").innerHTML=E.stagesFor(v.settings.splitsMode).map(id=>`<li><b>${E.STAGE_LABEL[id]}</b> ${bs[id]?bs[id].text:"—"}</li>`).join("");
-  $("#history").innerHTML=historyHTML(v);
-  const sb=$("#sessionBanner");
-  if(sb)sb.innerHTML=sessionBannerHTML(v);
+  const best=$("#bestSplits");
+  if(best)best.innerHTML=E.stagesFor(v.settings.splitsMode).map(id=>`<li><b>${E.STAGE_LABEL[id]}</b> ${bs[id]?bs[id].text:"—"}</li>`).join("");
+  const hist=$("#history"); if(hist)hist.innerHTML=historyHTML(v);
   const box=$("#sessionBox");
   if(box)box.innerHTML=sessionHTML(v);
-
-
   const insp=$("#optInspect");if(insp)insp.checked=v.settings.inspect!==false;
   const mode=$("#optMode");if(mode)mode.value=v.settings.splitsMode||"lbl";
   const llm=$("#optLlMethod");if(llm)llm.value=(v.settings&&v.settings.llMethod)||"beginner";
   const slen=$("#optScrambleLen");if(slen&&document.activeElement!==slen)slen.value=v.settings.scrambleLen||13;
   setText("#savedMac",v.settings.mac||"not saved yet");
-
-  const cele=$("#cele");
-  show(cele,v.celebration==="pb");
-  if(v.celebration==="pb")setText("#celeText","New personal best! "+(st.pb?st.pb.text:""));
-  if(showDebug){
-    const dbg=$("#cubeDebug");
-    if(dbg)dbg.textContent=debugText(v);
+}
+function chromeKey(v){
+  return [v.phase, (v.solves&&v.solves.length)||0, v.connected?"1":"0", currentView, showDebug?"d":"", v.celebration||"", (v.sessionProgress&&v.sessionProgress.phase)||"", (v.stats&&v.stats.pb&&v.stats.pb.text)||""].join("|");
+}
+function maybeRenderChrome(v){
+  const key=chromeKey(v);
+  if(key!==lastChromeKey || v.phase==="stopped" || v.phase==="idle"){
+    lastChromeKey=key;
+    renderChrome(v);
+    return;
   }
-  const ask=$("#matchAsk"), help=$("#matchHelp");
-  if(ask)ask.classList.toggle("hidden",!(v.connected&&matchMode==="ask"));
-  if(help)help.classList.toggle("hidden",!(v.connected&&matchMode==="help"));
+  if(chromeRaf)return;
+  chromeRaf=(typeof requestAnimationFrame==="function"?requestAnimationFrame:fn=>setTimeout(fn,16))(function(){
+    chromeRaf=0;
+    const now=app.get();
+    lastChromeKey=chromeKey(now);
+    renderChrome(now);
+  });
 }
 
 function onAppView(v){
@@ -1504,15 +1745,13 @@ function onAppView(v){
 app.on(onAppView);
 
 function bind(){
-  $("#connectBtn").addEventListener("click",()=>{if(app.get().connected)disconnectCube();else connectCube();});
+  $("#connectBtn").addEventListener("click",()=>{if(isConnecting())return;if(app.get().connected)disconnectCube();else connectCube();});
   $("#resetBtn").addEventListener("click",()=>{
     doReset();
-    /* Stay on the help copy until FACELETS come back solved (confirms the i3 memory reset). */
-    if(matchMode==="ask"){matchMode="help";}
     render(app.get());
   });
   const resync=$("#resyncBtn");
-  if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(displayFaceletsFor(v)||v.facelets);});
+  if(resync)resync.addEventListener("click",()=>{requestFacelets(true);const v=app.get();if(v)setupFromFacelets(displayFaceletsFor(v)||v.facelets);});
   $("#newScrambleBtn").addEventListener("click",()=>nextScramble());
   $("#helpToggle").addEventListener("click",()=>{
     setView("settings");
@@ -1578,10 +1817,6 @@ function bind(){
     if(id)openLesson(id);
   });
   fillLessons();
-  const yes=$("#matchYes");
-  if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
-  const no=$("#matchNo");
-  if(no)no.addEventListener("click",()=>{matchMode="help";doReset();render(app.get());});
   function onSessionClick(e){
     const btn=e.target.closest?e.target.closest("button"):e.target;
     if(!btn||!btn.id)return;
@@ -1642,7 +1877,11 @@ function bind(){
     if(!spaceDown)return;
     e.preventDefault();spaceDown=false;app.manualReadyCheck();app.manualUp();
   });
-  setInterval(()=>{try{if(app.get().hold)app.manualReadyCheck();}catch(e){}},50);
+  if(!window.__ethanHoldIv){
+    window.__ethanHoldIv=setInterval(()=>{try{if(app.get().hold)app.manualReadyCheck();}catch(e){}},50);
+  }
+  if(window.__ethanLiveTimerStarted)return;
+  window.__ethanLiveTimerStarted=true;
   let liveTimerRaf=0, liveTimerIv=0;
   function tickLiveTimer(){
     try{
@@ -1706,6 +1945,7 @@ function init(){
   render(app.get());
   loadCubing();
   nextScramble();
+  setTimeout(()=>{try{tryAutoReconnect();}catch(e){}},400);
 }
 
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);

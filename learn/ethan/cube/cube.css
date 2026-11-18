@@ -1,4 +1,4 @@
-/* Ethan's Speedcubing — v14 layout. Neutral dark default, light option, 4/8 spacing. */
+/* Ethan's Speedcubing — v15 layout. Neutral dark default, light option, 4/8 spacing. */
 :root, [data-theme="dark"]{
   --bg:#0c0e12;
   --bg-elev:#15181e;
@@ -322,11 +322,6 @@ body.plan-blind #twistyHost{visibility:hidden}
 #coachPanel{width:100%;margin:8px 0 0}
 #coachPanel .callout{background:none;border:0;padding:0}
 
-/* match prompt */
-#matchAsk,#matchHelp{
-  width:100%;margin:0 0 12px;padding:12px 14px;
-  background:var(--bg-elev);border:1px solid var(--line-strong);border-radius:var(--radius);
-}
 #fixup.hidden{display:none!important}
 
 /* lessons */
