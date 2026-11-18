@@ -7,6 +7,48 @@ const E = window.CubeEngine;
 const app = E.createApp();
 window.CUBE = app;
 
+const THEME_KEY="kidsHub.p.ethan.cube.theme";
+function loadTheme(){try{return localStorage.getItem(THEME_KEY)==="light"?"light":"dark";}catch(e){return "dark";}}
+function applyTheme(name){
+  const theme=name==="light"?"light":"dark";
+  document.documentElement.setAttribute("data-theme",theme);
+  document.body.setAttribute("data-theme",theme);
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute("content",theme==="light"?"#f3f4f6":"#0c0e12");
+  try{localStorage.setItem(THEME_KEY,theme);}catch(e){}
+  const sel=$("#optTheme"); if(sel&&sel.value!==theme)sel.value=theme;
+}
+applyTheme(loadTheme());
+
+let currentView="practice";
+function closeMenu(){
+  const m=$("#headerMenu"), b=$("#menuBtn");
+  if(m)m.classList.add("hidden");
+  if(b)b.setAttribute("aria-expanded","false");
+}
+function setView(name){
+  currentView=name||"practice";
+  document.body.setAttribute("data-view",currentView);
+  const map={practice:"view-practice",coach:"view-coach",lessons:"lessonsPanel",history:"view-history",settings:"view-settings"};
+  Object.keys(map).forEach(k=>{
+    const el=$("#"+map[k]);
+    if(!el)return;
+    const on=k===currentView;
+    el.classList.toggle("active",on);
+    el.classList.toggle("hidden",!on);
+    if(k==="lessons"){
+      el.hidden=!on;
+      if(on){el.removeAttribute("hidden");}
+      else el.setAttribute("hidden","");
+    }
+  });
+  $$(".nav-item").forEach(b=>b.classList.toggle("on",b.getAttribute("data-view")===currentView));
+  const lb=$("#lessonsBtn");
+  if(lb)lb.setAttribute("aria-pressed",currentView==="lessons"?"true":"false");
+  if(currentView==="lessons")fillLessons();
+  closeMenu();
+}
+
 const GAN_MODS = "https://esm.sh/gan-web-bluetooth@3.0.2";
 const GAN_MODS_FALLBACK = "https://cdn.jsdelivr.net/npm/gan-web-bluetooth@3.0.2/+esm";
 const CUBING_SCRAMBLE = "https://cdn.cubing.net/v0/js/cubing/scramble";
@@ -77,7 +119,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v12 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v14 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -105,12 +147,15 @@ function debugText(v){
     "last error: "+(cubeDebug.lastError||twistyLog.lastError||"—"),
     "page errors: "+((window.__cubePageErrors&&window.__cubePageErrors.length)?window.__cubePageErrors.join(" | "):"—"),
     "last 20 events (GYRO omitted, too frequent):",
-    evs||"(none yet)"
+    evs||"(none yet)",
+    "last 60 judged events:",
+    (app.debugLogText&&app.debugLogText())||"(none yet)"
   ].join("\n");
 }
 function setShowDebug(on){
   showDebug=!!on;
   const box=$("#cubeDebug");
+  const tools=$("#debugTools");
   const cb=$("#optShowDebug");
   const btn=$("#debugBtn");
   if(cb)cb.checked=showDebug;
@@ -118,6 +163,7 @@ function setShowDebug(on){
     btn.setAttribute("aria-pressed",showDebug?"true":"false");
     btn.classList.toggle("on",showDebug);
   }
+  if(tools)tools.classList.toggle("hidden",!showDebug);
   if(box){
     box.classList.toggle("hidden",!showDebug);
     if(showDebug){
@@ -125,6 +171,26 @@ function setShowDebug(on){
       try{box.scrollIntoView({block:"nearest",inline:"nearest"});}catch(e){}
     }
   }
+}
+function debugLogPayload(){
+  const v=app.get();
+  const engineLog=(app.debugLogText&&app.debugLogText())||"";
+  const events=(app.getDebugEvents&&app.getDebugEvents())||[];
+  return [debugText(v),"","--- last 60 judged events ---",engineLog||JSON.stringify(events,null,2)].join("\n");
+}
+async function copyDebugLog(){
+  const text=debugLogPayload();
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      await navigator.clipboard.writeText(text);
+    }else{
+      const ta=document.createElement("textarea");
+      ta.value=text;document.body.appendChild(ta);ta.select();
+      document.execCommand("copy");ta.remove();
+    }
+    const btn=$("#copyDebugBtn");
+    if(btn){const prev=btn.textContent;btn.textContent="Copied";setTimeout(()=>{btn.textContent=prev||"Copy debug log";},1200);}
+  }catch(e){cubeDebug.lastError=String(e&&e.message||e||"copy failed");}
 }
 function recordPageError(msg){
   const s=String(msg||"error");
@@ -171,6 +237,7 @@ function turnArrow(mv){
   return "↻  clockwise";
 }
 function stopAlgPlayer(backToLive){
+  document.body.classList.remove("sheet-open");
   if(playerIv){clearInterval(playerIv);playerIv=null;}
   demoOn=false;showingMe=false;
   if(demoTwisty&&demoTwisty.parentNode)try{demoTwisty.parentNode.removeChild(demoTwisty);}catch(e){}
@@ -237,7 +304,7 @@ function openAlgPlayer(opts){
   stopAlgPlayer(false);
   algPlayer=E.createAlgPlayer({alg:opts.alg||"",setupAlg:opts.setupAlg,speed:opts.speed||1,hintAfterMs:3000});
   const start=playerStartState(opts);
-  demoOn=true;showingMe=true;document.body.classList.add("demo-on");
+  demoOn=true;showingMe=true;document.body.classList.add("demo-on","sheet-open");
   const panel=$("#algPlayerPanel");
   if(panel){panel.hidden=false;panel.removeAttribute("hidden");panel.classList.remove("hidden");panel.innerHTML=algPlayerHTML(opts.title||"Algorithm player",algPlayer.get());}
   mountDemoTwisty(start);
@@ -250,7 +317,8 @@ function algPlayerHTML(title,g){
   const moves=(g.moves||[]).map((m,i)=>`<button type="button" class="mv${i===g.i?" on":""}" data-jump="${i}">${m}</button>`).join("");
   const hint=g.hintMove?`<p class="tip">Hint: <b>${g.hintMove}</b></p>`:"";
   const speeds=[0.25,0.5,1,2].map(s=>`<button type="button" class="btn ghost" id="playerSpeed${String(s).replace(".","_")}" data-speed="${s}">${s}×</button>`).join("");
-  return `<h3>${title||"Algorithm player"}</h3>
+  return `<button type="button" class="btn ghost alg-close" id="playerClose">Close</button>
+    <h3>${title||"Algorithm player"}</h3>
     <div id="demoHost" aria-label="Demo cube"></div>
     <div class="player-now">${g.current||(g.atEnd?"Done":"Ready")}</div>
     <div class="player-arrow">${turnArrow(g.current)}</div>
@@ -685,7 +753,7 @@ function hookApp(){
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor,openAlgPlayer,stopAlgPlayer,getAlgPlayer:()=>algPlayer,doReset,moreDetail:()=>moreDetail};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets(),debug:()=>cubeDebug,setShowDebug:setShowDebug,setView:(n)=>setView(n),feedGanEvent:onGanEvent,getMatchMode:()=>matchMode,setMatchMode:m=>{matchMode=m||"";render(app.get());},showMeCoach,displayFaceletsFor,openAlgPlayer,stopAlgPlayer,getAlgPlayer:()=>algPlayer,doReset,moreDetail:()=>moreDetail};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -764,7 +832,7 @@ async function connectCube(){
     else if(/MAC/i.test(msg))app.setError("The GAN 356 i3 needs its MAC address before it can talk to Chrome. Ask a grown-up — the steps are in “How to connect”.");
     else app.setError("Couldn't connect this time. Make sure the cube is awake (give it a turn), then try again in Chrome.");
     app.setConnected(false);
-    btn.textContent="Connect cube";
+    btn.textContent="Connect";
   }
   btn.disabled=false;
   render(app.get());
@@ -772,7 +840,7 @@ async function connectCube(){
 async function disconnectCube(){
   try{if(conn&&conn.disconnect)await conn.disconnect();}catch(e){}
   conn=null;app.setConnected(false);
-  $("#connectBtn").textContent="Connect cube";
+  $("#connectBtn").textContent="Connect";
 }
 function onGanEvent(ev){
   try{
@@ -805,7 +873,7 @@ function onGanEvent(ev){
       if(!cubeDebug.protocol)cubeDebug.protocol=guessProtocol(ev.hardwareName||(app.get()&&app.get().deviceName));
     }else if(ev.type==="DISCONNECT"){
       conn=null;app.setConnected(false);
-      $("#connectBtn").textContent="Connect cube";
+      $("#connectBtn").textContent="Connect";
     }
   }catch(e){
     cubeDebug.lastError=String(e&&e.message||e||"onGanEvent");
@@ -866,11 +934,11 @@ function calloutHTML(v){
   const coachLine=(c&&c.active&&v.phase!=="scrambling")?coachCallout(c):"";
   if(v.timerMode==="step"||(c&&c.active&&(v.phase==="ready"||v.phase==="running"||v.phase==="inspect"))){
     const sub=coachLine||`<p class="callout-sub">Step time — I'll time this step, not a full solve.</p>`;
-    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.stepElapsed||v.elapsed||0)}</div>${sub}`;
+    return `<div class="callout next">Step time</div>${sub}`;
   }
   if(v.phase==="running"){
     const sub=coachLine||`<p class="callout-sub">Go! The timer stops when the cube is solved.</p>`;
-    return `<div class="live-timer" id="liveTimer">${E.formatTime(v.elapsed||0)}</div>${sub}`;
+    return `<div class="callout next">Go!</div>${sub}`;
   }
   if(v.phase==="stopped"){
     const rec=v.lastSolve||(v.solves&&v.solves[v.solves.length-1]);
@@ -878,7 +946,7 @@ function calloutHTML(v){
     const sec=Math.ceil((v.nextIn||0)/1000);
     const next=sec>0?`<p class="callout-sub">Next scramble in ${sec}…</p>`:`<p class="callout-sub">Loading the next scramble…</p>`;
     const sum=c&&c.summary?`<p class="callout-sub">${c.summary.text}${(c.summary.lines&&c.summary.lines.length)?" — "+c.summary.lines.join(" · "):""}</p>`:"";
-    return `<div class="callout done">Solved!</div><div class="live-timer done" id="liveTimer">${t}</div>${splitsLine(v)}${sum}${next}`;
+    return `<div class="callout done">Solved!</div>${splitsLine(v)}${sum}${next}`;
   }
   if(v.phase==="inspect"){
     const s=Math.ceil((v.inspectLeft||0)/1000);
@@ -983,12 +1051,12 @@ function phaseHint(v){
     const rec=v.lastSolve||v.solves[v.solves.length-1];
     const sec=Math.ceil((v.nextIn||0)/1000);
     const t=rec?E.formatTime(rec.ms,rec.penalty):"";
-    const msg=v.celebration==="pb"?"🎉 New personal best! "+t : (t?t+" — nice solve!":"Done!");
+    const msg=v.celebration==="pb"?"New personal best! "+t : (t?t+" — nice solve!":"Done!");
     return msg+(sec>0?" Next scramble in "+sec+"…":"");
   }
   if(v.celebration==="pb"&&v.phase==="scrambling"){
     const rec=v.solves[v.solves.length-1];
-    return "🎉 New personal best! "+(rec?E.formatTime(rec.ms,rec.penalty)+" — ":"")+"Here's the next scramble.";
+    return "New personal best! "+(rec?E.formatTime(rec.ms,rec.penalty)+" — ":"")+"Here's the next scramble.";
   }
   return v.connected?"Connected and ready.":"Connect Ethan's GAN 356 i3, or use the timer by itself.";
 }
@@ -1038,6 +1106,8 @@ function splitsHTML(v){
   const ids=E.stagesFor(mode);
   const run=v.run&&v.run.splits||{};
   const best=v.stats.bestSplits||{};
+  const has=ids.some(id=>run[id]);
+  if(!has && v.phase!=="running" && v.phase!=="stopped")return "";
   return `<div class="splits">${ids.map(id=>{
     const at=run[id];
     const b=best[id];
@@ -1051,12 +1121,24 @@ function splitsHTML(v){
 function chartSVG(trend){
   const pts=(trend||[]).map((p,i)=>({i,ms:p.ms})).filter(p=>p.ms!=null&&isFinite(p.ms));
   if(pts.length<2)return `<p class="muted">Do a few timed solves and a trend line will show up here.</p>`;
-  const w=320,h=90,pad=8;
+  const w=400,h=140,l=40,r=12,top=12,bot=28;
   const ys=pts.map(p=>p.ms),min=Math.min(...ys),max=Math.max(...ys),span=Math.max(1,max-min);
-  const x=i=>pad+i*(w-2*pad)/Math.max(1,(trend.length-1));
-  const y=ms=>h-pad-((ms-min)/span)*(h-2*pad);
+  const innerW=w-l-r, innerH=h-top-bot;
+  const x=i=>l+i*innerW/Math.max(1,(trend.length-1));
+  const y=ms=>top+innerH-((ms-min)/span)*innerH;
   const d=pts.map((p,k)=>(k?"L":"M")+x(p.i).toFixed(1)+","+y(p.ms).toFixed(1)).join(" ");
-  return `<svg viewBox="0 0 ${w} ${h}" class="chart" aria-label="Solve time trend">${d?`<path d="${d}" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>`:""}${pts.map(p=>`<circle cx="${x(p.i).toFixed(1)}" cy="${y(p.ms).toFixed(1)}" r="3.5" fill="#16a34a"/>`).join("")}</svg>`;
+  const ticks=3;
+  const grid=[];
+  for(let i=0;i<=ticks;i++){
+    const ms=min+(span*(ticks-i)/ticks);
+    const yy=y(ms).toFixed(1);
+    const label=(ms/1000).toFixed(ms>=10000?0:1)+"s";
+    grid.push('<line x1="'+l+'" x2="'+(w-r)+'" y1="'+yy+'" y2="'+yy+'" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>');
+    grid.push('<text x="'+(l-6)+'" y="'+(Number(yy)+4)+'" text-anchor="end" fill="currentColor" opacity="0.55" font-size="10" font-family="ui-monospace,Menlo,monospace">'+label+"</text>");
+  }
+  const x0='<text x="'+l+'" y="'+(h-8)+'" fill="currentColor" opacity="0.55" font-size="10">Older</text>';
+  const x1='<text x="'+(w-r)+'" y="'+(h-8)+'" text-anchor="end" fill="currentColor" opacity="0.55" font-size="10">Newer</text>';
+  return '<svg viewBox="0 0 '+w+' '+h+'" class="chart" role="img" aria-label="Solve time trend, '+E.formatTime(min)+' to '+E.formatTime(max)+'">'+grid.join("")+'<path d="'+d+'" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>'+x0+x1+"</svg>";
 }
 function historyHTML(v){
   const rows=(v.solves||[]).slice().reverse().slice(0,30);
@@ -1074,20 +1156,59 @@ function historyHTML(v){
 }
 
 
+function thumbUrl(id){return "https://i.ytimg.com/vi/"+id+"/hqdefault.jpg";}
+function ytWatchUrl(v0){
+  if(E.watchUrlFor)return E.watchUrlFor(v0);
+  if(v0&&v0.url)return v0.url;
+  return v0&&v0.id?("https://www.youtube.com/watch?v="+v0.id):"";
+}
+function embedSrc(v0){
+  return (E.embedUrlFor?E.embedUrlFor(v0):("https://www.youtube.com/embed/"+(v0&&v0.id||"")+"?rel=0"));
+}
+function watchCardHTML(v0,opts){
+  opts=opts||{};
+  if(!v0||!v0.id)return "";
+  const watched=!!loadWatched()[v0.id];
+  const src=embedSrc(v0);
+  const open=ytWatchUrl(v0);
+  const title=(v0.title||"Video")+(v0.channel?(" — "+v0.channel):"");
+  const openEmbed=opts.open===true;
+  const heading=opts.heading==null?"Watch first":opts.heading;
+  return `<div class="watch-card" data-vid="${v0.id}">
+      <img src="${thumbUrl(v0.id)}" alt="" width="96" height="54">
+      <div>
+        ${heading?`<p class="watch-kicker">${heading}</p>`:""}
+        <p class="watch-title">${title}${watched?" <b>✓ watched</b>":""}</p>
+        <p class="vid-links"><a href="${open}" target="_blank" rel="noopener">Open on YouTube</a></p>
+        ${opts.hideToggle?"":`<button class="btn ghost" type="button" id="${opts.toggleId||"watchToggle"}" data-vid="${v0.id}">${openEmbed?"Hide video":"Watch here"}</button>`}
+        ${opts.mark?`<button class="btn" type="button" id="markWatched" data-vid="${v0.id}">I've watched this</button>`:""}
+      </div>
+    </div>
+    <div id="${opts.bodyId||"watchBody"}" class="${openEmbed?"":"hidden"}">
+      <div class="vid-frame"><iframe src="${openEmbed?src:""}" data-src="${src}" title="${v0.title||"Video"}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+    </div>`;
+}
 function videoPanelHTML(v){
-  const vids=(v.sessionProgress&&v.sessionProgress.videos)||v.videos||[];
+  const drill=(v.sessionProgress&&v.sessionProgress.active&&v.sessionProgress.phase==="drill"&&(v.sessionProgress.drillStage||v.sessionProgress.stage))||"";
+  const vids=(v.sessionProgress&&v.sessionProgress.videos)||(drill&&E.videosForDrill?E.videosForDrill(drill):null)||v.videos||[];
   if(!vids.length)return "";
   if(!(v.sessionProgress&&v.sessionProgress.active&&v.sessionProgress.phase==="drill"))return "";
-  const v0=vids[0];
-  const watched=!!loadWatched()[v0.id];
-  const src=E.embedUrlFor?E.embedUrlFor(v0):("https://www.youtube-nocookie.com/embed/"+v0.id+"?rel=0");
-  return `<h3>Watch first</h3>
-    <p>${v0.title} — ${v0.channel}${watched?" <b>✓ watched</b>":""}</p>
-    <button class="btn ghost" type="button" id="watchToggle">Show or hide the video</button>
-    <div id="watchBody">
-      <div class="vid-frame"><iframe src="${src}" title="${v0.title}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
-      <button class="btn" type="button" id="markWatched" data-vid="${v0.id}">I've watched this</button>
-    </div>`;
+  return `<h3>Watch first</h3>`+watchCardHTML(vids[0],{heading:"",mark:true,open:false,toggleId:"watchToggle",bodyId:"watchBody"});
+}
+function tipWatchHTML(type){
+  if(!type||!E.videosForDrill)return "";
+  const vids=E.videosForDrill(type)||[];
+  if(!vids[0])return "";
+  return `<div class="watch tip-watch">`+watchCardHTML(vids[0],{heading:"Watch this tip",mark:false,open:false,toggleId:"tipWatchToggle",bodyId:"tipWatchBody"})+`</div>`;
+}
+const STAGE_NAME={cross:"Cross",fl:"First layer",sl:"Second layer",ll:"Last layer",f2l:"F2L",oll:"OLL",pll:"PLL",firstLayer:"First layer",secondLayer:"Second layer",lastLayer:"Last layer"};
+function stageName(id){return STAGE_NAME[id]||(E.STAGE_LABEL&&E.STAGE_LABEL[id])||id;}
+function lastSolveOf(v){
+  return (v&&v.lastSolve)||(v&&v.solves&&v.solves[v.solves.length-1])||null;
+}
+function stageBarHTML(stages,total){
+  total=Math.max(1,total||(stages||[]).reduce((s,x)=>s+(x.ms||0),0));
+  return (stages||[]).map(s=>`<span class="${s.name}" style="width:${Math.max(4,(s.ms||0)/total*100)}%" title="${s.name}"></span>`).join("");
 }
 function reviewHTML(v){
   const rec=v.lastSolve;
@@ -1095,34 +1216,131 @@ function reviewHTML(v){
   if(!a||v.phase!=="stopped")return "";
   const stages=a.stages||[];
   const total=Math.max(1,a.timeMs||stages.reduce((s,x)=>s+(x.ms||0),0));
-  const bar=stages.map(s=>`<span class="${s.name}" style="width:${Math.max(4,(s.ms||0)/total*100)}%">${s.name}</span>`).join("");
-  const tip=a.tip||{};
-  const detail=moreDetail?`<p class="why">Why this works: ${tip.why||"Practising the weak step on its own is how you get faster."}</p>
-    <p class="why">Moves ${a.moveCount||0} · ${a.tps||0} TPS · pauses ${a.pauseCount||0} (${((a.pauseMs||0)/1000).toFixed(1)}s) · cancelled turns ${(a.waste&&a.waste.cancel)||0}</p>`:"";
   const drill=(a.weakness&&a.weakness.type)||a.drill||"";
-  return `<h3>How that solve went</h3>
-    <p class="feedback">${a.feedback||rec.feedback||""}</p>
-    <div class="stagebar">${bar}</div>
-    ${a.biggestLoss?`<p><b>Biggest time loss:</b> ${a.biggestLoss.label||a.biggestLoss.kind} (${((a.biggestLoss.ms||0)/1000).toFixed(1)}s)</p>`:""}
-    <p>${tip.tip||""}</p>
-    ${detail}
+  const sentence=a.feedback||rec.feedback||(a.tip&&a.tip.tip)||"";
+  return `<div class="review-compact">
+    <div class="review-time">${E.formatTime(a.timeMs||rec.ms||0)}</div>
+    <div class="stagebar">${stageBarHTML(stages,total)}</div>
+    <p class="feedback">${sentence}</p>
     <div class="player-btns">
       <button class="btn" type="button" id="practiseThis" data-drill="${drill}" data-why="${(a.weakness&&a.weakness.why)||""}">Practise this</button>
-      <button class="btn ghost" type="button" id="replaySolve">Replay</button>
-      ${(stages.filter(s=>s.name==="cross"&&s.optimalAlg)[0])?`<button class="btn ghost" type="button" id="replayOpt">Show a shorter cross</button>`:""}
-      <button class="btn ghost" type="button" id="reviewMore">${moreDetail?"Less detail":"More detail"}</button>
-    </div>`;
+      <button class="btn ghost" type="button" id="reviewMore">More detail</button>
+    </div>
+  </div>`;
+}
+function loseTimeRows(v){
+  const t=v.trends;
+  if(t&&t.n&&t.weaknesses&&t.weaknesses.length){
+    return {n:t.n,improvedMs:t.improvedMs||0,rows:t.weaknesses.slice(0,4),source:"trends"};
+  }
+  const recs=(v.solves||[]).filter(r=>r&&r.analysis&&r.analysis.stages&&r.analysis.stages.length);
+  if(!recs.length)return null;
+  const last=recs.slice(-12);
+  const acc={};
+  last.forEach(r=>r.analysis.stages.forEach(s=>{
+    if(!acc[s.name])acc[s.name]={ms:0,n:0};
+    acc[s.name].ms+=s.ms||0;acc[s.name].n++;
+  }));
+  const rows=Object.keys(acc).map(k=>{
+    const avg=acc[k].ms/acc[k].n;
+    const tgt=(t&&t.targets&&t.targets[k])||null;
+    return {stage:k,avgMs:avg,target:tgt,over:tgt!=null?avg-tgt:0};
+  }).sort((a,b)=> (b.over||0)-(a.over||0)||b.avgMs-a.avgMs);
+  return {n:last.length,improvedMs:(t&&t.improvedMs)||0,rows,source:"solves"};
+}
+function loseTimeHTML(v){
+  const data=loseTimeRows(v);
+  if(!data)return "";
+  const max=Math.max(1,...data.rows.map(w=>Math.max(w.avgMs||0,w.target||0)));
+  const bars=data.rows.map(w=>{
+    const label=stageName(w.stage);
+    const avg=(w.avgMs/1000).toFixed(1);
+    const tgt=w.target!=null?(w.target/1000).toFixed(0)+"s":"";
+    return `<div class="lose-row"><div class="lose-lab">${label}</div><div class="lose-track"><i style="width:${Math.max(4,(w.avgMs||0)/max*100)}%"></i></div><div class="lose-val">${avg}s${tgt?" / "+tgt:""}</div></div>`;
+  }).join("");
+  const line="Across your last "+data.n+" solves"+(data.improvedMs>400?(", you're "+E.formatTime(Math.round(data.improvedMs))+" faster than your first day"):".");
+  return `<h3>Where you lose time</h3><p class="feedback">${line}</p>${bars}`;
 }
 function trendsHTML(v){
-  const t=v.trends;
-  if(!t||!t.n)return "";
-  if(!(v.phase==="stopped"||(v.sessionProgress&&v.sessionProgress.done)))return "";
-  const weak=(t.weaknesses||[]).slice(0,3);
-  const lines=weak.map(w=>`<li>${w.stage}: ${(w.avgMs/1000).toFixed(1)}s ${w.target!=null?("(target "+(w.target/1000).toFixed(0)+"s)"):""}</li>`).join("");
-  const sess=v.sessionProgress&&v.sessionProgress.summary&&v.sessionProgress.summary.feedback;
-  return `<h3>Where you lose time</h3>
-    <p class="feedback">${sess||("Across your last "+t.n+" solves"+(t.improvedMs>400?(", you're "+E.formatTime(Math.round(t.improvedMs))+" faster than your first day"):"."))}</p>
-    <ol>${lines}</ol>`;
+  /* Coach tab owns the trends; keep this hook so fillSidePanels can hide the old card. */
+  return "";
+}
+function coachTabHTML(v){
+  const rec=lastSolveOf(v);
+  const a=rec&&rec.analysis;
+  let out="";
+  if(a){
+    const stages=a.stages||[];
+    const total=Math.max(1,a.timeMs||stages.reduce((s,x)=>s+(x.ms||0),0));
+    const tip=a.tip||{};
+    const drill=(a.weakness&&a.weakness.type)||a.drill||"";
+    const labels=stages.map(s=>{
+      const name=stageName(s.name);
+      return `<li><span>${name}</span><b>${E.formatTime(s.ms||0)}</b></li>`;
+    }).join("");
+    out+=`<section class="card coach-last">
+      <h3>Last solve</h3>
+      <div class="review-time">${E.formatTime(a.timeMs||rec.ms||0)}</div>
+      <div class="stagebar">${stageBarHTML(stages,total)}</div>
+      <ul class="stage-legend">${labels}</ul>
+      <p class="feedback">${a.feedback||rec.feedback||""}</p>
+      ${a.biggestLoss?`<p class="muted">Biggest time loss: ${a.biggestLoss.label||a.biggestLoss.kind} (${((a.biggestLoss.ms||0)/1000).toFixed(1)}s)</p>`:""}
+      <p>${tip.tip||""}</p>
+      ${tip.why?`<p class="why">Why this works: ${tip.why}</p>`:""}
+      <p class="muted">Moves ${a.moveCount||0} · ${a.tps||0} TPS · pauses ${a.pauseCount||0} (${((a.pauseMs||0)/1000).toFixed(1)}s)</p>
+      ${tipWatchHTML(drill)}
+      <div class="player-btns">
+        <button class="btn" type="button" id="practiseThisCoach" data-drill="${drill}" data-why="${(a.weakness&&a.weakness.why)||""}">Practise this</button>
+        <button class="btn ghost" type="button" id="replaySolveCoach">Replay</button>
+        ${(stages.filter(s=>s.name==="cross"&&s.optimalAlg)[0])?`<button class="btn ghost" type="button" id="replayOptCoach">Show a shorter cross</button>`:""}
+      </div>
+    </section>`;
+  }
+  const lose=loseTimeHTML(v);
+  if(lose)out+=`<section class="card coach-trends">${lose}</section>`;
+  if(!out)return `<div class="empty-card" id="coachEmpty">After a solve, this tab shows where time went and what to practise next. Finish a timed solve on the Practice tab, then come back here.</div>`;
+  return out;
+}
+function lessonsHTML(){
+  const all=E.allLessonVideos?E.allLessonVideos():(E.DRILL_VIDEOS?Object.keys(E.DRILL_VIDEOS).map(k=>Object.assign({key:k,skill:E.skillForVideo?E.skillForVideo(E.DRILL_VIDEOS[k]):""},E.DRILL_VIDEOS[k])):[]);
+  const groups=[];
+  const order=["Look-ahead","Cross","F2L","Finger tricks","Last layer","Beginner"];
+  const by={};
+  all.forEach(v=>{
+    const g=v.skill||"Beginner";
+    if(!by[g]){by[g]=[];groups.push(g);}
+    by[g].push(v);
+  });
+  const skills=order.filter(s=>by[s]&&by[s].length).concat(groups.filter(s=>order.indexOf(s)<0));
+  return skills.map(s=>{
+    const cards=by[s].map(v=>`<button type="button" class="lesson-card" data-lesson-id="${v.id}" data-title="${String(v.title||"").replace(/"/g,"&quot;")}" data-url="${ytWatchUrl(v)}">
+        <img src="${thumbUrl(v.id)}" alt="${String(v.title||"").replace(/"/g,"&quot;")}" width="154" height="86">
+        <span>${v.title||"Video"}</span>
+      </button>`).join("");
+    return `<h3 class="lesson-skill">${s}</h3><div class="lesson-list">${cards}</div>`;
+  }).join("");
+}
+function fillLessons(){
+  const list=$("#lessonList");
+  if(!list||list.getAttribute("data-filled")==="1")return;
+  list.innerHTML=lessonsHTML();
+  list.setAttribute("data-filled","1");
+}
+function setLessonsOpen(on){
+  if(on)setView("lessons");
+  else if(currentView==="lessons")setView("practice");
+}
+function openLesson(id){
+  const all=E.allLessonVideos?E.allLessonVideos():[];
+  const v0=all.filter(v=>v.id===id)[0]||{id:id,title:"Video",url:"https://www.youtube.com/watch?v="+id};
+  const box=$("#lessonEmbed");
+  if(!box)return;
+  const src=embedSrc(v0);
+  const open=ytWatchUrl(v0);
+  box.hidden=false;
+  box.innerHTML=`<div class="vid-frame"><iframe src="${src}" title="${v0.title||"Video"}" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>
+    <p class="vid-links"><a href="${open}" target="_blank" rel="noopener">Open on YouTube</a></p>`;
+  try{box.scrollIntoView({block:"nearest"});}catch(e){}
 }
 function fillSidePanels(v){
   function put(id, html){
@@ -1134,7 +1352,9 @@ function fillSidePanels(v){
   }
   put("#videoPanel", videoPanelHTML(v));
   put("#reviewCard", reviewHTML(v));
-  put("#trendsCard", trendsHTML(v));
+  put("#trendsCard", "");
+  const body=$("#coachTabBody");
+  if(body)body.innerHTML=coachTabHTML(v);
   if(v.resetNote){
     /* keep the note visible via hint */
   }
@@ -1181,12 +1401,17 @@ function render(v){
   if(v.connected){
     setText("#connStatus",(v.deviceName||"GAN 356 i3")+(v.deviceMAC?" · "+v.deviceMAC:""));
     show(batt,v.battery!=null);
-    if(v.battery!=null){batt.textContent="🔋 "+v.battery+"%";batt.classList.toggle("low",v.battery<20);}
+    if(v.battery!=null){
+      const pct=$("#batteryPct");
+      if(pct)pct.textContent=v.battery+"%";
+      batt.classList.toggle("low",v.battery<20);
+      batt.title="Battery "+v.battery+"%";
+    }
     $("#connectBtn").textContent="Disconnect";
   }else{
     setText("#connStatus",v.ios?"Timer-only on this iPhone/iPad":"Not connected — timer still works");
     show(batt,false);
-    $("#connectBtn").textContent="Connect cube";
+    $("#connectBtn").textContent="Connect";
   }
   const err=$("#connError");
   if(v.lastError){err.textContent=v.lastError;show(err,true);}else show(err,false);
@@ -1212,6 +1437,10 @@ function render(v){
   fillSidePanels(v);
   const startSol=$("#startSolveBtn");
   if(startSol)startSol.classList.toggle("hidden",v.phase!=="scrambling");
+  const nextBtn=$("#nextBtn");
+  if(nextBtn)nextBtn.classList.toggle("hidden",v.phase!=="stopped");
+  const sc=$("#settingsConn");
+  if(sc)sc.textContent=($("#connStatus")&&$("#connStatus").textContent)||"";
   const fix=$("#fixup");
   if(fix)show(fix,false);
 
@@ -1231,7 +1460,7 @@ function render(v){
   setText("#statAo5",st.ao5?st.ao5.text:"—");
   setText("#statAo12",st.ao12?st.ao12.text:"—");
   setText("#statStreak",(st.streak||0)+" day"+(st.streak===1?"":"s"));
-  setText("#statStars","★ "+(st.stars||0));
+  setText("#statStars",String(st.stars||0));
   $("#chart").innerHTML=chartSVG(st.trend);
   const bs=st.bestSplits||{};
   $("#bestSplits").innerHTML=E.stagesFor(v.settings.splitsMode).map(id=>`<li><b>${E.STAGE_LABEL[id]}</b> ${bs[id]?bs[id].text:"—"}</li>`).join("");
@@ -1285,7 +1514,11 @@ function bind(){
   const resync=$("#resyncBtn");
   if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(displayFaceletsFor(v)||v.facelets);});
   $("#newScrambleBtn").addEventListener("click",()=>nextScramble());
-  $("#helpToggle").addEventListener("click",()=>$("#helpPanel").classList.toggle("hidden"));
+  $("#helpToggle").addEventListener("click",()=>{
+    setView("settings");
+    const hp=$("#helpPanel");
+    if(hp)hp.classList.remove("hidden");
+  });
   $("#grownToggle").addEventListener("click",()=>$("#grownPanel").classList.toggle("hidden"));
   $("#macSave").addEventListener("click",()=>closeMacModal($("#macInput").value));
   $("#macCancel").addEventListener("click",()=>closeMacModal(null));
@@ -1305,6 +1538,46 @@ function bind(){
   if(dbgCb)dbgCb.addEventListener("change",e=>setShowDebug(e.target.checked));
   const dbgBtn=$("#debugBtn");
   if(dbgBtn)dbgBtn.addEventListener("click",()=>setShowDebug(!showDebug));
+  const copyDbg=$("#copyDebugBtn");
+  if(copyDbg)copyDbg.addEventListener("click",()=>{copyDebugLog();});
+  const lessonsBtn=$("#lessonsBtn");
+  if(lessonsBtn)lessonsBtn.addEventListener("click",()=>{
+    const panel=$("#lessonsPanel");
+    const isOpen=currentView==="lessons"&&panel&&!panel.hidden&&!panel.classList.contains("hidden");
+    setLessonsOpen(!isOpen);
+  });
+  $$(".nav-item").forEach(btn=>{
+    if(btn.id==="lessonsBtn")return;
+    btn.addEventListener("click",()=>setView(btn.getAttribute("data-view")||"practice"));
+  });
+  const menuBtn=$("#menuBtn");
+  if(menuBtn)menuBtn.addEventListener("click",e=>{
+    e.stopPropagation();
+    const m=$("#headerMenu");
+    if(!m)return;
+    const open=m.classList.contains("hidden");
+    m.classList.toggle("hidden",!open);
+    menuBtn.setAttribute("aria-expanded",open?"true":"false");
+  });
+  document.addEventListener("click",e=>{
+    const wrap=$(".menu-wrap");
+    if(wrap&&!wrap.contains(e.target))closeMenu();
+  });
+  const menuSettings=$("#menuSettings");
+  if(menuSettings)menuSettings.addEventListener("click",()=>setView("settings"));
+  const themeSel=$("#optTheme");
+  if(themeSel){
+    themeSel.value=loadTheme();
+    themeSel.addEventListener("change",()=>applyTheme(themeSel.value));
+  }
+  const lessonList=$("#lessonList");
+  if(lessonList)lessonList.addEventListener("click",e=>{
+    const card=e.target.closest?e.target.closest(".lesson-card"):null;
+    if(!card)return;
+    const id=card.getAttribute("data-lesson-id");
+    if(id)openLesson(id);
+  });
+  fillLessons();
   const yes=$("#matchYes");
   if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
   const no=$("#matchNo");
@@ -1321,12 +1594,21 @@ function bind(){
       else if(btn.id==="coachNextCase"){
         if(app.coachNextCase){app.coachNextCase();onScrambleChanged();}
       }
-      else if(btn.id==="practiseThis"){const typ=btn.getAttribute("data-drill")||"";if(app.startTargetedDrill){app.startTargetedDrill(typ,btn.getAttribute("data-why")||"");onScrambleChanged();}}
-      else if(btn.id==="reviewMore"){moreDetail=!moreDetail;render(app.get());}
-      else if(btn.id==="replaySolve"){replayLastSolve(false);}
-      else if(btn.id==="replayOpt"){replayLastSolve(true);}
-      else if(btn.id==="watchToggle"){const box=$("#watchBody"); if(box)box.classList.toggle("hidden");}
+      else if(btn.id==="practiseThis"||btn.id==="practiseThisCoach"){const typ=btn.getAttribute("data-drill")||"";if(app.startTargetedDrill){app.startTargetedDrill(typ,btn.getAttribute("data-why")||"");onScrambleChanged();setView("practice");}}
+      else if(btn.id==="reviewMore"){moreDetail=true;setView("coach");}
+      else if(btn.id==="replaySolve"||btn.id==="replaySolveCoach"){replayLastSolve(false);}
+      else if((btn.id==="replayOpt"||btn.id==="replayOptCoach")){replayLastSolve(true);}
+      else if(btn.id==="watchToggle"||btn.id==="tipWatchToggle"){
+        const box=$(btn.id==="tipWatchToggle"?"#tipWatchBody":"#watchBody");
+        if(box){
+          const hide=!box.classList.contains("hidden");
+          box.classList.toggle("hidden",hide);
+          const frame=box.querySelector("iframe");
+          if(frame&&!hide&&!frame.getAttribute("src"))frame.setAttribute("src",frame.getAttribute("data-src")||"");
+        }
+      }
       else if(btn.id==="markWatched"){markVideoWatched(btn.getAttribute("data-vid")||"");render(app.get());}
+      else if(btn.id==="playerClose"){stopAlgPlayer(true);}
     }catch(err){cubeDebug.lastError=String(err&&err.message||err||"session click");}
   }
   const cubeCard=$("#cubeCard");

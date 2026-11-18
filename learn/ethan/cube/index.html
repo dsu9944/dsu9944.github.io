@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en-AU">
+<html lang="en-AU" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0d9488">
+<meta name="theme-color" content="#0c0e12">
 <title>Speedcubing – Ethan</title>
 <script>
 window.__cubePageErrors=[];
@@ -31,286 +31,178 @@ window.addEventListener("unhandledrejection",function(e){
   __showCubeError((r&&(r.stack||r.message)||String(r))+" (unhandled promise)");
 });
 </script>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%8B%3C/text%3E%3C/svg%3E">
-<style>
-:root{--blue:#2563eb;--teal:#0d9488;--teal2:#0f766e;--green:#16a34a;--red:#ef4444;--orange:#f97316;--ink:#1f2937;--gold:#f59e0b}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;padding:0}
-body{font-family:"Trebuchet MS","Segoe UI",system-ui,-apple-system,Roboto,sans-serif;color:var(--ink);background:linear-gradient(160deg,#ecfeff,#eff6ff 50%,#f0fdf4);min-height:100vh;font-size:19px}
-button,select,input{font-family:inherit;font-size:1rem}
-button{cursor:pointer;border:none;border-radius:16px;padding:12px 18px;min-height:52px;touch-action:manipulation}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #fbbf24;outline-offset:2px}
-.hidden{display:none!important}
-.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(90deg,#0d9488,#2563eb);color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.15)}
-.topbar h1{font-size:1.2rem;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.iconbtn{background:rgba(255,255,255,.22);color:#fff;min-height:40px;padding:6px 12px;border-radius:999px;text-decoration:none;font-weight:bold;display:inline-flex;align-items:center;white-space:nowrap}
-main{max-width:980px;margin:0 auto;padding:16px}
-.card{background:#fff;border-radius:24px;padding:18px;box-shadow:0 6px 20px rgba(13,148,136,.12);margin-bottom:16px}
-.note{background:#fff7ed;border:3px solid #fdba74;border-radius:20px;padding:14px 16px;margin-bottom:16px}
-.note.ios{background:#ecfeff;border-color:#5eead4}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.row-gap{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
-.btn{background:var(--teal);color:#fff;font-weight:bold;box-shadow:0 4px 0 var(--teal2)}
-.btn.big{font-size:1.25rem;min-height:64px;padding:16px 22px;border-radius:20px}
-.btn.ghost{background:#ccfbf1;color:var(--teal2);box-shadow:0 4px 0 #99f6e4}
-.btn.danger,.tiny.danger{background:#fee2e2;color:#991b1b;box-shadow:none}
-#connectBtn{background:#2563eb;box-shadow:0 4px 0 #1d4ed8;font-size:1.15rem;min-height:58px}
-body.connected #connectBtn{background:#16a34a;box-shadow:0 4px 0 #15803d}
-#battery{background:#ecfdf5;border:2px solid #86efac;border-radius:999px;padding:6px 12px;font-weight:bold}
-#battery.low{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
-.status{color:#4b5563;font-size:.95rem}
-.err{color:#991b1b;background:#fef2f2;border-radius:14px;padding:10px 12px;margin-top:8px}
-.cube-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-#twistyHost{width:min(72vw,34vh,320px);height:min(72vw,34vh,320px);max-width:320px;max-height:320px;display:flex;align-items:center;justify-content:center;margin:0 auto}
-#twistyHost twisty-player,#twistyHost .fake-twisty{width:100%!important;height:100%!important;max-width:100%;max-height:100%}
-.twisty-ph{color:#0f766e;font-weight:bold;text-align:center;padding:24px;font-size:1.1rem}
-#cubeNet{margin-top:8px}
-#cubeNet.hidden{display:none!important}
-#cubeNet svg{display:block;max-width:280px;height:auto;margin:0 auto}
-@media (min-width:700px){#twistyHost{width:min(34vh,320px);height:min(34vh,320px)}}
-@media (max-width:560px){#twistyHost{width:min(70vw,260px);height:min(70vw,260px)}}
-.scramble{font-size:1.35rem;font-weight:bold;letter-spacing:.02em;line-height:1.85;text-align:center;min-height:2.8em}
-.mv{display:inline-block;padding:4px 9px;border-radius:10px;margin:3px 2px;color:#1f2937;vertical-align:middle}
-.mv.done{background:transparent;color:#9ca3af;font-weight:600}
-.mv.done .tick{margin-left:3px;font-size:.85em;color:#9ca3af}
-.mv.next{background:#ecfdf5;color:#0f766e;font-size:1.85rem;font-weight:900;padding:6px 14px;border:4px solid #0d9488;border-radius:14px;box-shadow:0 3px 0 #0f766e;text-decoration:underline;text-underline-offset:5px}
-.mv.next.half{background:#fff7ed;border-color:#ea580c;color:#9a3412;box-shadow:0 3px 0 #c2410c}
-.mv.waiting{border:3px dashed #cbd5e1;color:#4b5563}
-.mv .half{display:block;font-size:.7rem;color:#c2410c;font-weight:900;line-height:1;letter-spacing:.04em}
-.callout{text-align:center;font-size:1.8rem;font-weight:900;margin:4px 0 12px;padding:14px 16px;border-radius:22px;line-height:1.2}
-.callout.next{background:#ecfdf5;border:4px solid #0d9488;color:#0f766e}
-.callout.fix{background:#fff7ed;border:4px solid #ea580c;color:#9a3412}
-.callout.done{background:#dcfce7;border:4px solid #16a34a;color:#166534;font-size:1.5rem}
-.callout b{font-size:2.5rem;letter-spacing:.04em}
-.half-big{display:inline-block;margin-left:10px;background:#ffedd5;color:#9a3412;border-radius:999px;padding:4px 12px;font-size:1.15rem;vertical-align:middle}
-.callout-sub{margin:8px 0 0;font-size:1.05rem;font-weight:normal}
-#fixup{text-align:center;background:#fff7ed;border-radius:16px;padding:10px;margin-top:8px;font-size:1.15rem}
-.mv.fix{background:#ffedd5;color:#9a3412;font-size:1.3rem}
-.timer-pad{text-align:center;padding:12px 8px;border-radius:28px;border:5px dashed #99f6e4;background:linear-gradient(180deg,#f0fdfa,#fff);user-select:none}
-.timer{font-variant-numeric:tabular-nums;font-size:4.2rem;font-weight:bold;color:#0f766e;line-height:1;padding:10px 0}
-.timer.ph-inspect{color:#d97706}
-.timer.ph-running{color:#16a34a}
-.timer.ph-stopped{color:#2563eb}
-.timer.ready{color:#16a34a;background:#dcfce7;border-radius:20px}
-#hint{margin:8px 0 0;color:#374151;font-size:1.05rem}
-.splits{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:14px}
-.split{background:#f8fafc;border:3px solid #e2e8f0;border-radius:16px;padding:10px;text-align:center}
-.split.on{border-color:#86efac;background:#ecfdf5}
-.split .sn{font-size:.85rem;color:#4b5563;font-weight:bold}
-.split .st{font-size:1.3rem;font-weight:bold}
-.split .sb{font-size:.8rem;color:#6b7280}
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
-.stat{background:#f0f9ff;border-radius:16px;padding:12px;text-align:center}
-.stat b{display:block;font-size:1.5rem;color:#1d4ed8}
-.stat span{font-size:.85rem;color:#4b5563}
-.chart{width:100%;height:90px}
-.hist .hrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e7eb}
-.ht{font-weight:bold;min-width:4.5rem}
-.hm{color:#6b7280;flex:1}
-.tiny{min-height:36px;padding:4px 10px;border-radius:10px;background:#e5e7eb;font-size:.85rem;font-weight:bold}
-.muted{color:#6b7280}
-h2{margin:0 0 10px;color:var(--teal2);font-size:1.45rem}
-.hero-copy p{margin:0 0 8px}
-.stars-line{color:#f59e0b;font-size:1.3rem;font-weight:bold}
-details, .help{font-size:1rem;line-height:1.45}
-.help ol{padding-left:1.3em}
-.help code,.help kbd{background:#f1f5f9;border-radius:6px;padding:1px 6px;font-size:.9em}
-#cele{position:fixed;inset:0;z-index:40;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;padding:20px}
-#cele .pop{background:#fff;border-radius:28px;padding:28px 22px;text-align:center;max-width:420px;box-shadow:0 20px 50px rgba(0,0,0,.25);border:6px solid #facc15}
-#cele h2{font-size:2rem;color:#b45309}
-.modal{position:fixed;inset:0;z-index:50;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;padding:16px}
-.modal .box{background:#fff;border-radius:24px;padding:20px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
-.modal h2{color:#0f766e}
-input[type=text]{width:100%;padding:12px;border:3px solid #99f6e4;border-radius:14px;font-size:1.1rem;letter-spacing:.08em}
-label.opt{display:flex;gap:8px;align-items:center;margin:8px 0}
-footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
-.ver{font-size:.75rem;color:#6b7280;white-space:nowrap;font-weight:600}
-.topbar .ver{margin:0 6px 0 0;align-self:center}
-#debugBtn[aria-pressed="true"]{background:#0f172a;color:#e2e8f0;border-color:#0f172a}
-@media (max-width:560px){.timer{font-size:3.1rem}.scramble{font-size:1.15rem}.callout{font-size:1.45rem}.callout b{font-size:2rem}.mv.next{font-size:1.5rem}}
-#cubeDebug{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.35;white-space:pre-wrap;max-height:280px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:10px;margin-top:8px}
-#cubeDebug:not(.hidden){position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:80;max-height:min(42vh,320px);margin:0;box-shadow:0 -8px 30px rgba(15,23,42,.4)}
-#errorStrip{position:sticky;top:0;z-index:120;background:#991b1b;color:#fff;padding:8px 12px;font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
-#errorStrip.hidden,#errorStrip[hidden]{display:none!important}
-
-.live-timer{font-variant-numeric:tabular-nums;font-size:64px;line-height:1;font-weight:900;color:#16a34a;text-align:center;padding:8px 0 4px;letter-spacing:.02em}
- .live-timer.done{color:#2563eb}
-.solve-splits{text-align:center;margin:8px 0;font-size:1.05rem;font-weight:700;color:#1f2937}
-.scramble.locked .mv{opacity:.45;filter:grayscale(.2)}
-#startSolveBtn{margin-top:8px}
-@media (max-width:560px){.live-timer{font-size:52px}}
-
-.session-banner{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:#ecfeff;border:3px solid #14b8a6;border-radius:16px;padding:10px 12px;margin:0 0 10px}
-.session-banner .sb-title{font-weight:800;font-size:1.15rem;color:#0f766e;flex:1 1 auto}
-.session-banner .sb-explain{flex:1 1 100%;margin:0;color:#334155;font-size:.95rem}
-.session-banner.idle{background:#f8fafc;border-color:#cbd5e1}
-.session-banner.idle .sb-title{color:#334155}
-.session-banner.done{background:#eff6ff;border-color:#2563eb}
-.session-banner.done .sb-title{color:#1d4ed8}
-.session-summary{margin:0;padding:0;list-style:none;flex:1 1 100%;font-size:.95rem;color:#1f2937}
-.session-summary li{margin:2px 0}
-#sessionBox:empty{display:none}
-#skipDrillBtn{margin-top:0}
-#cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
-
-.coach{background:#fffbeb;border:3px solid #f59e0b;border-radius:16px;padding:10px 12px;margin:8px 0 10px}
-.coach.hidden{display:none}
-.coach h3{margin:0 0 6px;color:#b45309;font-size:1.2rem}
-.coach .hold{font-weight:700;color:#1f2937;margin:0 0 6px}
-.coach .tip{margin:0 0 8px;color:#334155}
-.coach .oops{background:#fee2e2;border:2px solid #ef4444;border-radius:10px;padding:6px 8px;margin:6px 0;font-weight:800;color:#991b1b}
-.coach .guard{background:#fef3c7;border:2px solid #d97706;border-radius:10px;padding:6px 8px;margin:6px 0;font-weight:700;color:#92400e}
-.coach .times{margin:6px 0 0;font-size:.95rem;font-weight:700;color:#1f2937}
-.coach .alg-name{font-weight:800;color:#0f766e;margin:0 0 4px}
-.coach .coach-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-.coach .summary{margin:6px 0 0;font-weight:800;color:#1d4ed8}
-
-
-.timer-label{font-size:.95rem;font-weight:800;color:#0f766e;letter-spacing:.04em;text-transform:uppercase;margin:0 0 2px}
-.timer-label.hidden{display:none}
-.watch,.review,.trends,.algplayer{background:#f8fafc;border:3px solid #7dd3fc;border-radius:16px;padding:10px 12px;margin:8px 0 10px}
-.watch{border-color:#38bdf8;background:#f0f9ff}
-.review{border-color:#34d399;background:#ecfdf5}
-.trends{border-color:#a78bfa;background:#f5f3ff}
-.algplayer{border-color:#0d9488;background:#f0fdfa}
-.watch.hidden,.review.hidden,.trends.hidden,.algplayer.hidden{display:none}
-.watch h3,.review h3,.trends h3,.algplayer h3{margin:0 0 6px;font-size:1.15rem;color:#0f172a}
-.review .feedback,.trends .feedback{margin:0 0 8px;font-size:1.05rem;line-height:1.35;color:#1f2937}
-.stagebar{display:flex;height:18px;border-radius:999px;overflow:hidden;background:#e2e8f0;margin:8px 0}
-.stagebar span{display:block;height:100%;font-size:10px;color:#fff;text-align:center;line-height:18px;font-weight:800}
-.stagebar .cross{background:#0ea5e9}.stagebar .fl,.stagebar .f2l{background:#22c55e}.stagebar .sl{background:#84cc16}.stagebar .ll{background:#f59e0b}
-.why{margin:6px 0 0;font-size:.9rem;color:#475569}
-.player-strip{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.player-strip .mv{padding:4px 8px;border-radius:8px;background:#fff;border:2px solid #99f6e4;font-weight:800;cursor:pointer}
-.player-strip .mv.on{background:#0d9488;color:#fff;border-color:#0d9488}
-.player-now{font-size:2.2rem;font-weight:900;color:#0f766e;text-align:center;margin:4px 0}
-.player-arrow{font-size:1.6rem;text-align:center;margin:0 0 6px}
-.player-btns{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0}
-#demoHost{width:min(72vw,28vh,260px);height:min(72vw,28vh,260px);margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
-#demoHost twisty-player{width:100%!important;height:100%!important}
-body.demo-on #twistyHost{opacity:.35}
-body.plan-blind #twistyHost{visibility:hidden}
-.metro{width:100%;height:10px;border-radius:999px;background:#e2e8f0;overflow:hidden;margin:6px 0}
-.metro i{display:block;height:100%;width:30%;background:#14b8a6;animation:metro 1s linear infinite}
-@keyframes metro{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
-.vid-frame{position:relative;padding-top:56.25%;margin:8px 0;border-radius:12px;overflow:hidden}
-.vid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-
-</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b9cff' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cpath d='M3 9h18M3 15h18M9 3v18M15 3v18'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="cube.css?v=14">
 </head>
-<body>
+<body data-theme="dark" data-view="practice">
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
-<header class="topbar">
-  <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v12 · 18 Nov</span>
-  <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
-  <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
+
+<header class="app-header">
+  <a class="icon-link" id="gamesBtn" href="../../index.html" title="Back to games" aria-label="Back to games">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+  </a>
+  <h1>Speedcubing</h1>
+  <span class="ver" id="buildVer" title="Page build">v14 · 18 Nov</span>
+  <div class="status-cluster">
+    <span class="dot" id="connDot" title="Connection" aria-hidden="true"></span>
+    <span id="battery" class="hidden" title="Battery"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="7" width="18" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M22 10v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span id="batteryPct"></span></span>
+    <button class="btn" id="connectBtn" type="button">Connect</button>
+  </div>
+  <div class="menu-wrap">
+    <button class="icon-btn" id="menuBtn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="headerMenu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14"/></svg>
+    </button>
+    <div id="headerMenu" class="menu hidden" role="menu">
+      <button type="button" id="resyncBtn" role="menuitem">Re-sync</button>
+      <button type="button" id="resetBtn" role="menuitem">My cube is solved</button>
+      <button type="button" id="debugBtn" role="menuitem" aria-pressed="false">Debug</button>
+      <button type="button" id="helpToggle" role="menuitem">How to connect the i3</button>
+      <button type="button" id="menuSettings" data-view="settings" role="menuitem">Settings</button>
+      <a id="switchBtn" href="../../index.html?switch=1" role="menuitem">Switch player</a>
+    </div>
+  </div>
 </header>
+<span class="status" id="connStatus">Not connected — timer still works</span>
+
+<div class="app-shell">
+<nav class="app-nav" id="appNav" aria-label="Main">
+  <button type="button" class="nav-item on" data-view="practice" id="tabPractice">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+    Practice
+  </button>
+  <button type="button" class="nav-item" data-view="coach" id="tabCoach">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M8 15v-4"/><path d="M12 15V8"/><path d="M16 15v-6"/></svg>
+    Coach
+  </button>
+  <button type="button" class="nav-item" data-view="lessons" id="lessonsBtn" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M10 9l6 3-6 3V9z"/></svg>
+    Lessons
+  </button>
+  <button type="button" class="nav-item" data-view="history" id="tabHistory">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    History
+  </button>
+  <button type="button" class="nav-item" data-view="settings" id="tabSettings">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9c.3.6.9 1 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    Settings
+  </button>
+</nav>
+
 <main>
-  <div id="iosNote" class="note ios hidden">
-    <strong>You're on an iPhone or iPad.</strong> Safari and Chrome on iOS can't talk to the smart cube. You can still use the scramble and the tap / spacebar timer, and keep your times. To connect Ethan's GAN 356 i3, open this page in <strong>Chrome on a computer or Android</strong>.
-  </div>
-  <div id="btNote" class="note hidden">
-    This browser doesn't support Web Bluetooth. Please open this page in <strong>Google Chrome</strong> on a computer or Android to connect the cube. The manual timer still works here.
-  </div>
-
-  <section class="card" id="connectCard">
-    <div class="row">
-      <button class="btn" id="connectBtn" type="button">Connect cube</button>
-      <span id="battery" class="hidden">🔋</span>
-      <span class="status" id="connStatus">Not connected — timer still works</span>
+  <section class="view active" id="view-practice">
+    <div id="iosNote" class="note ios hidden">
+      <strong>You're on an iPhone or iPad.</strong> Safari and Chrome on iOS can't talk to the smart cube. You can still use the scramble and the tap / spacebar timer, and keep your times. To connect Ethan's GAN 356 i3, open this page in <strong>Chrome on a computer or Android</strong>.
     </div>
-    <div id="connError" class="err hidden"></div>
-    <div class="row-gap">
-      <button class="btn ghost" id="resyncBtn" type="button">Cube looks wrong? Re-sync</button>
-      <button class="btn ghost" id="resetBtn" type="button">My cube is solved</button>
-      <button class="btn ghost" id="debugBtn" type="button" aria-pressed="false">Debug</button>
-      <button class="btn ghost" id="helpToggle" type="button">How to connect the i3</button>
+    <div id="btNote" class="note hidden">
+      This browser doesn't support Web Bluetooth. Please open this page in <strong>Google Chrome</strong> on a computer or Android to connect the cube. The manual timer still works here.
     </div>
-    <div id="helpPanel" class="help hidden">
-      <h3>Connecting Ethan's GAN 356 i3</h3>
-      <p>The 356 i3 is a <strong>GAN Gen2</strong> smart cube. Chrome can talk to it over Bluetooth (this site is HTTPS). The cube encrypts its moves with a key based on its <strong>MAC address</strong>, so Chrome sometimes has to ask for that address once.</p>
-      <ol>
-        <li>Use <strong>Google Chrome</strong> on a computer or Android phone (not an iPhone or iPad).</li>
-        <li>Wake the cube by turning a face. It should have some charge.</li>
-        <li>Tap <strong>Connect cube</strong> and pick the device whose name starts with <strong>GAN</strong> (often something like <strong>GAN356i3</strong>).</li>
-        <li>We'll try to read the MAC address automatically from the cube's Bluetooth advertisement. This often works on Windows, Linux and Android. It usually <strong>does not</strong> work on a Mac, because Chrome hides the real address there.</li>
-        <li>If a box asks for the MAC (six pairs like <code>AB:12:CD:34:EF:56</code>), enter it once. We save it in this browser and shouldn't ask again.
-          <ul>
-            <li><strong>Windows, Linux or Android:</strong> in Chrome open <code>chrome://bluetooth-internals/#devices</code>, scan, wake the cube, and copy the <strong>Address</strong> of the GAN device. (On a Mac this address is fake — don't use it.)</li>
-            <li><strong>On a Mac, or if that page doesn't help:</strong> open the official <strong>GAN Cube Station</strong> app, connect the i3, and look for the Bluetooth / MAC address in the cube info. It may also be on the box or a sticker.</li>
-          </ul>
-        </li>
-        <li>After it connects you should see the battery and a live cube that follows Ethan's turns — even if the cube wasn't solved when you connected. If the picture doesn't match the real cube, tap <strong>Cube looks wrong? Re-sync</strong>. If the real cube is actually solved, tap <strong>My cube is solved</strong>.</li>
-      </ol>
-      <p>Optional: turning on <code>chrome://flags/#enable-experimental-web-platform-features</code> and restarting Chrome can help auto-detect the MAC, but it isn't required once the address is saved.</p>
+    <div id="cubeCard">
+      <div id="videoPanel" class="watch hidden" hidden></div>
+      <div id="callout" aria-live="polite"></div>
+      <div id="scramble" class="scramble" aria-live="polite"></div>
+      <div id="coachPanel" class="coach hidden" hidden></div>
+      <div id="fixup" class="hidden"></div>
+      <div id="matchAsk" class="note hidden" role="dialog">
+        <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
+        <div class="row-gap">
+          <button class="btn" id="matchYes" type="button">Yes</button>
+          <button class="btn ghost" id="matchNo" type="button">No</button>
+        </div>
+      </div>
+      <div id="matchHelp" class="note hidden">
+        <p style="margin:0">The picture is out of sync (the i3's memory can drift). <strong>Solve your cube</strong>, then tap <strong>My cube is solved</strong>. I'll reset the cube's memory and check again.</p>
+      </div>
+      <div class="cube-wrap">
+        <div id="twistyHost" aria-label="3D cube">
+          <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
+        </div>
+        <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
+      </div>
+      <div class="timer-wrap">
+        <section class="timer-pad" id="timerPad" tabindex="0" role="button" aria-label="Timer. Hold to ready, release to start, tap to stop.">
+          <div id="timerLabel" class="timer-label hidden"></div>
+          <div class="timer ph-idle" id="timer">0.00</div>
+          <div id="liveTimer">0.00</div>
+          <p id="hint">Connect Ethan's GAN 356 i3, or use the timer by itself.</p>
+          <div id="splits"></div>
+        </section>
+      </div>
+      <div id="reviewCard" class="review hidden" hidden></div>
+      <div id="sessionBanner"></div>
+      <div class="primary-row">
+        <button class="btn" id="startSolveBtn" type="button">Start solve anyway</button>
+        <button class="btn ghost" id="nextBtn" type="button">Next</button>
+        <button class="btn ghost" id="newScrambleBtn" type="button">Skip / new scramble</button>
+      </div>
+      <div id="algPlayerPanel" class="algplayer hidden" hidden></div>
     </div>
   </section>
 
-  <section class="card" id="cubeCard">
-    <div id="sessionBanner"></div>
-    <div id="callout" aria-live="polite"></div>
-    <div id="scramble" class="scramble" aria-live="polite"></div>
-    <div id="coachPanel" class="coach hidden" hidden></div>
-    <div id="videoPanel" class="watch hidden" hidden></div>
-    <div id="algPlayerPanel" class="algplayer hidden" hidden></div>
-    <div id="reviewCard" class="review hidden" hidden></div>
+  <section class="view" id="view-coach">
+    <h2>Coach</h2>
     <div id="trendsCard" class="trends hidden" hidden></div>
-    <div id="fixup" class="hidden"></div>
-    <div class="row-gap" style="justify-content:center">
-      <button class="btn" id="startSolveBtn" type="button">Start solve anyway</button>
-    </div>
-    <div id="matchAsk" class="note hidden" role="dialog">
-      <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
-      <div class="row-gap">
-        <button class="btn" id="matchYes" type="button">Yes</button>
-        <button class="btn ghost" id="matchNo" type="button">No</button>
-      </div>
-    </div>
-    <div id="matchHelp" class="note hidden">
-      <p style="margin:0">The picture is out of sync (the i3's memory can drift). <strong>Solve your cube</strong>, then tap <strong>My cube is solved</strong>. I'll reset the cube's memory and check again.</p>
-    </div>
-    <div class="cube-wrap">
-      <div id="twistyHost" aria-label="3D cube">
-        <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
-      </div>
-      <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
-    </div>
-    <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
-    <div class="row-gap" style="justify-content:center">
-      <button class="btn" id="newScrambleBtn" type="button">Skip / new scramble</button>
-      <button class="btn ghost" id="nextBtn" type="button">Next solve</button>
+    <div id="coachTabBody">
+      <div class="empty-card" id="coachEmpty">After a solve, this tab shows where time went and what to practise next. Finish a timed solve on the Practice tab, then come back here.</div>
     </div>
   </section>
 
-  <section class="card timer-pad" id="timerPad" tabindex="0" role="button" aria-label="Timer. Hold to ready, release to start, tap to stop.">
-    <div id="timerLabel" class="timer-label hidden"></div>
-    <div class="timer ph-idle" id="timer">0.00</div>
-    <p id="hint">Connect Ethan's GAN 356 i3, or use the timer by itself.</p>
-    <div id="splits"></div>
+  <section class="view" id="lessonsPanel" hidden>
+    <h2>Lessons</h2>
+    <p class="muted">Short videos for each skill. Tap one to watch here, or open it on YouTube.</p>
+    <div id="lessonList"></div>
+    <div id="lessonEmbed" hidden></div>
   </section>
 
-  <section class="card" id="sessionBox"></section>
-
-  <section class="card">
-    <h2>Progress</h2>
+  <section class="view" id="view-history">
+    <h2>History</h2>
     <div class="stats">
       <div class="stat"><b id="statPb">—</b><span>Personal best</span></div>
       <div class="stat"><b id="statAo5">—</b><span>Average of 5</span></div>
       <div class="stat"><b id="statAo12">—</b><span>Average of 12</span></div>
       <div class="stat"><b id="statStreak">0 days</b><span>Daily streak</span></div>
-      <div class="stat"><b id="statStars">★ 0</b><span>Stars</span></div>
+      <div class="stat"><b id="statStars">0</b><span>Stars</span></div>
     </div>
-    <div id="chart" style="margin-top:12px"></div>
+    <div id="chart"></div>
     <h3>Best splits</h3>
     <ul id="bestSplits"></ul>
     <h3>Recent solves</h3>
     <div id="history"></div>
   </section>
 
-  <section class="card">
+  <section class="view" id="view-settings">
+    <h2>Settings</h2>
+    <p class="muted" id="settingsVer">v14 · 18 Nov</p>
+    <section class="card" id="connectCard">
+      <div id="connError" class="err hidden"></div>
+      <p class="muted" id="settingsConn"></p>
+      <div id="helpPanel" class="help hidden">
+        <h3>Connecting Ethan's GAN 356 i3</h3>
+        <p>The 356 i3 is a <strong>GAN Gen2</strong> smart cube. Chrome can talk to it over Bluetooth (this site is HTTPS). The cube encrypts its moves with a key based on its <strong>MAC address</strong>, so Chrome sometimes has to ask for that address once.</p>
+        <ol>
+          <li>Use <strong>Google Chrome</strong> on a computer or Android phone (not an iPhone or iPad).</li>
+          <li>Wake the cube by turning a face. It should have some charge.</li>
+          <li>Tap <strong>Connect</strong> and pick the device whose name starts with <strong>GAN</strong> (often something like <strong>GAN356i3</strong>).</li>
+          <li>We'll try to read the MAC address automatically from the cube's Bluetooth advertisement. This often works on Windows, Linux and Android. It usually <strong>does not</strong> work on a Mac, because Chrome hides the real address there.</li>
+          <li>If a box asks for the MAC (six pairs like <code>AB:12:CD:34:EF:56</code>), enter it once. We save it in this browser and shouldn't ask again.
+            <ul>
+              <li><strong>Windows, Linux or Android:</strong> in Chrome open <code>chrome://bluetooth-internals/#devices</code>, scan, wake the cube, and copy the <strong>Address</strong> of the GAN device. (On a Mac this address is fake — don't use it.)</li>
+              <li><strong>On a Mac, or if that page doesn't help:</strong> open the official <strong>GAN Cube Station</strong> app, connect the i3, and look for the Bluetooth / MAC address in the cube info. It may also be on the box or a sticker.</li>
+            </ul>
+          </li>
+          <li>After it connects you should see the battery and a live cube that follows Ethan's turns — even if the cube wasn't solved when you connected. If the picture doesn't match the real cube, tap <strong>Re-sync</strong>. If the real cube is actually solved, tap <strong>My cube is solved</strong>.</li>
+        </ol>
+        <p>Optional: turning on <code>chrome://flags/#enable-experimental-web-platform-features</code> and restarting Chrome can help auto-detect the MAC, but it isn't required once the address is saved.</p>
+      </div>
+    </section>
+
     <button class="btn ghost" id="grownToggle" type="button">Grown-up settings</button>
-    <div id="grownPanel" class="hidden help">
+    <div id="grownPanel" class="help">
+      <label class="opt">Theme
+        <select id="optTheme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
       <label class="opt"><input type="checkbox" id="optInspect" checked> 15-second inspection before the timer starts</label>
       <label class="opt">Scramble length
         <input type="number" id="optScrambleLen" min="8" max="20" value="13" step="1" style="width:4.5rem">
@@ -335,13 +227,22 @@ body.plan-blind #twistyHost{visibility:hidden}
       <p>Times and settings are stored in this browser only, under <code>kidsHub.p.ethan.cube</code>. When a session finishes we quietly send a summary to the same results sheet as the other lessons (it never blocks a solve if the network is down).</p>
     </div>
   </section>
+
+  <section class="card hidden" id="sessionBox"></section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v12 · 18 Nov</span></footer>
+</div>
+
+<div id="debugTools" class="hidden">
+  <button class="btn ghost" id="copyDebugBtn" type="button">Copy debug log</button>
+</div>
+<pre id="cubeDebug" class="hidden" aria-live="off"></pre>
+
+<footer>Progress is saved in this browser on this device only. <span class="ver">v14 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
-  <p>That was a flyer. ⭐</p>
-  <button class="btn big" type="button" onclick="document.getElementById('cele').classList.add('hidden')">Woohoo!</button>
+  <p>That was a flyer.</p>
+  <button class="btn big" type="button" onclick="document.getElementById('cele').classList.add('hidden')">Nice!</button>
 </div></div>
 
 <div id="macModal" class="modal hidden"><div class="box">
@@ -356,7 +257,7 @@ body.plan-blind #twistyHost{visibility:hidden}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=12"></script>
-<script src="cube-app.js?v=12"></script>
+<script src="cube-engine.js?v=14"></script>
+<script src="cube-app.js?v=14"></script>
 </body>
 </html>

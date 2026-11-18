@@ -324,161 +324,217 @@ function remainingFromSnap(found,moves){
   return rest.slice();
 }
 
+function buildStepTable(scramble,start){
+  const moves=parseAlg(scramble);
+  start=start||SOLVED;
+  const steps=[];
+  let s=start;
+  for(let k=0;k<moves.length;k++){
+    const M=moves[k];
+    const rec={k,move:M,before:s,done:applyMove(s,M),cw:null,ccw:null};
+    if(M[1]==="2"){rec.cw=applyMove(s,M[0]);rec.ccw=applyMove(s,M[0]+"'");}
+    steps.push(rec);
+    s=rec.done;
+  }
+  return {moves,steps,start,end:s};
+}
+function hitStep(f,rec){
+  if(!rec||!f)return null;
+  if(eq(f,rec.before))return {kind:"before",k:rec.k,partial:0,dir:"",move:rec.move};
+  if(rec.cw&&eq(f,rec.cw))return {kind:"mid",k:rec.k,partial:1,dir:rec.move[0],move:rec.move};
+  if(rec.ccw&&eq(f,rec.ccw))return {kind:"mid",k:rec.k,partial:1,dir:rec.move[0]+"'",move:rec.move};
+  if(eq(f,rec.done))return {kind:"done",k:rec.k,partial:0,dir:"",move:rec.move};
+  return null;
+}
+/* State-based classify: current step, a one-step window forward, and stale previous-step mids. */
+function classifyState(f,table,k){
+  if(!f||!table)return {ok:false,kind:"off",k:k||0,partial:0,dir:"",stale:false,doneAll:false};
+  const steps=table.steps||[];
+  k=Math.max(0,Math.min(k||0,steps.length));
+  if(eq(f,table.end)){
+    return {ok:true,kind:"doneAll",k:steps.length,partial:0,dir:"",stale:false,doneAll:true,move:null};
+  }
+  if(k>=steps.length){
+    return {ok:false,kind:"off",k:steps.length,partial:0,dir:"",stale:false,doneAll:false};
+  }
+  const cur=hitStep(f,steps[k]);
+  if(cur){
+    if(cur.kind==="done"){
+      const nk=k+1;
+      if(nk>=steps.length)return {ok:true,kind:"doneAll",k:nk,partial:0,dir:"",stale:false,doneAll:true,move:null};
+      return {ok:true,kind:"before",k:nk,partial:0,dir:"",stale:false,doneAll:false,move:steps[nk].move};
+    }
+    return Object.assign({ok:true,stale:false,doneAll:false},cur);
+  }
+  if(k+1<steps.length){
+    const nxt=hitStep(f,steps[k+1]);
+    if(nxt){
+      if(nxt.kind==="done"){
+        const nk=k+2;
+        if(nk>=steps.length)return {ok:true,kind:"doneAll",k:nk,partial:0,dir:"",stale:false,doneAll:true,move:null};
+        return {ok:true,kind:"before",k:nk,partial:0,dir:"",stale:false,doneAll:false,move:steps[nk].move};
+      }
+      return Object.assign({ok:true,stale:false,doneAll:false},nxt);
+    }
+  }
+  if(k>0){
+    const prev=hitStep(f,steps[k-1]);
+    if(prev&&prev.kind!=="done"){
+      return {ok:true,kind:"stale",k:k,partial:0,dir:"",stale:true,doneAll:false,move:steps[k].move};
+    }
+  }
+  return {ok:false,kind:"off",k:k,partial:0,dir:"",stale:false,doneAll:false,move:steps[k]?steps[k].move:null};
+}
+
 function createTracker(scramble,start,targetState){
   start=start||SOLVED;
-  let {moves,snaps}=pathSnapshots(scramble,start);
-  let target=targetState||snaps[snaps.length-1].state;
-  let state=start,lastMove="",fixup="",lastOn=snaps[0];
-  function snapshot(){
-    const done=eq(state,target);
-    const p=packProgress(lastOn,moves,done,!fixup&&!!lastOn);
-    p.state=state;p.target=target;p.fixup=done?"":fixup;p.lastMove=lastMove;
-    p.on=!!(!fixup&&!done&&lastOn);
-    if(done){p.current=null;p.currentScramble=null;p.k=moves.length;p.partial=0;p.half=false;p.halfLabel="";p.fixup="";p.on=false;}
-    else if(fixup){p.current=fixup;p.half=false;p.halfLabel="";p.partial=0;p.on=false;p.dir="";}
-    p.dir=(!done&&!fixup&&lastOn&&lastOn.dir)||"";
-    p.midSource=(!done&&!fixup&&(lastOn&&lastOn.midSource||midSource))||"";
-    return p;
-  }
-  function startSnapFor(k,current){
-    let s=null;
-    snaps.forEach(x=>{if(x.k===k&&!x.partial&&x.current===current)s=s||x;});
-    return s;
-  }
+  let table=buildStepTable(scramble,start);
+  let {moves,steps}=table;
+  let target=targetState||table.end;
+  let state=start,k=0,lastMove="",fixup="",confirmedOff=false,offPending=false;
+  let lastOn={state:start,k:0,partial:0,totalParts:moves[0]&&moves[0][1]==="2"?2:1,current:moves[0]||null,q:0,dir:"",midSource:""};
   let midSource="";
-  let pendingCompanion=null;
-  function endSnapFor(k){
-    let s=null;
-    snaps.forEach(x=>{if(x.k===k+1&&!x.partial)s=s||x;});
-    return s||snaps[snaps.length-1];
+  let lastFaceletsSerial=null;
+  let tentative=null;
+  let judged=classifyState(state,table,0);
+
+  function snapshot(){
+    const hit=judged;
+    const done=!!(hit&&hit.doneAll)||eq(state,target)||k>=moves.length;
+    const cur=done?null:((hit&&hit.ok&&hit.move)||moves[k]||null);
+    const half=!!(hit&&hit.ok&&hit.kind==="mid");
+    const on=!done&&!confirmedOff&&!!(hit&&hit.ok);
+    return {
+      k:done?moves.length:(hit&&hit.ok?hit.k:k),
+      on,done,total:moves.length,moves,
+      partial:half?1:0,totalParts:cur&&cur[1]==="2"?2:1,
+      current:cur,currentScramble:cur,
+      half,halfLabel:half?"1/2":"",
+      state,target,fixup:(done||!confirmedOff)?"":fixup,
+      lastMove,dir:(hit&&hit.dir)||"",
+      midSource,offPending:!!offPending&&!done&&!confirmedOff,
+      judgedKind:(hit&&hit.kind)||"off",
+      stale:!!(hit&&hit.stale),
+      confirmedOff:!!confirmedOff&&!done
+    };
   }
-  function startOf(cur,k){
-    return startSnapFor(k,cur)||{state:lastOn&&lastOn.partial&&lastOn.dir?applyMove(lastOn.state,invertMove(lastOn.dir)):((lastOn&&lastOn.state)||state),k:k,partial:0,totalParts:2,current:cur,q:(lastOn&&lastOn.q)||0};
+  function adopt(hit,newState,src){
+    if(hit&&hit.stale)return snapshot();
+    if(newState)state=newState;
+    if(!hit||!hit.ok){
+      offPending=true;
+      judged=hit||{ok:false,kind:"off",k:k,partial:0,dir:"",stale:false,doneAll:false};
+      return snapshot();
+    }
+    offPending=false;confirmedOff=false;fixup="";
+    judged=hit;
+    if(hit.doneAll){
+      k=moves.length;
+      lastOn={state:state,k:moves.length,partial:0,totalParts:0,current:null,q:0,dir:"",midSource:""};
+      midSource="";
+      return snapshot();
+    }
+    k=hit.k;
+    midSource=src||midSource||"";
+    lastOn={state:state,k:hit.k,partial:hit.kind==="mid"?1:0,totalParts:hit.move&&hit.move[1]==="2"?2:1,current:hit.move||moves[k]||null,q:0,dir:hit.dir||"",midSource:midSource};
+    return snapshot();
   }
-  function enterMid(start,dir,src){
-    const st=applyMove(start.state,dir);
-    midSource=src||"move";
-    lastOn={state:st,k:start.k,partial:1,totalParts:2,current:start.current,q:(start.q||0)+1,dir:dir,midSource:midSource};
-    return lastOn;
-  }
-  function apply(m){
+  function apply(m,opts){
+    opts=opts||{};
     m=normalizeMove(m);
     if(!m)return snapshot();
-    if(pendingCompanion&&m[0]===pendingCompanion.face){
-      pendingCompanion=null;
-      lastMove=m;
-      return snapshot();
-    }
-    pendingCompanion=null;
-    const cur=(!fixup&&lastOn&&lastOn.current)||null;
-    /* X2 is always two quarters on the i3. Treat a quarter of the current X2, either way,
-       as a valid mid-state by the MOVE itself — do not require the resulting facelets to
-       match a precomputed snapshot (FACELETS can arrive first, or differ slightly). */
-    if(!fixup&&cur&&cur[1]==="2"&&m[0]===cur[0]){
-      const start=startOf(cur,lastOn.k);
-      lastMove=m;fixup="";
-      if(m[1]==="2"){
-        state=applyMove(start.state,cur);
-        lastOn=endSnapFor(start.k);midSource="";
-        return snapshot();
-      }
-      if(lastOn.partial>0){
-        if(m!==lastOn.dir){
-          state=start.state;
-          lastOn=startSnapFor(start.k,cur)||start;
-          midSource="";
-          return snapshot();
-        }
-        /* Same direction: if FACELETS already put us at mid, this MOVE is the companion, not the second quarter. */
-        if((midSource||lastOn.midSource)==="facelets"){
-          midSource="both";
-          lastOn=Object.assign({},lastOn,{midSource:"both"});
-          return snapshot();
-        }
-        state=applyMove(start.state,cur);
-        lastOn=endSnapFor(start.k);midSource="";
-        return snapshot();
-      }
-      if(eq(state,applyMove(start.state,m))){
-        enterMid(start,m,"both");
-        return snapshot();
-      }
-      state=applyMove(start.state,m);
-      enterMid(start,m,"move");
-      return snapshot();
-    }
-    state=applyMove(state,m);
     lastMove=m;
-    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];midSource="";return snapshot();}
-    const found=matchSnap(snaps,state);
-    if(found){fixup="";lastOn=found;midSource=found.partial?(midSource||"move"):"";return snapshot();}
-    fixup=invertMove(m);
-    return snapshot();
-  }
-  function setState(f){
-    if(f&&f.length===54){
-      state=f;
-      if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];midSource="";}
-      else{
-        const cur=(!fixup&&lastOn&&lastOn.current)||null;
-        const start=cur?startSnapFor(lastOn.k,cur):null;
-        if(cur&&cur[1]==="2"&&start){
-          const face=cur[0];
-          const midCW=applyMove(start.state,face), midCCW=applyMove(start.state,face+"'"), doneSt=applyMove(start.state,cur);
-          if(eq(f,start.state)){fixup="";lastOn=start;midSource="";}
-          else if(eq(f,midCW)||eq(f,midCCW)){
-            const dir=eq(f,midCW)?face:face+"'";
-            fixup="";
-            if(lastOn.partial>0&&lastOn.dir===dir){
-              midSource=(midSource==="move"||lastOn.midSource==="move")?"both":(midSource||"facelets");
-              lastOn=Object.assign({},lastOn,{state:f,dir,midSource});
-            }else enterMid(start,dir,"facelets");
-            lastOn=Object.assign({},lastOn,{state:f});
-          }else if(eq(f,doneSt)){
-            const wasMid=lastOn.partial>0;
-            const dir=lastOn.dir||"";
-            fixup="";lastOn=endSnapFor(start.k);midSource="";
-            if(wasMid)pendingCompanion={face:cur[0],dir:dir};
-          }
-          else if(lastOn.partial>0){
-            /* Keep MOVE mid-progress; unmatched FACELETS must not rewind or error. */
-          }else{
-            const found=matchSnap(snaps,state);
-            if(found){fixup="";lastOn=found;midSource=found.partial?"facelets":"";}
-          }
-        }else{
-          const found=matchSnap(snaps,state);
-          if(found){fixup="";lastOn=found;midSource=found.partial?"facelets":"";}
-        }
-      }
+    if(opts.serial!=null&&lastFaceletsSerial!=null&&opts.serial===lastFaceletsSerial){
+      midSource=midSource==="facelets"?"both":midSource;
+      if(lastOn)lastOn=Object.assign({},lastOn,{midSource:midSource});
+      return snapshot();
     }
+    /* If a previous MOVE was unverified, keep applying to that live model so
+       a quick undo (F then F') can return to an acceptable state without a red flash. */
+    const from=(offPending&&tentative)?tentative:state;
+    const next=applyMove(from,m);
+    const hit=classifyState(next,table,k);
+    if(hit.ok){tentative=null;return adopt(hit,next,opts.source||"move");}
+    /* MOVE did not land on an acceptable state (wrong face letter, race, typo).
+       Keep the last confirmed highlight; remember a tentative state in case no
+       FACELETS arrive to correct it. Never confirm a red error here. */
+    tentative=next;
+    offPending=true;
     return snapshot();
   }
-  function reset(){state=start;lastMove="";fixup="";lastOn=snaps[0];midSource="";pendingCompanion=null;return snapshot();}
+  function setState(f,opts){
+    opts=opts||{};
+    if(!f||f.length!==54)return snapshot();
+    if(opts.serial!=null)lastFaceletsSerial=opts.serial;
+    const hit=classifyState(f,table,k);
+    if(hit.stale)return snapshot();
+    if(hit.ok){tentative=null;return adopt(hit,f,opts.source||"facelets");}
+    state=f;
+    tentative=null;
+    offPending=true;
+    confirmedOff=false;
+    judged=hit;
+    return snapshot();
+  }
+  function confirmOff(){
+    const cand=(!judged||judged.ok)?(tentative||state):state;
+    const hit=classifyState(cand,table,k);
+    if(hit.ok&&!hit.stale){tentative=null;return adopt(hit,cand,midSource);}
+    if(hit.stale){offPending=false;tentative=null;return snapshot();}
+    if(cand)state=cand;
+    tentative=null;
+    offPending=false;
+    confirmedOff=true;
+    fixup=invertMove(lastMove)||(moves[k]?invertMove(moves[k][1]==="2"?moves[k][0]:moves[k]):"")||"";
+    judged=hit;
+    return snapshot();
+  }
+  function clearOff(){
+    offPending=false;confirmedOff=false;fixup="";tentative=null;
+    return snapshot();
+  }
+  function reset(){
+    state=start;k=0;lastMove="";fixup="";confirmedOff=false;offPending=false;midSource="";lastFaceletsSerial=null;tentative=null;
+    lastOn={state:start,k:0,partial:0,totalParts:moves[0]&&moves[0][1]==="2"?2:1,current:moves[0]||null,q:0,dir:"",midSource:""};
+    judged=classifyState(state,table,0);
+    return snapshot();
+  }
   function repath(current,remaining,asFixup){
     remaining=parseAlg(remaining);
     if(current&&current.length===54)state=current;
-    const built=pathSnapshots(remaining,state);
-    moves=built.moves;snaps=built.snaps;
-    lastOn=snaps[0];lastMove="";midSource="";pendingCompanion=null;
-    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1]||snaps[0];}
-    else{
-      const found=matchSnap(snaps,state);
-      const atStart=!!(found&&found.k===0&&!found.partial);
-      if(asFixup&&moves[0]&&(atStart||!found)){
-        fixup=moves[0];
-        lastOn=found||snaps[0];
-      }else if(found){fixup="";lastOn=found;}
-      else fixup="";
+    table=buildStepTable(remaining,state);
+    moves=table.moves;steps=table.steps;
+    if(!targetState)target=table.end;
+    lastMove="";midSource="";lastFaceletsSerial=null;k=0;
+    const hit=classifyState(state,table,0);
+    if(hit.ok)return adopt(hit,state,"");
+    if(asFixup&&moves[0]){
+      confirmedOff=true;offPending=false;fixup=moves[0];
+      judged={ok:false,kind:"off",k:0,partial:0,dir:"",stale:false,doneAll:false,move:moves[0]};
+      lastOn={state:state,k:0,partial:0,totalParts:moves[0][1]==="2"?2:1,current:moves[0],q:0,dir:"",midSource:""};
+      return snapshot();
     }
+    confirmedOff=false;offPending=true;fixup="";
+    judged=hit;
     return snapshot();
   }
   function setTarget(t){if(t&&t.length===54)target=t;return snapshot();}
-  function remaining(){return remainingFromSnap(lastOn,moves);}
-  return {apply,setState,reset,repath,setTarget,remaining,get:snapshot,get target(){return target;},get moves(){return moves;},get lastOn(){return lastOn;}};
+  function remaining(){
+    const cur=snapshot();
+    if(cur.done)return [];
+    const rest=moves.slice(cur.k);
+    if(cur.half&&cur.current)return [cur.current].concat(rest.slice(1));
+    return rest;
+  }
+  function judge(f){return classifyState(f||state,table,k);}
+  return {apply,setState,reset,repath,setTarget,remaining,get:snapshot,judge,confirmOff,clearOff,
+    get target(){return target;},get moves(){return moves;},get lastOn(){return lastOn;},
+    get offPending(){return offPending;}};
 }
 
+
 /* ---- timing helpers ---- */
+
 function formatTime(ms,pen){
   if(pen==="DNF"||ms==null||!isFinite(ms))return "DNF";
   const official=pen==="+2"?ms+2000:ms;
@@ -1646,7 +1702,39 @@ function syncPayload(analysis,ctx){
 function embedUrlFor(video){
   if(!video||!video.id)return "";
   const start=video.start?("&start="+video.start):"";
+  /* Plain youtube.com/embed is the github.io-safe default; nocookie is offered as an alternate. */
+  return "https://www.youtube.com/embed/"+video.id+"?rel=0"+start;
+}
+function nocookieUrlFor(video){
+  if(!video||!video.id)return "";
+  const start=video.start?("&start="+video.start):"";
   return "https://www.youtube-nocookie.com/embed/"+video.id+"?rel=0"+start;
+}
+function watchUrlFor(video){
+  if(!video)return "";
+  if(video.url)return video.url;
+  if(video.id)return "https://www.youtube.com/watch?v="+video.id;
+  return "";
+}
+function allLessonVideos(){
+  const seen={};
+  const out=[];
+  Object.keys(DRILL_VIDEOS).forEach(k=>{
+    const v=DRILL_VIDEOS[k];
+    if(!v||!v.id||seen[v.id])return;
+    seen[v.id]=1;
+    out.push(Object.assign({key:k,skill:skillForVideo(v)},v));
+  });
+  return out;
+}
+function skillForVideo(v){
+  const d=(v&&v.drills)||[];
+  if(d.indexOf("lookahead")>=0||d.indexOf("metronome")>=0)return "Look-ahead";
+  if(d.indexOf("crossPlan")>=0||d.indexOf("cross")>=0)return "Cross";
+  if(d.indexOf("f2l")>=0)return "F2L";
+  if(d.indexOf("fingerTricks")>=0)return "Finger tricks";
+  if(d.indexOf("lastLayer")>=0||d.indexOf("oll")>=0||d.indexOf("pll")>=0)return "Last layer";
+  return "Beginner";
 }
 
 
@@ -1910,33 +1998,22 @@ function createApp(opts){
         /* FACELETS already updated the coach tracker for this serial; the MOVE is the companion (same X2 1/2 handling as the scramble). */
         t=coach.tracker.get();
       }else if(move){
-        t=coach.tracker.apply(move);
+        t=coach.tracker.apply(move,{serial:serial,source:"move"});
       }else{
-        t=coach.tracker.setState(f);
+        t=coach.tracker.setState(f,{serial:serial,source:"facelets"});
       }
+      recordJudgeEvent({type:move?"COACH_MOVE":"COACH_FACELETS",move:move||"",serial:serial,facelets:f,localState:t.state,expectedStep:t.current,k:t.k,judged:t.judgedKind,result:judgeResultOf(t)});
       const end=applyAlg(coach.algStart,coach.detect.cubeAlg||[]);
-      if(t.done||eq(f,end)){completeCoachStep(f);return;}
-      if(t.fixup){
-        const undo=fmtAlg(mapAlgX2(t.fixup));
-        coach.oops="Oops, undo: "+undo;
-        const fu=parseAlg(t.fixup);
-        if(fu.length>=4&&!faceletsOnAlgPath(f,coach.algStart,coach.detect.cubeAlg||[])){
-          const prev=coach.detect;
-          fresh.lead="Oops, I'll look again.";
-          coach.detect=fresh;
-          coach.oops="Oops, I'll look again. "+(fresh.caseName||"");
-          if(!prev||fresh.stage!==prev.stage||fresh.caseId!==prev.caseId||fresh.hold!==prev.hold||fmtAlg(fresh.cubeAlg||[])!==fmtAlg(prev.cubeAlg||[])){
-            const phase=((fresh.hold&&fresh.hold!==0)||fresh.stage==="auf"||!fresh.alg)?"hold":"alg";
-            coach.phase=phase;
-            coach.tracker=null;
-            if(phase==="alg"&&fresh.cubeAlg&&fresh.cubeAlg.length){
-              coach.tracker=createTracker(fresh.cubeAlg,f);
-              coach.algStart=f;
-            }
-          }
-        }
+      if(t.done||eq(f,end)){clearCoachOff();coach.oops="";completeCoachStep(f);return;}
+      if(t.fixup||t.confirmedOff){
+        applyCoachOops(t);
         return;
       }
+      if(t.offPending){
+        scheduleCoachOffConfirm();
+        return;
+      }
+      clearCoachOff();
       if(faceletsOnAlgPath(f,coach.algStart,coach.detect.cubeAlg||[]))coach.oops="";
     }
   }
@@ -2321,19 +2398,175 @@ function createApp(opts){
   let lastFaceletsSerial=null, armedFromFacelets=false;
   let replanCount=0, replanMethod="", replanAt=0, replanNote=false, replanning=false;
   let offPathMoves=[], pathAnchorRemaining=null, replanTimer=null, replanGen=0;
+  let offConfirmTimer=null, coachOffTimer=null;
+  let debugEvents=[], lastDebugSyncAt=0;
   function bumpFacelets(){faceletsGen++;}
   function whenPathReady(){return pathPromise||Promise.resolve(fmtAlg(tracker.get().moves));}
+  function clearOffConfirm(){
+    if(offConfirmTimer){clearTimeout(offConfirmTimer);offConfirmTimer=null;}
+  }
+  function clearCoachOff(){
+    if(coachOffTimer){clearTimeout(coachOffTimer);coachOffTimer=null;}
+  }
   function clearReplanTimer(){
     if(replanTimer){clearTimeout(replanTimer);replanTimer=null;}
+    clearOffConfirm();
   }
   function resetReplanState(){
     clearReplanTimer();
+    clearCoachOff();
     replanGen++;
     offPathMoves=[];
     pathAnchorRemaining=null;
     replanning=false;
     replanNote=false;
     pathReady=true;
+  }
+  function judgeResultOf(t){
+    if(!t)return "unknown";
+    if(t.done)return "done";
+    if(t.fixup||t.confirmedOff)return "red";
+    if(t.stale)return "stale";
+    if(t.offPending)return "off-pending";
+    if(t.half)return "mid";
+    if(t.on)return "ok";
+    return "off";
+  }
+  function recordJudgeEvent(rec){
+    const t=tracker&&tracker.get?tracker.get():{};
+    const ev=Object.assign({
+      at:wall(),
+      type:rec&&rec.type||"",
+      move:rec&&rec.move||"",
+      serial:rec&&rec.serial,
+      localTimestamp:rec&&rec.localTimestamp,
+      cubeTimestamp:rec&&rec.cubeTimestamp,
+      facelets:String((rec&&rec.facelets)||facelets||""),
+      localState:String(t.state||facelets||""),
+      expectedStep:t.current||"",
+      k:t.k,
+      judged:t.judgedKind||"",
+      result:judgeResultOf(t),
+      halfLabel:t.halfLabel||"",
+      fixup:t.fixup||"",
+      offPending:!!t.offPending,
+      phase:phase
+    }, rec||{});
+    debugEvents.push(ev);
+    if(debugEvents.length>60)debugEvents=debugEvents.slice(-60);
+  }
+  function debugLogText(){
+    return debugEvents.map(e=>{
+      return [e.at,e.type,e.move||"",e.serial!=null?("#"+e.serial):"",e.expectedStep,e.judged,e.result,e.halfLabel,e.fixup||"", (e.facelets||"").slice(0,12)].join(" ");
+    }).join("\n");
+  }
+  function maybeSyncDebug(reason){
+    const ts=wall();
+    if(ts-lastDebugSyncAt<30000)return false;
+    lastDebugSyncAt=ts;
+    const t=tracker&&tracker.get?tracker.get():{};
+    const payload={
+      child:"ethan",
+      lesson:"cube-debug",
+      details:JSON.stringify({
+        reason:reason||"red-error",
+        at:ts,
+        phase:phase,
+        official:fmtAlg(officialScramble||[]),
+        expected:t.current||"",
+        k:t.k,
+        judged:t.judgedKind||"",
+        fixup:t.fixup||"",
+        events:debugEvents.slice()
+      })
+    };
+    const body=syncCubeSession(payload);
+    if(body)lastSyncBody=body;
+    return true;
+  }
+  function scheduleOffConfirm(){
+    if(phase!=="scrambling")return;
+    clearOffConfirm();
+    const myGen=++replanGen;
+    offConfirmTimer=setTimeout(()=>{
+      offConfirmTimer=null;
+      if(myGen!==replanGen||phase!=="scrambling")return;
+      const t=tracker.confirmOff();
+      recordJudgeEvent({type:"JUDGE",result:judgeResultOf(t),judged:t.judgedKind,fixup:t.fixup,expectedStep:t.current,k:t.k,facelets:facelets,localState:t.state});
+      if(t.fixup||t.confirmedOff){
+        maybeSyncDebug("red-error");
+        emit();
+        /* Re-plan after the debounce already elapsed, on the next tick so the red Fix-up is visible first. */
+        setTimeout(()=>{if(myGen===replanGen&&phase==="scrambling")runReplanToTarget(myGen);},0);
+      }else{
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        replanning=false;
+        pathReady=true;
+        emit();
+      }
+    },400);
+  }
+  function flushStateJudge(){
+    clearOffConfirm();
+    const myGen=++replanGen;
+    if(phase==="scrambling"){
+      const t=tracker.confirmOff();
+      recordJudgeEvent({type:"JUDGE",result:judgeResultOf(t),judged:t.judgedKind,fixup:t.fixup,expectedStep:t.current,k:t.k,facelets:facelets,localState:t.state});
+      if(t.fixup||t.confirmedOff){
+        maybeSyncDebug("red-error");
+        setTimeout(()=>{if(replanGen===myGen&&phase==="scrambling")runReplanToTarget(myGen);},0);
+      }else{
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        replanning=false;
+        pathReady=true;
+      }
+    }
+    if(coach&&coach.tracker){
+      const ct=coach.tracker.confirmOff();
+      applyCoachOops(ct);
+    }
+    emit();
+    return tracker.get();
+  }
+  function applyCoachOops(t){
+    if(!coach||!t)return;
+    if(!(t.fixup||t.confirmedOff)){
+      if(t.on||t.done)coach.oops="";
+      return;
+    }
+    const undo=fmtAlg(mapAlgX2(t.fixup));
+    coach.oops="Oops, undo: "+undo;
+    const fu=parseAlg(t.fixup);
+    const f=facelets;
+    const fresh=detectLLFor(f);
+    if(fu.length>=4&&!faceletsOnAlgPath(f,coach.algStart,coach.detect.cubeAlg||[])){
+      const prev=coach.detect;
+      fresh.lead="Oops, I'll look again.";
+      coach.detect=fresh;
+      coach.oops="Oops, I'll look again. "+(fresh.caseName||"");
+      if(!prev||fresh.stage!==prev.stage||fresh.caseId!==prev.caseId||fresh.hold!==prev.hold||fmtAlg(fresh.cubeAlg||[])!==fmtAlg(prev.cubeAlg||[])){
+        const phaseC=((fresh.hold&&fresh.hold!==0)||fresh.stage==="auf"||!fresh.alg)?"hold":"alg";
+        coach.phase=phaseC;
+        coach.tracker=null;
+        if(phaseC==="alg"&&fresh.cubeAlg&&fresh.cubeAlg.length){
+          coach.tracker=createTracker(fresh.cubeAlg,f);
+          coach.algStart=f;
+        }
+      }
+    }
+    maybeSyncDebug("coach-red");
+  }
+  function scheduleCoachOffConfirm(){
+    clearCoachOff();
+    coachOffTimer=setTimeout(()=>{
+      coachOffTimer=null;
+      if(!coach||!coach.tracker)return;
+      const t=coach.tracker.confirmOff();
+      applyCoachOops(t);
+      emit();
+    },400);
   }
   function pathReaches(from,moves,to){
     return !!(from&&to&&eq(applyAlg(from,moves||[]),to));
@@ -2364,7 +2597,7 @@ function createApp(opts){
   }
   function inHalfTurn(t){
     t=t||tracker.get();
-    return !!(t&&!t.fixup&&t.on&&(t.partial>0||t.half));
+    return !!(t&&!t.fixup&&t.on&&!t.offPending&&(t.partial>0||t.half));
   }
   function scheduleReplanToTarget(){
     if(phase!=="scrambling")return;
@@ -2442,11 +2675,12 @@ function createApp(opts){
     pathPromise=p;
     return p;
   }
-  let scrambleStart=SOLVED;
+  let scrambleStart=SOLVED, scrambleTouched=false;
   function startScrambleFromCurrent(){
     scrambleStart=facelets;
     scrambleTargetState=applyAlg(scrambleStart,officialScramble);
     replanCount=0;replanMethod="";replanAt=0;
+    scrambleTouched=false;
     resetReplanState();
     pathReady=true;
     pathPromise=Promise.resolve(fmtAlg(officialScramble));
@@ -2523,42 +2757,40 @@ function createApp(opts){
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=applyCalibFacelets(evt.facelets);
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
+      scrambleTouched=true;
       if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return tracker.get();}
       const before=tracker.get();
-      const wasOn=!before.fixup&&!!before.on;
+      const wasOn=!before.fixup&&!!before.on&&!before.offPending;
       if(wasOn)pathAnchorRemaining=tracker.remaining();
-      const t=tracker.apply(m);
+      /* MOVE events only drive animation and highlighting. They must never confirm a red error or a re-plan by themselves. */
+      const t=tracker.apply(m,{serial:evSerial,source:"move"});
+      recordJudgeEvent({type:"MOVE",move:m,serial:evSerial,localTimestamp:ts.localTimestamp,cubeTimestamp:ts.cubeTimestamp,facelets:facelets,localState:t.state,expectedStep:t.current,k:t.k,judged:t.judgedKind,result:judgeResultOf(t)});
       if(inHalfTurn(t)&&tBefore&&t.k===tBefore.k&&t.partial>0){
         if(eq(facelets,applyMove(t.state,m)))facelets=t.state;
         else if(tBefore.partial===0&&eq(applyMove(beforeF,m),facelets)&&!eq(beforeF,t.state))facelets=beforeF;
       }
       if(t.done||eq(facelets,scrambleTargetState)){resetReplanState();armAfterScramble();return t;}
-      if(inHalfTurn(t)||(!t.fixup&&t.on)){
+      if(!t.fixup&&(inHalfTurn(t)||(t.on&&!t.offPending))){
         offPathMoves=[];
         pathAnchorRemaining=tracker.remaining();
         clearReplanTimer();
+        replanGen++;
         replanning=false;
         pathReady=true;
         replanNote=false;
         emit();
-      }else if(t.fixup||!t.on){
+      }else{
         if(wasOn)offPathMoves=[m];
         else offPathMoves=offPathMoves.concat(m);
         replanNote=false;
-        scheduleReplanToTarget();
-        emit();
-      }else{
-        offPathMoves=[];
-        pathAnchorRemaining=tracker.remaining();
-        clearReplanTimer();
-        replanning=false;
-        pathReady=true;
-        replanNote=false;
+        /* Debounce ~400ms with no new event before showing red or re-planning. */
+        scheduleOffConfirm();
         emit();
       }
       return t;
     }
     if(phase==="inspect"||phase==="ready"||phase==="wait"){
+      recordJudgeEvent({type:"MOVE",move:m,serial:evSerial,localTimestamp:ts.localTimestamp,cubeTimestamp:ts.cubeTimestamp,facelets:facelets,localState:facelets});
       const serial=evt&&evt.serial;
       if(armedFromFacelets&&serial!=null&&serial===lastFaceletsSerial){
         armedFromFacelets=false;
@@ -2577,6 +2809,7 @@ function createApp(opts){
       emit();return;
     }
     if(phase==="running"&&run){
+      recordJudgeEvent({type:"MOVE",move:m,serial:evSerial,localTimestamp:ts.localTimestamp,cubeTimestamp:ts.cubeTimestamp,facelets:facelets,localState:facelets});
       run.moves.push(ts);
       run.moveCount=run.moves.length;
       const el=elapsedNow();
@@ -2595,36 +2828,35 @@ function createApp(opts){
     if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
-      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble({fromFacelets:true});return;}
-      const t=tracker.setState(facelets);
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets,{serial:serial,source:"facelets"});armAfterScramble({fromFacelets:true});return;}
+      const t=tracker.setState(facelets,{serial:serial,source:"facelets"});
+      recordJudgeEvent({type:"FACELETS",move:"",serial:serial,facelets:facelets,localState:t.state,expectedStep:t.current,k:t.k,judged:t.judgedKind,result:judgeResultOf(t)});
       if(t.done){resetReplanState();armAfterScramble({fromFacelets:true});return;}
       /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. Do not rebase after a re-plan (new path starts at k=0 from a non-F0 state). */
       const first=(tracker.moves&&tracker.moves[0])||officialScramble[0];
       const midOfFirst=!!(first&&first[1]==="2"&&(eq(facelets,applyMove(scrambleStart,first[0]))||eq(facelets,applyMove(scrambleStart,first[0]+"'"))||eq(facelets,applyMove(scrambleStart,first))));
-      if(t.k===0&&!t.partial&&!t.fixup&&facelets!==scrambleStart&&!midOfFirst&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
+      if(!scrambleTouched&&t.k===0&&!t.partial&&!t.fixup&&!t.stale&&facelets!==scrambleStart&&!midOfFirst&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&!offConfirmTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
         startScrambleFromCurrent();
         return;
       }
-      if(inHalfTurn(t)||(!t.fixup&&t.on)){
+      if(t.stale||(!t.fixup&&(inHalfTurn(t)||(t.on&&!t.offPending)))){
         offPathMoves=[];
         pathAnchorRemaining=tracker.remaining();
         clearReplanTimer();
+        replanGen++;
         replanning=false;
         pathReady=true;
-      }else if(t.fixup||!t.on){
-        scheduleReplanToTarget();
       }else{
-        offPathMoves=[];
-        pathAnchorRemaining=tracker.remaining();
-        clearReplanTimer();
-        replanning=false;
-        pathReady=true;
+        scheduleOffConfirm();
       }
       emit();
       return;
     }
     if((phase==="inspect"||phase==="ready")&&eq(facelets,SOLVED)&&run&&!run.started){
       /* ignore; wait for a move or a later solved-after-solve path */
+    }
+    if(phase!=="scrambling"){
+      recordJudgeEvent({type:"FACELETS",move:"",serial:serial,facelets:facelets,localState:facelets});
     }
     if(phase==="inspect"||phase==="ready"||phase==="running"||phase==="wait"){
       onCoachEvent(null,facelets,serial);
@@ -2763,7 +2995,7 @@ function createApp(opts){
     return {
       facelets,solved:isSolved(facelets),phase,
       scramble:t.moves,scrambleText:fmtAlg(t.moves),officialScramble,officialText:fmtAlg(officialScramble),
-      k:t.k,onPath:t.on,fixup:replanning?"":t.fixup,scrambled:t.done,target:t.target,f0:scrambleStart,atTarget:eq(facelets,scrambleTargetState),
+      k:t.k,onPath:t.on,fixup:t.fixup||"",scrambled:t.done,target:t.target,f0:scrambleStart,atTarget:eq(facelets,scrambleTargetState),
       pathReady,faceletsGen,
       replanCount,replanMethod,replanAt,replanNote,replanning,
       cubies:cubiesFromFacelets(facelets),
@@ -2800,9 +3032,9 @@ function createApp(opts){
   const api={
     STORE,SOLVED,RESULTS_SYNC_URL,STAGE_LABEL,STAGE_KID,
     applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,
-    stageFlags,stagesFor,reachedStages,createTracker,progressOnPath,
+    stageFlags,stagesFor,reachedStages,createTracker,progressOnPath,buildStepTable,classifyState,hitStep,
     formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
-    createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,faceletsFromCubies,
+    createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,nocookieUrlFor,watchUrlFor,allLessonVideos,skillForVideo,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,faceletsFromCubies,
     validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
@@ -2814,6 +3046,8 @@ function createApp(opts){
     setPenalty,deleteSolve,manualDown,manualUp,manualStop,manualReadyCheck,
     startTimer,finishSolve,nextAfterStop,elapsedNow,abortTimer,timerModeNow,stepElapsed,
     applyCalibFacelets,confirmResetFacelets,beginResetConfirm,noteResetAck,logReset,
+    flushStateJudge,getDebugEvents:()=>debugEvents.slice(),debugLogText,maybeSyncDebug,
+    resetDebugSync:()=>{lastDebugSyncAt=0;},
     getState:()=>S,getFacelets:()=>facelets,getPhase:()=>phase,lastSync:()=>lastSyncBody,
     getCalibration:()=>calibCubies,setError:m=>{lastError=m||"";emit();}
   };
@@ -2824,10 +3058,10 @@ const Engine={
   STORE,RESULTS_SYNC_URL,SOLVED,FACES,COL,CYCLES,LBL,CFOP,STAGE_LABEL,STAGE_KID,
   applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
-  createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
+  createTracker,progressOnPath,buildStepTable,classifyState,hitStep,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
   invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,faceletsFromCubies,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,detectBeginnerLL,detect4LookLL,detectDrillCoach,detectStageCoach,COACH_ALGS,coachSummaryText,coachStepLabel,fmtCoachMs,faceletsOnAlgPath,yellowTopSolved,DRILL_REPS,DRILL_LABEL,
-  createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,
+  createAlgPlayer,invertAlgStr,analyzeSolve,splitSolveStages,optimalCross,writtenFeedback,recommendWeakness,trendFromRecords,syncPayload,videosForDrill,DRILL_VIDEOS,embedUrlFor,nocookieUrlFor,watchUrlFor,allLessonVideos,skillForVideo,whiteCrossSolved,firstLayerSolved,secondLayerSolved,classifyStageAt,PAUSE_GAP_MS,LBL_TARGET,CFOP_TARGET,
   validMac,randomMoveScramble,clampScrambleLen,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
 };
