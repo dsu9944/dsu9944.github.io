@@ -23,13 +23,29 @@ const STAGE_KID={cross:"the white cross",firstLayer:"the first layer",secondLaye
 function clone(s){return s;}
 function isSolved(f){return f===SOLVED;}
 function normalizeMove(m){
-  m=String(m||"").trim().replace(/[’`]/g,"'");
+  m=String(m||"").trim().replace(/[’`′ʼ]/g,"'");
   if(!m)return "";
   const f=m[0].toUpperCase();
   if(FACES.indexOf(f)<0)return "";
   if(/2/.test(m))return f+"2";
   if(/'/.test(m))return f+"'";
   return f;
+}
+/* Face+direction fallback for gan-web-bluetooth (face 0-5, direction 0=CW, 1=CCW). */
+function moveFromEvent(evt){
+  if(typeof evt==="string")return normalizeMove(evt);
+  if(!evt||typeof evt!=="object")return "";
+  const direct=normalizeMove(evt.move);
+  if(direct)return direct;
+  let face=evt.face;
+  if(typeof face==="number"&&face>=0&&face<=5)face=FACES.charAt(face);
+  face=String(face||"").trim().toUpperCase();
+  if(!face||FACES.indexOf(face[0])<0)return "";
+  face=face[0];
+  const d=evt.direction;
+  if(d===2||d==="2")return face+"2";
+  if(d===3||d==="3"||d===1||d==="1"||d==="'"||d==="CCW"||d==="ccw")return face+"'";
+  return face;
 }
 function invertMove(m){
   m=normalizeMove(m);
@@ -301,7 +317,9 @@ function createTracker(scramble,start,targetState){
     p.state=state;p.target=target;p.fixup=done?"":fixup;p.lastMove=lastMove;
     p.on=!!(!fixup&&!done&&lastOn);
     if(done){p.current=null;p.currentScramble=null;p.k=moves.length;p.partial=0;p.half=false;p.halfLabel="";p.fixup="";p.on=false;}
-    else if(fixup){p.current=fixup;p.half=false;p.halfLabel="";p.partial=0;p.on=false;}
+    else if(fixup){p.current=fixup;p.half=false;p.halfLabel="";p.partial=0;p.on=false;p.dir="";}
+    p.dir=(!done&&!fixup&&lastOn&&lastOn.dir)||"";
+    p.midSource=(!done&&!fixup&&(lastOn&&lastOn.midSource||midSource))||"";
     return p;
   }
   function startSnapFor(k,current){
@@ -309,50 +327,122 @@ function createTracker(scramble,start,targetState){
     snaps.forEach(x=>{if(x.k===k&&!x.partial&&x.current===current)s=s||x;});
     return s;
   }
+  let midSource="";
+  let pendingCompanion=null;
+  function endSnapFor(k){
+    let s=null;
+    snaps.forEach(x=>{if(x.k===k+1&&!x.partial)s=s||x;});
+    return s||snaps[snaps.length-1];
+  }
+  function startOf(cur,k){
+    return startSnapFor(k,cur)||{state:lastOn&&lastOn.partial&&lastOn.dir?applyMove(lastOn.state,invertMove(lastOn.dir)):((lastOn&&lastOn.state)||state),k:k,partial:0,totalParts:2,current:cur,q:(lastOn&&lastOn.q)||0};
+  }
+  function enterMid(start,dir,src){
+    const st=applyMove(start.state,dir);
+    midSource=src||"move";
+    lastOn={state:st,k:start.k,partial:1,totalParts:2,current:start.current,q:(start.q||0)+1,dir:dir,midSource:midSource};
+    return lastOn;
+  }
   function apply(m){
     m=normalizeMove(m);
     if(!m)return snapshot();
+    if(pendingCompanion&&m[0]===pendingCompanion.face){
+      pendingCompanion=null;
+      lastMove=m;
+      return snapshot();
+    }
+    pendingCompanion=null;
     const cur=(!fixup&&lastOn&&lastOn.current)||null;
-    /* X2: first quarter either way is 1/2, never an error. Opposite second quarter (X then X')
-       puts the face back and stays on that same X2 with nothing done — not a miss. */
+    /* X2 is always two quarters on the i3. Treat a quarter of the current X2, either way,
+       as a valid mid-state by the MOVE itself — do not require the resulting facelets to
+       match a precomputed snapshot (FACELETS can arrive first, or differ slightly). */
     if(!fixup&&cur&&cur[1]==="2"&&m[0]===cur[0]){
-      const start=startSnapFor(lastOn.k,cur);
-      if(lastOn.partial>0&&start&&m!==lastOn.dir){
-        state=applyMove(state,m);
-        lastMove=m;
-        fixup="";
-        lastOn=start;
+      const start=startOf(cur,lastOn.k);
+      lastMove=m;fixup="";
+      if(m[1]==="2"){
+        state=applyMove(start.state,cur);
+        lastOn=endSnapFor(start.k);midSource="";
         return snapshot();
       }
+      if(lastOn.partial>0){
+        if(m!==lastOn.dir){
+          state=start.state;
+          lastOn=startSnapFor(start.k,cur)||start;
+          midSource="";
+          return snapshot();
+        }
+        /* Same direction: if FACELETS already put us at mid, this MOVE is the companion, not the second quarter. */
+        if((midSource||lastOn.midSource)==="facelets"){
+          midSource="both";
+          lastOn=Object.assign({},lastOn,{midSource:"both"});
+          return snapshot();
+        }
+        state=applyMove(start.state,cur);
+        lastOn=endSnapFor(start.k);midSource="";
+        return snapshot();
+      }
+      if(eq(state,applyMove(start.state,m))){
+        enterMid(start,m,"both");
+        return snapshot();
+      }
+      state=applyMove(start.state,m);
+      enterMid(start,m,"move");
+      return snapshot();
     }
     state=applyMove(state,m);
     lastMove=m;
-    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];return snapshot();}
+    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];midSource="";return snapshot();}
     const found=matchSnap(snaps,state);
-    if(found){fixup="";lastOn=found;return snapshot();}
+    if(found){fixup="";lastOn=found;midSource=found.partial?(midSource||"move"):"";return snapshot();}
     fixup=invertMove(m);
     return snapshot();
   }
   function setState(f){
     if(f&&f.length===54){
       state=f;
-      if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];}
+      if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];midSource="";}
       else{
-        const found=matchSnap(snaps,state);
-        /* If FACELETS matches a path snapshot, use it. If it doesn't, keep MOVE progress
-           (lastOn / fixup). Clearing those used to rewind a half-turn after MOVE then FACELETS. */
-        if(found){fixup="";lastOn=found;}
+        const cur=(!fixup&&lastOn&&lastOn.current)||null;
+        const start=cur?startSnapFor(lastOn.k,cur):null;
+        if(cur&&cur[1]==="2"&&start){
+          const face=cur[0];
+          const midCW=applyMove(start.state,face), midCCW=applyMove(start.state,face+"'"), doneSt=applyMove(start.state,cur);
+          if(eq(f,start.state)){fixup="";lastOn=start;midSource="";}
+          else if(eq(f,midCW)||eq(f,midCCW)){
+            const dir=eq(f,midCW)?face:face+"'";
+            fixup="";
+            if(lastOn.partial>0&&lastOn.dir===dir){
+              midSource=(midSource==="move"||lastOn.midSource==="move")?"both":(midSource||"facelets");
+              lastOn=Object.assign({},lastOn,{state:f,dir,midSource});
+            }else enterMid(start,dir,"facelets");
+            lastOn=Object.assign({},lastOn,{state:f});
+          }else if(eq(f,doneSt)){
+            const wasMid=lastOn.partial>0;
+            const dir=lastOn.dir||"";
+            fixup="";lastOn=endSnapFor(start.k);midSource="";
+            if(wasMid)pendingCompanion={face:cur[0],dir:dir};
+          }
+          else if(lastOn.partial>0){
+            /* Keep MOVE mid-progress; unmatched FACELETS must not rewind or error. */
+          }else{
+            const found=matchSnap(snaps,state);
+            if(found){fixup="";lastOn=found;midSource=found.partial?"facelets":"";}
+          }
+        }else{
+          const found=matchSnap(snaps,state);
+          if(found){fixup="";lastOn=found;midSource=found.partial?"facelets":"";}
+        }
       }
     }
     return snapshot();
   }
-  function reset(){state=start;lastMove="";fixup="";lastOn=snaps[0];return snapshot();}
+  function reset(){state=start;lastMove="";fixup="";lastOn=snaps[0];midSource="";pendingCompanion=null;return snapshot();}
   function repath(current,remaining,asFixup){
     remaining=parseAlg(remaining);
     if(current&&current.length===54)state=current;
     const built=pathSnapshots(remaining,state);
     moves=built.moves;snaps=built.snaps;
-    lastOn=snaps[0];lastMove="";
+    lastOn=snaps[0];lastMove="";midSource="";pendingCompanion=null;
     if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1]||snaps[0];}
     else{
       const found=matchSnap(snaps,state);
@@ -446,6 +536,75 @@ function weakestStage(solves,mode){
   ids.forEach(id=>{if(acc[id].n&&acc[id].t/acc[id].n>worst){worst=acc[id].t/acc[id].n;weak=id;}});
   return {id:weak,avg:worst>=0?worst:null,label:STAGE_LABEL[weak],kid:STAGE_KID[weak],counts:acc};
 }
+const DRILL_REPS=5;
+const DRILL_LABEL={cross:"cross",f2l:"first two layers",lastLayer:"last layer"};
+const DRILL_MOVES={cross:8,f2l:20,lastLayer:15};
+function drillBucket(id){
+  if(id==="cross")return "cross";
+  if(id==="f2l"||id==="firstLayer"||id==="secondLayer")return "f2l";
+  return "lastLayer";
+}
+function pickDrillStage(solves,mode){
+  const w=weakestStage(solves,mode);
+  return drillBucket(w&&w.id);
+}
+function drillGoalReached(f,stage){
+  const flags=stageFlags(f||SOLVED);
+  if(stage==="cross")return !!flags.cross;
+  if(stage==="f2l")return !!flags.f2l;
+  return !!(flags.solved||flags.lastLayer);
+}
+function drillExplain(stage){
+  stage=drillBucket(stage);
+  if(stage==="cross")return "Drill: cross. Scramble, then solve only the cross in 8 moves or fewer. 5 reps.";
+  if(stage==="f2l")return "Drill: first two layers. Scramble, then solve only the first two layers. 5 reps.";
+  return "Drill: last layer. Scramble (first two layers stay solved), then solve only the last layer. 5 reps.";
+}
+/* Rotate the cube 180° around the R–L axis so we can reuse standard U-layer last-layer algs, then flip back (our cross lives on U, last layer on D). */
+function faceletsX2(f){
+  if(!f||f.length!==54)return f;
+  const rot=x=>x[8]+x[7]+x[6]+x[5]+x[4]+x[3]+x[2]+x[1]+x[0];
+  const U=f.slice(0,9),R=f.slice(9,18),F=f.slice(18,27),D=f.slice(27,36),L=f.slice(36,45),B=f.slice(45,54);
+  return rot(D)+rot(R)+rot(B)+rot(U)+rot(L)+rot(F);
+}
+function mapAlgX2(alg){
+  return parseAlg(alg).map(m=>{
+    const map={U:"D",D:"U",F:"B",B:"F",R:"R",L:"L"};
+    return (map[m[0]]||m[0])+m.slice(1);
+  });
+}
+const LL_ALGS=[
+  "R U R' U' R' F R2 U' R' U' R U R' F'",
+  "R U R' F' R U R' U' R' F R2 U' R'",
+  "R U2 R' U' R U' R'",
+  "R U R' U R U2 R'",
+  "L' U' L U' L' U2 L",
+  "F R U R' U' F'",
+  "F R U R' U' R U R' U' F'",
+  "R U R' U' R' F R F'",
+  "R2 D R' U2 R D' R' U2 R'",
+  "F R U' R' U' R U R' F'",
+  "R' U' F' U F R",
+];
+function lastLayerScramble(){
+  const auf=["","U","U2","U'"];
+  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  for(let i=0;i<20;i++){
+    const seq=(pick(auf)+" "+pick(LL_ALGS)+" "+pick(auf)+" "+pick(LL_ALGS)+" "+pick(auf)).trim();
+    const moves=mapAlgX2(seq);
+    const st=applyAlg(SOLVED,moves);
+    const f=stageFlags(st);
+    if(f.f2l&&!f.solved)return moves;
+  }
+  return mapAlgX2(pick(LL_ALGS));
+}
+function randomDrillScramble(stage){
+  stage=drillBucket(stage);
+  if(stage==="cross")return randomMoveScramble(null,8);
+  if(stage==="f2l")return randomMoveScramble(null,12);
+  return lastLayerScramble();
+}
+
 function dayKey(ts){
   const d=ts instanceof Date?ts:new Date(ts||Date.now());
   const p=n=>String(n).padStart(2,"0");
@@ -633,7 +792,9 @@ function createApp(opts){
     if(inspectTimer){clearInterval(inspectTimer);inspectTimer=null;}
     inspectLeft=0;inspectStartedAt=0;
   }
-  function armAfterScramble(){
+  function armAfterScramble(opts){
+    if(opts&&opts.fromFacelets)armedFromFacelets=true;
+    else armedFromFacelets=false;
     clearInspect();
     if(S.inspect!==false){
       phase="inspect";
@@ -652,7 +813,7 @@ function createApp(opts){
   }
   function newAttempt(){
     const kind=currentKind();
-    const drillStage=(kind==="drill"&&S.session&&S.session.drillStage)||null;
+    const drillStage=(kind==="drill"&&S.session&&S.session.drillStage)?drillBucket(S.session.drillStage):null;
     return {kind,drillStage,scramble:fmtAlg(tracker.get().moves),started:false,moves:[],t0:null,hostT0:null,splits:{},moveCount:0,penalty:null,source:connected?"cube":"manual"};
   }
   function inspectPenalty(){
@@ -678,9 +839,12 @@ function createApp(opts){
   function elapsedNow(){
     if(!run||!run.started)return 0;
     if(phase==="stopped"&&run.ms!=null)return run.ms;
-    const fit=linearFitElapsed(run.moves);
-    if(fit!=null&&run.moves.length>=2)return fit;
-    return Math.max(0,now()-(run.timerHost0||now()));
+    /* Live display must use the host clock, not cube move timestamps.
+       linearFitElapsed only spans the first and last recorded turn, so after two
+       turns it froze until the next move. */
+    const t0=run.timerHost0;
+    if(t0==null)return 0;
+    return Math.max(0,now()-t0);
   }
   function markSplits(f,at,moves){
     if(!run)return;
@@ -694,7 +858,7 @@ function createApp(opts){
     if(!run||!run.started||phase!=="running")return false;
     const goal=run.drillStage||"solved";
     const flags=stageFlags(f);
-    const done=goal==="solved"?flags.solved:!!flags[goal];
+    const done=goal==="solved"?flags.solved:(currentKind()==="drill"?drillGoalReached(f,goal):!!flags[goal]);
     if(!done)return false;
     const ms=(()=>{
       const fit=linearFitElapsed(run.moves.concat(ts?[ts]:[]));
@@ -773,16 +937,13 @@ function createApp(opts){
     if(sess.phase==="warmup"){
       sess.warmup=sess.warmup||[];sess.warmup.push(rec.id);
       if(sess.warmup.length>=3){
-        if(connected||rec.source==="cube"){
-          const w=weakestStage(S.solves,S.splitsMode);
-          sess.phase="drill";sess.drillStage=w.id;sess.drill=[];
-        }else{
-          sess.phase="ao5";sess.ao5=[];
-        }
+        sess.phase="drill";
+        sess.drillStage=pickDrillStage(S.solves,S.splitsMode);
+        sess.drill=[];
       }
     }else if(sess.phase==="drill"){
       sess.drill=sess.drill||[];sess.drill.push(rec.id);
-      if(sess.drill.length>=3){sess.phase="ao5";sess.ao5=[];}
+      if(sess.drill.length>=DRILL_REPS){sess.phase="ao5";sess.ao5=[];}
     }else if(sess.phase==="ao5"){
       sess.ao5=sess.ao5||[];sess.ao5.push(rec.id);
       if(sess.ao5.length>=5)finishSession();
@@ -799,7 +960,17 @@ function createApp(opts){
     const pb=bestSingle(S.solves);
     const weak=weakestStage(S.solves,S.splitsMode);
     const stars=sess.ao5&&sess.ao5.length>=5?3:sess.ao5&&sess.ao5.length?2:1;
-    sess.summary={ao5,pb,weak,stars,n:recs.length};
+    const warmupRecs=(sess.warmup||[]).map(id=>S.solves.find(x=>x.id===id)).filter(Boolean);
+    const drillRecs=(sess.drill||[]).map(id=>S.solves.find(x=>x.id===id)).filter(Boolean);
+    sess.summary={
+      ao5,pb,weak,stars,n:recs.length,
+      warmupTimes:warmupRecs.map(s=>({ms:s.ms,penalty:s.penalty||null,text:formatTime(s.ms,s.penalty)})),
+      drillReps:drillRecs.length,
+      drillTarget:DRILL_REPS,
+      drillStage:sess.drillStage||null,
+      drillLabel:DRILL_LABEL[drillBucket(sess.drillStage)]||sess.drillStage||"",
+      ao5Times:recs.filter(s=>s.kind==="ao5").map(s=>({ms:s.ms,penalty:s.penalty||null,text:formatTime(s.ms,s.penalty)}))
+    };
     const d=S.days[today]||(S.days[today]={solves:0,done:false,stars:0});
     d.done=true;d.stars=Math.max(d.stars||0,stars);d.ao5=ao5?ao5.text:null;
     S.stars=(S.stars||0)+stars;
@@ -825,14 +996,25 @@ function createApp(opts){
   }
   function skipLessonPhase(){
     const sess=S.session;if(!sess||sess.finished)return;
-    if(sess.phase==="warmup"){sess.phase=connected?"drill":"ao5";if(sess.phase==="drill"){sess.drillStage=weakestStage(S.solves,S.splitsMode).id;sess.drill=[];}else sess.ao5=[];}
+    if(sess.phase==="warmup"){sess.phase="drill";sess.drillStage=pickDrillStage(S.solves,S.splitsMode);sess.drill=[];}
     else if(sess.phase==="drill"){sess.phase="ao5";sess.ao5=[];}
     else if(sess.phase==="ao5")finishSession();
+    save();if(S.session&&!S.session.finished)newScramble();emit();
+  }
+  function skipDrill(){
+    const sess=S.session;if(!sess||sess.finished||sess.phase!=="drill")return;
+    sess.phase="ao5";sess.ao5=sess.ao5||[];
     save();newScramble();emit();
   }
-  function abandonLesson(){if(S.session&&!S.session.finished){S.session=null;save();emit();}}
+  function stopSession(){
+    if(!S.session)return;
+    if(!S.session.finished)finishSession();
+    else emit();
+  }
+  function abandonLesson(){stopSession();}
 
   let officialScramble=[], scrambleTargetState=SOLVED, pathReady=true, pathPromise=null, faceletsGen=0;
+  let lastFaceletsSerial=null, armedFromFacelets=false;
   let replanCount=0, replanMethod="", replanAt=0, replanNote=false, replanning=false;
   let offPathMoves=[], pathAnchorRemaining=null, replanTimer=null, replanGen=0;
   function bumpFacelets(){faceletsGen++;}
@@ -979,7 +1161,9 @@ function createApp(opts){
     if(!opts.keepCelebration)celebration=null;
     run=null;
     nextAt=0;
-    const official=parseAlg(alg||randomMoveScramble(null,S.scrambleLen));
+    const sess=S.session;
+    const useDrill=!alg&&sess&&!sess.finished&&sess.phase==="drill";
+    const official=parseAlg(alg||(useDrill?randomDrillScramble(sess.drillStage):randomMoveScramble(null,S.scrambleLen)));
     officialScramble=official;
     if(!connected&&!opts.keepFacelets)facelets=SOLVED;
     bumpFacelets();
@@ -1012,16 +1196,20 @@ function createApp(opts){
   }
 
   function onMove(evt){
-    /* gan-web-bluetooth's `move` string is authoritative (never rebuild from face/direction:
-       those fields can disagree on D/L/B depending on axis convention). i3 never sends "D2". */
-    const m=normalizeMove(typeof evt==="string"?evt:(evt&&evt.move));
+    /* Prefer gan-web-bluetooth's `move` string; fall back to face+direction (0=CW, 1=CCW). */
+    const m=moveFromEvent(evt);
     if(!m)return;
     const ts={
       move:m,
       localTimestamp:evt&&evt.localTimestamp!=null?evt.localTimestamp:(now()),
       cubeTimestamp:evt&&evt.cubeTimestamp!=null?evt.cubeTimestamp:null
     };
-    facelets=applyMove(facelets,m);
+    const tBefore=phase==="scrambling"?tracker.get():null;
+    const beforeF=facelets;
+    const alreadyMid=!!(tBefore&&tBefore.current&&tBefore.current[1]==="2"&&tBefore.partial>0&&tBefore.dir===m);
+    if(!alreadyMid){
+      if(!(evt&&evt.facelets&&evt.facelets.length===54))facelets=applyMove(facelets,m);
+    }
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
@@ -1030,6 +1218,10 @@ function createApp(opts){
       const wasOn=!before.fixup&&!!before.on;
       if(wasOn)pathAnchorRemaining=tracker.remaining();
       const t=tracker.apply(m);
+      if(inHalfTurn(t)&&tBefore&&t.k===tBefore.k&&t.partial>0){
+        if(eq(facelets,applyMove(t.state,m)))facelets=t.state;
+        else if(tBefore.partial===0&&eq(applyMove(beforeF,m),facelets)&&!eq(beforeF,t.state))facelets=beforeF;
+      }
       if(t.done||eq(facelets,scrambleTargetState)){resetReplanState();armAfterScramble();return t;}
       if(inHalfTurn(t)||(!t.fixup&&t.on)){
         offPathMoves=[];
@@ -1057,6 +1249,13 @@ function createApp(opts){
       return t;
     }
     if(phase==="inspect"||phase==="ready"){
+      const serial=evt&&evt.serial;
+      if(armedFromFacelets&&serial!=null&&serial===lastFaceletsSerial){
+        armedFromFacelets=false;
+        emit();
+        return;
+      }
+      armedFromFacelets=false;
       if(!run)run=newAttempt();
       run.source="cube";
       run.moves.push(ts);
@@ -1074,18 +1273,21 @@ function createApp(opts){
       emit();
     }else emit();
   }
-  function onFacelets(f,state){
-    if(f&&typeof f==="object"&&!Array.isArray(f)&&f.facelets){state=f.state||state;f=f.facelets;}
+  function onFacelets(f,state,serial){
+    if(f&&typeof f==="object"&&!Array.isArray(f)&&f.facelets){serial=f.serial!=null?f.serial:serial;state=f.state||state;f=f.facelets;}
+    if(serial!=null)lastFaceletsSerial=serial;
     if(!f||f.length!==54)return;
     facelets=f;
     if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
-      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(f);armAfterScramble();return;}
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(f);armAfterScramble({fromFacelets:true});return;}
       const t=tracker.setState(f);
-      if(t.done){resetReplanState();armAfterScramble();return;}
+      if(t.done){resetReplanState();armAfterScramble({fromFacelets:true});return;}
       /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. Do not rebase after a re-plan (new path starts at k=0 from a non-F0 state). */
-      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
+      const first=(tracker.moves&&tracker.moves[0])||officialScramble[0];
+      const midOfFirst=!!(first&&first[1]==="2"&&(eq(f,applyMove(scrambleStart,first[0]))||eq(f,applyMove(scrambleStart,first[0]+"'"))||eq(f,applyMove(scrambleStart,first))));
+      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart&&!midOfFirst&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
         startScrambleFromCurrent();
         return;
       }
@@ -1181,10 +1383,32 @@ function createApp(opts){
   function setBattery(n){battery=n;emit();}
   function setIos(v){ios=!!v;emit();}
 
+  function sessionProgress(){
+    const sess=S.session;
+    if(!sess)return null;
+    if(sess.finished){
+      return {active:false,done:true,title:"Session done",explain:"",summary:sess.summary||null,phase:"done"};
+    }
+    if(sess.phase==="warmup"){
+      const n=(sess.warmup||[]).length;
+      return {active:true,done:false,phase:"warmup",title:"Session: Warm-up "+(n+1)+" of 3",explain:"Three warm-up solves to get comfortable. Use the scramble and timer above.",n:n,of:3,stage:null,summary:null};
+    }
+    if(sess.phase==="drill"){
+      const n=(sess.drill||[]).length;
+      const stage=drillBucket(sess.drillStage);
+      return {active:true,done:false,phase:"drill",title:"Drill: "+(DRILL_LABEL[stage]||stage)+" "+(n+1)+" of "+DRILL_REPS,explain:drillExplain(stage),n:n,of:DRILL_REPS,stage:stage,summary:null};
+    }
+    if(sess.phase==="ao5"){
+      const n=(sess.ao5||[]).length;
+      return {active:true,done:false,phase:"ao5",title:"Timed solve "+(n+1)+" of 5",explain:"Five timed solves for your average of 5 (ao5).",n:n,of:5,stage:null,summary:null};
+    }
+    return {active:!!sess,done:!!sess.finished,phase:sess.phase,title:"Today's cube session",explain:"",n:0,of:0,stage:null,summary:sess.summary||null};
+  }
   function view(){
     const t=tracker.get();
     const st=stats();
     const sess=S.session;
+    const sp=sessionProgress();
     return {
       facelets,solved:isSolved(facelets),phase,
       scramble:t.moves,scrambleText:fmtAlg(t.moves),officialScramble,officialText:fmtAlg(officialScramble),
@@ -1197,6 +1421,8 @@ function createApp(opts){
       inspectLeft,inspectOn:S.inspect!==false,
       running:phase==="running",elapsed:elapsedNow(),
       lastSolve:lastSolveRec,nextIn:nextIn(),
+      sessionProgress:sp,sessionBanner:sp&&(sp.active||sp.done)?sp.title:"",
+      sessionExplain:sp?sp.explain:"",
       locked:phase==="inspect"||phase==="ready"||phase==="running"||phase==="stopped",
       run,hold:hold&&{ready:!!hold.ready,held:now()-(hold.t0||0)},
       settings:settings(),stats:st,solves:S.solves.slice(),
@@ -1212,9 +1438,9 @@ function createApp(opts){
   /* public */
   const api={
     STORE,SOLVED,RESULTS_SYNC_URL,STAGE_LABEL,STAGE_KID,
-    applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,
+    applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,
     stageFlags,stagesFor,reachedStages,createTracker,progressOnPath,
-    formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
+    formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,DRILL_REPS,DRILL_LABEL,
     validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
@@ -1222,7 +1448,7 @@ function createApp(opts){
     newScramble,setScramble,skipScramble,startSolveAnyway,proceedToNextScramble,tickNext,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
     whenPathReady,bumpFacelets,
     simulateConnected,setConnected,setBattery,setIos,setSetting,setMac,
-    startLesson,skipLessonPhase,abandonLesson,finishSession,
+    startLesson,skipLessonPhase,skipDrill,stopSession,abandonLesson,finishSession,
     setPenalty,deleteSolve,manualDown,manualUp,manualStop,manualReadyCheck,
     startTimer,finishSolve,nextAfterStop,elapsedNow,
     getState:()=>S,getFacelets:()=>facelets,getPhase:()=>phase,lastSync:()=>lastSyncBody,
@@ -1233,11 +1459,11 @@ function createApp(opts){
 
 const Engine={
   STORE,RESULTS_SYNC_URL,SOLVED,FACES,COL,CYCLES,LBL,CFOP,STAGE_LABEL,STAGE_KID,
-  applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,isSolved,
+  applyMove,applyAlg,parseAlg,normalizeMove,moveFromEvent,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
   createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
   invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
-  formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
+  formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,pickDrillStage,drillBucket,drillExplain,drillGoalReached,randomDrillScramble,lastLayerScramble,faceletsX2,mapAlgX2,DRILL_REPS,DRILL_LABEL,
   validMac,randomMoveScramble,clampScrambleLen,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
 };

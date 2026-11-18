@@ -77,7 +77,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v9 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v10 · 18 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -391,11 +391,12 @@ function hookApp(){
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onMove");}
   };
   const rawFace=app.onFacelets.bind(app);
-  app.onFacelets=function(f,state){
+  app.onFacelets=function(f,state,serial){
     try{
       const face=(f&&typeof f==="object"&&f.facelets)?f.facelets:f;
       const st=(f&&typeof f==="object"&&f.state)?f.state:state;
-      const r=rawFace(face,st);
+      const ser=(f&&typeof f==="object"&&f.serial!=null)?f.serial:serial;
+      const r=rawFace(face,st,ser);
       if(face&&face.length===54&&face!==expectedFacelets())setupFromFacelets(face,st);
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onFacelets");}
@@ -557,7 +558,7 @@ function onGanEvent(ev){
       cubeDebug.faceletsReceivedAt=Date.now();
       cubeDebug.lastFacelets=ev.facelets||"";
       cubeDebug.lastFaceletsSerial=ev.serial;
-      app.onFacelets(ev.facelets,ev.state);
+      app.onFacelets(ev.facelets,ev.state,ev.serial);
       let matchChanged=false;
       if(!matchMode&&app.get()&&app.get().connected){matchMode="ask";matchChanged=true;}
       if(matchMode==="help"&&ev.facelets&&ev.facelets===E.SOLVED){matchMode="done";matchChanged=true;}
@@ -686,28 +687,46 @@ function phaseHint(v){
   }
   return v.connected?"Connected and ready.":"Connect Ethan's GAN 356 i3, or use the timer by itself.";
 }
+function sessionSummaryHTML(sum){
+  if(!sum)return "";
+  const warm=(sum.warmupTimes||[]).map((t,i)=>`Warm-up ${i+1}: ${t.text}`).join(" · ")||"No warm-up times";
+  const drill=sum.drillReps!=null?`Drill (${sum.drillLabel||"practice"}): ${sum.drillReps} of ${sum.drillTarget||5} reps`:"";
+  const ao5=sum.ao5&&sum.ao5.text?`ao5 ${sum.ao5.text}`:"ao5 —";
+  const ao5t=(sum.ao5Times||[]).map((t,i)=>t.text).join(", ");
+  return `<ul class="session-summary">
+      <li>${warm}</li>
+      ${drill?`<li>${drill}</li>`:""}
+      <li>${ao5}${ao5t?` (${ao5t})`:""}${sum.pb?` · PB ${sum.pb.text}`:""}</li>
+    </ul>
+    <p class="stars-line">${"★".repeat(sum.stars||0)}${"☆".repeat(Math.max(0,3-(sum.stars||0)))} ${sum.stars||0} star${sum.stars===1?"":"s"} today</p>`;
+}
+function sessionBannerHTML(v){
+  const sp=v.sessionProgress;
+  if(!sp||(!sp.active&&!sp.done)){
+    return `<div class="session-banner idle">
+      <div class="sb-title">Today's cube session</div>
+      <button class="btn" id="startLessonBtn" type="button">Start today's session</button>
+      <p class="sb-explain">About 10–15 minutes using the scramble and timer above: 3 warm-up solves, a drill on your slowest step, then 5 timed solves for an average of 5.</p>
+    </div>`;
+  }
+  if(sp.done){
+    return `<div class="session-banner done">
+      <div class="sb-title">Session done — well done!</div>
+      <button class="btn" id="startLessonBtn" type="button">Do another session</button>
+      ${sessionSummaryHTML(sp.summary||(v.session&&v.session.summary))}
+    </div>`;
+  }
+  const drillBtns=sp.phase==="drill"?`<button class="btn ghost" id="skipDrillBtn" type="button">Done / Skip drill</button>`:"";
+  return `<div class="session-banner" data-phase="${sp.phase||""}">
+    <div class="sb-title">${sp.title}</div>
+    <button class="btn ghost danger" id="stopSessionBtn" type="button">Stop</button>
+    ${drillBtns}
+    <p class="sb-explain">${sp.explain||""}</p>
+  </div>`;
+}
 function sessionHTML(v){
-  const s=v.session;
-  if(!s){
-    return `<div class="hero-copy"><h2>Today's cube session</h2>
-      <p>About 10–15 minutes: a short warm-up, a practice drill, then 5 timed solves for an average of 5.</p></div>
-      <button class="btn big" id="startLessonBtn" type="button">Start today's session</button>`;
-  }
-  if(s.finished&&s.summary){
-    const sum=s.summary;
-    return `<div class="hero-copy"><h2>Session done — well done!</h2>
-      <p>${sum.n||0} solves · ao5 ${sum.ao5&&sum.ao5.text||"—"}${sum.pb?` · PB ${sum.pb.text}`:""}${sum.weak?` · Keep practising ${sum.weak.kid}`:""}</p>
-      <p class="stars-line">${"★".repeat(sum.stars||0)}${"☆".repeat(Math.max(0,3-(sum.stars||0)))} ${sum.stars||0} star${sum.stars===1?"":"s"} today</p></div>
-      <button class="btn ghost" id="startLessonBtn" type="button">Do another session</button>`;
-  }
-  const label={warmup:"Warm-up",drill:"Practice drill",ao5:"Average of 5"}[s.phase]||s.phase;
-  let detail="";
-  if(s.phase==="warmup")detail=`Warm-up solve ${(s.warmup||[]).length+1} of 3. Just get comfortable — no pressure!`;
-  else if(s.phase==="drill")detail=`Let's practise ${E.STAGE_KID[s.drillStage]||"your slower stage"}. The timer stops when that part is done. Drill ${(s.drill||[]).length+1} of 3.`;
-  else if(s.phase==="ao5")detail=`Timed solve ${(s.ao5||[]).length+1} of 5. These count for your average of 5.`;
-  return `<div class="hero-copy"><h2>Today's cube session · ${label}</h2><p>${detail}</p></div>
-    <div class="row-gap"><button class="btn ghost" id="skipPhaseBtn" type="button">Skip this part</button>
-    <button class="btn ghost danger" id="abandonBtn" type="button">Stop session</button></div>`;
+  /* Session lives in the main banner above the scramble. Keep this slot empty so we don't show a disconnected widget. */
+  return "";
 }
 function splitsHTML(v){
   const mode=v.settings.splitsMode||"lbl";
@@ -801,7 +820,11 @@ function render(v){
   const bs=st.bestSplits||{};
   $("#bestSplits").innerHTML=E.stagesFor(v.settings.splitsMode).map(id=>`<li><b>${E.STAGE_LABEL[id]}</b> ${bs[id]?bs[id].text:"—"}</li>`).join("");
   $("#history").innerHTML=historyHTML(v);
-  $("#sessionBox").innerHTML=sessionHTML(v);
+  const sb=$("#sessionBanner");
+  if(sb)sb.innerHTML=sessionBannerHTML(v);
+  const box=$("#sessionBox");
+  if(box)box.innerHTML=sessionHTML(v);
+
 
   const insp=$("#optInspect");if(insp)insp.checked=v.settings.inspect!==false;
   const mode=$("#optMode");if(mode)mode.value=v.settings.splitsMode||"lbl";
@@ -862,11 +885,21 @@ function bind(){
   if(yes)yes.addEventListener("click",()=>{matchMode="done";render(app.get());});
   const no=$("#matchNo");
   if(no)no.addEventListener("click",()=>{matchMode="help";render(app.get());});
-  $("#sessionBox").addEventListener("click",e=>{
-    if(e.target.id==="startLessonBtn"){app.startLesson();nextScramble();}
-    if(e.target.id==="skipPhaseBtn"){app.skipLessonPhase();nextScramble();}
-    if(e.target.id==="abandonBtn")app.abandonLesson();
-  });
+  function onSessionClick(e){
+    const btn=e.target.closest?e.target.closest("button"):e.target;
+    if(!btn||!btn.id)return;
+    try{
+      if(btn.id==="startLessonBtn"){app.startLesson();onScrambleChanged();}
+      else if(btn.id==="skipPhaseBtn"){app.skipLessonPhase();onScrambleChanged();}
+      else if(btn.id==="skipDrillBtn"){if(app.skipDrill)app.skipDrill();else app.skipLessonPhase();onScrambleChanged();}
+      else if(btn.id==="stopSessionBtn"||btn.id==="abandonBtn"){if(app.stopSession)app.stopSession();else app.abandonLesson();onScrambleChanged();}
+    }catch(err){cubeDebug.lastError=String(err&&err.message||err||"session click");}
+  }
+  const cubeCard=$("#cubeCard");
+  if(cubeCard)cubeCard.addEventListener("click",onSessionClick);
+  const sessionBox=$("#sessionBox");
+  if(sessionBox)sessionBox.addEventListener("click",onSessionClick);
+
   $("#history").addEventListener("click",e=>{
     const del=e.target.getAttribute("data-del");
     if(del){app.deleteSolve(del);return;}
@@ -893,13 +926,44 @@ function bind(){
     if(!spaceDown)return;
     e.preventDefault();spaceDown=false;app.manualReadyCheck();app.manualUp();
   });
-  setInterval(()=>{if(app.get().hold)app.manualReadyCheck();},50);
-  setInterval(()=>{
-    if(app.tickNext)app.tickNext();
-    const v=app.get();
-    if(v.phase==="running"||v.phase==="inspect"||v.phase==="stopped")render(v);
-  },50);
+  setInterval(()=>{try{if(app.get().hold)app.manualReadyCheck();}catch(e){}},50);
+  let liveTimerRaf=0, liveTimerIv=0;
+  function tickLiveTimer(){
+    try{
+      if(app.tickNext)app.tickNext();
+      const v=app.get();
+      if(!v)return;
+      if(v.phase==="running"){
+        const t=E.formatTime(v.elapsed||0);
+        const live=$("#liveTimer"); if(live)live.textContent=t;
+        const timer=$("#timer"); if(timer)timer.textContent=t;
+      }else if(v.phase==="inspect"||v.phase==="stopped"){
+        const timer=$("#timer"); if(timer)timer.textContent=timerText(v);
+        const call=$("#callout"); if(call)call.innerHTML=calloutHTML(v);
+        const hint=$("#hint"); if(hint)hint.textContent=phaseHint(v);
+        const live=$("#liveTimer");
+        if(live&&v.phase==="stopped"){
+          const rec=v.lastSolve||(v.solves&&v.solves[v.solves.length-1]);
+          live.textContent=rec?E.formatTime(rec.ms,rec.penalty):E.formatTime(v.elapsed||0);
+        }
+        const sb=$("#sessionBanner");
+        if(sb&&v.sessionProgress)sb.innerHTML=sessionBannerHTML(v);
+      }
+    }catch(e){
+      cubeDebug.lastError=String(e&&e.message||e||"liveTimer");
+    }
+  }
+  function loopLiveTimer(){
+    tickLiveTimer();
+    if(typeof requestAnimationFrame==="function"){
+      liveTimerRaf=requestAnimationFrame(loopLiveTimer);
+    }
+  }
+  /* Independent of cube events: rAF for a smooth count, 30ms interval as a fallback if rAF stalls. */
+  if(typeof requestAnimationFrame==="function")liveTimerRaf=requestAnimationFrame(loopLiveTimer);
+  liveTimerIv=setInterval(tickLiveTimer,30);
 }
+
 
 function init(){
   hookApp();
