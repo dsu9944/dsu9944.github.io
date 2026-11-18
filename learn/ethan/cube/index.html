@@ -196,13 +196,31 @@ body.plan-blind #twistyHost{visibility:hidden}
 .vid-frame{position:relative;padding-top:56.25%;margin:8px 0;border-radius:12px;overflow:hidden}
 .vid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
+
+#lessonsBtn.on{background:#0f172a;color:#fff}
+#lessonsPanel{margin-top:10px}
+#lessonsPanel.hidden{display:none}
+#lessonsPanel h2{margin:0 0 8px;font-size:1.15rem}
+.lesson-skill{margin:10px 0 6px;font-size:.95rem}
+.lesson-list{display:flex;flex-wrap:wrap;gap:8px}
+.lesson-card{display:block;width:154px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;color:inherit;font:inherit}
+.lesson-card img{width:154px;height:86px;object-fit:cover;border-radius:8px;display:block;background:#e2e8f0}
+.lesson-card span{display:block;font-size:.82rem;line-height:1.25;margin-top:4px}
+#lessonEmbed{margin-top:10px}
+#lessonEmbed .vid-links{margin:6px 0 0}
+#debugTools{margin:8px 0 0;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+#debugTools.hidden{display:none}
+.watch-card{display:flex;gap:8px;align-items:flex-start;margin:6px 0}
+.watch-card img{width:96px;height:54px;object-fit:cover;border-radius:6px;flex:0 0 auto;background:#e2e8f0}
+.watch-card p{margin:0}
+
 </style>
 </head>
 <body>
 <div id="errorStrip" class="hidden" role="alert" hidden></div>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v12 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v13 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -224,6 +242,7 @@ body.plan-blind #twistyHost{visibility:hidden}
     <div class="row-gap">
       <button class="btn ghost" id="resyncBtn" type="button">Cube looks wrong? Re-sync</button>
       <button class="btn ghost" id="resetBtn" type="button">My cube is solved</button>
+      <button class="btn ghost" id="lessonsBtn" type="button" aria-pressed="false">Lessons 🎬</button>
       <button class="btn ghost" id="debugBtn" type="button" aria-pressed="false">Debug</button>
       <button class="btn ghost" id="helpToggle" type="button">How to connect the i3</button>
     </div>
@@ -247,12 +266,19 @@ body.plan-blind #twistyHost{visibility:hidden}
     </div>
   </section>
 
+  <section class="card hidden" id="lessonsPanel" hidden>
+    <h2>Lessons 🎬</h2>
+    <p class="muted">Short videos for each skill. Tap one to watch here, or open it on YouTube.</p>
+    <div id="lessonList"></div>
+    <div id="lessonEmbed" hidden></div>
+  </section>
+
   <section class="card" id="cubeCard">
     <div id="sessionBanner"></div>
+    <div id="videoPanel" class="watch hidden" hidden></div>
     <div id="callout" aria-live="polite"></div>
     <div id="scramble" class="scramble" aria-live="polite"></div>
     <div id="coachPanel" class="coach hidden" hidden></div>
-    <div id="videoPanel" class="watch hidden" hidden></div>
     <div id="algPlayerPanel" class="algplayer hidden" hidden></div>
     <div id="reviewCard" class="review hidden" hidden></div>
     <div id="trendsCard" class="trends hidden" hidden></div>
@@ -275,6 +301,9 @@ body.plan-blind #twistyHost{visibility:hidden}
         <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
       </div>
       <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
+    </div>
+    <div id="debugTools" class="hidden">
+      <button class="btn ghost" id="copyDebugBtn" type="button">Copy debug log</button>
     </div>
     <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
     <div class="row-gap" style="justify-content:center">
@@ -336,7 +365,7 @@ body.plan-blind #twistyHost{visibility:hidden}
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v12 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v13 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -356,7 +385,7 @@ body.plan-blind #twistyHost{visibility:hidden}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=12"></script>
-<script src="cube-app.js?v=12"></script>
+<script src="cube-engine.js?v=13"></script>
+<script src="cube-app.js?v=13"></script>
 </body>
 </html>
