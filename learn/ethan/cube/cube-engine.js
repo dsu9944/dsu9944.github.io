@@ -257,6 +257,38 @@ function combineMoves(a,b){
   const n=(tw(a)+tw(b))%4;
   return n===0?"":n===1?a[0]:n===2?a[0]+"2":a[0]+"'";
 }
+function moveTurns(m){
+  m=normalizeMove(m);
+  if(!m)return 0;
+  return m[1]==="2"?2:m[1]==="'"?3:1;
+}
+function moveFromTurns(face,n){
+  n=((n%4)+4)%4;
+  return n===0?"":n===1?face:n===2?face+"2":face+"'";
+}
+/* Cancel adjacent same-face turns and merge into ', 2, or a single quarter. */
+function simplifyAlg(alg){
+  const out=[];
+  parseAlg(alg).forEach(m=>{
+    if(!out.length){out.push(m);return;}
+    const a=out[out.length-1];
+    if(a[0]!==m[0]){out.push(m);return;}
+    const c=moveFromTurns(a[0],moveTurns(a)+moveTurns(m));
+    out.pop();
+    if(c)out.push(c);
+  });
+  return out;
+}
+function remainingFromSnap(found,moves){
+  moves=parseAlg(moves);
+  if(!found)return moves.slice();
+  const rest=moves.slice(found.k);
+  if(found.partial>0&&rest[0]&&rest[0][1]==="2"){
+    const fin=normalizeMove(found.dir||rest[0][0]);
+    return (fin?[fin]:[]).concat(rest.slice(1));
+  }
+  return rest.slice();
+}
 
 function createTracker(scramble,start,targetState){
   start=start||SOLVED;
@@ -316,7 +348,8 @@ function createTracker(scramble,start,targetState){
     return snapshot();
   }
   function setTarget(t){if(t&&t.length===54)target=t;return snapshot();}
-  return {apply,setState,reset,repath,setTarget,get:snapshot,get target(){return target;},get moves(){return moves;}};
+  function remaining(){return remainingFromSnap(lastOn,moves);}
+  return {apply,setState,reset,repath,setTarget,remaining,get:snapshot,get target(){return target;},get moves(){return moves;},get lastOn(){return lastOn;}};
 }
 
 /* ---- timing helpers ---- */
@@ -777,53 +810,125 @@ function createApp(opts){
   function abandonLesson(){if(S.session&&!S.session.finished){S.session=null;save();emit();}}
 
   let officialScramble=[], scrambleTargetState=SOLVED, pathReady=true, pathPromise=null, faceletsGen=0;
+  let replanCount=0, replanMethod="", replanAt=0, replanNote=false, replanning=false;
+  let offPathMoves=[], pathAnchorRemaining=null, replanTimer=null, replanGen=0;
   function bumpFacelets(){faceletsGen++;}
   function whenPathReady(){return pathPromise||Promise.resolve(fmtAlg(tracker.get().moves));}
+  function clearReplanTimer(){
+    if(replanTimer){clearTimeout(replanTimer);replanTimer=null;}
+  }
+  function resetReplanState(){
+    clearReplanTimer();
+    replanGen++;
+    offPathMoves=[];
+    pathAnchorRemaining=null;
+    replanning=false;
+    replanNote=false;
+    pathReady=true;
+  }
+  function pathReaches(from,moves,to){
+    return !!(from&&to&&eq(applyAlg(from,moves||[]),to));
+  }
+  function undoStackPath(offMoves,remaining){
+    return simplifyAlg((invertAlg(offMoves||[])).concat(parseAlg(remaining||[])));
+  }
   function adoptPath(moves,opts){
     opts=opts||{};
+    moves=simplifyAlg(moves||[]);
     pathReady=true;
+    replanning=false;
+    clearReplanTimer();
+    offPathMoves=[];
+    pathAnchorRemaining=moves.slice();
     tracker=createTracker(moves,facelets,scrambleTargetState);
     const t=tracker.setState(facelets);
-    if(t.done)armAfterScramble();
+    if(opts.method){
+      replanMethod=opts.method;
+      replanAt=Date.now();
+      replanCount++;
+      replanNote=true;
+    }
+    if(t.done||eq(facelets,scrambleTargetState))armAfterScramble();
     else phase="scrambling";
-    if(!(opts.keepCelebration)){/* celebration already handled by caller */}
     emit();
     return fmtAlg(tracker.get().moves);
   }
-  function recomputeRemaining(asFixup){
-    if(eq(facelets,scrambleTargetState)){
-      tracker.setState(facelets);
+  function scheduleReplanToTarget(){
+    if(phase!=="scrambling")return;
+    if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return;}
+    const t=tracker.get();
+    if(!t.fixup&&t.on){ /* back on the current path */
+      clearReplanTimer();
+      offPathMoves=[];
+      pathAnchorRemaining=tracker.remaining();
+      replanning=false;
       pathReady=true;
-      armAfterScramble();
-      return Promise.resolve([]);
+      return;
     }
-    const short=solveFromToSync(facelets,scrambleTargetState,4);
-    if(short){
-      pathReady=true;
-      tracker.repath(facelets,short,asFixup);
-      emit();
-      return Promise.resolve(short);
+    const myGen=++replanGen;
+    const delay=400;
+    const needSolver=offPathMoves.length>=2||(!offPathMoves.length);
+    if(needSolver){replanning=true;pathReady=false;emit();}
+    clearReplanTimer();
+    replanTimer=setTimeout(()=>{replanTimer=null;runReplanToTarget(myGen);},delay);
+  }
+  function runReplanToTarget(gen){
+    if(gen!==replanGen||phase!=="scrambling")return;
+    if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return;}
+    const t=tracker.get();
+    if(!t.fixup&&t.on){offPathMoves=[];pathAnchorRemaining=tracker.remaining();replanning=false;pathReady=true;emit();return;}
+    const remaining=pathAnchorRemaining!=null?pathAnchorRemaining.slice():tracker.remaining();
+    const inversePath=offPathMoves.length===1?simplifyAlg([invertMove(offPathMoves[0])].concat(remaining)):null;
+    if(inversePath&&pathReaches(facelets,inversePath,scrambleTargetState)){
+      adoptPath(inversePath,{method:"inverse"});
+      return;
     }
-    pathReady=false;
-    const p=solveFromTo(facelets,scrambleTargetState).then(path=>{
-      if(!eq(facelets,scrambleTargetState)&&phase==="scrambling"){
-        if(path&&path.length){pathReady=true;tracker.repath(facelets,path,asFixup);}
-        else {pathReady=true;}
-        emit();
+    const fallback=()=>{
+      let stack=undoStackPath(offPathMoves,remaining);
+      if(!pathReaches(facelets,stack,scrambleTargetState)){
+        const short=solveFromToSync(facelets,scrambleTargetState,4);
+        if(short&&pathReaches(facelets,short,scrambleTargetState))stack=short;
       }
-      return path||[];
+      if(!pathReaches(facelets,stack,scrambleTargetState)){
+        /* Last resort: still show the undo-stack so he has something to follow. */
+        stack=undoStackPath(offPathMoves,remaining);
+      }
+      adoptPath(stack,{method:"undo-stack"});
+    };
+    const from=facelets, to=scrambleTargetState;
+    replanning=true;pathReady=false;emit();
+    const timeout=new Promise(resolve=>setTimeout(()=>resolve(null),3000));
+    const work=Promise.resolve().then(()=>solveFromTo(from,to)).catch(()=>null);
+    const p=Promise.race([work,timeout]).then(path=>{
+      if(gen!==replanGen||phase!=="scrambling")return path||[];
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return path||[];}
+      const nowT=tracker.get();
+      if(!nowT.fixup&&nowT.on){offPathMoves=[];pathAnchorRemaining=tracker.remaining();replanning=false;pathReady=true;emit();return path||[];}
+      const use=path&&pathReaches(from,path,to)?parseAlg(path):null;
+      /* Facelets may have moved during the wait; re-check from the latest state. */
+      const fromNow=facelets;
+      const useNow=use&&pathReaches(fromNow,use,to)?use:null;
+      if(useNow)adoptPath(useNow,{method:"solver"});
+      else fallback();
+      return useNow||[];
+    }).catch(()=>{
+      if(gen!==replanGen||phase!=="scrambling")return [];
+      fallback();
+      return [];
     });
     pathPromise=p;
-    emit();
     return p;
   }
   let scrambleStart=SOLVED;
   function startScrambleFromCurrent(){
     scrambleStart=facelets;
     scrambleTargetState=applyAlg(scrambleStart,officialScramble);
+    replanCount=0;replanMethod="";replanAt=0;
+    resetReplanState();
     pathReady=true;
     pathPromise=Promise.resolve(fmtAlg(officialScramble));
     tracker=createTracker(officialScramble,scrambleStart,scrambleTargetState);
+    pathAnchorRemaining=officialScramble.slice();
     const t=tracker.setState(facelets);
     if(t.done||eq(facelets,scrambleTargetState))armAfterScramble();
     else phase="scrambling";
@@ -859,10 +964,27 @@ function createApp(opts){
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
-      if(eq(facelets,scrambleTargetState)){tracker.setState(facelets);armAfterScramble();return tracker.get();}
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(facelets);armAfterScramble();return tracker.get();}
+      const before=tracker.get();
+      const wasOn=!before.fixup&&!!before.on;
+      if(wasOn)pathAnchorRemaining=tracker.remaining();
       const t=tracker.apply(m);
-      if(t.done||eq(facelets,scrambleTargetState)){armAfterScramble();return t;}
-      emit();
+      if(t.done||eq(facelets,scrambleTargetState)){resetReplanState();armAfterScramble();return t;}
+      if(t.fixup||!t.on){
+        if(wasOn)offPathMoves=[m];
+        else offPathMoves=offPathMoves.concat(m);
+        replanNote=false;
+        scheduleReplanToTarget();
+        emit();
+      }else{
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        clearReplanTimer();
+        replanning=false;
+        pathReady=true;
+        replanNote=false;
+        emit();
+      }
       return t;
     }
     if(phase==="inspect"||phase==="ready"){
@@ -890,13 +1012,22 @@ function createApp(opts){
     if(state&&state.CP&&!cubiesFromFacelets(f)){/* keep string even if conversion fails */}
     if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
-      if(eq(facelets,scrambleTargetState)){tracker.setState(f);armAfterScramble();return;}
+      if(eq(facelets,scrambleTargetState)){resetReplanState();tracker.setState(f);armAfterScramble();return;}
       const t=tracker.setState(f);
-      if(t.done){armAfterScramble();return;}
-      /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. */
-      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart){
+      if(t.done){resetReplanState();armAfterScramble();return;}
+      /* First FACELETS often arrives after a scramble was shown from a default (solved) snapshot. Re-base F0/T from the real cube if he hasn't started yet. Do not rebase after a re-plan (new path starts at k=0 from a non-F0 state). */
+      if(t.k===0&&!t.partial&&!t.fixup&&f!==scrambleStart&&replanCount===0&&offPathMoves.length===0&&!replanTimer&&fmtAlg(t.moves)===fmtAlg(officialScramble)){
         startScrambleFromCurrent();
         return;
+      }
+      if(t.fixup||!t.on){
+        scheduleReplanToTarget();
+      }else{
+        offPathMoves=[];
+        pathAnchorRemaining=tracker.remaining();
+        clearReplanTimer();
+        replanning=false;
+        pathReady=true;
       }
       emit();
       return;
@@ -982,8 +1113,9 @@ function createApp(opts){
     return {
       facelets,solved:isSolved(facelets),phase,
       scramble:t.moves,scrambleText:fmtAlg(t.moves),officialScramble,officialText:fmtAlg(officialScramble),
-      k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,f0:scrambleStart,atTarget:eq(facelets,scrambleTargetState),
+      k:t.k,onPath:t.on,fixup:replanning?"":t.fixup,scrambled:t.done,target:t.target,f0:scrambleStart,atTarget:eq(facelets,scrambleTargetState),
       pathReady,faceletsGen,
+      replanCount,replanMethod,replanAt,replanNote,replanning,
       cubies:cubiesFromFacelets(facelets),
       current:t.current,currentScramble:t.currentScramble,partial:t.partial,totalParts:t.totalParts,half:t.half,halfLabel:t.halfLabel,total:t.total,
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
@@ -1026,7 +1158,7 @@ const Engine={
   STORE,RESULTS_SYNC_URL,SOLVED,FACES,COL,CYCLES,LBL,CFOP,STAGE_LABEL,STAGE_KID,
   applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
-  createTracker,progressOnPath,scrambleTarget,combineMoves,expandToQuarters,pathSnapshots,
+  createTracker,progressOnPath,scrambleTarget,combineMoves,simplifyAlg,remainingFromSnap,expandToQuarters,pathSnapshots,
   invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,cubiesToCubing,C2K_CORNER,C2K_EDGE,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
   validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
