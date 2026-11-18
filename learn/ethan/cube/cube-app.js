@@ -65,6 +65,12 @@ function pushDebug(ev){
     if(cubeDebug.events.length>20)cubeDebug.events.shift();
   }catch(e){}
 }
+function fmtDebugTime(ts){
+  const d=new Date(ts);
+  if(isNaN(d.getTime()))return "—";
+  const p=n=>String(n).padStart(2,"0");
+  return p(d.getHours())+":"+p(d.getMinutes())+":"+p(d.getSeconds())+" (Australia/Sydney)";
+}
 function debugText(v){
   v=v||app.get()||{};
   const reply=cubeDebug.faceletsReply?"yes (serial "+(cubeDebug.lastFaceletsSerial!=null?cubeDebug.lastFaceletsSerial:"?")+")":"NO — REQUEST_FACELETS got no FACELETS event";
@@ -86,6 +92,9 @@ function debugText(v){
     "expected move: "+(v.fixup||v.current||"(none)")+(v.halfLabel?" "+v.halfLabel:""),
     "path: "+(v.scrambleText||""),
     "on path: "+!!v.onPath+"  k="+v.k+"/"+v.total+"  pathReady="+!!v.pathReady,
+    "replan count: "+(v.replanCount||0),
+    "replan method: "+(v.replanMethod||"—"),
+    "last re-plan: "+(v.replanAt?fmtDebugTime(v.replanAt):"—"),
     "gyro events ignored: "+cubeDebug.gyroCount,
     "last error: "+(cubeDebug.lastError||twistyLog.lastError||"—"),
     "page errors: "+((window.__cubePageErrors&&window.__cubePageErrors.length)?window.__cubePageErrors.join(" | "):"—"),
@@ -583,6 +592,9 @@ function scrambleDone(v){
 }
 function calloutHTML(v){
   if(scrambleDone(v))return `<div class="callout done">Scramble done!</div>`;
+  if(v.replanning||(v.phase==="scrambling"&&v.pathReady===false)){
+    return `<div class="callout next">Working out the scramble…</div><p class="callout-sub">Keep turning — I'll rewrite the moves in a moment.</p>`;
+  }
   if(v.fixup){
     const nxt=v.currentScramble||(v.scramble&&v.scramble[v.k])||"";
     return `<div class="callout fix">Fix-up: <b>${v.fixup}</b></div>${nxt?`<p class="callout-sub">Then we'll go on with ${nxt}${v.halfLabel?" ("+v.halfLabel+")":""}.</p>`:""}`;
@@ -590,7 +602,8 @@ function calloutHTML(v){
   const m=v.current||(v.scramble&&v.scramble[v.k])||"";
   if(!m)return "";
   const half=v.halfLabel?`<span class="half-big">${v.halfLabel}</span>`:"";
-  return `<div class="callout next">Next: <b>${m}</b>${half}</div>`;
+  const note=v.replanNote?`<p class="callout-sub">Scramble updated, keep going.</p>`:"";
+  return `<div class="callout next">Next: <b>${m}</b>${half}</div>${note}`;
 }
 function scrambleHTML(v){
   const moves=v.scramble||[];
@@ -618,7 +631,8 @@ function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
   if(v.phase==="needSolved")return "Do the big move next. I'll tick off each turn as you go. If the picture is wrong, tap Re-sync or Debug.";
   if(v.phase==="scrambling"){
-    if(!v.pathReady)return "Working out the scramble from how your cube is now…";
+    if(v.replanning||v.pathReady===false)return "Working out the scramble from how your cube is now…";
+    if(v.replanNote)return "Scramble updated, keep going.";
     if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
     if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it.";
