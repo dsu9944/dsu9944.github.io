@@ -11,6 +11,9 @@ const GAN_MODS = "https://esm.sh/gan-web-bluetooth@3.0.2";
 const GAN_MODS_FALLBACK = "https://cdn.jsdelivr.net/npm/gan-web-bluetooth@3.0.2/+esm";
 const CUBING_SCRAMBLE = "https://cdn.cubing.net/v0/js/cubing/scramble";
 const CUBING_TWISTY = "https://cdn.cubing.net/v0/js/cubing/twisty";
+const CUBING_SEARCH = "https://cdn.cubing.net/v0/js/cubing/search";
+const CUBING_PUZZLES = "https://cdn.cubing.net/v0/js/cubing/puzzles";
+const CUBING_KPUZZLE = "https://cdn.cubing.net/v0/js/cubing/kpuzzle";
 
 let conn = null;
 let unsub = null;
@@ -20,7 +23,9 @@ let twisty = null;
 let macResolver = null;
 let appliedAlg = [];
 let showNet = false;
-const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:""};
+let searchSolve = null, kpuzzle = null, KPatternCls = null, solveReady = false;
+let setupToken = 0, lastFaceletsGen = -1;
+const twistyLog = {moves:[], setup:"", ready:false, lastError:"", visualization:"", faceletsSynced:false};
 
 function isIos(){
   const ua=navigator.userAgent||"";
@@ -44,7 +49,86 @@ async function loadCubing(){
     TwistyPlayer=null;
     twistyLog.lastError=String(e&&e.message||e||"twisty import failed");
   }
+  try{
+    const [search,puzzles,kp]=await Promise.all([
+      import(CUBING_SEARCH),
+      import(CUBING_PUZZLES),
+      import(CUBING_KPUZZLE).catch(()=>({}))
+    ]);
+    searchSolve=search.experimentalSolve3x3x3IgnoringCenters||null;
+    KPatternCls=kp&&kp.KPattern||null;
+    if(puzzles.cube3x3x3&&typeof puzzles.cube3x3x3.kpuzzle==="function"){
+      kpuzzle=await puzzles.cube3x3x3.kpuzzle();
+      if(!KPatternCls&&kpuzzle&&kpuzzle.defaultPattern)KPatternCls=kpuzzle.defaultPattern().constructor;
+    }
+    if(searchSolve&&kpuzzle&&KPatternCls){
+      E.setSolveFromTo(solveFromToSearch);
+      solveReady=true;
+    }
+  }catch(e){
+    solveReady=false;
+    twistyLog.lastError=twistyLog.lastError||String(e&&e.message||e||"search import failed");
+  }
   mountTwisty();
+  const v=app.get();
+  if(v)setupFromFacelets(v.facelets);
+}
+function patternFromCubies(c){
+  const def=kpuzzle.defaultPattern();
+  const centers=(def.patternData&&def.patternData.CENTERS)||{pieces:[0,1,2,3,4,5],orientation:[0,0,0,0,0,0]};
+  const data={
+    EDGES:{pieces:(c?c.ep:[0,1,2,3,4,5,6,7,8,9,10,11]).slice(),orientation:(c?c.eo:Array(12).fill(0)).slice()},
+    CORNERS:{pieces:(c?c.cp:[0,1,2,3,4,5,6,7]).slice(),orientation:(c?c.co:Array(8).fill(0)).slice()},
+    CENTERS:{pieces:centers.pieces.slice(),orientation:(centers.orientation||[0,0,0,0,0,0]).slice()}
+  };
+  if(centers.orientationMod)data.CENTERS.orientationMod=centers.orientationMod.slice();
+  return new KPatternCls(kpuzzle,data);
+}
+function patternFromFacelets(f){
+  if(!kpuzzle||!KPatternCls)return null;
+  const c=E.cubiesFromFacelets(f);
+  return patternFromCubies(c);
+}
+function algToMoves(alg){
+  if(!alg)return [];
+  return E.parseAlg(String(alg));
+}
+async function solveFromToSearch(from,to){
+  if(!searchSolve||!kpuzzle||!KPatternCls)return null;
+  const rel=E.relativeCubies(from,to);
+  if(!rel)return null;
+  const alg=await searchSolve(patternFromCubies(rel));
+  return algToMoves(alg);
+}
+function expectedFacelets(){return E.applyAlg(E.SOLVED,appliedAlg);}
+async function setupFromFacelets(f){
+  f=f||(app.get()&&app.get().facelets)||E.SOLVED;
+  if(!f||f.length!==54)return;
+  const token=++setupToken;
+  twistyLog.faceletsSynced=E.isSolved(f)?true:false;
+  if(E.isSolved(f)){snapSetup("");twistyLog.faceletsSynced=true;return;}
+  const short=E.solveFromToSync(f,E.SOLVED,4);
+  if(short){
+    snapSetup(E.fmtAlg(E.invertAlg(short)));
+    twistyLog.faceletsSynced=expectedFacelets()===f;
+    return;
+  }
+  if(!searchSolve||!kpuzzle||!KPatternCls)return;
+  try{
+    const alg=await searchSolve(patternFromFacelets(f));
+    if(token!==setupToken)return;
+    let setup="";
+    if(alg&&typeof alg.invert==="function")setup=String(alg.invert());
+    else if(alg)setup=E.fmtAlg(E.invertAlg(String(alg)));
+    snapSetup(setup);
+    twistyLog.faceletsSynced=expectedFacelets()===f;
+  }catch(e){
+    twistyLog.lastError=String(e&&e.message||e||"setup from facelets failed");
+  }
+}
+async function requestFacelets(){
+  if(!conn||typeof conn.sendCubeCommand!=="function")return;
+  try{await conn.sendCubeCommand({type:"REQUEST_FACELETS"});}catch(e){}
 }
 async function nextScramble(alg){
   if(alg)return app.setScramble(alg);
@@ -137,22 +221,18 @@ function liveMove(m){
   }catch(e){}
   appliedAlg.push(m);
 }
-function onScrambleChanged(alg){
+function onScrambleChanged(){
   twistyLog.moves=[];
-  if(app.get().connected)snapSetup("");
-  else snapSetup(alg||"");
+  const v=app.get();
+  if(!v)return;
+  if(v.connected)setupFromFacelets(v.facelets);
+  else snapSetup(v.officialText||v.scrambleText||"");
 }
 function syncAfterMount(){
   const v=app.get();
   if(!v)return snapSetup("");
-  if(!v.connected)return snapSetup(v.scrambleText||"");
-  const moves=v.scramble||[];
-  const k=v.k||0;
-  let applied=moves.slice(0,k);
-  if(v.half&&moves[k]&&v.partial&&E.expandToQuarters){
-    applied=applied.concat(E.expandToQuarters(moves[k]).slice(0,v.partial));
-  }
-  snapSetup(applied.join(" "));
+  if(!v.connected)return snapSetup(v.officialText||v.scrambleText||"");
+  setupFromFacelets(v.facelets);
 }
 function hookApp(){
   const rawMove=app.onMove.bind(app);
@@ -162,16 +242,22 @@ function hookApp(){
     if(m)liveMove(m);
     return r;
   };
+  const rawFace=app.onFacelets.bind(app);
+  app.onFacelets=function(f){
+    const r=rawFace(f);
+    if(f&&f.length===54&&f!==expectedFacelets())setupFromFacelets(f);
+    return r;
+  };
   const rawSet=app.setScramble.bind(app);
   app.setScramble=function(alg){
     const r=rawSet(alg);
-    onScrambleChanged(String(r||alg||(app.get().scrambleText||"")));
+    onScrambleChanged();
     return r;
   };
   const rawNew=app.newScramble.bind(app);
-  app.newScramble=function(alg){
-    const r=rawNew(alg);
-    onScrambleChanged(String(r||alg||(app.get().scrambleText||"")));
+  app.newScramble=function(alg,opts){
+    const r=rawNew(alg,opts);
+    onScrambleChanged();
     return r;
   };
   const rawReset=app.resetToSolved.bind(app);
@@ -181,6 +267,15 @@ function hookApp(){
     snapSetup("");
     return r;
   };
+  if(app.markSolved){
+    const rawMark=app.markSolved.bind(app);
+    app.markSolved=function(){
+      const r=rawMark();
+      twistyLog.moves=[];
+      snapSetup("");
+      return r;
+    };
+  }
   const rawSim=app.simulateConnected.bind(app);
   app.simulateConnected=function(info){
     const r=rawSim(info);
@@ -190,15 +285,15 @@ function hookApp(){
   const rawConn=app.setConnected.bind(app);
   app.setConnected=function(on,info){
     const r=rawConn(on,info);
-    if(on)syncAfterMount();
-    else onScrambleChanged(app.get().scrambleText||"");
+    if(on){syncAfterMount();requestFacelets();}
+    else onScrambleChanged();
     return r;
   };
 }
 function syncTwistyApi(){
   window.CUBE_TWISTY=twistyLog;
   twistyLog.player=twisty||null;
-  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet};
+  window.CUBE_UI={remountTwisty,snapSetup,liveMove,mountTwisty,getPlayer:()=>twisty,setShowNet:setShowNet,setupFromFacelets,requestFacelets,expectedFacelets:()=>expectedFacelets()};
 }
 function setShowNet(on){
   showNet=!!on;
@@ -345,8 +440,9 @@ function timerText(v){
 }
 function phaseHint(v){
   if(v.ios&&!v.connected)return "On an iPhone or iPad the smart cube can't connect, but you can still use the timer with a tap or the spacebar.";
-  if(v.phase==="needSolved")return "Nice work! Solve the cube the rest of the way (or put it in the solved position and tap Reset to solved), then we'll start the next scramble.";
+  if(v.phase==="needSolved")return "Follow the scramble on the screen — it starts from how your cube is now. If the picture is wrong, tap Re-sync. If the real cube is solved, tap My cube is solved.";
   if(v.phase==="scrambling"){
+    if(!v.pathReady)return "Working out the scramble from how your cube is now…";
     if(v.fixup)return "Turn "+v.fixup+" to fix that, then we'll carry on.";
     if(!v.connected)return "No cube connected — scramble by hand, then hold the timer (or spacebar) to start.";
     if(v.halfLabel)return "Halfway through "+(v.current||"that turn")+" — one more quarter turn to finish it.";
@@ -362,6 +458,10 @@ function phaseHint(v){
     const rec=v.solves[v.solves.length-1];
     const msg=v.celebration==="pb"?"🎉 New personal best! "+(rec?E.formatTime(rec.ms,rec.penalty):"") : (rec?E.formatTime(rec.ms,rec.penalty)+" — nice solve!":"Done!");
     return msg;
+  }
+  if(v.celebration==="pb"&&v.phase==="scrambling"){
+    const rec=v.solves[v.solves.length-1];
+    return "🎉 New personal best! "+(rec?E.formatTime(rec.ms,rec.penalty)+" — ":"")+"Here's the next scramble.";
   }
   return v.connected?"Connected and ready.":"Connect Ethan's GAN 356 i3, or use the timer by itself.";
 }
@@ -485,11 +585,20 @@ function render(v){
   if(v.celebration==="pb")setText("#celeText","New personal best! "+(st.pb?st.pb.text:""));
 }
 
-app.on(render);
+function onAppView(v){
+  render(v);
+  if(v.faceletsGen!=null&&v.faceletsGen!==lastFaceletsGen){
+    lastFaceletsGen=v.faceletsGen;
+    requestFacelets();
+  }
+}
+app.on(onAppView);
 
 function bind(){
   $("#connectBtn").addEventListener("click",()=>{if(app.get().connected)disconnectCube();else connectCube();});
   $("#resetBtn").addEventListener("click",doReset);
+  const resync=$("#resyncBtn");
+  if(resync)resync.addEventListener("click",()=>{requestFacelets();const v=app.get();if(v)setupFromFacelets(v.facelets);});
   $("#newScrambleBtn").addEventListener("click",()=>nextScramble());
   $("#helpToggle").addEventListener("click",()=>$("#helpPanel").classList.toggle("hidden"));
   $("#grownToggle").addEventListener("click",()=>$("#grownPanel").classList.toggle("hidden"));
@@ -539,6 +648,8 @@ function bind(){
 function init(){
   hookApp();
   syncTwistyApi();
+  document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")requestFacelets();});
+  window.addEventListener("focus",()=>requestFacelets());
   app.setIos(isIos());
   bind();
   setShowNet(false);

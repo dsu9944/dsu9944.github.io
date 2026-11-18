@@ -94,16 +94,107 @@ function reachedStages(f,mode){const flags=stageFlags(f);return stagesFor(mode).
 function scrambleTarget(scramble){return applyAlg(SOLVED,scramble);}
 function prefixState(scramble,k){return applyAlg(SOLVED,parseAlg(scramble).slice(0,k));}
 /* A half-turn like R2 is two quarter turns. GAN i3 (Gen2) reports those as two separate MOVE events (R then R), not one "R2". */
+function invertAlg(alg){return parseAlg(alg).slice().reverse().map(invertMove);}
+
+/* Kociemba cubies (same CP/CO/EP/EO convention as gan-web-bluetooth FACELETS.state). */
+const CORNER_FACELETS=[[8,9,20],[6,18,38],[0,36,47],[2,45,11],[29,26,15],[27,44,24],[33,53,42],[35,17,51]];
+const CORNER_COLORS=["URF","UFL","ULB","UBR","DFR","DLF","DBL","DRB"];
+const EDGE_FACELETS=[[5,10],[7,19],[3,37],[1,46],[32,16],[28,25],[30,43],[34,52],[23,12],[21,41],[50,39],[48,14]];
+const EDGE_COLORS=["UR","UF","UL","UB","DR","DF","DL","DB","FR","FL","BL","BR"];
+function sortStr(s){return String(s).split("").sort().join("");}
+function cubiesFromFacelets(f){
+  if(!f||f.length!==54)return null;
+  const cp=[],co=[],ep=[],eo=[];
+  for(let i=0;i<8;i++){
+    const cols=CORNER_FACELETS[i].map(x=>f[x]).join("");
+    const id=CORNER_COLORS.findIndex(c=>sortStr(c)===sortStr(cols));
+    const ori=cols.split("").findIndex(ch=>ch==="U"||ch==="D");
+    if(id<0||ori<0)return null;
+    cp.push(id);co.push(ori);
+  }
+  for(let i=0;i<12;i++){
+    const cols=EDGE_FACELETS[i].map(x=>f[x]).join("");
+    const id=EDGE_COLORS.findIndex(c=>sortStr(c)===sortStr(cols));
+    if(id<0)return null;
+    ep.push(id);eo.push(cols[0]===EDGE_COLORS[id][0]?0:1);
+  }
+  return {cp,co,ep,eo};
+}
+function isValidFacelets(f){return !!(f&&f.length===54&&cubiesFromFacelets(f));}
+function invertCubies(c){
+  const icp=Array(8),ico=Array(8),iep=Array(12),ieo=Array(12);
+  for(let i=0;i<8;i++){icp[c.cp[i]]=i;ico[c.cp[i]]=(3-c.co[i])%3;}
+  for(let i=0;i<12;i++){iep[c.ep[i]]=i;ieo[c.ep[i]]=c.eo[i];}
+  return {cp:icp,co:ico,ep:iep,eo:ieo};
+}
+function mulCubies(A,B){
+  const C={cp:[],co:[],ep:[],eo:[]};
+  for(let i=0;i<8;i++){C.cp[i]=A.cp[B.cp[i]];C.co[i]=(A.co[B.cp[i]]+B.co[i])%3;}
+  for(let i=0;i<12;i++){C.ep[i]=A.ep[B.ep[i]];C.eo[i]=(A.eo[B.ep[i]]+B.eo[i])%2;}
+  return C;
+}
+function relativeCubies(from,to){
+  const A=typeof from==="string"?cubiesFromFacelets(from):from;
+  const B=typeof to==="string"?cubiesFromFacelets(to):to;
+  if(!A||!B)return null;
+  return mulCubies(invertCubies(A),B);
+}
+function cubiesEqual(a,b){
+  if(!a||!b)return false;
+  return a.cp.join()===b.cp.join()&&a.co.join()===b.co.join()&&a.ep.join()===b.ep.join()&&a.eo.join()===b.eo.join();
+}
+
+
+let solveFromToImpl=null;
+function setSolveFromTo(fn){solveFromToImpl=typeof fn==="function"?fn:null;}
+function solveFromToSync(from,to,maxDepth){
+  if(!from||!to)return null;
+  if(from===to)return [];
+  maxDepth=maxDepth==null?4:Math.min(maxDepth,4);
+  const faces=["U","R","F","D","L","B"], moves=[];
+  faces.forEach(f=>{moves.push(f,f+"'",f+"2");});
+  const q=[[from,[]]], seen={};seen[from]=1;
+  for(let qi=0;qi<q.length;qi++){
+    const st=q[qi][0],path=q[qi][1];
+    if(path.length>=maxDepth)continue;
+    const last=path.length?path[path.length-1][0]:"";
+    for(let i=0;i<moves.length;i++){
+      const m=moves[i];
+      if(m[0]===last)continue;
+      const n=applyMove(st,m);
+      if(seen[n])continue;
+      const p=path.concat(m);
+      if(n===to)return p;
+      seen[n]=1;q.push([n,p]);
+    }
+  }
+  return null;
+}
+function solveFromTo(from,to){
+  if(from===to)return Promise.resolve([]);
+  const short=solveFromToSync(from,to,4);
+  if(short)return Promise.resolve(short);
+  if(typeof solveFromToImpl==="function"){
+    return Promise.resolve(solveFromToImpl(from,to)).then(r=>{
+      if(Array.isArray(r))return parseAlg(r);
+      if(typeof r==="string")return parseAlg(r);
+      return null;
+    }).catch(()=>null);
+  }
+  return Promise.resolve(null);
+}
+
 function expandToQuarters(m){
   m=normalizeMove(m);
   if(!m)return [];
   if(m[1]==="2")return [m[0],m[0]];
   return [m];
 }
-function pathSnapshots(scramble){
+function pathSnapshots(scramble,start){
   const moves=parseAlg(scramble);
-  const snaps=[{state:SOLVED,k:0,partial:0,totalParts:moves[0]?expandToQuarters(moves[0]).length:0,current:moves[0]||null,q:0}];
-  let s=SOLVED,q=0;
+  start=start||SOLVED;
+  const snaps=[{state:start,k:0,partial:0,totalParts:moves[0]?expandToQuarters(moves[0]).length:0,current:moves[0]||null,q:0}];
+  let s=start,q=0;
   moves.forEach((M,i)=>{
     const qs=expandToQuarters(M);
     qs.forEach((qt,qi)=>{
@@ -129,8 +220,8 @@ function packProgress(found,moves,done,on){
     half,halfLabel:half?found.partial+"/"+found.totalParts:""
   };
 }
-function progressOnPath(facelets,scramble){
-  const {moves,snaps}=pathSnapshots(scramble);
+function progressOnPath(facelets,scramble,start){
+  const {moves,snaps}=pathSnapshots(scramble,start);
   const target=snaps[snaps.length-1].state;
   const done=eq(facelets,target);
   const found=matchSnap(snaps,facelets);
@@ -145,10 +236,11 @@ function combineMoves(a,b){
   return n===0?"":n===1?a[0]:n===2?a[0]+"2":a[0]+"'";
 }
 
-function createTracker(scramble){
-  const {moves,snaps}=pathSnapshots(scramble);
-  const target=snaps[snaps.length-1].state;
-  let state=SOLVED,lastMove="",fixup="",lastOn=snaps[0];
+function createTracker(scramble,start,targetState){
+  start=start||SOLVED;
+  let {moves,snaps}=pathSnapshots(scramble,start);
+  let target=targetState||snaps[snaps.length-1].state;
+  let state=start,lastMove="",fixup="",lastOn=snaps[0];
   function snapshot(){
     const done=eq(state,target);
     const p=packProgress(lastOn,moves,done,!fixup&&!!lastOn);
@@ -181,8 +273,27 @@ function createTracker(scramble){
     }
     return snapshot();
   }
-  function reset(){state=SOLVED;lastMove="";fixup="";lastOn=snaps[0];return snapshot();}
-  return {apply,setState,reset,get:snapshot,target,moves};
+  function reset(){state=start;lastMove="";fixup="";lastOn=snaps[0];return snapshot();}
+  function repath(current,remaining,asFixup){
+    remaining=parseAlg(remaining);
+    if(current&&current.length===54)state=current;
+    const built=pathSnapshots(remaining,state);
+    moves=built.moves;snaps=built.snaps;
+    lastOn=snaps[0];lastMove="";
+    if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1]||snaps[0];}
+    else{
+      const found=matchSnap(snaps,state);
+      const atStart=!!(found&&found.k===0&&!found.partial);
+      if(asFixup&&moves[0]&&(atStart||!found)){
+        fixup=moves[0];
+        lastOn=found||snaps[0];
+      }else if(found){fixup="";lastOn=found;}
+      else fixup="";
+    }
+    return snapshot();
+  }
+  function setTarget(t){if(t&&t.length===54)target=t;return snapshot();}
+  return {apply,setState,reset,repath,setTarget,get:snapshot,get target(){return target;},get moves(){return moves;}};
 }
 
 /* ---- timing helpers ---- */
@@ -551,6 +662,12 @@ function createApp(opts){
     S.bestStreak=Math.max(S.bestStreak||0,st);
     save();
     afterSessionSolve(rec);
+    const keep=celebration;
+    const sessionDone=!!(S.session&&S.session.finished);
+    if(!sessionDone){
+      newScramble(null,{keepCelebration:true,keepFacelets:true});
+      if(keep)celebration=keep;
+    }
     emit();
     return rec;
   }
@@ -634,25 +751,86 @@ function createApp(opts){
   }
   function abandonLesson(){if(S.session&&!S.session.finished){S.session=null;save();emit();}}
 
-  function newScramble(alg){
-    clearInspect();
-    celebration=null;
-    run=null;
-    const scr=alg||randomMoveScramble();
-    tracker=createTracker(scr);
-    if(!connected)facelets=SOLVED;
-    if(connected&&!isSolved(facelets)){
-      phase="needSolved";
-      emit();
-      return fmtAlg(scr);
-    }
-    phase="scrambling";
+  let officialScramble=[], scrambleTargetState=SOLVED, pathReady=true, pathPromise=null, faceletsGen=0;
+  function bumpFacelets(){faceletsGen++;}
+  function whenPathReady(){return pathPromise||Promise.resolve(fmtAlg(tracker.get().moves));}
+  function adoptPath(moves,opts){
+    opts=opts||{};
+    pathReady=true;
+    tracker=createTracker(moves,facelets,scrambleTargetState);
     const t=tracker.setState(facelets);
     if(t.done)armAfterScramble();
+    else phase="scrambling";
+    if(!(opts.keepCelebration)){/* celebration already handled by caller */}
     emit();
-    return fmtAlg(scr);
+    return fmtAlg(tracker.get().moves);
+  }
+  function recomputeRemaining(asFixup){
+    if(eq(facelets,scrambleTargetState)){
+      tracker.setState(facelets);
+      pathReady=true;
+      armAfterScramble();
+      return Promise.resolve([]);
+    }
+    const short=solveFromToSync(facelets,scrambleTargetState,4);
+    if(short){
+      pathReady=true;
+      tracker.repath(facelets,short,asFixup);
+      emit();
+      return Promise.resolve(short);
+    }
+    pathReady=false;
+    const p=solveFromTo(facelets,scrambleTargetState).then(path=>{
+      if(!eq(facelets,scrambleTargetState)&&phase==="scrambling"){
+        if(path&&path.length){pathReady=true;tracker.repath(facelets,path,asFixup);}
+        else {pathReady=true;}
+        emit();
+      }
+      return path||[];
+    });
+    pathPromise=p;
+    emit();
+    return p;
+  }
+  function newScramble(alg,opts){
+    opts=opts||{};
+    clearInspect();
+    if(!opts.keepCelebration)celebration=null;
+    run=null;
+    const official=parseAlg(alg||randomMoveScramble());
+    officialScramble=official;
+    scrambleTargetState=applyAlg(SOLVED,official);
+    if(!connected&&!opts.keepFacelets)facelets=SOLVED;
+    bumpFacelets();
+    if(eq(facelets,scrambleTargetState)){
+      pathReady=true;pathPromise=Promise.resolve("");
+      tracker=createTracker([],facelets,scrambleTargetState);
+      armAfterScramble();
+      return "";
+    }
+    if(isSolved(facelets)){
+      pathPromise=Promise.resolve(fmtAlg(official));
+      return adoptPath(official,opts);
+    }
+    const short=solveFromToSync(facelets,scrambleTargetState,4);
+    if(short){
+      pathPromise=Promise.resolve(fmtAlg(short));
+      return adoptPath(short,opts);
+    }
+    pathReady=false;
+    phase="scrambling";
+    tracker=createTracker([],facelets,scrambleTargetState);
+    emit();
+    const p=solveFromTo(facelets,scrambleTargetState).then(path=>{
+      if(path&&path.length)return adoptPath(path,opts);
+      pathReady=true;
+      return adoptPath(official,opts);
+    });
+    pathPromise=p;
+    return fmtAlg(official);
   }
   function setScramble(alg){return newScramble(alg);}
+  function skipScramble(){return newScramble();}
 
   function onMove(evt){
     const m=normalizeMove(evt&&(evt.move||evt));
@@ -665,13 +843,14 @@ function createApp(opts){
     facelets=applyMove(facelets,m);
     if(evt&&evt.facelets&&evt.facelets.length===54)facelets=evt.facelets;
     if(phase==="needSolved"){
-      if(isSolved(facelets)){phase="scrambling";tracker.setState(SOLVED);}
-      else{emit();return;}
+      phase="scrambling";
     }
     if(phase==="scrambling"){
+      if(eq(facelets,scrambleTargetState)){tracker.setState(facelets);armAfterScramble();return tracker.get();}
       const t=tracker.apply(m);
-      if(t.done)armAfterScramble();
-      else emit();
+      if(t.done||eq(facelets,scrambleTargetState)){armAfterScramble();return t;}
+      if(!t.on){recomputeRemaining(true);return tracker.get();}
+      emit();
       return t;
     }
     if(phase==="inspect"||phase==="ready"){
@@ -695,14 +874,17 @@ function createApp(opts){
   function onFacelets(f){
     if(!f||f.length!==54)return;
     facelets=f;
-    if(phase==="needSolved"){
-      if(isSolved(facelets)){phase="scrambling";tracker.setState(SOLVED);emit();return;}
-    }
+    if(phase==="needSolved")phase="scrambling";
     if(phase==="scrambling"){
+      if(eq(facelets,scrambleTargetState)){tracker.setState(f);armAfterScramble();return;}
       const t=tracker.setState(f);
-      if(t.done)armAfterScramble();
-      else emit();
+      if(t.done){armAfterScramble();return;}
+      if(!t.on){recomputeRemaining(true);return;}
+      emit();
       return;
+    }
+    if((phase==="inspect"||phase==="ready")&&eq(facelets,SOLVED)&&run&&!run.started){
+      /* ignore; wait for a move or a later solved-after-solve path */
     }
     if(phase==="running"&&run){
       markSplits(facelets,Math.round(elapsedNow()),run.moves.length);
@@ -710,17 +892,20 @@ function createApp(opts){
     }
     emit();
   }
-  function resetToSolved(){
+  function markSolved(){
     facelets=SOLVED;
-    if(phase==="needSolved"){
-      phase="scrambling";
-      tracker.setState(SOLVED);
-      emit();
-      return;
-    }
-    if(phase==="scrambling")tracker.setState(SOLVED);
-    emit();
+    if(phase==="scrambling"){
+      if(eq(SOLVED,scrambleTargetState)){tracker.setState(SOLVED);armAfterScramble();}
+      else{
+        pathReady=true;
+        tracker=createTracker(officialScramble,SOLVED,scrambleTargetState);
+        phase="scrambling";
+        emit();
+      }
+    }else emit();
+    return {requestReset:true};
   }
+  function resetToSolved(){return markSolved();}
 
   /* manual stackmat: press/hold ready, release start, press stop */
   function manualDown(){
@@ -778,7 +963,9 @@ function createApp(opts){
     const sess=S.session;
     return {
       facelets,solved:isSolved(facelets),phase,
-      scramble:t.moves,scrambleText:fmtAlg(t.moves),k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,
+      scramble:t.moves,scrambleText:fmtAlg(t.moves),officialScramble,officialText:fmtAlg(officialScramble),
+      k:t.k,onPath:t.on,fixup:t.fixup,scrambled:t.done,target:t.target,pathReady,faceletsGen,
+      cubies:cubiesFromFacelets(facelets),
       current:t.current,currentScramble:t.currentScramble,partial:t.partial,totalParts:t.totalParts,half:t.half,halfLabel:t.halfLabel,total:t.total,
       connected,battery,deviceName,deviceMAC:deviceMAC||S.mac||"",
       inspectLeft,inspectOn:S.inspect!==false,
@@ -804,7 +991,8 @@ function createApp(opts){
     resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,
     on:fn=>{listeners.push(fn);return ()=>{const i=listeners.indexOf(fn);if(i>=0)listeners.splice(i,1);};},
     get:view,emit,save,
-    newScramble,setScramble,onMove,onFacelets,resetToSolved,feedMove:onMove,feedFacelets:onFacelets,
+    newScramble,setScramble,skipScramble,onMove,onFacelets,resetToSolved,markSolved,feedMove:onMove,feedFacelets:onFacelets,
+    whenPathReady,bumpFacelets,
     simulateConnected,setConnected,setBattery,setIos,setSetting,setMac,
     startLesson,skipLessonPhase,abandonLesson,finishSession,
     setPenalty,deleteSolve,manualDown,manualUp,manualStop,manualReadyCheck,
@@ -820,6 +1008,7 @@ const Engine={
   applyMove,applyAlg,parseAlg,normalizeMove,invertMove,fmtAlg,isSolved,
   stageFlags,stagesFor,reachedStages,whiteCross,firstLayer,secondLayer,f2lDone,ollDone,
   createTracker,progressOnPath,scrambleTarget,combineMoves,expandToQuarters,pathSnapshots,
+  invertAlg,cubiesFromFacelets,isValidFacelets,invertCubies,mulCubies,relativeCubies,cubiesEqual,solveFromTo,solveFromToSync,setSolveFromTo,
   formatTime,officialMs,averageOf,bestSingle,bestSplits,weakestStage,splitSegments,
   validMac,randomMoveScramble,svgNet,linearFitElapsed,tps,dayKey,streakFromDays,
   resultsSyncUrl,syncCubeSession,loadRaw,saveRaw,defState,createApp
