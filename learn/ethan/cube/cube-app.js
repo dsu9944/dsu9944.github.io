@@ -88,6 +88,7 @@ function debugText(v){
     "on path: "+!!v.onPath+"  k="+v.k+"/"+v.total+"  pathReady="+!!v.pathReady,
     "gyro events ignored: "+cubeDebug.gyroCount,
     "last error: "+(cubeDebug.lastError||twistyLog.lastError||"—"),
+    "page errors: "+((window.__cubePageErrors&&window.__cubePageErrors.length)?window.__cubePageErrors.join(" | "):"—"),
     "last 20 events (GYRO omitted, too frequent):",
     evs||"(none yet)"
   ].join("\n");
@@ -104,7 +105,19 @@ function setShowDebug(on){
   }
   if(box){
     box.classList.toggle("hidden",!showDebug);
-    if(showDebug)box.textContent=debugText(app.get());
+    if(showDebug){
+      box.textContent=debugText(app.get());
+      try{box.scrollIntoView({block:"nearest",inline:"nearest"});}catch(e){}
+    }
+  }
+}
+function recordPageError(msg){
+  const s=String(msg||"error");
+  cubeDebug.lastError=s;
+  if(typeof window.__showCubeError==="function")window.__showCubeError(s);
+  if(showDebug){
+    const box=$("#cubeDebug");
+    if(box&&!box.classList.contains("hidden"))box.textContent=debugText(app.get());
   }
 }
 
@@ -366,7 +379,7 @@ function hookApp(){
   app.onMove=function(evt){
     try{
       const r=rawMove(evt);
-      const m=E.normalizeMove(evt&&(evt.move||evt));
+      const m=E.normalizeMove(typeof evt==="string"?evt:(evt&&evt.move));
       if(m)liveMove(m);
       return r;
     }catch(e){cubeDebug.lastError=String(e&&e.message||e||"onMove");}

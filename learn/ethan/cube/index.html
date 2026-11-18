@@ -5,6 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0d9488">
 <title>Speedcubing – Ethan</title>
+<script>
+window.__cubePageErrors=[];
+function __showCubeError(msg){
+  try{
+    window.__cubePageErrors.push(String(msg||"error"));
+    var el=document.getElementById("errorStrip");
+    if(!el){
+      el=document.createElement("div");
+      el.id="errorStrip";
+      el.setAttribute("role","alert");
+      (document.body||document.documentElement).insertBefore(el, document.body&&document.body.firstChild);
+    }
+    el.textContent=window.__cubePageErrors.join("\n");
+    el.classList.remove("hidden");
+    el.hidden=false;
+  }catch(e){}
+}
+window.addEventListener("error",function(e){
+  var src=e.filename||e.target&&e.target.src||"";
+  __showCubeError((e.message||"error")+" "+src+":"+(e.lineno||""));
+});
+window.addEventListener("unhandledrejection",function(e){
+  var r=e.reason;
+  __showCubeError((r&&(r.stack||r.message)||String(r))+" (unhandled promise)");
+});
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%8B%3C/text%3E%3C/svg%3E">
 <style>
 :root{--blue:#2563eb;--teal:#0d9488;--teal2:#0f766e;--green:#16a34a;--red:#ef4444;--orange:#f97316;--ink:#1f2937;--gold:#f59e0b}
@@ -35,14 +61,14 @@ body.connected #connectBtn{background:#16a34a;box-shadow:0 4px 0 #15803d}
 .status{color:#4b5563;font-size:.95rem}
 .err{color:#991b1b;background:#fef2f2;border-radius:14px;padding:10px 12px;margin-top:8px}
 .cube-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px}
-#twistyHost{width:min(92vw,70vh,560px);height:min(92vw,70vh,560px);max-width:560px;max-height:560px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+#twistyHost{width:min(72vw,34vh,320px);height:min(72vw,34vh,320px);max-width:320px;max-height:320px;display:flex;align-items:center;justify-content:center;margin:0 auto}
 #twistyHost twisty-player,#twistyHost .fake-twisty{width:100%!important;height:100%!important;max-width:100%;max-height:100%}
 .twisty-ph{color:#0f766e;font-weight:bold;text-align:center;padding:24px;font-size:1.1rem}
 #cubeNet{margin-top:8px}
 #cubeNet.hidden{display:none!important}
 #cubeNet svg{display:block;max-width:280px;height:auto;margin:0 auto}
-@media (min-width:700px){#twistyHost{width:min(70vh,560px);height:min(70vh,560px)}}
-@media (max-width:560px){#twistyHost{width:min(92vw,420px);height:min(92vw,420px)}}
+@media (min-width:700px){#twistyHost{width:min(34vh,320px);height:min(34vh,320px)}}
+@media (max-width:560px){#twistyHost{width:min(70vw,260px);height:min(70vw,260px)}}
 .scramble{font-size:1.35rem;font-weight:bold;letter-spacing:.02em;line-height:1.85;text-align:center;min-height:2.8em}
 .mv{display:inline-block;padding:4px 9px;border-radius:10px;margin:3px 2px;color:#1f2937;vertical-align:middle}
 .mv.done{background:transparent;color:#9ca3af;font-weight:600}
@@ -103,13 +129,17 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
 #debugBtn[aria-pressed="true"]{background:#0f172a;color:#e2e8f0;border-color:#0f172a}
 @media (max-width:560px){.timer{font-size:3.1rem}.scramble{font-size:1.15rem}.callout{font-size:1.45rem}.callout b{font-size:2rem}.mv.next{font-size:1.5rem}}
 #cubeDebug{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.35;white-space:pre-wrap;max-height:280px;overflow:auto;background:#0f172a;color:#e2e8f0;padding:10px;border-radius:10px;margin-top:8px}
+#cubeDebug:not(.hidden){position:fixed;left:max(8px,env(safe-area-inset-left));right:max(8px,env(safe-area-inset-right));bottom:max(8px,env(safe-area-inset-bottom));z-index:80;max-height:min(42vh,320px);margin:0;box-shadow:0 -8px 30px rgba(15,23,42,.4)}
+#errorStrip{position:sticky;top:0;z-index:120;background:#991b1b;color:#fff;padding:8px 12px;font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap}
+#errorStrip.hidden,#errorStrip[hidden]{display:none!important}
 #cubeDebug .ok{color:#86efac}#cubeDebug .bad{color:#fca5a5}
 </style>
 </head>
 <body>
+<div id="errorStrip" class="hidden" role="alert" hidden></div>
 <header class="topbar">
   <h1>🧊 Ethan's Speedcubing</h1>
-  <span class="ver" id="buildVer" title="Page build">v6 · 18 Nov</span>
+  <span class="ver" id="buildVer" title="Page build">v7 · 18 Nov</span>
   <a class="iconbtn" id="gamesBtn" href="../../index.html" title="My games">🏠<span class="lbl"> Games</span></a>
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥</a>
 </header>
@@ -154,13 +184,10 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     </div>
   </section>
 
-  <section class="card">
-    <div class="cube-wrap">
-      <div id="twistyHost" aria-label="3D cube">
-        <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
-      </div>
-      <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
-    </div>
+  <section class="card" id="cubeCard">
+    <div id="callout" aria-live="polite"></div>
+    <div id="scramble" class="scramble" aria-live="polite"></div>
+    <div id="fixup" class="hidden"></div>
     <div id="matchAsk" class="note hidden" role="dialog">
       <p style="margin:0 0 8px"><strong>Does the 3D cube match your cube?</strong></p>
       <div class="row-gap">
@@ -171,9 +198,12 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     <div id="matchHelp" class="note hidden">
       <p style="margin:0">The picture is out of sync (the i3's memory can drift). <strong>Solve your cube</strong>, then tap <strong>My cube is solved</strong>. I'll reset the cube's memory and check again.</p>
     </div>
-    <div id="callout" aria-live="polite"></div>
-    <div id="scramble" class="scramble" aria-live="polite"></div>
-    <div id="fixup" class="hidden"></div>
+    <div class="cube-wrap">
+      <div id="twistyHost" aria-label="3D cube">
+        <div id="twistyPlaceholder" class="twisty-ph">Loading the 3D cube…</div>
+      </div>
+      <div id="cubeNet" class="hidden" aria-hidden="true" aria-label="Optional 2D cube net"></div>
+    </div>
     <pre id="cubeDebug" class="hidden" aria-live="off"></pre>
     <div class="row-gap" style="justify-content:center">
       <button class="btn" id="newScrambleBtn" type="button">Skip / new scramble</button>
@@ -223,7 +253,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
     </div>
   </section>
 </main>
-<footer>Progress is saved in this browser on this device only. <span class="ver">v6 · 18 Nov</span></footer>
+<footer>Progress is saved in this browser on this device only. <span class="ver">v7 · 18 Nov</span></footer>
 
 <div id="cele" class="hidden"><div class="pop">
   <h2 id="celeText">New personal best!</h2>
@@ -243,7 +273,7 @@ footer{text-align:center;font-size:.85rem;color:#6b7280;padding:8px 0 24px}
   </div>
 </div></div>
 
-<script src="cube-engine.js?v=6"></script>
-<script src="cube-app.js?v=6"></script>
+<script src="cube-engine.js?v=7"></script>
+<script src="cube-app.js?v=7"></script>
 </body>
 </html>

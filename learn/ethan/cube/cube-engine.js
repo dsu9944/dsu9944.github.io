@@ -289,8 +289,9 @@ function createTracker(scramble,start,targetState){
       if(eq(state,target)){fixup="";lastOn=snaps[snaps.length-1];}
       else{
         const found=matchSnap(snaps,state);
+        /* If FACELETS matches a path snapshot, use it. If it doesn't, keep MOVE progress
+           (lastOn / fixup). Clearing those used to rewind a half-turn after MOVE then FACELETS. */
         if(found){fixup="";lastOn=found;}
-        else fixup="";
       }
     }
     return snapshot();
@@ -845,7 +846,9 @@ function createApp(opts){
   function skipScramble(){return newScramble();}
 
   function onMove(evt){
-    const m=normalizeMove(evt&&(evt.move||evt));
+    /* gan-web-bluetooth's `move` string is authoritative (never rebuild from face/direction:
+       those fields can disagree on D/L/B depending on axis convention). i3 never sends "D2". */
+    const m=normalizeMove(typeof evt==="string"?evt:(evt&&evt.move));
     if(!m)return;
     const ts={
       move:m,
