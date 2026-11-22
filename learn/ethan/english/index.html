@@ -490,8 +490,8 @@ const fw=d=>({2:'halves',3:'thirds',4:'quarters',5:'fifths',6:'sixths',7:'sevent
 
 /* ===== Ethan's English practice topics (NSW English K–10 Syllabus 2022, Stage 1 → Stage 2) =====
    About 10 minutes a day. Mostly tap-the-answer, with some short typed spelling on a letter keypad.
-   Engine levels 0..3 (a new topic starts at 1): 0 = Year 2 review, 1 = early Year 3, 2 = Year 3, 3 = early Year 4 stretch.
-   pt47u, pt55u, then pt59u: solidly Year 3 and early Year 4 (harder spelling/suffixes, prefixes, homophones, tense, complex sentences, inference).
+   Engine levels 0..3 (a new topic starts at 1): 0 = Year 2 review, 1 = early Year 3, 2 = Year 3, 3 = upper Year 3 / early Year 4 stretch.
+   pt47u, pt55u, pt59u, then pt104u (4th step-up): upper Year 3 and early Year 4 (harder -tion/-sion, typo-prone spelling, word-class traps, inference).
    Every question has: hint (short), hint2 ("More help"), explain (steps) and why (one line for the results list). */
 const ENK=(function(){
   const J=a=>a.join('<br>');
@@ -516,9 +516,10 @@ const ENK=(function(){
 window.ENKIT=ENK;
 const ENE=(function(){
   const {J,sent,emo,M,uniq,tiles,spellE,parse,CN}=ENK;
-  /* Prefer the current Year 3–4 band; often stretch one level. Drop very easy Year 2 items once a topic has started. */
-  function poolLvl(arr,l,idx){const stretch=Math.min(3,l+(l>=1&&chance(0.8)?1:0));let ok=arr.filter(x=>x[idx]<=stretch);if(!ok.length)ok=arr.filter(x=>x[idx]<=l);
-    const floor=l>=2?l:(l>=1?1:0);const prefer=ok.filter(x=>x[idx]>=floor);return prefer.length?prefer:ok;}
+  /* Prefer upper Year 3 / early Year 4; almost always stretch one level. Once a topic has started, drop Year 2 and early Year 3 fillers. */
+  function poolLvl(arr,l,idx){const stretch=Math.min(3,l+(l>=1&&chance(0.9)?1:0));let ok=arr.filter(x=>x[idx]<=stretch);if(!ok.length)ok=arr.filter(x=>x[idx]<=l);
+    const floor=l>=3?3:(l>=1?2:0);const prefer=ok.filter(x=>x[idx]>=floor);if(prefer.length)return prefer;
+    const mid=ok.filter(x=>x[idx]>=Math.max(0,floor-1));return mid.length?mid:ok;}
   const pickL=(arr,l,idx)=>pick(poolLvl(arr,l,idx));
 
   /* ---------------- warm-up: rhymes, syllables, ABC order ---------------- */
@@ -527,26 +528,32 @@ const ENE=(function(){
     ['night',['light','kite','bright'],['nest','knot','neat','new'],1],['tree',['bee','sea','key'],['tray','try','toe','ten'],1],['coat',['boat','goat','note'],['cot','cut','cart','cool'],1],
     ['star',['car','jar','far'],['stair','stop','sky','step'],1],['moon',['spoon','soon','balloon'],['moan','mean','mine','mud'],1],
     ['chair',['bear','pear','hair'],['cheer','chin','chop','shoe'],2],['clock',['sock','rock','block'],['cloud','click','clap','lake'],2],['snow',['grow','toe','glow'],['snap','snake','sneeze','sun'],2],
-    ['great',['late','eight','straight'],['greet','grant','green','gate'],3],['heard',['bird','third','stirred'],['heart','hard','head','herd'],3]];
+    ['great',['late','eight','straight'],['greet','grant','green','gate'],3],['heard',['bird','third','stirred'],['heart','hard','head','herd'],3],
+    ['weight',['late','eight','straight'],['wait','white','wheat','height'],3],['through',['blue','flew','shoe'],['though','thought','throw','tough'],3],
+    ['break',['steak','ache','make'],['brake','bread','breaked','brick'],3]];
   const SYL=[['cat',1],['frog',1],['school',1],['sun',1],['rabbit',2],['pencil',2],['monkey',2],['tiger',2],['apple',2],['window',2],
     ['elephant',3],['banana',3],['dinosaur',3],['kangaroo',3],['umbrella',3],['computer',3],['butterfly',3],['crocodile',3],
-    ['helicopter',4],['watermelon',4],['caterpillar',4],['alligator',4]];
+    ['helicopter',4],['watermelon',4],['caterpillar',4],['alligator',4],
+    ['information',4],['invitation',4],['celebration',4],['calculator',4],['Australia',4],
+    ['hippopotamus',5],['electricity',5],['university',5],['imagination',5],['refrigerator',5]];
   const ABCW=['ant','bus','cat','duck','egg','fish','goat','hat','ink','jam','kite','lion','moon','nest','owl','pig','queen','rain','sun','tap','van','web','yak','zoo'];
   const ABC2=[['sand','seal','sock','sun'],['bat','bed','bin','bus'],['cake','cloud','cow','cup'],['tap','ten','tiger','tree'],['map','milk','moon','mud'],['pan','pet','pig','pond'],['rat','red','ring','rock'],['dad','den','dig','dog']];
   const ABC3=[['stand','star','stamp','stay'],['chair','chop','chin','chess'],['break','brush','brave','bring'],['cloud','clap','clock','close'],['train','trap','tree','trick'],['splash','split','spoon','sport']];
+  const ABC4=[['stream','stroke','strip','straw'],['three','throw','thrill','thrust'],['scratch','scream','scroll','script'],['grain','grant','grape','grass']];
   const quick={id:'quick',title:'Quick Sounds',icon:'⚡',warm:true,dedupByText:true,code:'EN1-PHOKW-01 · EN1-SPELL-01',
     blurb:'Rhyming words, clapping syllables and ABC order.',
     subs:l=>l>=1?['rhyme','syll','abc']:['rhyme','syll'],
     gen(H,l,sub){
-      if(sub==='syll'){const [w,n]=pick(SYL.filter(x=>l>=2?x[1]>=3:l>=1?x[1]>=2:x[1]<=2));
+      if(sub==='syll'){const [w,n]=pick(SYL.filter(x=>l>=2?x[1]>=4:l>=1?x[1]>=3:x[1]<=2));
+        const choices=n>=5?['2','3','4','5']:['1','2','3','4'];
         return M(Object.assign({sub,prompt:`How many syllables (beats) in <b>${w}</b>?`,vis:emo('👏'),hint:'Clap the word slowly. Count each clap you make.',hint2:'Put your hand under your chin. Count each time it drops.',
-          explain:J([`Clap it: ${w}.`,`That is <b>${n}</b> beat${n>1?'s':''}.`]),why:`“${w}” has ${n} beat${n>1?'s':''} when you clap it.`},fixedOpts(['1','2','3','4'],n-1,'txt')),{type:'syll'});}
-      if(sub==='abc'){let ws,mode=l>=2?(chance(0.5)?2:1):(l>=1&&chance(0.75)?1:0);
-        if(mode===2)ws=shuffle(pick(ABC3).slice());else if(mode===1)ws=shuffle(pick(ABC2).slice());else ws=shuffle(ABCW.slice()).slice(0,4);
+          explain:J([`Clap it: ${w}.`,`That is <b>${n}</b> beat${n>1?'s':''}.`]),why:`“${w}” has ${n} beat${n>1?'s':''} when you clap it.`},fixedOpts(choices,choices.indexOf(String(n)),'txt')),{type:'syll'});}
+      if(sub==='abc'){let ws,mode=l>=2?(chance(0.65)?3:2):(l>=1&&chance(0.75)?1:0);
+        if(mode===3)ws=shuffle(pick(ABC4).slice());else if(mode===2)ws=shuffle(pick(ABC3).slice());else if(mode===1)ws=shuffle(pick(ABC2).slice());else ws=shuffle(ABCW.slice()).slice(0,4);
         const a=ws.slice().sort()[0];
-        const h1=mode===2?'They start with the same two letters. Look at the third letter.':mode===1?'All the words start the same. Look at the second letter instead.':'Look at the first letter of each word. Which comes first in the alphabet?';
-        const ex1=mode===2?'They start with the same two letters, so look at the third.':mode===1?'They all start with the same letter, so look at the second letter.':'Look at the first letters.';
-        const wh=mode===2?`Look at the third letters: “${a}” comes first in the alphabet.`:mode===1?`Look at the second letters: “${a}” comes first in the alphabet.`:`“${a.charAt(0)}” comes first in the alphabet, so “${a}” is first.`;
+        const h1=mode>=3?'They begin with the same opening letters. Look at the 4th letter.':mode===2?'They start with the same two letters. Look at the third letter.':mode===1?'All the words start the same. Look at the second letter instead.':'Look at the first letter of each word. Which comes first in the alphabet?';
+        const ex1=mode>=3?'They begin with the same opening letters, so look at the 4th.':mode===2?'They start with the same two letters, so look at the third.':mode===1?'They all start with the same letter, so look at the second letter.':'Look at the first letters.';
+        const wh=mode>=3?`Look at the fourth letters: “${a}” comes first in the alphabet.`:mode===2?`Look at the third letters: “${a}” comes first in the alphabet.`:mode===1?`Look at the second letters: “${a}” comes first in the alphabet.`:`“${a.charAt(0)}” comes first in the alphabet, so “${a}” is first.`;
         return M(Object.assign({sub,prompt:'Which word comes <b>first</b> in ABC order?',vis:'',hint:h1,
           hint2:'Sing the alphabet slowly. Stop when you reach one of the letters.',explain:J([ex1,`<b>${a}</b> comes first.`]),
           why:wh},opts(a,ws.filter(x=>x!==a),{cls:'txt'})),{type:'abc'});}
@@ -614,7 +621,23 @@ const ENE=(function(){
     ['honest','🤝','Someone who always tells the truth','h',['o','n','t'],3,'silent'],
     ['island','🏝️','Land with water all around it','s',['i','l','a'],3,'silent'],
     ['closing','🚪','The shop is doing this at the end of the day','closing',['closeing','clossing','closin'],3,'double'],
-    ['planned','🗓️','We already ___ the party yesterday','planned',['planed','plannned','pland'],3,'double']];
+    ['planned','🗓️','We already ___ the party yesterday','planned',['planed','plannned','pland'],3,'double'],
+    ['celebration','🎉','A party for something special','tion',['sion','cian','shun'],3,'tion'],
+    ['information','ℹ️','Facts you find out about something','tion',['sion','cian','shun'],3,'tion'],
+    ['invitation','✉️','A note asking someone to come','tion',['sion','cian','shun'],3,'tion'],
+    ['direction','➡️','The way you need to go','tion',['sion','cian','shun'],3,'tion'],
+    ['description','📝','Words that tell what something is like','tion',['sion','cian','shun'],3,'tion'],
+    ['decision','⚖️','A choice you have made','sion',['tion','cian','shun'],3,'tion'],
+    ['confusion','😵','When things feel mixed up','sion',['tion','cian','shun'],3,'tion'],
+    ['permission','✅','Being allowed to do something','sion',['tion','cian','shun'],3,'tion'],
+    ['explosion','💥','A sudden loud burst','sion',['tion','cian','shun'],3,'tion'],
+    ['occasion','🎈','A special event or time','sion',['tion','cian','shun'],3,'tion'],
+    ['mysterious','🕵️','Hard to explain or full of secrets','ous',['us','ious','ise'],3,'tion'],
+    ['curious','🧐','Wanting to find things out','ous',['us','ious','ise'],3,'tion'],
+    ['whistle','🎵','You blow it to make a high sound','t',['w','h','s'],3,'silent'],
+    ['receipt','🧾','The slip you get after you pay','p',['r','c','t'],3,'silent'],
+    ['beginning','▶️','The very start of something','beginning',['begining','beginnning','beggining'],3,'double'],
+    ['coming','🚶','On the way here now','coming',['comeing','comming','comingg'],3,'double']];
   const phonics={id:'phonics',title:'Sounds and Letters',icon:'🔤',dedupByText:true,code:'EN1-PHOKW-01 · EN1-SPELL-01 → EN2-SPELL-01',
     blurb:'Digraphs, vowel teams, and Year 3–4 stretch: -tion/-sion/-ous, silent letters and suffix rules.',
     subs:l=>l>=2?['digraph','vowel','spell','pattern']:l>=1?['digraph','vowel','vowel','spell']:['digraph','vowel','vowel'],
@@ -628,7 +651,7 @@ const ENE=(function(){
           explain:J([`<b>${p}</b> is the correct spelling.`,`Check the vowel sound, then the last consonant.`]),why:`“${p}” follows the doubling (or drop-e) spelling rule.`},opts(p,d,{cls:'txt'})),{type:'pattern',w});
         const at=w.indexOf(p);const shun=p==='tion'||p==='sion';
         return M(Object.assign({sub,prompt:'Which letters finish the picture word?',vis:emo(e)+`<div class="small">${clue}</div>`+tiles(w,at,p.length),
-          hint:shun?'This ending sounds a bit like “shun”. Picture how it looks in a book.':'This ending often means “full of”. Picture the letters in a book.',
+          hint:shun?'This ending sounds a bit like “shun”. Picture the whole word in a book.':'This ending often means “full of”. Picture the letters in a book.',
           hint2:shun?'Lots of naming words use the same four-letter ending.':'Say the ending slowly. Which letters make that sound?',
           explain:J([`Say it: ${w}.`,`The ending is spelt <b>${p}</b>.`]),why:`“${w}” ends with the letters ${p}.`},opts(p,d,{cls:'txt'})),{type:'pattern',w});}
       if(sub==='digraph'){const [w,e,clue,p,pos,d]=pickL(DIG,l,6);const at=pos==='start'?0:w.lastIndexOf(p);
@@ -656,17 +679,28 @@ const ENE=(function(){
     ['people',['peple','peeple','pepole'],'Lots of ___ came to the show.','eo',1],['where',['wher','whare','wair'],'Do you know ___ my hat is?','ere',1],
     ['could',['cud','coud','culd'],'I ___ see the moon last night.','oul',1],['would',['wud','woud','wuld'],'I ___ like a drink, please.','oul',1],
     ['water',['worter','wotter','watter'],'Fish swim in the ___.','a',1],['school',['skool','scool','shool'],'We walk to ___ each day.','ch',1],
-    ['should',['shud','shoud','shuld'],'You ___ wear a helmet on your bike.','oul',2],['does',['duz','dus','doez'],'Where ___ the cat sleep?','oe',2],
+    ['should',['shud','shoud','shild'],'You ___ wear a helmet on your bike.','oul',3],['does',['duz','dus','doez'],'Where ___ the cat sleep?','oe',3],
     ['once',['wons','wunce','onse'],'I went on a plane ___, when I was little.','o',2],['laugh',['laff','larf','lauf'],'Funny jokes make me ___.','augh',3],
     ['Wednesday',['Wensday','Wendsday','Wednsday'],'After Tuesday comes ___.','dn',3],['busy',['bizzy','bizy','buzy'],'The shops are very ___ today.','u',3],
     ['enough',['enuff','enogh','enouph'],'Have you had ___ to eat?','ough',3],['though',['tho','thow','thou'],'It was cold, ___ the sun was out.','ough',3],
     ['famous',['famus','fameous','famouse'],'The actor is very ___.','ou',3],['special',['speacial','speshal','specal'],'Today is a ___ day.','ci',3],
     ['straight',['strate','strait','straite'],'Draw a ___ line across the page.','aight',3],
-    ['surprise',['suprise','surprize','sirprise'],'The party was a big ___.','ur',3],
+    ['surprise',['suprise','surprize','serprise'],'The party was a big ___.','ur',3],
     ['favourite',['favorit','favrit','favourit'],'Blue is my ___ colour.','our',3],
     ['separate',['seperate','seprate','seperete'],'Please ___ the recycling.','a',3],
     ['through',['throo','thrugh','thur'],'We walked ___ the tunnel.','ough',3],
     ['thought',['thort','thoght','thougt'],'I ___ the answer was six.','ough',3],
+    ['believe',['beleive','belive','belief'],'I ___ we can finish this.','ie',3],
+    ['receive',['recieve','receve','riceive'],'Did you ___ my message?','ei',3],
+    ['caught',['caut','caugt','cought'],'Sam ___ the ball with one hand.','augh',3],
+    ['naughty',['norty','nauty','noughty'],'The ___ puppy chewed the shoe.','augh',3],
+    ['height',['hight','heigth','hieth'],'What is the ___ of that tree?','eigh',3],
+    ['library',['libary','librery','librey'],'We borrowed a book from the ___.','ra',3],
+    ['knowledge',['nowledge','knowlege','knolledge'],'She has a lot of ___ about birds.','know',3],
+    ['disappear',['dissappear','disapear','dissapear'],'The coins seemed to ___ in his hand.','pp',3],
+    ['necessary',['neccessary','necesary','neccesary'],'A coat is ___ on a cold day.','ss',3],
+    ['interesting',['intresting','intersting','interisting'],'That was an ___ science lesson.','e',3],
+    ['different',['diffrent','differnt','diferent'],'Each snowflake looks ___.','e',3],
   ];
   const where=(w,p)=>{const i=w.indexOf(p);return i===0?'beginning':i+p.length>=w.length?'end':'middle';};
   const HP=[['there','The books are over ___.',['their',"they're"],'in that place',2],['their','The children packed ___ bags.',['there',"they're"],'belonging to them',2],
@@ -682,7 +716,15 @@ const ENE=(function(){
     ['passed','The bus ___ the school gate.',['past','passt'],'went by',3],
     ['past','It happened in the ___.',['passed','passt'],'time already gone',3],
     ['quiet','Please be ___ in the library.',['quite','quit'],'not noisy',3],
-    ['quite','This puzzle is ___ tricky.',['quiet','quit'],'fairly or rather',3]];
+    ['quite','This puzzle is ___ tricky.',['quiet','quit'],'fairly or rather',3],
+    ['allowed','We are not ___ to run in the hall.',['aloud','alouded'],'given permission',3],
+    ['aloud','Please read the poem ___.',['allowed','alouded'],'out loud, so others can hear',3],
+    ['peace','The garden was full of ___.',['piece','peice'],'calm, not fighting',3],
+    ['piece','Can I have a ___ of cake?',['peace','peice'],'a part of something',3],
+    ['break','Be careful not to ___ the glass.',['brake','braik'],'to smash or snap',3],
+    ['brake','Press the ___ to stop the bike.',['break','braik'],'the part that stops a vehicle',3],
+    ['which','___ path should we take?',['witch','wich'],'asking for a choice',3],
+    ['witch','The story was about a kind ___.',['which','wich'],'a storybook character',3]];
   const sight={id:'sight',title:'Tricky Words',icon:'👀',dedupByText:true,code:'EN1-SPELL-01 · EN2-SPELL-01',
     blurb:'Tricky high-frequency spellings, plus Year 3–4 homophones in context (whose/who’s, weather/whether, past/passed).',
     subs:l=>l>=2?['pick','fill','homo']:['pick','pick','fill'],
@@ -720,6 +762,13 @@ const ENE=(function(){
     ['{Lina:n} {wrote:v} a {detailed:a} {report:n} after she {examined:v} the {fossil:n}.',3],
     ['The {tired:a} {hikers:n} {rested:v} {briefly:d} before the {steep:a} {climb:n}.',3],
     ['{Tom:n} {has:v} already {eaten:v} the {last:a} {apple:n}, so we {need:v} another {one:n}.',3],
+    ['A {sudden:a} {crash:n} {startled:v} the {sleepy:a} {audience:n}.',3],
+    ['The {empty:a} {bottle:n} {rolled:v} {slowly:d} across the {kitchen:n} {floor:n}.',3],
+    ['The {cook:n} {tasted:v} the {spicy:a} {soup:n} {carefully:d}.',3],
+    ['A {visit:n} from {Grandma:n} {cheered:v} the {sick:a} {boy:n}.',3],
+    ['The {light:n} {sparkled:v} on the {calm:a} {lake:n}.',3],
+    ['Because the {gate:n} was {stuck:a}, the {keeper:n} {tugged:v} {firmly:d} on the {rusty:a} {handle:n}.',3],
+    ['After the {speech:n}, a {long:a} {silence:n} {filled:v} the {hall:n}.',3],
   ];
   const WCH={n:['A noun is a person, place or thing. Find the thing word.','Can you put “the” or “a” in front of it? Then it is a noun.'],
     v:['A verb is a doing word. What happens in the sentence?','Ask: what did someone or something do? That word is the verb.'],
@@ -818,7 +867,7 @@ const ENE=(function(){
   const CW=[['sun','flower','🌻',0],['foot','ball','⚽',0],['rain','bow','🌈',0],['cup','cake','🧁',0],['star','fish','⭐',0],['butter','fly','🦋',0],['tooth','brush','🪥',0],
     ['pop','corn','🍿',0],['snow','man','☃️',0],['bed','room','🛏️',0],['play','ground','🛝',1],['sand','castle','🏰',1],['lady','bird','🐞',1],['jelly','fish','🪼',1],
     ['back','pack','🎒',1],['door','bell','🔔',1],['rain','coat','🧥',1],['water','melon','🍉',1],['sea','shell','🐚',1],['grand','mother','👵',2],['every','one','👨‍👩‍👧',2],
-    ['some','thing','❓',2],['light','house','🗼',2],['tea','pot','🫖',2],['hand','bag','👜',2],['pan','cake','🥞',2],['wheel','chair','🧑‍🦽',3],['finger','nail','💅',3]];
+    ['some','thing','❓',2],['light','house','🗼',2],['tea','pot','🫖',2],['hand','bag','👜',2],['pan','cake','🥞',2],['wheel','chair','🧑‍🦽',3],['finger','nail','💅',3],['earth','quake','🌍',3],['note','book','📓',3],['head','light','💡',3],['shop','keeper','🛍️',3]];
   const REALC=new Set(CW.map(x=>x[0]+x[1]).concat('sunshine snowball snowflake starlight raindrop footprint bathroom bedtime playtime handshake backyard doorway cupboard sandpit rainfall seaweed toothpaste firefly sunset sunrise someone anyone everything nothing somewhere everywhere nowhere anything sandbox handball basketball ballroom sunglasses mailbox snowman football footpath teacup teaspoon housework doormat lighthouse playroom bedroom backpack fishbowl starship sunburn sandman seaside seahorse handstand handmade backbone'.split(' ')));
   const NONC=['pencil','monkey','garden','yellow','rabbit','kitten','tomato','dinner','turtle','spider','jacket','dragon','sister','purple','number','orange','lemon','tiger','zebra','planet'];
   const NONC2=['carpet','window','magnet','pillow','helmet','basket','market','planet','garden','jacket'];
@@ -899,14 +948,18 @@ const ENE=(function(){
     ['brave','bold',['scared','shy','lazy'],2],['damp','wet',['dry','warm','rough'],3],['gaze','stare',['blink','shut','sleep'],3],
     ['vanish','disappear',['appear','arrive','gather'],3],['glance','peek',['stare','shout','grab'],3],['scarce','rare',['common','plenty','usual'],3],['clever','intelligent',['silly','clumsy','slow'],3],
     ['furious','enraged',['annoyed','cross','upset'],3],['rapid','swift',['sudden','busy','early'],3],['precious','valuable',['pretty','shiny','heavy'],3],
-    ['cautious','careful',['fearful','slow','quiet'],3],['ancient','very old',['elderly','historic','used'],3]];
+    ['cautious','careful',['fearful','slow','quiet'],3],['ancient','very old',['elderly','historic','used'],3],
+    ['reluctant','unwilling',['lazy','tired','shy'],3],['astonished','amazed',['confused','worried','curious'],3],
+    ['ordinary','usual',['special','famous','perfect'],3],['certain','sure',['lucky','brave','honest'],3]];
   const ANT=[['big','small',['large','huge','tall'],0],['hot','cold',['warm','sunny','boiling'],0],['up','down',['high','over','top'],0],['happy','sad',['glad','cheerful','jolly'],0],
     ['fast','slow',['quick','rapid','speedy'],0],['wet','dry',['damp','soggy','moist'],0],['full','empty',['packed','stuffed','heavy'],0],['old','new',['ancient','aged','grey'],0],
     ['day','night',['morning','sun','week'],0],['loud','quiet',['noisy','booming','big'],0],['push','pull',['shove','press','move'],1],['early','late',['soon','first','quick'],1],
     ['win','lose',['beat','score','play'],1],['float','sink',['swim','drift','bob'],1],['top','bottom',['peak','up','high'],1],['smooth','rough',['flat','silky','soft'],2],
     ['shallow','deep',['low','flat','thin'],2],['always','never',['often','forever','every'],2],['arrive','leave',['come','reach','enter'],3],['ancient','modern',['old','dusty','huge'],3],
     ['scarce','plentiful',['rare','few','limited'],3],['generous','selfish',['kind','giving','helpful'],3],
-    ['brave','cowardly',['careful','quiet','calm'],3],['expand','shrink',['grow','stretch','spread'],3],['victory','defeat',['prize','score','game'],3]];
+    ['brave','cowardly',['careful','quiet','calm'],3],['expand','shrink',['grow','stretch','spread'],3],['victory','defeat',['prize','score','game'],3],
+    ['reluctant','eager',['afraid','tired','lazy'],3],['ordinary','extraordinary',['plain','simple','usual'],3],
+    ['certain','uncertain',['careful','honest','ready'],3]];
   const synant={id:'synant',title:'Same and Opposite',icon:'🔁',dedupByText:true,code:'EN1-VOCAB-01 · EN2-VOCAB-01',
     blurb:'Synonyms (same meaning: big → large) and antonyms (opposites: big → small).',
     subs:l=>['syn','ant'],
@@ -928,7 +981,10 @@ const ENE=(function(){
     ['We will start lunch ___ everyone is sitting down.','when',3],['___ you heat ice, it turns into water.','If',3],
     ['The path was muddy, ___ we still kept walking.','yet',3],['I have lived here ___ I was five.','since',3],
     ['Brush your teeth ___ you go to bed.','before',3],['We went straight home ___ the match ended.','after',3],
-    ['___ the hill was steep, they kept climbing.','Even though',3]];
+    ['___ the hill was steep, they kept climbing.','Even though',3],
+    ['We packed extra water ___ the walk was long.','because',3],
+    ['The museum was busy, ___ the children stayed close to Dad.','so',3],
+    ['I would have been late, ___ the bus came early.','but',3]];
   const CJD={and:['but','because','so'],but:['so','because','although'],because:['so','but','when'],so:['because','but','if'],
     when:['because','if','while'],if:['because','when','unless'],while:['because','when','and'],until:['when','because','so'],unless:['if','because','until'],Although:['Because','So','But'],If:['When','Because','Although'],
     yet:['but','so','because'],since:['when','because','until'],before:['after','until','when'],after:['before','until','when'],'Even though':['Because','Although','If']};
@@ -957,7 +1013,7 @@ const ENE=(function(){
     ['quick','ly','in a quick way',2],['careful','ly','in a careful way',3],['act','tion','the naming word from act',3],
     ['behave','mis','behave badly',3],['place','mis','put in the wrong place',3],['spell','mis','spell wrongly',3],
     ['load','over','load too much',3],['sleep','over','sleep too much',3],
-    ['danger','ous','having a lot of danger',3],['fame','ous','known by many people',3],['market','super','a bigger market',3]];
+    ['danger','ous','having a lot of danger',3],['fame','ous','known by many people',3],['market','super','a bigger market',3],['honest','dis','not honest',3],['joy','ous','having a lot of joy',3],['nerve','ous','feeling worried',3],['connect','tion','the naming word from connect',3]];
   const afW=(r,x)=>['un','re','dis','pre','mis','over','super'].includes(x)?x+r:x==='tion'&&r.endsWith('t')?r+'ion':r+x;
   const AFM={un:'not, or the opposite',re:'again',dis:'not, or the opposite',pre:'before',ful:'full of',less:'without',ness:'the state of being',ment:'the act of',ly:'in that way',tion:'the naming word from a verb',mis:'wrongly, or badly',over:'too much',super:'bigger, or above',ous:'having that quality'};
   const affix={id:'affix',title:'Word Starts and Endings',icon:'🧱',dedupByText:true,code:'EN1-VOCAB-01 · EN2-SPELL-01',
@@ -1029,11 +1085,15 @@ const ENE=(function(){
      q:[['literal','Which runner was Noah?','the third runner',['the first runner','the second runner','the last runner']],['infer','Why did Noah wipe his hands?','He did not want to drop the baton.',['The track was wet from rain.','His shorts were muddy.','Priya had asked him to stop.']],['infer','Who was waiting to run last?','Priya',['Noah','the second runner','the teacher']],['vocab','In the story, “pound” means','run with heavy, fast steps',['hit the baton with a fist','stand still and wait','whisper to the crowd']]]},
     {t:'Whale Watch',lv:3,x:'The class stood on the headland with the wind in their faces. For a long time the sea was empty. Then a dark shape rose and a spout of water shot into the air. “There!” whispered Mr Chen. Nobody cheered. They watched in silence until the whale slipped under again, as if they might scare it away.',
      q:[['literal','Where was the class standing?','on the headland',['on the beach path','in the school hall','on a ferry deck']],['infer','Why did nobody cheer when the whale appeared?','They did not want to frighten it.',['They had not seen it clearly.','Mr Chen told them to go home.','The wind was too loud to shout.']],['infer','What does the spout of water tell us?','The whale was breathing out at the surface.',['A boat had crashed nearby.','Rain had started to fall.','The class had thrown a stone.']],['vocab','In the story, a “headland” is','high land sticking out by the sea',['a cave under the cliffs','the deck of a ferry','a path down to the beach']]]},
+    {t:'The Borrowed Umbrella',lv:3,x:'On the way to the bus, Ami noticed the sky had turned a heavy grey. She almost turned back for her umbrella, but the bus was already pulling in. At the next stop an older boy stood up and held out a folded one. “Keep it till tomorrow,” he said, and hopped off before she could ask his name. Ami arrived at school dry, the umbrella dripping in her hand, and wondered how she would ever return it.',
+     q:[['literal','How did Ami arrive at school?','dry, holding a dripping umbrella',['soaked, without a bag','late, running for the bell','with her own umbrella']],['infer','Why did Ami almost turn back?','She thought it was about to rain.',['She had forgotten her school bag.','The bus was not coming.','She wanted to talk to the boy.']],['infer','Why was it hard for Ami to return the umbrella?','She did not know the boy’s name.',['The umbrella was already broken.','The teacher had taken it.','She had left it on the bus.']],['vocab','In the story, a “heavy grey” sky means','dark, as if a storm is coming',['pale and sunny','full of smoke from a fire','covered in thick fog']]]},
+    {t:'The Science Fair',lv:3,x:'Jae’s volcano had failed twice at home, and the science fair was after lunch. He stayed in the classroom while the others went out to play, mixing the powder more slowly this time and checking his notes. When his name was called, the model bubbled just enough. He did not grin until he was back at his table, packing the tray away.',
+     q:[['literal','When was the science fair?','after lunch',['before school','during playtime','the next morning']],['infer','Why did Jae stay inside at playtime?','He wanted one more careful practice.',['The teacher would not let him go out.','His volcano had already been packed away.','He was feeling too unwell to play.']],['infer','Why did Jae wait until later to grin?','He was concentrating until he knew it had worked.',['He had not wanted the volcano to bubble.','Someone else had finished his model.','The fair had been cancelled.']],['vocab','In the story, “failed” means','did not work as planned',['won a prize','was packed away early','was too slow to start']]]},
   ];
   const comp={id:'comp',title:'Reading Detective',icon:'📖',dedupByText:true,code:'EN1-RECOM-01 → EN2-RECOM-01',
     blurb:'Reading short stories and facts: literal questions, inference from clues, and vocabulary in context.',
     subs:l=>l>=2?['infer','infer','vocab','literal']:['literal','infer'],
-    gen(H,l,sub){const stretch=Math.min(3,l+(l>=1?1:0));const floor=l>=2?l:(l>=1?1:0);const ps=P.filter(p=>p.lv<=stretch);const prefer=ps.filter(p=>p.lv>=floor);const pool=prefer.length?prefer:ps;for(let t=0;t<40;t++){const p=pick(pool);const qs=p.q.filter(x=>x[0]===sub);if(!qs.length)continue;const [k,qq,a,d]=pick(qs);
+    gen(H,l,sub){const stretch=Math.min(3,l+(l>=1?1:0));const floor=l>=3?3:(l>=1?2:0);const ps=P.filter(p=>p.lv<=stretch);const prefer=ps.filter(p=>p.lv>=floor);const pool=prefer.length?prefer:ps;for(let t=0;t<40;t++){const p=pick(pool);const qs=p.q.filter(x=>x[0]===sub);if(!qs.length)continue;const [k,qq,a,d]=pick(qs);
         return M(Object.assign({sub,prompt:qq,vis:`<div class="passage"><b>${p.t}</b><p>${p.x}</p></div>`,
           hint:k==='literal'?'The answer is written in the story. Find the sentence that tells you.':k==='vocab'?'Read the sentence around the word. Which meaning fits best?':'The answer is not written exactly. Use clues from the story.',
           hint2:k==='literal'?'Look for a key word from the question in the story.':k==='vocab'?'Swap each choice into the sentence. Which one still makes sense?':'Think about what the clues show. What would you feel or do?',
@@ -1045,7 +1105,7 @@ const ENE=(function(){
   return {quick,phonics,sight,wordclass,punct,compound,plurals,past,synant,conj,affix,contract,comp};
 })();
 const TOPICS_ENE=Object.values(ENE);
-const CFG_ENE={player:'ethan',name:'Ethan',theme:'ethan',year:'Year 3 → early Year 4',warm:'quick',
+const CFG_ENE={player:'ethan',name:'Ethan',theme:'ethan',year:'upper Year 3 → early Year 4',warm:'quick',
   path:['phonics','sight','wordclass','punct','compound','plurals','past','synant','conj','affix','contract','comp'],start:'phonics',games:{},moreLabel:'More help'};
 
 const BUILTIN=TOPICS_ENE,CFG=CFG_ENE;
@@ -1102,7 +1162,7 @@ function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){
 /* ---------- lesson planning: Ethan's English practice, about 10 minutes (18-20 questions) ----------
    Normal day: 2 warm-up, 6 new-topic, 6 mixed, 2 fix-it, 2 challenge (18).
    School-focus weekday: the school topic is about 2/3 (14 of 20): worked example + 8 school, 5 new-topic, then mix/fix/challenge on the school topic.
-   pt47u + pt55u + pt59u: later school/new/challenge/mix items stretch a level; Word detectives prefers multi-step types.
+   pt47u + pt55u + pt59u + pt104u: later school/new/challenge/mix items stretch a level (more of the mix now stretches); Word detectives prefers multi-step types.
    Review day (Fri, or Sat/Sun catch-up): this week's practice and mistakes (20); a school topic from this week is about 2/3. */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
@@ -1112,7 +1172,7 @@ function planLesson(date,variant=0){
   const mixW=id=>{const t=S.topics[id];const since=t&&t.last?Math.min(6,daysBetween(t.last,date)):6;return 1+3*(1-acc(id))+since/2+(wf.includes(id)?3:0)+(id===cur?0.5:0);};
   const mistakes=(pred,days)=>{const m={};S.log.filter(e=>!e.ok&&e.d<date&&daysBetween(e.d,date)<=days&&TOPICS[e.t]&&!TOPICS[e.t].warm&&pred(e)).forEach(e=>{const k=e.t+'|'+(e.s||'');m[k]=(m[k]||0)+1;});return m;};
   const subOf=(m,t)=>{const ks=Object.keys(m).filter(k=>k.split('|')[0]===t&&k.split('|')[1]);return ks.length?wpick(ks,k=>m[k]).split('|')[1]:null;};
-  const newSec=n=>{if(!cur)return;if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<n;i++)add('new',cur,{guided:i<1&&T(cur).les.length===0,up:i>=n-2?1:0});};
+  const newSec=n=>{if(!cur)return;if(T(cur).les.length===0)add('new',cur,{kind:'example'});for(let i=0;i<n;i++)add('new',cur,{guided:i<1&&T(cur).les.length===0,up:i>=n-3?1:0});};
   const review=isReviewDay(date);
   let kind=review?'review':'mix';
   if(!review&&focusToday.length){
@@ -1131,7 +1191,7 @@ function planLesson(date,variant=0){
     for(let i=0;i<2;i++)add('warm',CFG.warm,{});
     newSec(6);
     const pl=pool.length?pool:(cur?[cur]:[CFG.warm]);
-    interleave(pl,6,mixW).forEach((t,i)=>add('mix',t,{up:i>=3?1:0}));
+    interleave(pl,6,mixW).forEach((t,i)=>add('mix',t,{up:i>=2?1:0}));
     const rm=mistakes(()=>true,14),rk=Object.keys(rm);
     for(let i=0;i<2;i++){const fk=rk.length?wpick(rk,k=>rm[k]):(pl.slice().sort((a,b)=>acc(a)-acc(b))[0]+'|');const [t,s]=fk.split('|');add('fix',t,{sub:s||null});}
     const ch=pool.concat(cur?[cur]:[]);for(let i=0;i<2;i++)add('challenge',ch.length?pick(ch):CFG.warm,{up:1});
