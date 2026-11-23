@@ -180,6 +180,13 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
 #bodyScanGate .row .btn{min-width:160px}
 #bodyScanDone.hidden{display:none!important}
 
+/* optional next-lesson rating on the results screen */
+.next-rate{text-align:center;margin:16px 0 8px;padding:12px 8px}
+.next-rate-label{font-weight:800;font-size:1.3rem;color:var(--main);margin:0 0 12px}
+.next-rate-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+.next-rate-btns .rate-btn{flex:1 1 130px;max-width:200px;overflow-wrap:anywhere}
+.rate-btn.on,.rate-btn[aria-pressed="true"]{box-shadow:0 0 0 4px var(--main),0 4px 0 var(--shadow)}
+
 /* ===== English revision extras ===== */
 .opts.sent{grid-template-columns:1fr;max-width:640px}
 .opts.sent .opt{font-size:1.1rem;text-align:left;justify-content:flex-start;min-height:56px;padding:12px 16px;line-height:1.35}
@@ -1047,7 +1054,7 @@ const longDate=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long',day:'nume
 const weekday=s=>parseD(s).toLocaleDateString('en-AU',{weekday:'long'});
 const isReviewDay=s=>[5,6,0].includes(dow(s));
 /* ---------- state ---------- */
-const defState=()=>({v:2,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0});
+const defState=()=>({v:2,points:0,bestStreak:0,sound:true,cur:null,days:{},topics:{},log:[],run:null,told:0,adapt:{offset:0,lastStepDate:null,lastDelta:0,frozen:{},hist:[],pending:null}});
 function load(){try{const s=Object.assign(defState(),JSON.parse(localStorage.getItem(STORE)||'{}'));return s;}catch(e){return defState();}}
 let S=load();
 function save(){try{localStorage.setItem(STORE,JSON.stringify(S));}catch(e){}}
@@ -1067,6 +1074,180 @@ const weekFocus=d=>FOCUS.filter(f=>f.date>=monday(d)&&f.date<=d).map(f=>f.topicI
 function wpick(items,wfn){const ws=items.map(wfn),tot=ws.reduce((a,b)=>a+b,0);let r=RNG()*tot;for(let i=0;i<items.length;i++){r-=ws[i];if(r<=0)return items[i];}return items[items.length-1];}
 function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){const c=list.length>1?list.filter(x=>x!==last):list;const p=wpick(c,wfn);out.push(p);last=p;}return out;}
 /* ---------- lesson planning ---------- */
+/* ---------- adaptive notch (per child, per subject) ----------
+   Rolling first-try error and time over the last 4 completed official lessons
+   (one entry per day; a redo replaces that day). Combined with an optional
+   Harder / Same / Easier rating to step a single offset of ±2 around the
+   base topic levels David calibrated (T(t).lvl and stretch `up`).
+   Rule:
+   • Under 5% wrong: step up. The rating cannot stop it. "Easier" becomes Same
+     only if the rolling time is very slow (>1.5× expected).
+   • Over the error cap, or very slow (>1.5×): step down. "Harder" cannot
+     override. The cap is 15% on familiar questions, or 20% when more than
+     half the recent questions are from a brand-new topic (fewer than two
+     prior completed lessons on that topic, not counting warm-ups).
+   • 5%–cap (on target): follow the rating. Harder steps up unless rolling
+     error is over 12%; Easier steps down unless it is under 8%; Same or no
+     rating stays. Today's already-generated lesson is unchanged; at most
+     one step per day. */
+const ADAPT_WIN=4,ADAPT_UP=0.05,ADAPT_DOWN=0.15,ADAPT_NEW_DOWN=0.20,ADAPT_HARDER_MAX=0.12,ADAPT_EASIER_MIN=0.08,ADAPT_SLOW=1.5,ADAPT_CLAMP=2;
+function adaptState(){
+  if(!S.adapt||typeof S.adapt!=='object')S.adapt={offset:0,lastStepDate:null,lastDelta:0,frozen:{},hist:[],pending:null};
+  if(!S.adapt.frozen||typeof S.adapt.frozen!=='object')S.adapt.frozen={};
+  if(!Array.isArray(S.adapt.hist))S.adapt.hist=[];
+  if(S.adapt.offset==null)S.adapt.offset=0;
+  return S.adapt;
+}
+function clampOffset(n){n=n||0;return Math.max(-ADAPT_CLAMP,Math.min(ADAPT_CLAMP,Math.round(n)));}
+function offsetForDate(date){
+  const A=adaptState(),d=date||TODAY;
+  if(Object.prototype.hasOwnProperty.call(A.frozen,d))return clampOffset(A.frozen[d]);
+  if(A.lastStepDate===d)return clampOffset((A.offset||0)-(A.lastDelta||0));
+  return clampOffset(A.offset||0);
+}
+function freezeOffsetForDate(date){
+  const A=adaptState(),d=date||TODAY;
+  if(!Object.prototype.hasOwnProperty.call(A.frozen,d))A.frozen[d]=offsetForDate(d);
+  return A.frozen[d];
+}
+function itemLvl(t,up,date){
+  const base=(T(t)&&T(t).lvl)||0;
+  return Math.max(0,Math.min(3,base+offsetForDate(date||TODAY)+(up||0)));
+}
+function isNewTopicId(id,date){
+  if(!id||!TOPICS[id]||TOPICS[id].warm)return false;
+  const t=S.topics[id],prior=((t&&t.les)||[]).filter(L=>L&&L[2]&&L[2]<date).length;
+  return prior<2;
+}
+function lessonAdaptStats(R,date){
+  const res=(R&&R.res||[]).filter(r=>r&&r.t);
+  const n=res.length,c=res.filter(r=>r.ok).length;
+  let nFam=0,eFam=0,nNew=0,eNew=0;
+  res.forEach(r=>{
+    if(isNewTopicId(r.t,date)){nNew++;if(!r.ok)eNew++;}
+    else{nFam++;if(!r.ok)eFam++;}
+  });
+  const eNewCap=Math.min(eNew,ADAPT_NEW_DOWN*nNew);
+  const errAdj=n?((eFam+eNewCap)/n):0;
+  const err=n?((n-c)/n):0;
+  const timeRatio=LESSON_MS>0?(R&&R.el||0)/LESSON_MS:1;
+  return {n,c,err,errAdj,timeRatio,nFam,eFam,nNew,eNew,errFam:nFam?eFam/nFam:0,errNew:nNew?eNew/nNew:0};
+}
+function rollingFrom(hist,date){
+  const rows=(hist||[]).filter(h=>h&&h.date&&(!date||h.date<=date)).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0).slice(-ADAPT_WIN);
+  const n=rows.length;
+  if(!n)return {n:0,err:0,time:1,nFam:0,nNew:0,errFam:0,errNew:0,downLim:ADAPT_DOWN,rows};
+  const err=rows.reduce((s,h)=>s+(h.errAdj||0),0)/n;
+  const time=rows.reduce((s,h)=>s+(h.timeRatio||0),0)/n;
+  const nFam=rows.reduce((s,h)=>s+(h.nFam||0),0),nNew=rows.reduce((s,h)=>s+(h.nNew||0),0);
+  const eFam=rows.reduce((s,h)=>s+(h.eFam||0),0),eNew=rows.reduce((s,h)=>s+(h.eNew||0),0);
+  const errFam=nFam?eFam/nFam:0,errNew=nNew?eNew/nNew:0;
+  const downLim=(nNew>nFam)?ADAPT_NEW_DOWN:ADAPT_DOWN;
+  return {n,err,time,nFam,nNew,errFam,errNew,downLim,rows};
+}
+function adaptDecide(err,time,rating,downLim,errForDown){
+  const r=rating||null,lim=(downLim==null?ADAPT_DOWN:downLim),downErr=(errForDown==null?err:errForDown);
+  if(err<ADAPT_UP){
+    if(r==='easier'&&time>ADAPT_SLOW)return {step:0,decision:'same',reason:'Under 5% wrong over recent lessons, but Easier stays the same because those lessons were very slow.'};
+    return {step:1,decision:'up',reason:'Under 5% wrong over recent lessons, so the next lesson steps up.'};
+  }
+  if(downErr>lim||time>ADAPT_SLOW){
+    const why=err>lim?(lim>ADAPT_DOWN?'New-topic error was over 20% over recent lessons, so the next lesson steps down.':'Over 15% wrong over recent lessons, so the next lesson steps down.'):'Recent lessons were very slow, so the next lesson steps down.';
+    return {step:-1,decision:'down',reason:why};
+  }
+  if(r==='harder'){
+    if(err>ADAPT_HARDER_MAX)return {step:0,decision:'same',reason:'On target, but Harder stays the same because the rolling error is above 12%.'};
+    return {step:1,decision:'up',reason:'On target and you chose Harder, so the next lesson steps up.'};
+  }
+  if(r==='easier'){
+    if(err<ADAPT_EASIER_MIN)return {step:0,decision:'same',reason:'On target, but Easier stays the same because the rolling error is under 8%.'};
+    return {step:-1,decision:'down',reason:'On target and you chose Easier, so the next lesson steps down.'};
+  }
+  return {step:0,decision:'same',reason:'On target over recent lessons, so the next lesson stays the same.'};
+}
+function dayBaseOffset(date){
+  const A=adaptState();
+  if(Object.prototype.hasOwnProperty.call(A.frozen,date))return clampOffset(A.frozen[date]);
+  if(A.lastStepDate===date)return clampOffset((A.offset||0)-(A.lastDelta||0));
+  return clampOffset(A.offset||0);
+}
+function buildAdaptPending(R,c,n,rating){
+  const date=R.date||TODAY;
+  const today=lessonAdaptStats(R,date);
+  const A=adaptState();
+  const hist=A.hist.filter(h=>h.date!==date).concat([{date,errAdj:today.errAdj,timeRatio:today.timeRatio,nFam:today.nFam,eFam:today.eFam,nNew:today.nNew,eNew:today.eNew}]);
+  const roll=rollingFrom(hist,date);
+  const downErr=(roll.nNew>roll.nFam)?roll.errNew:roll.err;
+  const dec=adaptDecide(roll.err,roll.time,rating,roll.downLim,downErr);
+  const already=A.lastStepDate===date&&!(A.pending&&A.pending.date===date&&!A.pending.committed);
+  const base=dayBaseOffset(date);
+  const step=already?0:dec.step;
+  const newOffset=already?clampOffset(A.offset||0):clampOffset(base+dec.step);
+  const decision=already?(A.pending&&A.pending.date===date?dec.decision:(A.lastDecision||'same')):dec.decision;
+  const reason=already?'This day already had its one difficulty step. A redo updates the record but does not step again.':dec.reason;
+  return {date,rating:rating||null,err:today.err,errAdj:today.errAdj,timeRatio:today.timeRatio,nFam:today.nFam,eFam:today.eFam,nNew:today.nNew,eNew:today.eNew,n:today.n,c:today.c,rollErr:roll.err,rollTime:roll.time,downLim:roll.downLim,step:already?0:dec.step,decision:already?'same':dec.decision,reason,baseOffset:base,newOffset,already,committed:false,R,c,n};
+}
+function prepareAdapt(R,c,n){
+  if(!R||R.extra||R.practice)return null;
+  const A=adaptState();
+  A.pending=buildAdaptPending(R,c,n,null);
+  return A.pending;
+}
+function setAdaptRating(rating){
+  const A=adaptState();
+  if(!A.pending||A.pending.committed)return A.pending||null;
+  A.pending=buildAdaptPending(A.pending.R,A.pending.c,A.pending.n,rating);
+  highlightRateButtons(rating);
+  save();
+  return A.pending;
+}
+function commitAdaptPending(){
+  const A=adaptState(),p=A.pending;
+  if(!p)return null;
+  const entry={date:p.date,errAdj:p.errAdj,timeRatio:p.timeRatio,nFam:p.nFam,eFam:p.eFam,nNew:p.nNew,eNew:p.eNew,rating:p.rating,decision:p.decision};
+  A.hist=A.hist.filter(h=>h.date!==p.date).concat([entry]).sort((a,b)=>a.date<b.date?-1:1);
+  if(A.hist.length>12)A.hist=A.hist.slice(-12);
+  if(!p.already&&A.lastStepDate!==p.date){
+    A.lastDelta=p.newOffset-(A.offset||0);
+    A.offset=p.newOffset;
+    A.lastStepDate=p.date;
+    A.lastDecision=p.decision;
+  }
+  p.committed=true;
+  return p;
+}
+function flushAdaptSync(){
+  const A=adaptState();
+  if(!A.pending||A.pending.synced)return;
+  commitAdaptPending();
+  try{syncLessonResult(A.pending.R,A.pending.c,A.pending.n);}catch(e){}
+  A.pending.synced=true;
+  save();
+}
+function nextRateHTML(){
+  return `<div class="next-rate" id="nextRate"><p class="next-rate-label">Next time:</p><div class="next-rate-btns" role="group" aria-label="Next time"><button type="button" class="btn huge rate-btn" data-rate="harder" id="rateHarder">Harder</button><button type="button" class="btn huge rate-btn" data-rate="same" id="rateSame">Same</button><button type="button" class="btn huge rate-btn" data-rate="easier" id="rateEasier">Easier</button></div></div>`;
+}
+function highlightRateButtons(rating){
+  document.querySelectorAll('.rate-btn').forEach(b=>{
+    const on=b.getAttribute('data-rate')===rating;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+function bindNextRate(){
+  const box=$('#nextRate');if(!box)return;
+  box.onclick=e=>{
+    const b=e.target.closest('[data-rate]');if(!b)return;
+    setAdaptRating(b.getAttribute('data-rate'));
+    sfx('tap');
+  };
+}
+function bindResultsLeave(){
+  const homeBtn=$('#rHome');if(homeBtn)homeBtn.onclick=()=>{flushAdaptSync();home();};
+  const games=document.querySelector('#resultsCard a.btn[href]');
+  if(games)games.addEventListener('click',()=>flushAdaptSync());
+}
+
 /* ---------- lesson planning: English revision, about 10 minutes (20-24 questions) ----------
    Normal day: 3 warm-up, 6 new-topic, 7 mixed, 2 fix-it, 2 challenge (20).
    School-focus weekday: the school topic is about 2/3 of the lesson (16 of 24).
@@ -1074,7 +1255,7 @@ function interleave(list,n,wfn){const out=[];let last=null;for(let i=0;i<n;i++){
    pt56u then Nov 15: later new/mix/school/challenge items stretch a level (Year 5 → early Year 6). */
 function planLesson(date,variant=0){
   RNG=mulberry32(hashStr(`${PLAYER}|${date}|plan|${variant}`));
-  const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:Math.min(3,T(t).lvl+(o.up||0)),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
+  const items=[],add=(sec,t,o={})=>items.push(Object.assign({sec,t,lvl:itemLvl(t,o.up,date),sub:o.sub||null},o.kind?{kind:o.kind}:{},o.guided?{guided:true}:{}));
   const focusToday=activeFocus(date),wf=weekFocus(date),cur=curTopic();
   const pool=doneTopics().concat(cur&&T(cur).les.length?[cur]:[]).concat(wf.filter(x=>!PATH.includes(x)||PATH.indexOf(x)>S.cur)).filter((x,i,a)=>a.indexOf(x)===i);
   const mixW=id=>{const t=S.topics[id];const since=t&&t.last?Math.min(6,daysBetween(t.last,date)):6;return 1+3*(1-acc(id))+since/2+(wf.includes(id)?3:0)+(id===cur?0.5:0);};
@@ -1209,7 +1390,7 @@ function weekHTML(){const L=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   return `<div class="week">${WEEK.map((d,i)=>{const r=S.days[d];return `<div class="wd${r&&r.done?' done':''}${d===TODAY?' today':''}${i===4?' fri':''}" data-day="${d}"><div class="dn">${L[i]}</div><div class="st">${r&&r.done?(r.kind==='review'?'🏆':'✅'):d<TODAY&&i<5?'·':i===4?'🔁':'○'}</div><div>${r&&r.done?'★'.repeat(r.stars||0)||'–':''}</div></div>`;}).join('')}</div>`;}
 /* ---------- home ---------- */
 let RUN=null,QS=null,q=null,tick=null;
-function home(){if(needsBodyScanGate()){renderBodyScanGate();return;}RUN=null;q=null;clearInterval(tick);
+function home(){flushAdaptSync();if(needsBodyScanGate()){renderBodyScanGate();return;}RUN=null;q=null;clearInterval(tick);
   document.title=`${NAME}'s English Revision`;$('#titleName').textContent=NAME;
   const review=isReviewDay(TODAY),done=S.days[TODAY]&&S.days[TODAY].done,inprog=S.run&&S.run.date===TODAY&&!S.run.finished;
   const tr=S.run&&S.run.date===TODAY?initRun(S.run):null;
@@ -1291,8 +1472,8 @@ function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res
   show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
 function startLesson(extra){
   if(needsBodyScanGate()){renderBodyScanGate();return;}
-  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);syncRunCursor(RUN);}
-  else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
+  if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){freezeOffsetForDate(TODAY);RUN=initRun(S.run);syncRunCursor(RUN);}
+  else{freezeOffsetForDate(TODAY);const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
     RUN=S.run=newRun(variant,extra,p);save();}
   QS=buildAll(RUN);show('play');startTimer();next(true);}
 function newRun(variant,extra,p){p.items.forEach((it,i)=>it.qi=i);return {date:TODAY,variant,extra:!!extra,kind:p.kind,items:p.items,i:0,res:[],pts:0,streak:0,best:0,el:0,told:0,finished:false,rq:[],rd:null,asked:0,fixed:0,awaitNext:false};}
@@ -1375,7 +1556,9 @@ function syncLessonResult(R,c,n){try{const url=resultsSyncUrl();if(!url||!R)retu
   const page=STORE.indexOf('.english')>=0?'english':'maths';
   const by={};(R.res||[]).forEach(r=>{if(!r||!r.t)return;const o=by[r.t]||(by[r.t]={id:r.t,title:(TOPICS[r.t]&&TOPICS[r.t].title)||r.t,n:0,correct:0});o.n++;if(r.ok)o.correct++;});
   const mistakes=(S.rev&&S.rev[R.date||TODAY]||[]).filter(e=>e&&(e.v===R.variant||e.v==null)).map(e=>({topic:(e.it&&TOPICS[e.it.t]&&TOPICS[e.it.t].title)||(e.it&&e.it.t)||'',question:textOf(e.q&&e.q.prompt),childAnswer:textOf(e.a),correctAnswer:textOf(e.c)}));
-  const body=JSON.stringify({child:PLAYER,page,path:PLAYER+'/'+(page==='english'?'english':'daily'),date:R.date||TODAY,score:c,total:n,firstTryAccuracy:n?Math.round(1000*c/n)/10:0,timeTakenSec:Math.round((R.el||0)/1000),kind:R.kind||'mix',extra:!!R.extra,topics:Object.values(by),mistakes,sentAt:new Date().toISOString()});
+  const P=adaptState().pending;
+  const extra=(P&&(P.R===R||(P.date===(R.date||TODAY)&&P.n===n)))?{rating:P.rating||null,adaptDecision:P.decision,adaptOffset:P.newOffset,rollingErrorPct:Math.round((P.rollErr||0)*1000)/10,rollingTimeRatio:Math.round((P.rollTime||0)*100)/100,adaptReason:P.reason||''}:{};
+  const body=JSON.stringify(Object.assign({child:PLAYER,page,path:PLAYER+'/'+(page==='english'?'english':'daily'),date:R.date||TODAY,score:c,total:n,firstTryAccuracy:n?Math.round(1000*c/n)/10:0,timeTakenSec:Math.round((R.el||0)/1000),kind:R.kind||'mix',extra:!!R.extra,topics:Object.values(by),mistakes,sentAt:new Date().toISOString()},extra));
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body}).catch(()=>{});
 }catch(e){}}
 /* ---------- dad's Vipassana reminder (25 Nov–6 Dec 2026, Australia/Sydney) ---------- */
@@ -1504,8 +1687,10 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
   const prevDay=S.days[TODAY];
   if(!R.extra||!prevDay||!prevDay.done){S.days[TODAY]={done:true,kind:R.kind,score:c,total:n,points:R.pts,stars:st,mins:Math.round(R.el/60000),told:R.told,missed:R.rq.length,fixed:R.fixed};}
   else{prevDay.extra=(prevDay.extra||0)+1;prevDay.stars=Math.max(prevDay.stars||0,st);}
-  R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());save();
-  try{syncLessonResult(R,c,n);}catch(e){}
+  R.finished=true;S.bestStreak=Math.max(S.bestStreak,dayStreak());
+  if(!R.extra&&!R.practice)prepareAdapt(R,c,n);
+  save();
+  if(R.extra||R.practice){try{syncLessonResult(R,c,n);}catch(e){}}
   const nxt=curTopic();
   if(mastered)msgs.unshift(`<div class="msg up">🎓 <b>You mastered ${TOPICS[mastered].icon} ${esc(TOPICS[mastered].title)}!</b> It joins your mixed review.</div>`+(nxt?`<div class="msg next">🆕 Next lesson starts a new topic: <b>${TOPICS[nxt].icon} ${esc(TOPICS[nxt].title)}</b></div>`:''));
   const secRows=Object.keys(SECN).filter(k=>res.some(r=>r.sec===k)).map(k=>{const rr=res.filter(r=>r.sec===k);return `<tr><td>${SECN[k][0]} ${SECN[k][1]}</td><td>${rr.filter(r=>r.ok).length} / ${rr.length}</td></tr>`;}).join('');
@@ -1516,9 +1701,10 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
    ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
+   ${(!R.extra&&!R.practice)?nextRateHTML():''}
    ${dadReminderHTML()}
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
-  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;const rv=$('#rRev');if(rv)rv.onclick=()=>openReview(TODAY,'results');}
+  show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}bindNextRate();bindResultsLeave();const rv=$('#rRev');if(rv)rv.onclick=()=>openReview(TODAY,'results');}
 function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.filter(e=>e.d>=wk[0]&&e.d<=TODAY&&TOPICS[e.t]&&!TOPICS[e.t].warm);
   const daysDone=MT.filter(d=>S.days[d]&&S.days[d].done).length;
   const by={};L.forEach(e=>{const o=by[e.t]||(by[e.t]={n:0,c:0,en:0,ec:0,tn:0,tc:0});o.n++;if(e.ok)o.c++;if(e.d<TODAY){o.en++;if(e.ok)o.ec++;}else{o.tn++;if(e.ok)o.tc++;}});
@@ -1619,11 +1805,11 @@ $('#stage').addEventListener('click',e=>{if(!q||q.done)return;const o=e.target.c
   const k=e.target.closest('[data-key]');if(k){key(k.dataset.key);return;}const f=e.target.closest('[data-field]');if(f){q.active=f.dataset.field;refresh();}});
 document.addEventListener('keydown',e=>{if(!q)return;if(q.done&&e.key==='Enter'){const n=$('#nextBtn');if(n){e.preventDefault();n.click();}return;}
   if(q.fields&&!q.done){if(/^[0-9]$/.test(e.key))key(e.key);else if(e.key==='.')key('.');else if(e.key==='Backspace')key('del');else if(e.key==='Tab'||e.key===':'||e.key==='/'){e.preventDefault();key('next');}else if(e.key==='Enter')$('#checkBtn').click();}});
-window.addEventListener('pagehide',()=>{if(RUN)save();});
+window.addEventListener('pagehide',()=>{try{flushAdaptSync();}catch(e){}if(RUN)save();});
 window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
   correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
   wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
-  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus,syncLessonResult,resultsSyncUrl,sydneyYmd,remindDate,showDadReminder,dadReminderHTML,needsBodyScanGate,bodyScanDoneFor,markBodyScanDone,bodyScanElapse,renderBodyScanGate};
+  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus,syncLessonResult,resultsSyncUrl,sydneyYmd,remindDate,showDadReminder,dadReminderHTML,needsBodyScanGate,bodyScanDoneFor,markBodyScanDone,bodyScanElapse,renderBodyScanGate,adaptState,clampOffset,offsetForDate,freezeOffsetForDate,itemLvl,adaptDecide,rollingFrom,lessonAdaptStats,prepareAdapt,setAdaptRating,flushAdaptSync,buildAdaptPending,LESSON_MS};
 home();
 
 })();
