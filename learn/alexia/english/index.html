@@ -166,6 +166,20 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
 .rvvar .story,.chip .story{display:inline;background:none;padding:0;margin:0;font-size:inherit}.rvmini{text-align:center}.rvmini .keypad{margin:8px auto}.rvmini .opts{margin:8px auto}
 .seg .btn:not(.ghost){color:#fff}
 
+/* dad's Vipassana reminder on the results screen (25 Nov–6 Dec 2026) */
+.dad-note{text-align:left;margin:16px 0 4px;padding:14px 16px;background:var(--soft2);border:3px solid var(--line);border-radius:16px;color:inherit;overflow-wrap:anywhere}
+.dad-note p{margin:0 0 8px;font-weight:700;color:var(--main)}
+.dad-note ol{margin:0;padding-left:22px}
+.dad-note li{margin:6px 0;line-height:1.45}
+
+/* body-scan start gate (25 Nov–6 Dec 2026) */
+#bodyScanGate{max-width:540px;margin:24px auto}
+.bodyscan-card{text-align:center}
+.bodyscan-card h2{color:var(--main);font-size:1.55rem;margin:0 0 8px;line-height:1.25}
+.bodyscan-time{font-size:4.6rem;font-weight:800;letter-spacing:3px;color:var(--main);line-height:1.05;margin:18px 0;font-variant-numeric:tabular-nums}
+#bodyScanGate .row .btn{min-width:160px}
+#bodyScanDone.hidden{display:none!important}
+
 /* ===== English revision extras ===== */
 .opts.sent{grid-template-columns:1fr;max-width:640px}
 .opts.sent .opt{font-size:1.1rem;text-align:left;justify-content:flex-start;min-height:56px;padding:12px 16px;line-height:1.35}
@@ -204,7 +218,8 @@ a.btn{display:inline-flex;align-items:center;text-decoration:none;padding:12px 1
   <a class="iconbtn" id="switchBtn" href="../../index.html?switch=1" title="Switch player">👥<span class="lbl"> Switch</span></a>
 </header>
 <main>
-<section id="home"><div id="homeBody"></div></section>
+<section id="bodyScanGate" class="hidden"><div class="card bodyscan-card" id="bodyScanCard"></div></section>
+<section id="home" class="hidden"><div id="homeBody"></div></section>
 <section id="play" class="hidden">
   <div class="playhead"><button class="btn ghost" id="quitBtn">⏸️ Pause</button><div class="secname" id="secName"></div></div>
   <div class="bars"><span>✏️ Questions</span><div class="pbar" id="progBar"><div style="width:0"></div></div><span id="progTxt"></span>
@@ -1185,7 +1200,7 @@ function spoken(el){const c=el.cloneNode(true);c.querySelectorAll('.say,svg').fo
     .replace(/×/g,' times ').replace(/÷/g,' divided by ').replace(/−/g,' minus ').replace(/cm²/g,' square centimetres').replace(/°C/g,' degrees').replace(/°/g,' degrees').replace(/\s+/g,' ').trim();}
 /* ---------- UI helpers ---------- */
 const SECN={school:['🏫','From school today'],warm:['⚡','Warm-up'],new:['🆕','New topic'],mix:['🔀','Mixed practice'],fix:['🔧','Fix-it'],challenge:['🏔️','Challenge finish'],review:['🔁','Week review'],tough:['💪','Toughest of the week']};
-function show(id){['home','play','results','review'].forEach(s=>$('#'+s).classList.toggle('hidden',s!==id));window.scrollTo(0,0);}
+function show(id){['bodyScanGate','home','play','results','review'].forEach(s=>{const el=$('#'+s);if(el)el.classList.toggle('hidden',s!==id);});window.scrollTo(0,0);}
 const starsFor=p=>p>=0.95?3:p>=0.8?2:p>=0.6?1:0;
 function dayStreak(){let n=0,d=TODAY;if(!(S.days[d]&&S.days[d].done))d=addDays(d,-1);
   for(let i=0;i<60;i++){const w=dow(d);if(S.days[d]&&S.days[d].done)n++;else if(w!==0&&w!==6)break;d=addDays(d,-1);}return n;}
@@ -1194,7 +1209,7 @@ function weekHTML(){const L=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   return `<div class="week">${WEEK.map((d,i)=>{const r=S.days[d];return `<div class="wd${r&&r.done?' done':''}${d===TODAY?' today':''}${i===4?' fri':''}" data-day="${d}"><div class="dn">${L[i]}</div><div class="st">${r&&r.done?(r.kind==='review'?'🏆':'✅'):d<TODAY&&i<5?'·':i===4?'🔁':'○'}</div><div>${r&&r.done?'★'.repeat(r.stars||0)||'–':''}</div></div>`;}).join('')}</div>`;}
 /* ---------- home ---------- */
 let RUN=null,QS=null,q=null,tick=null;
-function home(){RUN=null;q=null;clearInterval(tick);
+function home(){if(needsBodyScanGate()){renderBodyScanGate();return;}RUN=null;q=null;clearInterval(tick);
   document.title=`${NAME}'s English Revision`;$('#titleName').textContent=NAME;
   const review=isReviewDay(TODAY),done=S.days[TODAY]&&S.days[TODAY].done,inprog=S.run&&S.run.date===TODAY&&!S.run.finished;
   const tr=S.run&&S.run.date===TODAY?initRun(S.run):null;
@@ -1271,9 +1286,11 @@ function finishPractice(){clearInterval(tick);const R=RUN,n=R.res.length,c=R.res
    <p style="font-size:1.3rem" id="practiceScore">${sn[0]} ${sn[1]}: <b>${c} out of ${n}</b> · +${R.pts} points</p>
    ${R.rq.length?`<p class="fixedline">🔧 You fixed <b>${R.fixed} of ${R.rq.length}</b> question${R.rq.length>1?'s':''} you missed</p>`:''}
    <p class="small">Extra practice doesn't change today's lesson score.</p>
+   ${dadReminderHTML()}
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" href="../../index.html">🏠 My games</a></div>`;
   show('results');q=null;topbar();sfx('win');$('#rHome').onclick=home;}
 function startLesson(extra){
+  if(needsBodyScanGate()){renderBodyScanGate();return;}
   if(!extra&&S.run&&S.run.date===TODAY&&!S.run.finished){RUN=initRun(S.run);syncRunCursor(RUN);}
   else{const variant=extra?((S.days[TODAY]&&S.days[TODAY].extra)||0)+1:0;const p=planLesson(TODAY,variant);
     RUN=S.run=newRun(variant,extra,p);save();}
@@ -1361,6 +1378,117 @@ function syncLessonResult(R,c,n){try{const url=resultsSyncUrl();if(!url||!R)retu
   const body=JSON.stringify({child:PLAYER,page,path:PLAYER+'/'+(page==='english'?'english':'daily'),date:R.date||TODAY,score:c,total:n,firstTryAccuracy:n?Math.round(1000*c/n)/10:0,timeTakenSec:Math.round((R.el||0)/1000),kind:R.kind||'mix',extra:!!R.extra,topics:Object.values(by),mistakes,sentAt:new Date().toISOString()});
   fetch(url,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body}).catch(()=>{});
 }catch(e){}}
+/* ---------- dad's Vipassana reminder (25 Nov–6 Dec 2026, Australia/Sydney) ---------- */
+const REMIND_START='2026-11-25',REMIND_END='2026-12-06';
+function sydneyYmd(now){
+  const d=(now instanceof Date)?now:new Date(now==null?Date.now():now);
+  try{
+    const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Australia/Sydney',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+    const g=k=>(parts.find(p=>p.type===k)||{}).value;
+    const y=g('year'),m=g('month'),day=g('day');
+    if(y&&m&&day)return y+'-'+m+'-'+day;
+  }catch(e){}
+  return '';
+}
+function remindDate(){
+  try{const q=params.get('remindDate');if(q&&/^\d{4}-\d{2}-\d{2}$/.test(q))return q;}catch(e){}
+  try{const w=window.__KIDS_HUB_REMIND_DATE;if(typeof w==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(w))return w;}catch(e){}
+  try{const n=window.__KIDS_HUB_REMIND_NOW;if(n!=null)return sydneyYmd(n instanceof Date?n:new Date(n));}catch(e){}
+  return sydneyYmd(new Date());
+}
+function showDadReminder(){const d=remindDate();return !!(d&&d>=REMIND_START&&d<=REMIND_END);}
+function dadReminderHTML(){
+  if(!showDadReminder())return '';
+  const ethan=PLAYER==='ethan';
+  const intro='Great work today! Before you\'re done for the day, Dad says:';
+  const items=ethan
+    ?['Do 30 minutes of writing.','Do 15 minutes of cubing.','Sit for your 20-minute meditation at 8pm tonight. The guided recording is on the backup phone, and there\'s a copy on your laptop.']
+    :['Do your school homework.','Do your piano practice.','Sit for your 20-minute meditation at 8pm tonight. The guided recording is on the backup phone, and there\'s a copy on your laptop.'];
+  return `<aside class="dad-note" id="dadReminder"><p>${intro}</p><ol>${items.map(x=>'<li>'+x+'</li>').join('')}</ol></aside>`;
+}
+
+
+/* ---------- body-scan start gate (25 Nov–6 Dec 2026, Australia/Sydney) ---------- */
+const BODYSCAN_MIN_MS=3*60*1000,BODYSCAN_SHORT_MS=3*60*1000,BODYSCAN_LONG_MS=5*60*1000;
+function bodyScanKey(player){return 'kidsHub.p.'+(player||PLAYER)+'.bodyscan';}
+function bodyScanDoneFor(player,date){
+  try{
+    const v=localStorage.getItem(bodyScanKey(player));
+    if(!v)return false;
+    if(v===date)return true;
+    const o=JSON.parse(v);
+    return !!(o&&o.date===date);
+  }catch(e){return false;}
+}
+function markBodyScanDone(player,date){
+  try{localStorage.setItem(bodyScanKey(player||PLAYER),JSON.stringify({date:date||remindDate()}));}catch(e){}
+}
+function needsBodyScanGate(){return showDadReminder()&&!bodyScanDoneFor(PLAYER,remindDate());}
+let bsDuration=BODYSCAN_SHORT_MS,bsStartedAt=0,bsAdj=0,bsTickIv=null,bsArmed=false;
+function bodyScanNow(){
+  try{const n=window.__KIDS_HUB_BODYSCAN_NOW;if(n!=null)return ((n instanceof Date)?n.getTime():+n)+bsAdj;}catch(e){}
+  return Date.now()+bsAdj;
+}
+function bodyScanElapsed(){return bsStartedAt?Math.max(0,bodyScanNow()-bsStartedAt):0;}
+function bodyScanLeft(){return Math.max(0,bsDuration-bodyScanElapsed());}
+function bodyScanFmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function bodyScanCanFinish(){return bsArmed&&bodyScanElapsed()>=BODYSCAN_MIN_MS-50;}
+function bodyScanElapse(ms){bsAdj+=(+ms||0);bodyScanTick();return {elapsed:bodyScanElapsed(),left:bodyScanLeft(),canFinish:bodyScanCanFinish()};}
+function stopBodyScanTick(){if(bsTickIv){clearInterval(bsTickIv);bsTickIv=null;}}
+function bodyScanTick(){
+  const time=$('#bodyScanTime'),done=$('#bodyScanDone');
+  if(time)time.textContent=bodyScanFmt(bsStartedAt?bodyScanLeft():bsDuration);
+  if(done){
+    const ok=bodyScanCanFinish();
+    done.classList.toggle('hidden',!ok);
+    done.disabled=!ok;
+  }
+  if(bsStartedAt&&bodyScanLeft()<=0)stopBodyScanTick();
+}
+function startBodyScanTimer(ms){
+  bsDuration=ms||BODYSCAN_SHORT_MS;
+  bsStartedAt=bodyScanNow();
+  bsArmed=true;
+  const start=$('#bodyScanStart'),start5=$('#bodyScanStart5'),hint=$('#bodyScanHint');
+  if(start)start.classList.add('hidden');
+  if(start5)start5.classList.add('hidden');
+  if(hint)hint.classList.add('hidden');
+  bodyScanTick();
+  stopBodyScanTick();
+  bsTickIv=setInterval(bodyScanTick,100);
+}
+function finishBodyScanGate(){
+  if(!bodyScanCanFinish())return;
+  stopBodyScanTick();
+  markBodyScanDone(PLAYER,remindDate());
+  bsStartedAt=0;bsArmed=false;bsAdj=0;
+  home();
+}
+function renderBodyScanGate(){
+  const card=$('#bodyScanCard');
+  if(!card){home();return;}
+  /* Restart the countdown after a refresh; do not keep mid-timer progress. */
+  stopBodyScanTick();bsStartedAt=0;bsArmed=false;bsDuration=BODYSCAN_SHORT_MS;
+  card.innerHTML=`<h2>Do your body scan before starting (3–5 minutes)</h2>
+    <div class="bodyscan-time" id="bodyScanTime">3:00</div>
+    <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">
+      <button class="btn huge" id="bodyScanStart" type="button">Start</button>
+      <button class="btn ghost" id="bodyScanStart5" type="button">Or do 5 minutes</button>
+    </div>
+    <p class="small" id="bodyScanHint">Press Start when you are ready. You can choose 5 minutes if you like.</p>
+    <div class="row" style="justify-content:center;margin-top:16px"><button class="btn huge green hidden" id="bodyScanDone" type="button" disabled>I've done my body scan</button></div>`;
+  show('bodyScanGate');
+  $('#bodyScanStart').onclick=()=>startBodyScanTimer(BODYSCAN_SHORT_MS);
+  $('#bodyScanStart5').onclick=()=>startBodyScanTimer(BODYSCAN_LONG_MS);
+  $('#bodyScanDone').onclick=finishBodyScanGate;
+  bodyScanTick();
+}
+window.KIDS_HUB_BODYSCAN={
+  key:bodyScanKey,doneFor:bodyScanDoneFor,mark:markBodyScanDone,needs:needsBodyScanGate,
+  elapse:bodyScanElapse,tick:bodyScanTick,start:startBodyScanTimer,finish:finishBodyScanGate,
+  minMs:BODYSCAN_MIN_MS,remindDate,showWindow:showDadReminder,sydneyYmd
+};
+
 /* ---------- finish ---------- */
 function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false);RUN.awaitNext=false;return next(true);}
   if(RUN.practice)return finishPractice();
@@ -1388,6 +1516,7 @@ function finish(){initRedo(RUN);if(pendingRedos().length){RUN.rd=pickRedo(false)
    ${(()=>{const nm=res.filter(r=>!r.ok).length;return nm?`<div style="margin:10px 0"><button class="btn huge orange" id="rRev">👨‍👦 Review mistakes together (${nm})</button></div>`:`<p class="small">🎉 No mistakes to review today.</p>`;})()}
    ${R.kind==='review'?weekSummary():`<table class="sum">${secRows}</table>`}
    <div style="margin:10px 0">${weekHTML()}</div>
+   ${dadReminderHTML()}
    <div class="row" style="justify-content:center;margin-top:14px"><button class="btn ghost" id="rHome">📅 Back to today</button><a class="btn" style="text-decoration:none;display:inline-flex;align-items:center" href="../../index.html">🏠 My games</a></div>`;
   show('results');q=null;topbar();if(st>=2){sfx('win');confetti();}$('#rHome').onclick=home;const rv=$('#rRev');if(rv)rv.onclick=()=>openReview(TODAY,'results');}
 function weekSummary(){const wk=WEEKOF(TODAY),MT=wk.slice(0,4);const L=S.log.filter(e=>e.d>=wk[0]&&e.d<=TODAY&&TOPICS[e.t]&&!TOPICS[e.t].warm);
@@ -1494,7 +1623,7 @@ window.addEventListener('pagehide',()=>{if(RUN)save();});
 window.DAILY={get S(){return S;},get q(){return q;},get RUN(){return RUN;},get QS(){return QS;},TOPICS,PATH,STORE,TODAY,planLesson,makeQ,buildAll,home,answer:ok=>answer(ok),
   correctFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=q.answer;answer(true);return;}q.fields.forEach(f=>q.f[f.id]=String(q.answer[f.id]));refresh();answer(gradeEntry());},
   wrongFill(){if(!q||q.example)return;if(q.kind==='choice'){q.chosen=(q.answer+1)%q.choices.length;answer(false);return;}q.fields.forEach(f=>q.f[f.id]='999');answer(gradeEntry());},
-  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus,syncLessonResult,resultsSyncUrl};
+  H,redoQ,pendingRedos,openReview,revList,revRecord,goSection,practiseSection,secProgress,setRNG:s=>{RNG=mulberry32(s);},gen:(id,l,sub)=>TOPICS[id].gen.call(TOPICS[id],H,l,sub),gradeEntry,same,activeFocus,weekFocus,syncLessonResult,resultsSyncUrl,sydneyYmd,remindDate,showDadReminder,dadReminderHTML,needsBodyScanGate,bodyScanDoneFor,markBodyScanDone,bodyScanElapse,renderBodyScanGate};
 home();
 
 })();

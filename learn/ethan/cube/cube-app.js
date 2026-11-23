@@ -119,7 +119,7 @@ function debugText(v){
   const evs=(cubeDebug.events||[]).map(e=>{
     try{return JSON.stringify(e);}catch(err){return String(e&&e.type||e);}
   }).join("\n");
-  const ver=(document.querySelector("#buildVer")||{}).textContent||"v15 · 18 Nov";
+  const ver=(document.querySelector("#buildVer")||{}).textContent||"v16 · 24 Nov";
   return [
     "build: "+String(ver).trim(),
     "protocol: "+(cubeDebug.protocol||guessProtocol(v.deviceName)||"unknown — GAN 356 i3 is Gen2"),
@@ -1260,6 +1260,122 @@ function phaseHint(v){
   }
   return v.connected?"Connected and ready.":"Connect Ethan's GAN 356 i3, or use the timer by itself.";
 }
+
+/* dad's Vipassana reminder (25 Nov–6 Dec 2026, Australia/Sydney). End-of-session only. */
+const REMIND_START="2026-11-25",REMIND_END="2026-12-06";
+function sydneyYmd(now){
+  const d=(now instanceof Date)?now:new Date(now==null?Date.now():now);
+  try{
+    const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Australia/Sydney",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(d);
+    const g=k=>(parts.find(p=>p.type===k)||{}).value;
+    const y=g("year"),m=g("month"),day=g("day");
+    if(y&&m&&day)return y+"-"+m+"-"+day;
+  }catch(e){}
+  return "";
+}
+function remindDate(){
+  try{
+    const q=new URLSearchParams(location.search).get("remindDate");
+    if(q&&/^\d{4}-\d{2}-\d{2}$/.test(q))return q;
+  }catch(e){}
+  try{const w=window.__KIDS_HUB_REMIND_DATE;if(typeof w==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(w))return w;}catch(e){}
+  try{const n=window.__KIDS_HUB_REMIND_NOW;if(n!=null)return sydneyYmd(n instanceof Date?n:new Date(n));}catch(e){}
+  return sydneyYmd(new Date());
+}
+function showDadReminder(){const d=remindDate();return !!(d&&d>=REMIND_START&&d<=REMIND_END);}
+function dadReminderHTML(){
+  if(!showDadReminder())return "";
+  return `<aside class="dad-note" id="dadReminder"><p>Great work today! Before you're done for the day, Dad says:</p><ol><li>Do 30 minutes of writing.</li><li>Do 15 minutes of cubing.</li><li>Sit for your 20-minute meditation at 8pm tonight. The guided recording is on the backup phone, and there's a copy on your laptop.</li></ol></aside>`;
+}
+window.KIDS_HUB_REMIND={sydneyYmd,remindDate,showDadReminder,dadReminderHTML};
+
+/* body-scan start gate (25 Nov–6 Dec 2026). Overlay only; does not start practice until passed. */
+const BODYSCAN_MIN_MS=3*60*1000,BODYSCAN_SHORT_MS=3*60*1000,BODYSCAN_LONG_MS=5*60*1000;
+const BODYSCAN_PLAYER="ethan";
+function bodyScanKey(player){return "kidsHub.p."+(player||BODYSCAN_PLAYER)+".bodyscan";}
+function bodyScanDoneFor(player,date){
+  try{
+    const v=localStorage.getItem(bodyScanKey(player));
+    if(!v)return false;
+    if(v===date)return true;
+    const o=JSON.parse(v);
+    return !!(o&&o.date===date);
+  }catch(e){return false;}
+}
+function markBodyScanDone(player,date){
+  try{localStorage.setItem(bodyScanKey(player||BODYSCAN_PLAYER),JSON.stringify({date:date||remindDate()}));}catch(e){}
+}
+function needsBodyScanGate(){return showDadReminder()&&!bodyScanDoneFor(BODYSCAN_PLAYER,remindDate());}
+let bsDuration=BODYSCAN_SHORT_MS,bsStartedAt=0,bsAdj=0,bsTickIv=null,bsArmed=false,bsOnPass=null;
+function bodyScanNow(){
+  try{const n=window.__KIDS_HUB_BODYSCAN_NOW;if(n!=null)return ((n instanceof Date)?n.getTime():+n)+bsAdj;}catch(e){}
+  return Date.now()+bsAdj;
+}
+function bodyScanElapsed(){return bsStartedAt?Math.max(0,bodyScanNow()-bsStartedAt):0;}
+function bodyScanLeft(){return Math.max(0,bsDuration-bodyScanElapsed());}
+function bodyScanFmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return Math.floor(s/60)+":"+String(s%60).padStart(2,"0");}
+function bodyScanCanFinish(){return bsArmed&&bodyScanElapsed()>=BODYSCAN_MIN_MS-50;}
+function bodyScanElapse(ms){bsAdj+=(+ms||0);bodyScanTick();return {elapsed:bodyScanElapsed(),left:bodyScanLeft(),canFinish:bodyScanCanFinish()};}
+function stopBodyScanTick(){if(bsTickIv){clearInterval(bsTickIv);bsTickIv=null;}}
+function bodyScanTick(){
+  const time=$("#bodyScanTime"),done=$("#bodyScanDone");
+  if(time)time.textContent=bodyScanFmt(bsStartedAt?bodyScanLeft():bsDuration);
+  if(done){
+    const ok=bodyScanCanFinish();
+    done.classList.toggle("hidden",!ok);
+    done.disabled=!ok;
+  }
+  if(bsStartedAt&&bodyScanLeft()<=0)stopBodyScanTick();
+}
+function startBodyScanTimer(ms){
+  bsDuration=ms||BODYSCAN_SHORT_MS;
+  bsStartedAt=bodyScanNow();
+  bsArmed=true;
+  const start=$("#bodyScanStart"),start5=$("#bodyScanStart5"),hint=$("#bodyScanHint");
+  if(start)start.classList.add("hidden");
+  if(start5)start5.classList.add("hidden");
+  if(hint)hint.classList.add("hidden");
+  bodyScanTick();
+  stopBodyScanTick();
+  bsTickIv=setInterval(bodyScanTick,100);
+}
+function finishBodyScanGate(){
+  if(!bodyScanCanFinish())return;
+  stopBodyScanTick();
+  markBodyScanDone(BODYSCAN_PLAYER,remindDate());
+  bsStartedAt=0;bsArmed=false;bsAdj=0;
+  const gate=$("#bodyScanGate");
+  if(gate)gate.remove();
+  const fn=bsOnPass;bsOnPass=null;
+  if(typeof fn==="function")fn();
+}
+function renderBodyScanGate(onPass){
+  bsOnPass=onPass||bsOnPass;
+  stopBodyScanTick();bsStartedAt=0;bsArmed=false;bsDuration=BODYSCAN_SHORT_MS;
+  let gate=$("#bodyScanGate");
+  if(!gate){
+    gate=document.createElement("section");
+    gate.id="bodyScanGate";
+    gate.className="bodyscan-overlay";
+    gate.innerHTML='<div class="bodyscan-card" id="bodyScanCard"></div>';
+    document.body.appendChild(gate);
+  }
+  const card=$("#bodyScanCard")||gate;
+  card.innerHTML=`<h2>Do your body scan before starting (3–5 minutes)</h2>
+    <div class="bodyscan-time" id="bodyScanTime">3:00</div>
+    <div class="row" style="justify-content:center;gap:10px;flex-wrap:wrap">
+      <button class="btn huge" id="bodyScanStart" type="button">Start</button>
+      <button class="btn ghost" id="bodyScanStart5" type="button">Or do 5 minutes</button>
+    </div>
+    <p class="muted" id="bodyScanHint">Press Start when you are ready. You can choose 5 minutes if you like.</p>
+    <div class="row" style="justify-content:center;margin-top:16px"><button class="btn huge hidden" id="bodyScanDone" type="button" disabled>I've done my body scan</button></div>`;
+  $("#bodyScanStart").onclick=()=>startBodyScanTimer(BODYSCAN_SHORT_MS);
+  $("#bodyScanStart5").onclick=()=>startBodyScanTimer(BODYSCAN_LONG_MS);
+  $("#bodyScanDone").onclick=finishBodyScanGate;
+  bodyScanTick();
+}
+
+
 function sessionSummaryHTML(sum){
   if(!sum)return "";
   const warm=(sum.warmupTimes||[]).map((t,i)=>`Warm-up ${i+1}: ${t.text}`).join(" · ")||"No warm-up times";
@@ -1287,6 +1403,7 @@ function sessionBannerHTML(v){
       <div class="sb-title">Session done — well done!</div>
       <button class="btn" id="startLessonBtn" type="button">Do another session</button>
       ${sessionSummaryHTML(sp.summary||(v.session&&v.session.summary))}
+      ${dadReminderHTML()}
     </div>`;
   }
   const drillBtns=sp.phase==="drill"?`<button class="btn ghost" id="skipDrillBtn" type="button">Done / Skip drill</button>`:"";
@@ -1297,6 +1414,12 @@ function sessionBannerHTML(v){
     <p class="sb-explain">${sp.explain||""}</p>
   </div>`;
 }
+if(window.KIDS_HUB_REMIND)window.KIDS_HUB_REMIND.sessionBannerHTML=sessionBannerHTML;
+window.KIDS_HUB_BODYSCAN={
+  key:bodyScanKey,doneFor:bodyScanDoneFor,mark:markBodyScanDone,needs:needsBodyScanGate,
+  elapse:bodyScanElapse,tick:bodyScanTick,start:startBodyScanTimer,finish:finishBodyScanGate,
+  minMs:BODYSCAN_MIN_MS,remindDate,showWindow:showDadReminder,sydneyYmd
+};
 function sessionHTML(v){
   /* Session lives in the main banner above the scramble. Keep this slot empty so we don't show a disconnected widget. */
   return "";
@@ -1948,6 +2071,13 @@ function init(){
   setTimeout(()=>{try{tryAutoReconnect();}catch(e){}},400);
 }
 
-if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",init);
-else init();
+function bootCube(){
+  if(needsBodyScanGate()){
+    renderBodyScanGate(init);
+    return;
+  }
+  init();
+}
+if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bootCube);
+else bootCube();
 })();
